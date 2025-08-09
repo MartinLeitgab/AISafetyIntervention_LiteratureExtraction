@@ -66,9 +66,6 @@ def test_enhanced_merger_with_visuals():
             show_plots=MATPLOTLIB_AVAILABLE
         )
         
-        # Export results
-        export_data = merger.export_enhanced_json("test_enhanced_merge.json")
-        print(f"\n💾 Exported merged graph to test_enhanced_merge.json")
         
         return merger
     except Exception as e:
