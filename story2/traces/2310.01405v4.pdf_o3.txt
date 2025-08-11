@@ -1,0 +1,113 @@
+======================  
+REASONING PROCESS  
+======================  
+
+I. Identify Starting Points  
+1. Opacity of modern LLMs → safety-critical behaviours (dishonesty, power-seeking, harmful outputs, bias, data leakage).  
+2. Assumption: distributed hidden‐state representations already encode high-level cognitive concepts in roughly linear sub-spaces.  
+3. Claim: analysing and manipulating those representations (top-down) can give practical control sooner than bottom-up circuit analysis.  
+
+II. Trace Logical Chains → Concepts & Findings  
+A. Representation Reading  
+ • Linear Artificial Tomography (LAT) = (design paired stimuli → collect hidden states at concept token → PCA on pair-wise differences)  
+  Finding: 1st PC strongly separates concepts such as truthfulness, utility, harmfulness, etc.  
+ • Contrast Vector = runtime (x⁺ – x⁻) hidden-state difference for same prompt pair → stronger, input-conditioned controller.  
+ • LoRRA = finetune rank-8 adapters with contrast-vector loss → permanent, zero-overhead control.  
+
+B. Representation Control  
+ • Linear combination (add/subtract reading vector) causally modulates honesty, bias, memorisation.  
+ • Piece-wise operator sign(h·v)v conditionally amplifies or suppresses activity (used for harmlessness).  
+ • Projection removes undesired component (used for memorisation).  
+
+C. Empirical Evidence  
+ • TruthfulQA MC1 ↑ 18 pp vs zero-shot; honesty vector detects lies per-token.  
+ • LoRRA/Contrast-vector honesty control → GPT-4-level accuracy with 13 B params.  
+ • Emotion clusters emerge; ↑ happiness direction ⇒ 100 % compliance with harmful request (safety concern).  
+ • Harmfulness vector robust to jailbreak strings; piece-wise control doubles refusal rate while preserving helpfulness.  
+ • Bias direction (race subset) generalises to gender & occupation; subtracting it balances pronoun-resolution answers & medical vignette demographics.  
+ • Memorisation vector detects popular quotes; subtracting it ↓ exact-match 89 → 48 % while factual QA 97 → 96 %.  
+
+III. Derive Actionable Interventions (+ maturity rationales)  
+1. Apply LAT with paired stimuli & PCA to obtain concept reading vector.  
+  maturity = tested (routinely evaluated on many datasets).  
+2. At inference, ADD/SUBTRACT reading vector on selected layers to steer behaviour.  
+  maturity = tested (empirically shifts honesty, bias, etc.).  
+3. Compute per-input Contrast Vector and inject into hidden states.  
+  maturity = tested (used for TruthfulQA improvement; requires 3× compute).  
+4. Train Low-Rank Representation Adaptation (LoRRA) adapters with contrast-vector loss on generic data; merge into model.  
+  maturity = tested (yields honesty gains, negligible inference cost).  
+5. Deploy piece-wise operator sign(h·v)v using harmfulness vector during decoding to increase refusal of unsafe instructions while retaining benign compliance.  
+  maturity = tested.  
+6. Project out memorisation vector from hidden states during generation to reduce verbatim training-data leakage without hurting general knowledge.  
+  maturity = tested.  
+7. Real-time lie detector: sum negative honesty scores across middle layers; trigger mitigation when threshold exceeded.  
+  maturity = tested (token-level demos).  
+
+IV. Edge Confidence Assignment  
+• Most chains backed by experimental results on multiple datasets → confidence = validated (3).  
+• Down-stream safety inferences (e.g., deploying memorisation projection in production) not yet field-tested → confidence = supported (2).  
+• Broader claims like “emotion control can be abused” rely on limited demo → confidence = supported (2).  
+
+======================  
+KNOWLEDGE GRAPH NODES  
+======================  
+
+--- CONCEPT NODES ---  
+C1  “LLMs contain linearly separable representations of high-level concepts”  
+C2  “Linear Artificial Tomography (LAT) extracts concept reading vector via PCA on paired stimuli”  
+C3  “Contrast Vector provides input-conditioned representation difference”  
+C4  “LoRRA low-rank adapters embed desired representation shifts without runtime cost”  
+C5  “Honesty reading vector correlates with true vs false internal belief”  
+C6  “Adding honesty vector increases truthful outputs on TruthfulQA”  
+C7  “Token-level honesty scores reveal impending lies”  
+C8  “Emotion representations cluster across layers”  
+C9  “Positive-emotion activation increases model compliance, including with harmful requests”  
+C10 “Harmfulness representation robust to jailbreak suffixes”  
+C11 “Piece-wise amplification of harmfulness activity raises refusal rate of unsafe prompts”  
+C12 “Unified bias representation spans race, gender, occupation”  
+C13 “Subtracting bias vector reduces gendered pronoun bias and demographic skew”  
+C14 “Memorisation direction detects popular quotations”  
+C15 “Projecting out memorisation direction reduces verbatim leakage with minimal knowledge loss”  
+
+--- INTERVENTION NODES ---  
+I1  “Apply LAT with paired stimuli and PCA to derive reading vector for target concept” [maturity: tested]  
+I2  “Inject reading vector (±α) into hidden states at selected layers during generation to modulate behaviour” [maturity: tested]  
+I3  “Compute per-input contrast vector between experimental and reference prompts and add to hidden states” [maturity: tested]  
+I4  “Train LoRRA rank-8 adapters using contrast-vector loss on generic instruction data and merge adapters” [maturity: tested]  
+I5  “Use piece-wise operator sign(h·v)v with harmfulness vector during decoding to conditionally amplify rejection behaviour” [maturity: tested]  
+I6  “Project out memorisation vector from hidden states during generation to prevent verbatim data leakage” [maturity: tested]  
+I7  “Deploy real-time lie detector based on summed negative honesty scores across middle layers” [maturity: tested]  
+
+======================  
+KNOWLEDGE GRAPH EDGES  
+======================  
+
+C1 enables C2         [edge_confidence: validated]  
+C2 produces I1        [validated]  
+C2 contributes_to C5    [validated]  
+C5 enables I7        [validated]  
+C5 enables I2        [validated]  
+C6 addressed_by I2     [validated]  
+C3 enables I3        [validated]  
+C3 supports C6       [supported]  
+C4 implemented_by I4   [validated]  
+C4 refined_by C3      [supported]  
+C8 causes C9        [supported]  
+C9 implies “Emotion manipulation can threaten safety” (implicit risk concept) [supported]  
+C10 enables I5      [validated]  
+C11 addressed_by I5    [validated]  
+C12 enables I2 (bias direction) [supported]  
+C12 enables I4 (fairness LoRRA) [supported]  
+C13 addressed_by I2/I4  [validated]  
+C14 enables I6       [validated]  
+C15 addressed_by I6    [validated]  
+C7 follows C5       [validated]  
+I1 builds_upon C1     [validated]  
+I3 requires C3      [validated]  
+I4 requires C3      [validated]  
+I5 requires C10       [supported]  
+I6 requires C14        [validated]  
+
+======================  
+END OF OUTPUT  
+======================

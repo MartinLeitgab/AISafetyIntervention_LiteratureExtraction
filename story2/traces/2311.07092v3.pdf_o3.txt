@@ -1,0 +1,104 @@
+REASONING LOG
+==============
+
+Paper processed: “To Tell The Truth: Language of Deception and Language Models”.  
+Primary domain: NLP; secondary relevance to AI safety via (a) robustness to misinformation, (b) interpretability / transparency, (c) human-AI collaboration in content moderation.
+
+--------------------------------------------------------------------
+STEP 1 – Starting Points (Problems / Assumptions / Foundations)
+--------------------------------------------------------------------
+P1  Human judges are only ~41 % accurate at spotting textual deception (Problem).
+P2  Existing automatic deception work mostly needs audio-visual or handcrafted psycholinguistic features (Problem).
+P3  There is no conversational dataset with objectively verifiable ground-truth for deception (Problem).
+A1  Certain linguistic cues (entailment violations, ambiguity, overconfidence, half-truths) correlate with deception (Assumption backed by prior psych studies).
+A2  Large Language Models (LLMs) can reason about text and may recognise these cues (Assumption).
+
+--------------------------------------------------------------------
+STEP 2 – Logical Chains
+--------------------------------------------------------------------
+Chain C1  (Dataset creation chain)
+  P3 → motivates → C1.1 “new dataset T4TEXT with ground-truth affidavit” (Concept).
+  C1.1 → enables → I1 “training & benchmarking models for textual deception detection”.
+
+Chain C2  (Model architecture chain)
+  P1 + P2 + A1 → motivates → C2.1 “need for automated, text-only deception detector”.
+  C2.1 + A2 → leads_to → C2.2 “bottleneck architecture extracting 4 linguistic controls”.
+  C2.2 → tested_by → F2 “GPT-4 model equals human accuracy and outperforms other baselines”.
+  F2 → implies → C2.3 “linguistic cue extraction sufficient for near-human detection”.
+  C2.3 → addressed_by → I2 “deploy bottleneck-style detector in online moderation pipelines”.
+
+Chain C3  (Interpretability / safety chain)
+  C2.2 → produces → F3 “model supplies explicit per-snippet verdicts, improving explanation quality”.
+  F3 → enables → I3 “require LLMs to output bottleneck explanations during safety-critical decisions”.
+
+Chain C4  (Human-AI collaboration chain)
+  F2 + F3 → leads_to → C4.1 “model correct where humans fail; complementary error profile”.
+  C4.1 → enables → I4 “interactive tool that surfaces model’s cues (ambiguity, half-truth etc.) to human moderators”.
+
+Chain C5  (Robust training chain)
+  Ablation result: half-truth cue most critical → C5.1 “half-truth detection strongly predictive”.
+  C5.1 → suggests → I5 “augment training objectives with explicit half-truth loss term when fine-tuning moderation models”.
+
+--------------------------------------------------------------------
+STEP 3 – Active Chain Memory Notes
+• Dataset (C1.1) is prerequisite for all later interventions.  
+• Bottleneck controls (entailment, ambiguity, overconfidence, half-truth) act both as interpretability artefacts and robustness enablers.  
+• Complementarity with humans is important for deployment – links Chain C2 → C4.  
+• Half-truth cue is singled out as highest impact – becomes specific intervention in Chain C5.
+
+--------------------------------------------------------------------
+STEP 4 – Structured Relationships (Concept / Intervention nodes with edges)
+--------------------------------------------------------------------
+CONCEPT NODES
+C1.1  “T4TEXT dataset with affidavit-grounded deception labels”
+C2.1  “need for text-only automated deception detector”
+C2.2  “bottleneck architecture extracting entailment, ambiguity, overconfidence, half-truth cues”
+C2.3  “linguistic cue extraction sufficient for near-human deception detection”
+C4.1  “model and human judges have complementary error profiles”
+C5.1  “half-truth cue most predictive among linguistic controls”
+
+FINDING NODES (treated as concepts for graph)
+F2  “GPT-4 bottleneck model matches 41 % human accuracy”
+F3  “bottleneck explanations preferred by humans (higher e-ViL score)”
+
+INTERVENTION NODES
+I1  “release and utilise T4TEXT dataset for training/evaluating deception detectors”
+      maturity = deployed  (rationale: dataset publicly released)
+I2  “integrate bottleneck-style LLM deception detector into content moderation pipelines”
+      maturity = proposed  (rationale: suggested as possible deployment, not yet done)
+I3  “mandate LLMs to output per-snippet linguistic-cue explanations in safety-critical tasks”
+      maturity = theoretical  (rationale: explicit suggestion for transparency)
+I4  “build human-AI interface showing model-flagged ambiguity/half-truth cues to moderators”
+      maturity = inferred_theoretical  (rationale: not in paper, inferred from complementarity finding)
+I5  “add half-truth detection loss term during LLM fine-tuning for robustness against misinformation”
+      maturity = inferred_theoretical  (rationale: paper identifies importance but doesn’t propose training change)
+
+--------------------------------------------------------------------
+EDGE LIST (Concept/Intervention triples with type & confidence)
+
+1. P3 “lack of dataset” → produces → C1.1          confidence: supported (authors create dataset)
+2. C1.1 → enables → I1                              confidence: established (dataset publicly released & used)
+3. P1+P2+A1 → leads_to → C2.1                      confidence: supported (problem statement)
+4. C2.1 → addressed_by → C2.2                      confidence: supported (architecture design)
+5. C2.2 → validated_by → F2                        confidence: validated (empirical results on 150 games)
+6. F2 → implies → C2.3                             confidence: supported (analysis section)
+7. C2.3 → mitigated_by → I2                        confidence: speculative (deployment not done)
+8. C2.2 → produces → F3                            confidence: supported (human eval of explanations)
+9. F3 → enables → I3                               confidence: speculative (policy suggestion)
+10. F2 + F3 → contributes_to → C4.1                confidence: supported (complementarity histogram)
+11. C4.1 → enables → I4                            confidence: speculative
+12. Ablation result → produces → C5.1              confidence: supported
+13. C5.1 → suggests → I5                           confidence: speculative
+
+--------------------------------------------------------------------
+STEP 5 – Attribute Rationales
+• I1 deployed: dataset already released on GitHub under CC-BY.  
+• I2 proposed: authors discuss possibility of using models for moderation but no deployment.  
+• I3 theoretical: requirement for explanations stated as desirable future work.  
+• I4 inferred_theoretical: derived safety-relevant UI idea from complementarity observation.  
+• I5 inferred_theoretical: leveraging half-truth cue in training not in paper; logical safety extension.  
+
+Edge confidences follow guideline: empirical results on single dataset = “validated”; straightforward causation without extensive evidence = “supported”; speculative extensions = “speculative”.
+
+--------------------------------------------------------------------
+END OF REASONING LOG

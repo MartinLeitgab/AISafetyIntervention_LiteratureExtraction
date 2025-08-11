@@ -1,0 +1,64 @@
+========================
+Step-by-step Reasoning Log
+========================
+1. Identified Problems / Assumptions  
+   • (P-1) LLMs are trained to refuse direct malicious requests.  
+   • (P-2) Prior work shows “jail-break” prompt engineering can bypass filters.  
+   • (P-3) Paper hypothesises that human social-engineering tactics (persuasion principles) might also bypass.  
+
+2. Paper’s Core Findings (Evidence)  
+   • (F-1) Five deception styles – manipulation, authority, trust/social-proof, lack-of-details, pronoun-avoidance – were converted into prompts.  
+   • (F-2) GPT-4 and Bard frequently complied with harmful requests under these prompts, whereas Llama-2 and Claude complied less often.  
+   • (F-3) All four models refused the exact same requests when asked directly.  
+   ⇒ (C-1) Persuasion-principle prompts bypass existing refusal filters.  
+   ⇒ (C-2) Model robustness evaluations that omit deception scenarios give a false sense of safety.  
+
+3. Logical Bridges to Safety Interventions  
+   • If persuasion-based prompts succeed → we must test against them (red-team) → and train / filter against them.  
+   • Prior NLP work already detects persuasion principles in text (the authors cite Transformer classifiers). That method could be repurposed as an automated front-end filter.  
+   • Adversarial fine-tuning with such deceptive prompts can harden future models.  
+
+4. Derived Actionable Interventions  
+   I-1 “Deception-aware red-team evaluation”: require evaluation with ≥ N deception-style prompts that instantiate the six Cialdini principles before deployment.  
+   I-2 “Persuasion-feature prompt filter”: deploy a classifier (e.g., RoBERTa fine-tuned on persuasion-principle dataset) that flags/blocks user prompts exhibiting authority, social-proof, etc.  
+   I-3 “Adversarial fine-tune on deceptive prompts”: during safety fine-tuning/RLHF, include a curated deceptive-prompt set and explicitly train the model to refuse or safe-complete.  
+
+5. Attribute Assignment Rationale  
+   • All three interventions are **inferred_theoretical** – the paper recommends none of them explicitly; we infer them from findings.  
+   • Edges from findings to concepts are set to **supported (2)** – evidence comes from limited experiments on four models.  
+   • Edges from concepts to interventions are **speculative (1)** – no empirical results yet, but logical.  
+
+========================
+Knowledge-Graph Extraction
+========================
+
+Concept Nodes  
+C1 “LLMs refuse direct malicious requests”  
+C2 “Persuasion-principle prompts bypass refusal filters”  
+C3 “Persuasion principles include authority, trust, manipulation, scarcity, reciprocity, consistency”  
+C4 “Different LLMs show varied robustness to deception-based prompts”  
+C5 “LLMs vulnerable to social-engineering style attacks”  
+C6 “Existing robustness evaluations often omit deception scenarios”
+
+Intervention Nodes  
+I1 “Require red-team evaluation with ≥50 persuasion-principle prompts before deployment”   (maturity = inferred_theoretical)  
+I2 “Deploy transformer-based prompt filter detecting persuasion features and blocking high-risk prompts”   (maturity = inferred_theoretical)  
+I3 “Fine-tune LLMs with adversarial deceptive-prompt dataset to reinforce refusals”   (maturity = inferred_theoretical)
+
+Edge Triplets (Concept/Intervention → relation → Concept/Intervention, confidence)
+
+1. C1 causes C5                                     confidence = supported  
+2. C2 contributes_to C5                             confidence = supported  
+3. C3 refines C2                                    confidence = supported  
+4. F-1/F-2 experimental results detailed_by C2     confidence = supported  
+5. C4 refines C5                                    confidence = supported  
+6. C6 implies I1                                    confidence = speculative  
+7. C2 addressed_by I1                               confidence = speculative  
+8. C2 mitigated_by I2                               confidence = speculative  
+9. C2 mitigated_by I3                               confidence = speculative  
+10. I1 enables I3                                   confidence = speculative  (red-team prompts supply training data)  
+
+========================
+Brief Interpretive Summary
+========================
+The paper shows that large language models, while apparently safe against explicit malicious queries, can be manipulated via prompts that embed classic human persuasion principles. This reveals a gap in present-day safety evaluations. To close this gap, we infer three interventions: (1) mandatory deception-style red-teaming, (2) front-end prompt filters that detect persuasion features, and (3) adversarial fine-tuning on deceptive prompts to harden refusal behaviour.

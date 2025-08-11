@@ -1,0 +1,148 @@
+{
+  "paper_doi": "10.48550/arXiv.2310.01405",
+  "paper_title": "Representation Engineering: A Top-Down Approach to AI Transparency",
+  "logical_chains": [
+    {
+      "chain_id": "LC1",
+      "description": "Reading chain – locating linearly separable internal concepts to monitor model cognition (illustrated with honesty/truthfulness).",
+      "nodes": [
+        {
+          "id": "C1",
+          "type": "concept",
+          "title": "Linear separability of high-level concepts",
+          "description": "LLM hidden-state space contains approximately linear directions encoding abstract cognitive properties.",
+          "maturity": 2
+        },
+        {
+          "id": "C2",
+          "type": "intervention",
+          "title": "Linear Artificial Tomography (LAT)",
+          "description": "Unsupervised paired-stimulus PCA procedure that extracts a reading vector for a target concept.",
+          "maturity": 3
+        },
+        {
+          "id": "C5",
+          "type": "concept",
+          "title": "Honesty reading vector",
+          "description": "Direction that scores positive on truthful internal belief and negative on lies.",
+          "maturity": 2
+        },
+        {
+          "id": "C7",
+          "type": "intervention",
+          "title": "Real-time lie detector",
+          "description": "Summed negative honesty scores across layers used as per-token dishonesty alarm.",
+          "maturity": 2
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "C1",
+          "target_id": "C2",
+          "title": "enables extraction",
+          "confidence": 3,
+          "description": "Assumed linear structure makes PCA-based LAT feasible."
+        },
+        {
+          "source_id": "C2",
+          "target_id": "C5",
+          "title": "produces reading vector",
+          "confidence": 3,
+          "description": "LAT applied to honesty stimuli yields a robust honesty direction."
+        },
+        {
+          "source_id": "C5",
+          "target_id": "C7",
+          "title": "used for monitoring",
+          "confidence": 3,
+          "description": "Honesty scores drive a detector that flags forthcoming lies or hallucinations."
+        }
+      ]
+    },
+    {
+      "chain_id": "LC2",
+      "description": "Control chain – manipulating representations to steer behaviour toward safety goals (honesty, harmlessness, bias reduction).",
+      "nodes": [
+        {
+          "id": "I1",
+          "type": "intervention",
+          "title": "Inject reading vector",
+          "description": "Add or subtract the concept direction in hidden states during generation.",
+          "maturity": 2
+        },
+        {
+          "id": "I3",
+          "type": "intervention",
+          "title": "Contrast Vector steering",
+          "description": "Compute input-conditioned difference between experimental and reference prompts and add to activations.",
+          "maturity": 2
+        },
+        {
+          "id": "I4",
+          "type": "intervention",
+          "title": "LoRRA adapters",
+          "description": "Finetune low-rank matrices with contrast-vector loss, then merge for zero-overhead control.",
+          "maturity": 2
+        },
+        {
+          "id": "C6",
+          "type": "concept",
+          "title": "Increased truthful outputs",
+          "description": "Measured 18-point improvement on TruthfulQA MC1 versus zero-shot baseline.",
+          "maturity": 1
+        },
+        {
+          "id": "C11",
+          "type": "concept",
+          "title": "Higher refusal of unsafe requests",
+          "description": "Piece-wise amplification of harmfulness direction doubles refusal rate while preserving helpfulness.",
+          "maturity": 1
+        },
+        {
+          "id": "C13",
+          "type": "concept",
+          "title": "Reduced demographic bias",
+          "description": "Subtracting bias vector balances pronoun-resolution and medical vignette demographics.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "I1",
+          "target_id": "C6",
+          "title": "causally increases honesty",
+          "confidence": 3,
+          "description": "Adding honesty vector shifts model answers toward truth on benchmark items."
+        },
+        {
+          "source_id": "I3",
+          "target_id": "C6",
+          "title": "stronger steering",
+          "confidence": 3,
+          "description": "Contrast-vector injection yields GPT-4-level TruthfulQA accuracy with 13B model."
+        },
+        {
+          "source_id": "I4",
+          "target_id": "C6",
+          "title": "retains honesty gains",
+          "confidence": 3,
+          "description": "LoRRA embeds the honesty shift permanently with negligible runtime cost."
+        },
+        {
+          "source_id": "I1",
+          "target_id": "C11",
+          "title": "enables conditional refusal",
+          "confidence": 2,
+          "description": "Piece-wise operation on harmfulness dimension heightens rejection of disallowed instructions."
+        },
+        {
+          "source_id": "I1",
+          "target_id": "C13",
+          "title": "mitigates bias",
+          "confidence": 2,
+          "description": "Subtracting unified bias vector reduces gender and race skew in answers."
+        }
+      ]
+    }
+  ]
+}

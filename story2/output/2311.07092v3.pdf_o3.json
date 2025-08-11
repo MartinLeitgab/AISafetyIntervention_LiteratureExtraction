@@ -1,0 +1,221 @@
+{
+  "paper_doi": "10.48550/arXiv.2311.07092",
+  "paper_title": "To Tell The Truth: Language of Deception and Language Models",
+  "logical_chains": [
+    {
+      "chain_id": "C1",
+      "description": "Creating and using a dataset with verifiable truth enables research and model training on textual deception.",
+      "nodes": [
+        {
+          "id": "P3",
+          "type": "concept",
+          "title": "Absence of conversational dataset with objective ground-truth for deception",
+          "description": "Prior work lacked text-only datasets where each utterance could be checked against known facts.",
+          "maturity": null
+        },
+        {
+          "id": "T4TEXT",
+          "type": "concept",
+          "title": "T4TEXT dataset with affidavit-grounded deception labels",
+          "description": "Transcribed and cleaned 150 TV-show sessions, providing conversation, affidavit facts and true contestant identity.",
+          "maturity": null
+        },
+        {
+          "id": "I1",
+          "type": "intervention",
+          "title": "Release and utilisation of T4TEXT for training/evaluating deception detectors",
+          "description": "Make dataset publicly available (CC-BY) and employ it for benchmarking models.",
+          "maturity": 3
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "P3",
+          "target_id": "T4TEXT",
+          "title": "motivates creation of",
+          "confidence": 3,
+          "description": "The gap in data led authors to construct the new dataset."
+        },
+        {
+          "source_id": "T4TEXT",
+          "target_id": "I1",
+          "title": "enables",
+          "confidence": 3,
+          "description": "Dataset is released and directly used for model training and evaluation."
+        }
+      ]
+    },
+    {
+      "chain_id": "C2",
+      "description": "Designing a bottleneck architecture that extracts linguistic cues allows near-human textual deception detection.",
+      "nodes": [
+        {
+          "id": "P1P2A1",
+          "type": "concept",
+          "title": "Need for accurate text-only deception detector using linguistic cues",
+          "description": "Humans are weak and prior automatic systems rely on non-text modalities or hand-crafted features.",
+          "maturity": null
+        },
+        {
+          "id": "BOT_ARCH",
+          "type": "concept",
+          "title": "Bottleneck architecture extracting entailment, ambiguity, overconfidence, half-truth cues",
+          "description": "LLM pipeline that first classifies four cues per snippet then aggregates them.",
+          "maturity": null
+        },
+        {
+          "id": "F2",
+          "type": "concept",
+          "title": "GPT-4 bottleneck model matches human accuracy",
+          "description": "Empirical result: 39% accuracy vs 41% human; higher top-2 accuracy.",
+          "maturity": null
+        },
+        {
+          "id": "C2.3",
+          "type": "concept",
+          "title": "Linguistic cue extraction is sufficient for near-human detection",
+          "description": "Validated by results; shows explicit cues can replace implicit reasoning.",
+          "maturity": null
+        },
+        {
+          "id": "I2",
+          "type": "intervention",
+          "title": "Deploy bottleneck-style detector in online moderation pipelines",
+          "description": "Integrate algorithm to flag deceptive text in real-world platforms.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "P1P2A1",
+          "target_id": "BOT_ARCH",
+          "title": "motivates design of",
+          "confidence": 2,
+          "description": "Problem statement leads authors to craft the architecture."
+        },
+        {
+          "source_id": "BOT_ARCH",
+          "target_id": "F2",
+          "title": "validated by",
+          "confidence": 3,
+          "description": "Model evaluated on T4TEXT achieves target performance."
+        },
+        {
+          "source_id": "F2",
+          "target_id": "C2.3",
+          "title": "implies",
+          "confidence": 2,
+          "description": "Empirical parity with humans shows cues are sufficient."
+        },
+        {
+          "source_id": "C2.3",
+          "target_id": "I2",
+          "title": "suggests deployment",
+          "confidence": 1,
+          "description": "Authors propose future use in content-moderation."
+        }
+      ]
+    },
+    {
+      "chain_id": "C3",
+      "description": "Bottleneck cues provide interpretable explanations that can be mandated for safety-critical LLM use.",
+      "nodes": [
+        {
+          "id": "BOT_ARCH_CUES",
+          "type": "concept",
+          "title": "Bottleneck architecture outputs explicit per-snippet cue verdicts",
+          "description": "Entailment, ambiguity, overconfidence, half-truth labels accompany predictions.",
+          "maturity": null
+        },
+        {
+          "id": "F3",
+          "type": "concept",
+          "title": "Explanations preferred by humans (higher e-ViL)",
+          "description": "User studies show explanations more satisfactory than baselines.",
+          "maturity": null
+        },
+        {
+          "id": "I3",
+          "type": "intervention",
+          "title": "Require LLMs to output linguistic-cue explanations in safety-critical decisions",
+          "description": "Policy/technical mandate for transparent reasoning.",
+          "maturity": 0
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "BOT_ARCH_CUES",
+          "target_id": "F3",
+          "title": "produces",
+          "confidence": 3,
+          "description": "Cue outputs lead to more comprehensible explanations."
+        },
+        {
+          "source_id": "F3",
+          "target_id": "I3",
+          "title": "enables",
+          "confidence": 1,
+          "description": "Positive user preference motivates suggestion to mandate explanations."
+        }
+      ]
+    },
+    {
+      "chain_id": "C4",
+      "description": "Complementary strengths of model and humans motivate interactive tools for joint deception detection.",
+      "nodes": [
+        {
+          "id": "F2F3",
+          "type": "concept",
+          "title": "Model correct where humans fail; complementary error profile",
+          "description": "Analysis shows model excels in sessions with many deceived judges.",
+          "maturity": null
+        },
+        {
+          "id": "I4",
+          "type": "intervention",
+          "title": "Interactive UI surfacing model-flagged cues to human moderators",
+          "description": "Tool displays ambiguity, half-truth indicators to aid human judgment.",
+          "maturity": 0
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "F2F3",
+          "target_id": "I4",
+          "title": "motivates",
+          "confidence": 1,
+          "description": "Complementarity suggests benefit of human-AI collaboration."
+        }
+      ]
+    },
+    {
+      "chain_id": "C5",
+      "description": "Half-truth cue is most predictive, suggesting targeted training objectives for robustness.",
+      "nodes": [
+        {
+          "id": "C5.1",
+          "type": "concept",
+          "title": "Half-truth detection cue most impactful",
+          "description": "Ablation shows largest accuracy drop when half-truth control removed.",
+          "maturity": null
+        },
+        {
+          "id": "I5",
+          "type": "intervention",
+          "title": "Add half-truth detection loss during LLM fine-tuning",
+          "description": "Explicitly supervise half-truth recognition to improve misinformation robustness.",
+          "maturity": 0
+        }
+      ],
+      "edges": [
+        {
+          "source_id": "C5.1",
+          "target_id": "I5",
+          "title": "suggests",
+          "confidence": 1,
+          "description": "Finding indicates potential benefit of specialised objective."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+****************  Concept Nodes  ****************
+C1  LLM natural language explanations increase human verification speed  
+C2  LLM explanations trigger user over-reliance when explanations are wrong  
+C3  User over-reliance lowers accuracy below baseline on wrong-explanation items  
+C4  Retrieved Wikipedia passages improve human fact-checking accuracy but slow decisions  
+C5  Retrieval recall (all evidence retrieved) strongly affects explanation accuracy  
+C6  Low retrieval recall reduces human accuracy across interface conditions  
+C7  Contrastive explanations (support + refute) mitigate over-reliance  
+C8  Contrastive explanations do not improve accuracy beyond retrieval passages  
+C9  Combining explanations with retrieval yields no complementary benefit over retrieval alone  
+C10 Users remain over-confident on wrong judgments when assisted by explanations  
+
+****************  Intervention Nodes  ****************
+I1  Present only retrieved evidence passages (top-k Wikipedia paragraphs) instead of model explanations when supporting fact-checking interfaces  
+  • maturity = tested  • rationale: implemented and evaluated in user study  
+I2  Provide contrastive explanations that include both supporting and refuting arguments for each claim  
+  • maturity = tested  • rationale: generated with GPT-3.5, evaluated in user study  
+I3  Automatically ground LLM explanations in cited retrieved passages using low-temperature prompting with inline citations  
+  • maturity = tested  • rationale: authors implemented in “retrieval + explanation” condition  
+I4  Improve retrieval recall by upgrading or fine-tuning the retriever before generating explanations  
+  • maturity = inferred_theoretical  • rationale: paper shows recall strongly impacts accuracy but does not implement retriever changes  
+I5  Adaptively choose interface: show explanation only when model confidence high, otherwise show raw retrieved passages  
+  • maturity = inferred_theoretical  • rationale: suggested in limitations section; not implemented  
+I6  Highlight claim keywords within evidence/explanations to speed user scanning  
+  • maturity = tested  • rationale: keyword highlighting present in study interface  
+
+****************  Edges (Concept / Intervention relationships)  ****************
+C1   causes                 → C2  
+  confidence = supported  rationale: faster reading led users to trust explanation content
+
+C2   leads_to               → C3  
+  confidence = validated  rationale: empirical drop to 35 % accuracy on wrong-explanation items
+
+C3   addressed_by           → I2  
+  confidence = validated  rationale: contrastive explanations raised accuracy to 56 %
+
+C3   addressed_by           → I1  
+  confidence = validated  rationale: retrieval interface avoided over-reliance, kept 54 % accuracy
+
+C2   addressed_by           → I2  
+  confidence = validated  same rationale as above
+
+C4   enables                → I1  
+  confidence = validated  retrieved passages already available and effective
+
+C5   contributes_to         → C6  
+  confidence = supported  lower recall linked to lower human accuracy
+
+C5   mitigated_by           → I4  
+  confidence = speculative  improving recall would reduce downstream errors
+
+C6   addressed_by           → I4  
+  confidence = speculative  higher recall expected to raise accuracy
+
+C7   refined_by             → I2  
+  confidence = validated  contrastive explanations operationalize concept
+
+C7   specified_by           → C8  
+  confidence = supported  shows limitation of contrastive approach
+
+C8   implies                → I1  
+  confidence = supported  if contrastive adds no benefit, default to retrieval
+
+C9   implies                → I1  
+  confidence = validated  combined interface slower & no accuracy gain
+
+C10  addressed_by           → I5  
+  confidence = speculative  adaptive interface may calibrate confidence
+
+I3   enables                → I2  
+  confidence = supported  citations help generate grounded contrastive explanations
+
+I6   contributes_to         → C1  
+  confidence = supported  highlighting speeds reading time in study
+
+****************  Rationales for Attribute Choices  ****************
+• Tested vs inferred_theoretical: I1, I2, I3, I6 were directly implemented and evaluated with 80 crowdworkers (Section 5) → “tested”.  
+• I4, I5 are logical extensions discussed in paper’s analysis/limitations but not executed → “inferred_theoretical”.  
+• Edge confidence:  
+ – “validated” when backed by multiple statistically-significant user-study results (e.g., C3 → I2).  
+ – “supported” when evidence is present but narrower or indirect (e.g., retrieval recall correlation).  
+ – “speculative” for forward-looking inferences without empirical evaluation (adaptive interface, retriever upgrade).
+
+This knowledge extraction captures the paper’s logical chains from observed problems (over-reliance, recall issues) through findings to concrete interventions that can inform safer human-AI collaboration designs.
