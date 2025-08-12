@@ -1,8 +1,9 @@
 import json
 import graphviz
 import html
+import os
 
-def render_json_graph(json_file_path):
+def render_json_graph(json_file_path, json_dir = None):
     """
     Render a JSON knowledge graph using Graphviz.
     
@@ -140,13 +141,14 @@ def render_json_graph(json_file_path):
                     style='invis', weight='100')
 
     # Render the graph
-    output_filename = f"{graph_name}_graph"
-    dot.render(output_filename, view=True, format='svg', cleanup=True)
-    print(f"Graph rendered and saved as '{output_filename}.svg'")
+    # json_filename = f"{graph_name}_graph"
+    json_filename = os.path.join(json_dir, f"{graph_name}_graph")
+    dot.render(json_filename, view=True, format='svg', cleanup=True)
+    print(f"Graph rendered and saved as '{json_filename}.svg'")
     
     # Also create a PNG version
-    dot.render(output_filename + '_png', view=False, format='png', cleanup=True)
-    print(f"PNG version saved as '{output_filename}_png.png'")
+    dot.render(json_filename + '_png', view=False, format='png', cleanup=True)
+    print(f"PNG version saved as '{json_filename}_png.png'")
 
 
 if __name__ == "__main__":
