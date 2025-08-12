@@ -15,3 +15,7 @@ Robust prompt for eliciting correct and comprehensive extraction of causal chain
 - **/input** subset of papers for testing
 - **/traces** freeform 'reasoning traces' from prompt tests
 - **/json** structured json of nodes from prompt tests
+
+## Notes
+
+- **graphviz** will require local install on your machine -  https://graphviz.org/download/
