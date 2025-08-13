@@ -21,8 +21,10 @@ from pathlib import Path
 from typing import Optional
 
 # Use relative imports for local modules
-from ..src.merge_indexer import build_merge_index
-from ..src.merge_input_builder import build_node_comparison_input
+from ardhito.llm_assisted_graph_merging.src.merge_indexer import build_merge_index
+from ardhito.llm_assisted_graph_merging.src.merge_input_builder import (
+    build_node_comparison_input,
+)
 
 
 def parse_args() -> argparse.Namespace:
