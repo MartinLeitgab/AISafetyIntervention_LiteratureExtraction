@@ -6,7 +6,7 @@ from typing import Dict
 from pydantic import BaseModel, ValidationError
 
 try:
-    from src.prompts import OutputSchema
+    from ardhito.llm_assisted_graph_merging.src.prompts import OutputSchema
 except ImportError:
     from prompts import OutputSchema
 

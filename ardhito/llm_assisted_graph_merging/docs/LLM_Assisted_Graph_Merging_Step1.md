@@ -17,7 +17,7 @@ e exists): node notes + rationales from linked edges
 
 
 ## Files Overview
-- `src/merge_types.py`
+- `ardhito/llm_assisted_graph_merging/src/merge_types.py`
   - `SourceMetadata`: identifies where a node/edge came from (currently `paper_id` from the output filename; placeholders for `title`, `section`, `paragraph_id`).
   - `LinkedEdgeSummary`: short record of an immediate connection (edge type, rationale, confidence, and source).
   - `NodeAggregate`: collected per-node data from all occurrences across outputs.
@@ -25,11 +25,11 @@ e exists): node notes + rationales from linked edges
   - `NodeComparisonInput`: a pair of `NodeViewForComparison` (data-only) for A vs B.
   - Edge types (`EdgeViewForComparison`, `EdgeComparisonInput`) are defined for a later step.
 
-- `src/merge_indexer.py`
+- `ardhito/llm_assisted_graph_merging/src/merge_indexer.py`
   - `build_merge_index(output_dir)`: reads parsed `OutputSchema` JSON files from `output/`, aggregates nodes by canonical name (lowercased), merges aliases and notes, and collects linked edge rationales as context.
   - Produces `MergeIndex` with `nodes: Dict[node_key, NodeAggregate]`.
 
-- `src/merge_input_builder.py`
+- `ardhito/llm_assisted_graph_merging/src/merge_input_builder.py`
   - `build_node_comparison_input(index, key_a, key_b)`: converts two aggregates to a data-only `NodeComparisonInput`.
   - The node view includes:
     - `text`, `aliases`
@@ -37,7 +37,7 @@ e exists): node notes + rationales from linked edges
     - `source_metadata`
     - `linked_edges`
 
-- `examples/walkthrough_prepare_llm_input.py`
+- `ardhito/llm_assisted_graph_merging/examples/walkthrough_prepare_llm_input.py`
   - Runnable script demonstrating the end-to-end Step 1 flow.
 
 

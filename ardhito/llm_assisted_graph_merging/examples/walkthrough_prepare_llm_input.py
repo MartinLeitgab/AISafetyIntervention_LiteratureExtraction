@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Walkthrough: Prepare data-only LLM inputs for node comparison (Step 1)
 
 This script demonstrates how to:
@@ -7,9 +6,9 @@ This script demonstrates how to:
 3) Produce a data-only payload for comparing two nodes (no prompt text)
 
 Usage examples:
-  uv run python examples/walkthrough_prepare_llm_input.py
-  uv run python examples/walkthrough_prepare_llm_input.py --key-a <node_key_a> --key-b <node_key_b>
-  uv run python examples/walkthrough_prepare_llm_input.py --save output/node_comparison_example.json
+  uv run python ardhito/llm_assisted_graph_merging/examples/walkthrough_prepare_llm_input.py
+  uv run python ardhito/llm_assisted_graph_merging/examples/walkthrough_prepare_llm_input.py --key-a <node_key_a> --key-b <node_key_b>
+  uv run python ardhito/llm_assisted_graph_merging/examples/walkthrough_prepare_llm_input.py --save output/node_comparison_example.json
 
 The resulting payload contains exactly the fields required for LLM-assisted merge decisions,
 without including any task instructions.
@@ -20,15 +19,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Optional
-import sys
 
-# Ensure project root is on sys.path so `src` is importable when running from repo root
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.merge_indexer import build_merge_index  # noqa: E402
-from src.merge_input_builder import build_node_comparison_input  # noqa: E402
+# Use relative imports for local modules
+from ..src.merge_indexer import build_merge_index
+from ..src.merge_input_builder import build_node_comparison_input
 
 
 def parse_args() -> argparse.Namespace:

@@ -6,7 +6,10 @@ from openai import OpenAI
 from tqdm import tqdm
 
 try:
-    from src.prompts import EXTRACTION_PROMPT_TEMPLATE, OutputSchema
+    from ardhito.llm_assisted_graph_merging.src.prompts import (
+        EXTRACTION_PROMPT_TEMPLATE,
+        OutputSchema,
+    )
 except ImportError:
     from prompts import EXTRACTION_PROMPT_TEMPLATE, OutputSchema
 
