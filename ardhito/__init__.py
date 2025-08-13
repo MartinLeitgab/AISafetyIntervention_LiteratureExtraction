@@ -1,6 +1,6 @@
 """Top-level package for personal staging work under `ardhito/`.
 
-This file makes `ardhito` a Python package so imports like
+So imports like
 `from ardhito.llm_assisted_graph_merging ...` resolve correctly.
 """
 
