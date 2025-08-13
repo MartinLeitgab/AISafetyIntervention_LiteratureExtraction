@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 from falkordb import FalkorDB
 from tqdm import tqdm
+
 try:
     from src.prompts import OutputSchema
 except ImportError:
@@ -33,11 +34,11 @@ def main():
             data = json.load(f)
         doc = OutputSchema(**data)
         paper_id = json_path.stem
- 
+
         db = FalkorDB(host=HOST, port=PORT)
         g = db.select_graph(GRAPH)
         g.query(f"MERGE (p:PAPER {{id: '{paper_id}'}}) RETURN p")
- 
+
         for edge in doc.edges:
             n = edge.target_node
             g.query(
