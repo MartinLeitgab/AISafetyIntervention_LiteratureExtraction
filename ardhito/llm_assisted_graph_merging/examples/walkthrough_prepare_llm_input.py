@@ -16,11 +16,19 @@ without including any task instructions.
 
 from __future__ import annotations
 
+# ruff: noqa: E402
+
 import argparse
 from pathlib import Path
+import sys
 from typing import Optional
 
-# Use relative imports for local modules
+# Ensure repository root is on sys.path so `ardhito.*` imports resolve when running directly
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# Local package imports
 from ardhito.llm_assisted_graph_merging.src.merge_indexer import build_merge_index
 from ardhito.llm_assisted_graph_merging.src.merge_input_builder import (
     build_node_comparison_input,
