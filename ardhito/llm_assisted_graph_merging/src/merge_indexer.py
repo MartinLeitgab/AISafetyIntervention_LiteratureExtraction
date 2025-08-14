@@ -44,16 +44,7 @@ def _upsert_node_aggregate(
 ) -> NodeAggregate:
     key = _node_key(node.canonical_name or node.name)
     if key not in aggregates:
-        aggregates[key] = NodeAggregate(
-            node_key=key,
-            text=node.name,
-            canonical_text=node.canonical_name or node.name,
-            aliases=list(node.aliases or []),
-            notes=[node.notes] if getattr(node, "notes", None) else [],
-            confidence_samples=[node.confidence],
-            linked_edges=[],
-            sources=[source],
-        )
+        aggregates[key] = _create_node_aggregate(node=node, key=key, source=source)
         return aggregates[key]
 
     agg = aggregates[key]
@@ -72,6 +63,19 @@ def _upsert_node_aggregate(
         agg.confidence_samples.append(node.confidence)
     agg.sources.append(source)
     return agg
+
+
+def _create_node_aggregate(node, key: str, source: SourceMetadata) -> NodeAggregate:
+    return NodeAggregate(
+        node_key=key,
+        text=node.name,
+        canonical_text=node.canonical_name or node.name,
+        aliases=list(node.aliases or []),
+        notes=[node.notes] if getattr(node, "notes", None) else [],
+        confidence_samples=[node.confidence],
+        linked_edges=[],
+        sources=[source],
+    )
 
 
 def build_merge_index(output_dir: Path) -> MergeIndex:
