@@ -4,7 +4,7 @@ from falkordb import FalkorDB
 from tqdm import tqdm
 
 try:
-    from ardhito.llm_assisted_graph_merging.src.prompts import OutputSchema
+    from .llm_assisted_graph_merging.src.prompts import OutputSchema
 except ImportError:
     from prompts import OutputSchema
 
