@@ -4,11 +4,7 @@ from pathlib import Path
 from typing import Dict
 
 from pydantic import BaseModel, ValidationError
-
-try:
-    from ardhito.llm_assisted_graph_merging.src.prompts import OutputSchema
-except ImportError:
-    from prompts import OutputSchema
+from .prompts import OutputSchema
 
 from .merge_types import NodeAggregate, LinkedEdgeSummary, SourceMetadata
 

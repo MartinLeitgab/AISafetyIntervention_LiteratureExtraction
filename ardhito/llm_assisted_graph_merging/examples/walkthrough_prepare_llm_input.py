@@ -23,14 +23,14 @@ from pathlib import Path
 import sys
 from typing import Optional
 
-# Ensure repository root is on sys.path so `ardhito.*` imports resolve when running directly
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# Ensure package dir is on sys.path when running directly from repo root
+PACKAGE_DIR = Path(__file__).resolve().parents[1]
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
 
-# Local package imports
-from ardhito.llm_assisted_graph_merging.src.merge_indexer import build_merge_index
-from ardhito.llm_assisted_graph_merging.src.merge_input_builder import (
+# Local package imports (username-free)
+from src.merge_indexer import build_merge_index
+from src.merge_input_builder import (
     build_node_comparison_input,
 )
 

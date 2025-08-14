@@ -60,6 +60,8 @@ uv run python ardhito/llm_assisted_graph_merging/examples/walkthrough_prepare_ll
 uv run python ardhito/llm_assisted_graph_merging/examples/walkthrough_prepare_llm_input.py --save output/node_comparison_example.json
 ```
 
+Note: The example script prepends its package directory to `sys.path` so imports are username-free (e.g., it imports `src.*` rather than `ardhito.*`). This makes the walkthrough runnable from the repository root without introducing usernames into import paths.
+
 The printed (or saved) JSON is the exact payload you can provide to an LLM in Step 2.
 
 
