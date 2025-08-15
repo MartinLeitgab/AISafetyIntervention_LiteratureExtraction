@@ -371,7 +371,7 @@ Now analyze the provided paper and extract the AI safety knowledge graph using t
 
 ## Output Instructions
 
-Output the AI safety knowledge graph and detailed explanation of your reasoning following this format exactly:
+Output a detailed explanation of your reasoning and the Logical Chains structure following this format exactly:
 
 - Summary
 	- Robust summary of the findings of the paper.
@@ -389,4 +389,36 @@ Output the AI safety knowledge graph and detailed explanation of your reasoning 
 			- Intervention Maturity: Intervention maturity label (if Intervention.)
 			- Intervention Maturity Rationale: detailed intervention maturity rationale (if Intervention.)
 	- Iterate over all Logical Chains in paper.
+"""
+
+PROMPT_JSON_DEV = """
+
+Finally, output a structured, code-fenced JSON of the Logical Chains following this format exactly:
+
+```json
+{
+  "logical_chains": [
+    {
+      "id": "concise description of logical chain",
+      "nodes": [
+        {
+          "id": "concise description of node",
+          "aliases": ["array of 2-3 alternative concise descriptions"],
+          "type": "concept|intervention",
+          "description": "detailed technical description of node",
+          "maturity": "1-5 (intervention nodes only)"
+        }
+      ],
+      "edges": [
+        {
+          "id": "relationship label verb",
+          "source_id": "source node_id",
+          "target_id": "target node_id",
+          "description": "concise description of logical connection",
+          "confidence": "1-5"
+        }
+      ]
+    }
+  ]
+}
 """
