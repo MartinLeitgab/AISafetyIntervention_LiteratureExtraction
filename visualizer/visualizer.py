@@ -12,49 +12,43 @@ def create_graph_from_json(json_data, output_file="knowledge_graph.html"):
     
     added_nodes = set()
     
+    # I believe we have more nodes types but this is based on story 2 branch
+    # can be adjusted later if needed.
     colors = {
         "concept": "#97C2FC",     
         "intervention": "#FFAB91", 
         "default": "#C5C5C5"       
     }
     
-    # Process each logical chain
     for chain in json_data["logical_chains"]:
         chain_id = chain["chain_id"]
         
-        # Add nodes
         for node in chain["nodes"]:
             node_id = node["id"]
             
             if node_id not in added_nodes:
-                # Determine node color based on type
                 node_type = node.get("type", "default")
                 color = colors.get(node_type, colors["default"])
                 
-                # Create hover info
                 hover_text = f"ID: {node_id}\\nType: {node_type}\\nTitle: {node['title']}\\nDescription: {node['description']}"
                 
-                # Add node with styling
                 net.add_node(
                     node_id,
-                    label=node["title"][:30] + "..." if len(node["title"]) > 30 else node["title"],  # Truncate long labels
+                    label=node["title"][:30] + "..." if len(node["title"]) > 30 else node["title"], 
                     title=hover_text,
                     color=color,
                     size=25
                 )
                 added_nodes.add(node_id)
         
-        # Add edges
         for edge in chain["edges"]:
             source = edge["source_id"]
             target = edge["target_id"]
             
-            # Create edge label and hover text
             edge_label = edge["title"]
             confidence = edge.get("confidence", "N/A")
             hover_text = f"Relationship: {edge_label}\\nConfidence: {confidence}\\nDescription: {edge['description']}"
             
-            # Add edge with styling
             net.add_edge(
                 source,
                 target,
@@ -64,6 +58,7 @@ def create_graph_from_json(json_data, output_file="knowledge_graph.html"):
                 width=2
             )
     
+    # we can turn physics on off for large renderings
     net.set_options("""
     var options = {
         "physics": {
