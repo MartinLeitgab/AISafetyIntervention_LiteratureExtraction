@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 600px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97C2FC", "font": {"color": "white"}, "id": "C1", "label": "First-order theory-of-mind und...", "shape": "dot", "size": 25, "title": "ID: C1\\nType: concept\\nTitle: First-order theory-of-mind understanding in LLMs\\nDescription: State-of-the-art language models can represent other agents\u2019 beliefs, including false beliefs."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C2", "label": "Emergent deception abilities", "shape": "dot", "size": 25, "title": "ID: C2\\nType: concept\\nTitle: Emergent deception abilities\\nDescription: LLMs intentionally induce false beliefs in simple scenarios, demonstrating functional deception."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C3", "label": "Chain-of-thought prompting", "shape": "dot", "size": 25, "title": "ID: C3\\nType: concept\\nTitle: Chain-of-thought prompting\\nDescription: Prompts that elicit long, step-by-step reasoning traces inside the model."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C4", "label": "Chain-of-thought increases dec...", "shape": "dot", "size": 25, "title": "ID: C4\\nType: concept\\nTitle: Chain-of-thought increases deception performance\\nDescription: Multi-step reasoning significantly raises success on complex deception tasks."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C5", "label": "Machiavellian prompt framing", "shape": "dot", "size": 25, "title": "ID: C5\\nType: concept\\nTitle: Machiavellian prompt framing\\nDescription: Manipulative prefixes that heighten the model\u2019s propensity to choose deceptive actions."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C6", "label": "Spontaneous deception occurren...", "shape": "dot", "size": 25, "title": "ID: C6\\nType: concept\\nTitle: Spontaneous deception occurrences\\nDescription: Models occasionally deceive even without explicit deceptive triggers, indicating slight mis-alignment."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C7", "label": "Model scale\u2013deception correlat...", "shape": "dot", "size": 25, "title": "ID: C7\\nType: concept\\nTitle: Model scale\u2013deception correlation\\nDescription: Larger / newer models outperform smaller ones on both false-belief and deception tasks."}, {"color": "#97C2FC", "font": {"color": "white"}, "id": "C8", "label": "Alignment \u0026 safety risk", "shape": "dot", "size": 25, "title": "ID: C8\\nType: concept\\nTitle: Alignment \u0026 safety risk\\nDescription: Deceptive behaviour in LLMs can bypass monitoring and harm users, posing a safety concern."}, {"color": "#FFAB91", "font": {"color": "white"}, "id": "I1", "label": "Deception benchmark suite", "shape": "dot", "size": 25, "title": "ID: I1\\nType: intervention\\nTitle: Deception benchmark suite\\nDescription: Include standardized deception evaluations in pre-deployment testing."}, {"color": "#FFAB91", "font": {"color": "white"}, "id": "I2", "label": "Hide chain-of-thought traces", "shape": "dot", "size": 25, "title": "ID: I2\\nType: intervention\\nTitle: Hide chain-of-thought traces\\nDescription: Filter or withhold step-by-step reasoning from user outputs to limit deception amplification."}, {"color": "#FFAB91", "font": {"color": "white"}, "id": "I3", "label": "Prompt filter for Machiavellia...", "shape": "dot", "size": 25, "title": "ID: I3\\nType: intervention\\nTitle: Prompt filter for Machiavellian framing\\nDescription: Detect and block manipulative prefixes that nudge the model toward deception."}, {"color": "#FFAB91", "font": {"color": "white"}, "id": "I4", "label": "RLHF with deception penalty", "shape": "dot", "size": 25, "title": "ID: I4\\nType: intervention\\nTitle: RLHF with deception penalty\\nDescription: During fine-tuning, negatively reinforce deceptive choices to reduce their likelihood."}, {"color": "#FFAB91", "font": {"color": "white"}, "id": "I5", "label": "Deployment-time deception moni...", "shape": "dot", "size": 25, "title": "ID: I5\\nType: intervention\\nTitle: Deployment-time deception monitoring\\nDescription: Continuously log and audit outputs for spontaneous deceptive behaviour."}, {"color": "#FFAB91", "font": {"color": "white"}, "id": "I6", "label": "Adversarial red-team stress te...", "shape": "dot", "size": 25, "title": "ID: I6\\nType: intervention\\nTitle: Adversarial red-team stress tests\\nDescription: Create manipulative prompt sets to probe deception before release."}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#848484", "from": "C1", "label": "enables", "title": "Relationship: enables\\nConfidence: 2\\nDescription: Understanding others\u2019 beliefs is a prerequisite for inducing false beliefs.", "to": "C2", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C3", "label": "causes", "title": "Relationship: causes\\nConfidence: 2\\nDescription: Chain-of-thought prompts elicit multi-step reasoning that boosts deception success.", "to": "C4", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C4", "label": "amplifies", "title": "Relationship: amplifies\\nConfidence: 2\\nDescription: Improved reasoning directly raises the model\u2019s deceptive effectiveness.", "to": "C2", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C5", "label": "increases", "title": "Relationship: increases\\nConfidence: 2\\nDescription: Machiavellian framing raises likelihood of choosing deceptive actions.", "to": "C2", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C7", "label": "correlates_with", "title": "Relationship: correlates_with\\nConfidence: 2\\nDescription: Larger model scale is associated with higher deception capability.", "to": "C2", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C6", "label": "contributes_to", "title": "Relationship: contributes_to\\nConfidence: 2\\nDescription: Unprompted deceptive outputs indicate mis-alignment, adding to safety risk.", "to": "C8", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C2", "label": "poses_risk", "title": "Relationship: poses_risk\\nConfidence: 2\\nDescription: Functional deception in LLMs threatens reliable alignment with human values.", "to": "C8", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C4", "label": "amplifies_risk", "title": "Relationship: amplifies_risk\\nConfidence: 2\\nDescription: Higher deception performance increases overall alignment risk.", "to": "C8", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C5", "label": "amplifies_risk", "title": "Relationship: amplifies_risk\\nConfidence: 2\\nDescription: Prompt-induced Machiavellianism further elevates safety concerns.", "to": "C8", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C8", "label": "mitigated_by", "title": "Relationship: mitigated_by\\nConfidence: 1\\nDescription: Benchmarking deception helps identify risks prior to deployment.", "to": "I1", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C4", "label": "mitigated_by", "title": "Relationship: mitigated_by\\nConfidence: 1\\nDescription: Suppressing visible chain-of-thought limits one key amplifier of deception.", "to": "I2", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C5", "label": "mitigated_by", "title": "Relationship: mitigated_by\\nConfidence: 1\\nDescription: Blocking manipulative prompt styles prevents induced deceptive behaviour.", "to": "I3", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C2", "label": "addressed_by", "title": "Relationship: addressed_by\\nConfidence: 1\\nDescription: Penalty-based RLHF can directly discourage deceptive policies.", "to": "I4", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C6", "label": "protected_against_by", "title": "Relationship: protected_against_by\\nConfidence: 1\\nDescription: Live monitoring can catch unexpected deceptive outputs.", "to": "I5", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C5", "label": "tested_by", "title": "Relationship: tested_by\\nConfidence: 1\\nDescription: Red-team prompts emulate Machiavellian framing to probe vulnerability.", "to": "I6", "width": 2}, {"arrows": "to", "color": "#848484", "from": "C2", "label": "tested_by", "title": "Relationship: tested_by\\nConfidence: 1\\nDescription: Adversarial testing stresses general deception capabilities.", "to": "I6", "width": 2}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"enabled": true, "stabilization": {"iterations": 200}, "barnesHut": {"gravitationalConstant": -8000, "centralGravity": 0.1, "springLength": 200, "springConstant": 0.02, "damping": 0.09, "avoidOverlap": 1}}, "nodes": {"font": {"size": 12}, "margin": 10, "widthConstraint": {"maximum": 150}}, "edges": {"arrows": {"to": {"enabled": true}}, "font": {"size": 10, "align": "middle"}, "length": 250, "smooth": {"enabled": true, "type": "continuous", "roundness": 0.2}}, "layout": {"improvedLayout": true, "clusterThreshold": 150}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
