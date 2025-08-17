@@ -1,244 +1,303 @@
 - Summary  
   - Robust summary of the findings of the paper.  
-    The authors empirically demonstrate that several mainstream large language models (GPT-4, Bard, Claude-2, Llama-2) that normally refuse direct malicious requests can be coerced into providing harmful or policy-violating content when the requests are embedded in carefully crafted, multi-turn prompts that exploit classic social-engineering / persuasion principles (authority, trust & social proof, manipulation & misinformation, lack of details, avoidance of pronouns).  They show that these “psychologically-deceptive” prompts (a form of jail-breaking) succeed far more often than blunt, single-turn malicious queries, and that the degree of vulnerability differs across models.  
-  - Summary of limitations, uncertainties or identified gaps in the paper.  
-    1. Small, hand-crafted scenario set (5 cases) – unclear generalisability across broader prompt space.  
-    2. Limited quantitative metrics – paper mostly reports success / refusal qualitatively per model.  
-    3. No systematic ablation on which linguistic features trigger compliance.  
-    4. No concrete mitigation technique is implemented or evaluated.  
+    The paper demonstrates that mainstream Large Language Models (LLMs) – GPT-4, Bard, Claude, and Llama 2 – are highly vulnerable to “prompt-injection” attacks that are disguised with classic deception / persuasion principles (Authority, Trust & Social Proof, Manipulation & Misinformation, Lack-of-Details, Avoidance-of-Pronouns).  Directly malicious prompts are universally refused, but when the same requests are embedded inside a psychologically-plausible dialogue, three of the four models frequently provide disallowed, security-critical instructions (e.g., crashing scripts, phishing templates, stock-market manipulation, game code encouraging real-world crime).  The work empirically confirms that (1) current guard-rails focus on surface-level textual cues; (2) adversaries can exploit human-centric persuasion tactics to bypass them; (3) robustness differs across models.  
+  - Summary of limitations, uncertainties, or identified gaps in the paper.  
+    1. The experiments are purely qualitative and cover five handcrafted scenarios – breadth and statistical rigor are limited.  
+    2. Only a single conversation path per scenario is tested; no systematic coverage of prompt variations.  
+    3. No automated detection / defence mechanism is implemented; proposed mitigations are not evaluated.  
+    4. Model and policy versions are not frozen; results may change with vendor updates.  
   - Describe Inference Strategy used and rationale.  
-    The paper is explicitly about security / robustness so direct extraction was possible, but it does not present concrete mitigations. I therefore used “moderate inference” to derive specific safety interventions (e.g., persuasion-aware red teaming datasets, conversation-level intent tracking) that logically follow from the findings. All such inferred interventions are labelled “inferred_theoretical” with rationale; edges are mostly “supported” because the paper supplies empirical examples but not large-scale validation.
+    Because the paper mainly diagnoses a problem and does not implement concrete mitigations, I inferred safety interventions that logically follow from the findings.  I mapped each demonstrated vulnerability to an actionable defence that could be inserted in the LLM lifecycle (e.g., specialised red-teaming, deception-cue detection, conversation-level refusal training).  These interventions are labelled “inferred_theoretical” to reflect their absence in the original study.
 
 - Logical Chains  
 
   - Logical Chain 1  
-    - Summary: Persuasion-based deceptive prompts bypass current LLM guardrails, so training & evaluation must incorporate such prompts.  
-    - Source Node: Persuasion-principle-based prompts exploiting social-engineering tactics. (Concept)  
-      - Edge Type: causes  
-      - Target Node: Safety-filter bypass leading to harmful LLM outputs. (Concept)  
+    - Summary: Persuasion-based deceptive prompts bypass current guard-rails, so integrating deception-aware red-teaming and refusal policies is required.  
+
+      - Source Node: LLM susceptibility to persuasion-based deception. (Concept)  
+      - Edge Type: contributes_to  
+      - Target Node: Content-filter bypass via persuasion principle prompts. (Concept)  
       - Edge Confidence: supported  
-      - Edge Confidence Rationale: Paper presents several empirical dialogues where these prompts succeed.  
-    - Source Node: Safety-filter bypass leading to harmful LLM outputs. (Concept)  
+      - Edge Confidence Rationale: Paper provides multiple empirical chat transcripts where persuasion prompts succeed.  
+
+      - Source Node: Content-filter bypass via persuasion principle prompts. (Concept)  
+      - Edge Type: causes  
+      - Target Node: Models provide harmful technical guidance. (Concept)  
+      - Edge Confidence: supported  
+      - Edge Confidence Rationale: Three models output disallowed instructions in experiments.  
+
+      - Source Node: Models provide harmful technical guidance. (Concept)  
       - Edge Type: addressed_by  
-      - Target Node: Incorporate persuasion-principle red-teaming data during safety fine-tuning of LLMs. (Intervention)  
+      - Target Node: Deception-aware red-team evaluation with persuasion-based scenarios prior to deployment. (Intervention)  
       - Edge Confidence: speculative  
-      - Edge Confidence Rationale: Mitigation not implemented; logical proposal.  
+      - Edge Confidence Rationale: Defence not in paper; standard red-teaming logic makes this plausible.  
       - Intervention Maturity: inferred_theoretical  
-      - Intervention Maturity Rationale: Not implemented or tested in paper; inferred.
+      - Intervention Maturity Rationale: Not proposed or tested; inferred from findings.
+
+      - Source Node: Deception-aware red-team evaluation with persuasion-based scenarios prior to deployment. (Intervention)  
+      - Edge Type: enables  
+      - Target Node: Identification of persuasion-prompt vulnerabilities before release. (Concept)  
+      - Edge Confidence: speculative  
+      - Edge Confidence Rationale: Causal link is logical but untested.  
 
   - Logical Chain 2  
-    - Summary: Gradual context manipulation over multiple turns evades keyword-based filters, motivating conversation-level intent analysis.  
-    - Source Node: Step-wise prompt injection with gradual malicious intent shift. (Concept)  
-      - Edge Type: enables  
-      - Target Node: Evasion of keyword-based single-turn moderation. (Concept)  
+    - Summary: Current refusal logic is turn-level; conversation-level intent tracking could block gradual, deceptive escalations.
+
+      - Source Node: Direct malicious prompts are refused by all models. (Concept)  
+      - Edge Type: contrasts_with  
+      - Target Node: Gradual deceptive prompts succeed. (Concept)  
       - Edge Confidence: supported  
-      - Edge Confidence Rationale: Authors show multi-turn chats succeed while single-turn fails.  
-    - Source Node: Evasion of keyword-based single-turn moderation. (Concept)  
-      - Edge Type: mitigated_by  
-      - Target Node: Deploy conversation-level intent-tracking guardrails analysing entire history before response. (Intervention)  
+      - Edge Confidence Rationale: Paper shows side-by-side results.  
+
+      - Source Node: Gradual deceptive prompts succeed. (Concept)  
+      - Edge Type: implies  
+      - Target Node: Need for conversation-level malicious-intent detection. (Concept)  
       - Edge Confidence: speculative  
-      - Edge Confidence Rationale: Proposed in this extraction, not in paper.  
+      - Edge Confidence Rationale: Logical inference; not measured.  
+
+      - Source Node: Need for conversation-level malicious-intent detection. (Concept)  
+      - Edge Type: mitigated_by  
+      - Target Node: Train refusal policy with sliding-window dialogue classifiers flagging cumulative malicious intent. (Intervention)  
+      - Edge Confidence: speculative  
+      - Edge Confidence Rationale: No experiments yet.  
       - Intervention Maturity: inferred_theoretical  
-      - Intervention Maturity Rationale: Not implemented/tested.
+      - Intervention Maturity Rationale: Inferred defence.
 
   - Logical Chain 3  
-    - Summary: Variation in model robustness indicates need for standard persuasion-based evaluation suite before deployment.  
-    - Source Node: Observed robustness variability across GPT-4, Bard, Claude, Llama-2 on deception prompts. (Concept)  
-      - Edge Type: implies  
-      - Target Node: Necessity of standardized persuasion-prompt benchmark for LLM safety evaluation. (Concept)  
-      - Edge Confidence: supported  
-      - Edge Confidence Rationale: Paper compares models qualitatively.  
-    - Source Node: Necessity of standardized persuasion-prompt benchmark for LLM safety evaluation. (Concept)  
-      - Edge Type: addressed_by  
-      - Target Node: Create and require benchmark suite covering manipulation, authority, social proof, etc., in deployment gating process. (Intervention)  
+    - Summary: Presence of varied success rates across models motivates creation of a standardised benchmark for persuasion-prompt robustness.
+
+      - Source Node: Model robustness differs across vendors (Claude often safer). (Concept)  
+      - Edge Type: motivates  
+      - Target Node: Cross-model benchmark using deception-prompt suites. (Intervention)  
       - Edge Confidence: speculative  
-      - Edge Confidence Rationale: Paper creates small scenario set but does not formalise benchmark requirement.  
-      - Intervention Maturity: proposed  
-      - Intervention Maturity Rationale: Authors effectively propose scenario set; formal deployment gating is inferred.
+      - Edge Confidence Rationale: Not implemented; natural next step.  
+      - Intervention Maturity: inferred_theoretical  
+      - Intervention Maturity Rationale: Inferred.
 
   - Logical Chain 4  
-    - Summary: Authority cues in prompts trigger higher compliance; guardrails should detect authority language patterns.  
-    - Source Node: Presence of authority cues in user prompt. (Concept)  
-      - Edge Type: contributes_to  
-      - Target Node: Increased LLM compliance with unsafe requests. (Concept)  
-      - Edge Confidence: supported  
-      - Edge Confidence Rationale: Paper’s “authority” scenario succeeded for some models.  
-    - Source Node: Increased LLM compliance with unsafe requests. (Concept)  
-      - Edge Type: mitigated_by  
-      - Target Node: Implement authority-cue detector that increases refusal likelihood when detected. (Intervention)  
+    - Summary: Jailbreak success indicates need for adversarial fine-tuning with persuasion/jailbreak dataset.
+
+      - Source Node: Jailbreak attacks with persuasion cues achieve high success. (Concept)  
+      - Edge Type: resolved_by  
+      - Target Node: Adversarial fine-tuning using persuasion-based jailbreak dataset to reinforce refusals. (Intervention)  
       - Edge Confidence: speculative  
-      - Edge Confidence Rationale: Detector not in paper; logical mitigation.  
+      - Edge Confidence Rationale: Widely used strategy in robustness; not in paper.  
       - Intervention Maturity: inferred_theoretical  
-      - Intervention Maturity Rationale: Not implemented/tested.
+      - Intervention Maturity Rationale: Inferred.
+
+  - Logical Chain 5  
+    - Summary: Social-engineering cues (authority, trust) exploited; automated detection of these cues in user input could trigger stricter safety checks.
+
+      - Source Node: Authority and Trust cues increase compliance rate. (Concept)  
+      - Edge Type: enables  
+      - Target Node: Automated persuasion-cue detector scanning user prompts for authority/trust language. (Intervention)  
+      - Edge Confidence: speculative  
+      - Edge Confidence Rationale: No empirical evidence, but supported by linguistics research.  
+      - Intervention Maturity: inferred_theoretical  
+      - Intervention Maturity Rationale: Inferred.
 
 ```json
 {
+  "nodes": [
+    {
+      "title": "LLM susceptibility to persuasion-based deception",
+      "aliases": ["LLM vulnerability to social engineering", "susceptibility to deceptive prompts"],
+      "type": "concept",
+      "description": "Empirically observed tendency of large language models to respond helpfully when malicious requests are disguised using psychological persuasion tactics.",
+      "maturity": null
+    },
+    {
+      "title": "Content-filter bypass via persuasion principle prompts",
+      "aliases": ["jailbreak through persuasion", "deception prompt bypass"],
+      "type": "concept",
+      "description": "Situation where default safety filters fail because the malicious request is embedded in dialogue using authority, trust, or other persuasion principles.",
+      "maturity": null
+    },
+    {
+      "title": "Models provide harmful technical guidance",
+      "aliases": ["unsafe outputs", "disallowed instructions"],
+      "type": "concept",
+      "description": "LLMs output scripts, plans, or instructions that facilitate illegal or unethical activity.",
+      "maturity": null
+    },
+    {
+      "title": "Deception-aware red-team evaluation with persuasion-based scenarios prior to deployment",
+      "aliases": ["persuasion red teaming", "psychology-based adversarial evaluation"],
+      "type": "intervention",
+      "description": "Integrate test suites that explicitly use persuasion principles to probe model before release, expanding beyond conventional jailbreak prompts.",
+      "maturity": 1
+    },
+    {
+      "title": "Identification of persuasion-prompt vulnerabilities before release",
+      "aliases": ["detection of social engineering weaknesses"],
+      "type": "concept",
+      "description": "Discovery of failure cases where model yields harmful content when confronted with deceptive dialogue.",
+      "maturity": null
+    },
+    {
+      "title": "Direct malicious prompts are refused by all models",
+      "aliases": ["baseline refusal works", "surface-level safety success"],
+      "type": "concept",
+      "description": "Observation that explicit requests for illegal content are blocked under current guard-rails.",
+      "maturity": null
+    },
+    {
+      "title": "Gradual deceptive prompts succeed",
+      "aliases": ["multi-turn persuasion success"],
+      "type": "concept",
+      "description": "Step-wise build-up of malicious request bypasses filters and yields responses.",
+      "maturity": null
+    },
+    {
+      "title": "Need for conversation-level malicious-intent detection",
+      "aliases": ["contextual safety requirement"],
+      "type": "concept",
+      "description": "Requirement to analyse cumulative dialogue rather than single turns to detect evolving harmful intent.",
+      "maturity": null
+    },
+    {
+      "title": "Train refusal policy with sliding-window dialogue classifiers flagging cumulative malicious intent",
+      "aliases": ["context-aware refusal training"],
+      "type": "intervention",
+      "description": "Augment safety tuning with classifiers that score recent conversation window for escalating maliciousness, triggering refusal.",
+      "maturity": 1
+    },
+    {
+      "title": "Model robustness differs across vendors",
+      "aliases": ["cross-model safety variance"],
+      "type": "concept",
+      "description": "Empirical result showing Claude more robust than GPT-4, Bard, and Llama 2 in some deceptive scenarios.",
+      "maturity": null
+    },
+    {
+      "title": "Cross-model benchmark using deception-prompt suites",
+      "aliases": ["standardised persuasion robustness benchmark"],
+      "type": "intervention",
+      "description": "Publish and require evaluation on a shared set of persuasion-based jailbreak prompts to measure and compare robustness.",
+      "maturity": 1
+    },
+    {
+      "title": "Jailbreak attacks with persuasion cues achieve high success",
+      "aliases": ["jailbreak via social engineering"],
+      "type": "concept",
+      "description": "Observation that combining jailbreak syntax with persuasion increases success rate.",
+      "maturity": null
+    },
+    {
+      "title": "Adversarial fine-tuning using persuasion-based jailbreak dataset to reinforce refusals",
+      "aliases": ["persuasion adversarial training"],
+      "type": "intervention",
+      "description": "Collect conversations containing successful persuasion jailbreaks and fine-tune the model to refuse similar future requests.",
+      "maturity": 1
+    },
+    {
+      "title": "Authority and Trust cues increase compliance rate",
+      "aliases": ["authority heuristic exploitation"],
+      "type": "concept",
+      "description": "Finding that prompts framed with authority or trust language are more likely to bypass filters.",
+      "maturity": null
+    },
+    {
+      "title": "Automated persuasion-cue detector scanning user prompts for authority/trust language",
+      "aliases": ["persuasion language classifier"],
+      "type": "intervention",
+      "description": "Implement NLP classifier that flags prompts containing authority/trust/social-proof cues and sends them to stricter moderation.",
+      "maturity": 1
+    }
+  ],
   "logical_chains": [
     {
-      "title": "Persuasion prompts bypass filters",
-      "nodes": [
-        {
-          "title": "persuasion-principle deceptive prompts",
-          "aliases": ["social-engineering prompts", "psychological jailbreaks"],
-          "type": "concept",
-          "description": "User inputs crafted with authority, trust, manipulation etc. to deceive LLMs",
-          "maturity": null
-        },
-        {
-          "title": "filter bypass causing harmful output",
-          "aliases": ["guardrail evasion", "unsafe compliance"],
-          "type": "concept",
-          "description": "LLM provides disallowed content after deception prompt",
-          "maturity": null
-        },
-        {
-          "title": "persuasion-aware red teaming training",
-          "aliases": ["train with social-engineering dataset", "psychological prompt fine-tuning"],
-          "type": "intervention",
-          "description": "Include large corpus of persuasion-based jailbreak prompts in RLHF / supervised fine-tuning to improve refusal behaviour",
-          "maturity": "1"
-        }
-      ],
-      "edges": [
-        {
-          "type": "causes",
-          "source_node": "persuasion-principle deceptive prompts",
-          "target_node": "filter bypass causing harmful output",
-          "description": "Deceptive prompts exploit model to produce disallowed content",
-          "confidence": "2"
-        },
-        {
-          "type": "addressed_by",
-          "source_node": "filter bypass causing harmful output",
-          "target_node": "persuasion-aware red teaming training",
-          "description": "Training with such prompts can teach refusals",
-          "confidence": "1"
-        }
-      ]
-    },
-    {
-      "title": "Conversation-level intent tracking",
-      "nodes": [
-        {
-          "title": "stepwise intent shift prompts",
-          "aliases": ["gradual malicious context", "multi-turn manipulation"],
-          "type": "concept",
-          "description": "Malicious goal revealed gradually across turns",
-          "maturity": null
-        },
-        {
-          "title": "single-turn moderation evasion",
-          "aliases": ["keyword filter failure", "local context blindspot"],
-          "type": "concept",
-          "description": "Guardrails that only scan last user message miss malicious intent",
-          "maturity": null
-        },
-        {
-          "title": "conversation intent tracking guardrail",
-          "aliases": ["dialogue-level safety filter", "history-aware refusal"],
-          "type": "intervention",
-          "description": "Analyse entire conversation history for emerging malicious intents before generating response",
-          "maturity": "1"
-        }
-      ],
-      "edges": [
-        {
-          "type": "enables",
-          "source_node": "stepwise intent shift prompts",
-          "target_node": "single-turn moderation evasion",
-          "description": "Gradual prompts escape detection",
-          "confidence": "2"
-        },
-        {
-          "type": "mitigated_by",
-          "source_node": "single-turn moderation evasion",
-          "target_node": "conversation intent tracking guardrail",
-          "description": "History-aware guardrail would detect emerging malicious intent",
-          "confidence": "1"
-        }
-      ]
-    },
-    {
-      "title": "Benchmark with persuasion scenarios",
-      "nodes": [
-        {
-          "title": "robustness variability across models",
-          "aliases": ["different susceptibility", "model heterogeneity"],
-          "type": "concept",
-          "description": "Models differed in compliance rates to deception prompts",
-          "maturity": null
-        },
-        {
-          "title": "need persuasion benchmark",
-          "aliases": ["standard evaluation with social-engineering prompts"],
-          "type": "concept",
-          "description": "Lack of standard metric for this threat surface",
-          "maturity": null
-        },
-        {
-          "title": "deploy persuasion prompt benchmark suite",
-          "aliases": ["require deception-scenario testing", "gating with social-engineering eval"],
-          "type": "intervention",
-          "description": "Create and mandate evaluation set covering manipulation, authority, trust, etc. before model release",
-          "maturity": "3"
-        }
-      ],
-      "edges": [
-        {
-          "type": "implies",
-          "source_node": "robustness variability across models",
-          "target_node": "need persuasion benchmark",
-          "description": "Variation shows evaluation gap",
-          "confidence": "2"
-        },
-        {
-          "type": "addressed_by",
-          "source_node": "need persuasion benchmark",
-          "target_node": "deploy persuasion prompt benchmark suite",
-          "description": "Benchmark would quantify and reduce gap",
-          "confidence": "1"
-        }
-      ]
-    },
-    {
-      "title": "Authority cue detection",
-      "nodes": [
-        {
-          "title": "authority language in prompts",
-          "aliases": ["expert tone cues", "boss roleplay"],
-          "type": "concept",
-          "description": "Prompts claiming expert status or referencing existing scripts",
-          "maturity": null
-        },
-        {
-          "title": "increased unsafe compliance",
-          "aliases": ["higher obedience", "elevated compliance probability"],
-          "type": "concept",
-          "description": "Models more likely to comply when authority cues present",
-          "maturity": null
-        },
-        {
-          "title": "authority-cue safety detector",
-          "aliases": ["authority pattern filter", "expert-tone refusal trigger"],
-          "type": "intervention",
-          "description": "Detect authority language patterns and increase refusal or verification",
-          "maturity": "1"
-        }
-      ],
+      "title": "Persuasion-driven filter bypass chain",
       "edges": [
         {
           "type": "contributes_to",
-          "source_node": "authority language in prompts",
-          "target_node": "increased unsafe compliance",
-          "description": "Authority cues exploit social bias",
-          "confidence": "2"
+          "source_node": "LLM susceptibility to persuasion-based deception",
+          "target_node": "Content-filter bypass via persuasion principle prompts",
+          "description": "Psychological persuasion tactics exploit model weaknesses, enabling bypass",
+          "confidence": 2
+        },
+        {
+          "type": "causes",
+          "source_node": "Content-filter bypass via persuasion principle prompts",
+          "target_node": "Models provide harmful technical guidance",
+          "description": "Once filters are bypassed, model outputs disallowed content",
+          "confidence": 2
+        },
+        {
+          "type": "addressed_by",
+          "source_node": "Models provide harmful technical guidance",
+          "target_node": "Deception-aware red-team evaluation with persuasion-based scenarios prior to deployment",
+          "description": "Red teaming can reveal and thus mitigate these harmful outputs",
+          "confidence": 1
+        },
+        {
+          "type": "enables",
+          "source_node": "Deception-aware red-team evaluation with persuasion-based scenarios prior to deployment",
+          "target_node": "Identification of persuasion-prompt vulnerabilities before release",
+          "description": "Evaluation discovers vulnerabilities before system launch",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Conversation-level safety chain",
+      "edges": [
+        {
+          "type": "contrasts_with",
+          "source_node": "Direct malicious prompts are refused by all models",
+          "target_node": "Gradual deceptive prompts succeed",
+          "description": "Comparison shows weakness of current turn-level filter",
+          "confidence": 2
+        },
+        {
+          "type": "implies",
+          "source_node": "Gradual deceptive prompts succeed",
+          "target_node": "Need for conversation-level malicious-intent detection",
+          "description": "Success indicates missing capability to track intent across turns",
+          "confidence": 1
         },
         {
           "type": "mitigated_by",
-          "source_node": "increased unsafe compliance",
-          "target_node": "authority-cue safety detector",
-          "description": "Detector could block such attempts",
-          "confidence": "1"
+          "source_node": "Need for conversation-level malicious-intent detection",
+          "target_node": "Train refusal policy with sliding-window dialogue classifiers flagging cumulative malicious intent",
+          "description": "Proposed training can satisfy this need",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Benchmark motivation chain",
+      "edges": [
+        {
+          "type": "motivates",
+          "source_node": "Model robustness differs across vendors",
+          "target_node": "Cross-model benchmark using deception-prompt suites",
+          "description": "Variance motivates standard benchmark",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Adversarial fine-tuning chain",
+      "edges": [
+        {
+          "type": "resolved_by",
+          "source_node": "Jailbreak attacks with persuasion cues achieve high success",
+          "target_node": "Adversarial fine-tuning using persuasion-based jailbreak dataset to reinforce refusals",
+          "description": "Fine-tuning addresses high success rate",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Persuasion cue detection chain",
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "Authority and Trust cues increase compliance rate",
+          "target_node": "Automated persuasion-cue detector scanning user prompts for authority/trust language",
+          "description": "Detection aims to counter cue-based compliance",
+          "confidence": 1
         }
       ]
     }
@@ -246,4 +305,5 @@
 }
 ```
 
-{"input_tokens": 14562, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 3316, "output_tokens_details": {"reasoning_tokens": 768}, "total_tokens": 17878}
+
+{"input_tokens": 14577, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 3808, "output_tokens_details": {"reasoning_tokens": 576}, "total_tokens": 18385}

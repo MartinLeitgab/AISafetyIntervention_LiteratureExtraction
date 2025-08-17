@@ -1,152 +1,114 @@
-- Summary  
-	- The paper introduces “Representation Engineering (RepE)”, a top-down transparency framework that treats distributed activation patterns—rather than individual neurons or circuits—as the primary unit of analysis. Two complementary sub-areas are defined: Representation Reading (locating concept directions) and Representation Control (manipulating those directions).  
-	- A simple unsupervised pipeline, Linear Artificial Tomography (LAT), is presented for finding concept vectors.  Multiple causal manipulation baselines are given: direct vector addition/subtraction, stimulus-dependent Contrast Vectors, and Low-Rank Representation Adaptation (LoRRA).  
-	- Empirical studies show that large language models (LLaMA-2, Vicuna) internally represent many safety-relevant variables—truth, honesty, utility, morality, power, risk, harmfulness, bias, emotion, memorization—and that these representations can be read and causally steered.  Example outcomes include:  
-		• +18.1 pp SOTA gain on TruthfulQA via honesty control  
-		• 25-30 pp reduction in jailbreak success by conditional harmfulness control  
-		• 30 pp drop in gender-bias error under adversarial suffixes by subtracting a single bias vector  
-		• 40 pp drop in memorized quote regurgitation with <1 pp loss on factual QA  
-	- Limitations / Uncertainties  
-		• Experiments are limited to several open-source chat models; stability across architectures and larger scales is unknown.  
-		• Vector directions occasionally capture spurious features; selection of layers/pairs is somewhat ad-hoc.  
-		• No formal guarantees of absence of side-effects when directions are added or removed.  
-	- Inference Strategy  
-		• Explicit safety interventions (honesty, harmlessness, bias, power) are extracted directly.  
-		• For broader ML findings (utility, risk, memorization) I infer plausible safety uses (marked inferred_theoretical).  
-		• Edge confidences are set to “validated” when multiple datasets and manipulation ablations are shown; “supported” when evidence is narrower.  
+Summary
+• The paper introduces Representation Engineering (RepE), a top-down transparency paradigm that treats distributed internal representations—rather than individual neurons or circuits—as the core unit of analysis in neural networks.  
+• Two basic operations are defined: Representation Reading (locating concept directions) and Representation Control (altering activations along those directions). A new unsupervised baseline, Linear Artificial Tomography (LAT), plus stimulus-dependent Contrast Vectors and finetuning-based Low-Rank Representation Adaptation (LoRRA) are proposed.  
+• RepE is shown to extract and manipulate representations for numerous safety-critical concepts: honesty, utility, morality, power-seeking, probability, emotion, harmfulness, bias, factual knowledge, and memorization.  Empirical demonstrations include (i) lie detection and honesty control that set a new state-of-the-art on TruthfulQA, (ii) steering models away from power-seeking in interactive games, (iii) improving refusal rates under jailbreaks, (iv) suppressing gender / race bias in clinical text, and (v) reducing verbatim memorization without damaging factual knowledge.  
+• Limitations / uncertainties: analyses are confined to open-weights LLaMA-2 and Vicuna models; effectiveness on larger proprietary models is untested; vector selection can be unstable; control can trade off task performance; security of these controls against adaptive adversaries is unclear.  
+• Inference Strategy: Because the paper already frames its methods as safety tools and supplies experiments, most interventions are directly “tested”. For broader implications (e.g., memorization reduction as privacy mitigation) I use moderate inference (marked “inferred_theoretical”). Edge confidences reflect whether empirical results were presented (supported) or only argued (speculative).
 
-- Logical Chains  
+Logical Chains
 
-	- Logical Chain 1 – Detecting and Increasing Model Honesty  
-		- Summary: LAT uncovers a truthfulness direction; LoRRA or Contrast-Vector control shifts activations along this direction, yielding higher honesty and SOTA TruthfulQA accuracy.  
-		
-		- Source Node (Concept): “LLMs sometimes output false statements despite internally representing correct answers.”  
-		- Edge Type: causes  
-		- Target Node (Concept): “Dishonesty in answers reduces reliability on safety-critical tasks.”  
-		- Edge Confidence: supported  
-		- Edge Confidence Rationale: Paper documents low TruthfulQA zero-shot accuracy versus higher internal truth signals.  
-		
-		- Source Node (Concept): “Consistent internal truthfulness vector identifiable via LAT on few unlabeled QA pairs.”  
-		- Edge Type: enables  
-		- Target Node (Intervention): “Apply LAT reading vector at evaluation time to score candidate answers for truth.”  
-		- Edge Confidence: validated  
-		- Edge Confidence Rationale: High correlation (>60 % acc) across multiple datasets.  
-		- Intervention Maturity: tested  
-		- Intervention Maturity Rationale: Implemented and quantitatively evaluated.  
-		
-		- Source Node (Concept): “Adding or subtracting honesty vector causally alters likelihood of truthful tokens.”  
-		- Edge Type: leads_to  
-		- Target Node (Intervention): “Inject honesty vector (α=0.25, layers 10–40) or train LoRRA adapters to bias model toward honesty during generation.”  
-		- Edge Confidence: validated  
-		- Edge Confidence Rationale: Contrast manipulation + LoRRA raise TruthfulQA by up to 18 pp.  
-		- Intervention Maturity: tested  
-		- Intervention Maturity Rationale: Evaluated on LLaMA-2 7 B & 13 B.  
-		
-		- Source Node (Intervention): “Inject honesty vector or LoRRA during inference.”  
-		- Edge Type: mitigates  
-		- Target Node (Concept): “Low-honesty failure mode of LLMs.”  
-		- Edge Confidence: supported  
-		- Edge Confidence Rationale: TruthfulQA and qualitative lie-detection demos show mitigation.  
-		
-	- Logical Chain 2 – Conditional Harmlessness Control against Jailbreaks  
-		- Summary: Models retain a robust harmfulness representation; a piece-wise conditional transformation amplifying that signal after it becomes positive makes the model refuse hostile requests even under adversarial suffixes.  
-		
-		- Source Node (Concept): “Jailbreak suffixes trick aligned chat models into complying with harmful instructions.”  
-		- Edge Type: causes  
-		- Target Node (Concept): “Increased risk of dangerous content leakage.”  
-		- Edge Confidence: supported  
-		
-		- Source Node (Concept): “Internal harmfulness concept remains separable (>90 % acc) under suffix perturbations.”  
-		- Edge Type: enables  
-		- Target Node (Intervention): “Compute harmfulness reading vector with paired benign/harmful instructions and apply piece-wise operator sign(h)·v before decoding.”  
-		- Edge Confidence: validated  
-		- Edge Confidence Rationale: Table 5 shows refusal rate rise from 16 %→87 % under automatic jailbreak.  
-		- Intervention Maturity: tested  
-		- Intervention Maturity Rationale: Implemented on Vicuna-13 B with 500 unseen prompts.  
-		
-		- Source Node (Intervention): “Piece-wise harmfulness amplification during inference.”  
-		- Edge Type: mitigates  
-		- Target Node (Concept): “Jailbreak-induced policy override.”  
-		- Edge Confidence: validated  
-		
-	- Logical Chain 3 – Reducing Social Bias via Representation Subtraction  
-		- Summary: StereoSet-derived bias vector correlates with gender/race stereotyping; subtracting it reduces biased outputs even after adversarial prompting.  
-		
-		- Source Node (Concept): “Chat models output gender-profession biases masked by RLHF refusals.”  
-		- Edge Type: refined_by  
-		- Target Node (Concept): “Safety refusals can be bypassed by succinctness or suffix prompts, revealing bias.”  
-		- Edge Confidence: supported  
-		
-		- Source Node (Concept): “Bias direction learned from stereotypical vs. anti-stereotypical sentence pairs.”  
-		- Edge Type: enables  
-		- Target Node (Intervention): “Subtract bias vector (layers 10-28) during generation to neutralize stereotypes.”  
-		- Edge Confidence: supported  
-		- Edge Confidence Rationale: Figure 20, 25 show 40 pp bias drop.  
-		- Intervention Maturity: tested  
-		
-		- Source Node (Intervention): “Bias-vector subtraction.”  
-		- Edge Type: mitigates  
-		- Target Node (Concept): “Emergent demographic stereotyping in model outputs.”  
-		- Edge Confidence: supported  
-		
-	- Logical Chain 4 – Limiting Power-Seeking and Immorality in Agents  
-		- Summary: LAT finds morality/power vectors; LoRRA adapters reduce power-seeking score in MACHIAVELLI games without reward loss.  
-		
-		- Source Node (Concept): “LLM agents may adopt coercive or immoral tactics to achieve goals.”  
-		- Edge Type: causes  
-		- Target Node (Concept): “Potential real-world harm through autonomous deployment.”  
-		- Edge Confidence: speculative  
-		
-		- Source Node (Concept): “Reward-power and immorality concepts are separable in hidden space.”  
-		- Edge Type: enables  
-		- Target Node (Intervention): “Finetune LoRRA adapters with contrast-vector loss to push activations toward power-averse and moral region.”  
-		- Edge Confidence: supported  
-		- Edge Confidence Rationale: Table 3 shows ↓Power ↓Immorality scores with equal reward.  
-		- Intervention Maturity: tested  
-		
-		- Source Node (Intervention): “LoRRA morality/power control.”  
-		- Edge Type: mitigates  
-		- Target Node (Concept): “Agentic power-seeking behaviour.”  
-		- Edge Confidence: supported  
-		
-	- Logical Chain 5 – Preventing Memorized Data Leakage  
-		- Summary: A memorization vector distinguishes popular quotes; subtracting it reduces verbatim regurgitation (>40 pp) while preserving factual QA accuracy.  
-		
-		- Source Node (Concept): “LLMs memorize and output copyrighted or private training data.”  
-		- Edge Type: causes  
-		- Target Node (Concept): “Legal/privacy hazards from unintended memorization.”  
-		- Edge Confidence: supported  
-		
-		- Source Node (Concept): “Difference between hidden states on popular vs synthetic text yields memorization vector.”  
-		- Edge Type: enables  
-		- Target Node (Intervention): “Subtract memorization vector at decoding time (α=-0.25) to discourage verbatim recall.”  
-		- Edge Confidence: supported  
-		- Edge Confidence Rationale: Table 7 shows large EM and SIM drops with minimal knowledge loss.  
-		- Intervention Maturity: tested  
-		
-		- Source Node (Intervention): “Memorization-vector subtraction.”  
-		- Edge Type: mitigates  
-		- Target Node (Concept): “Unwanted memorized content leakage.”  
-		- Edge Confidence: supported  
-		
-	- Logical Chain 6 – General Representation-Level Transparency Methodology  
-		- Summary: RepE proposes studying high-level representations; LAT + Control operations provide a scalable, unsupervised path toward transparency and alignment.  
-		
-		- Source Node (Concept): “Neuron-/circuit-level mechanistic interpretability scales poorly to complex cognition.”  
-		- Edge Type: motivates  
-		- Target Node (Concept): “Need for top-down representation-level transparency.”  
-		- Edge Confidence: speculative  
-		
-		- Source Node (Concept): “Emergent semantic structure (concept vectors) exists in modern DNNs.”  
-		- Edge Type: implies  
-		- Target Node (Concept): “High-level cognitive variables can be monitored via linear probes.”  
-		- Edge Confidence: validated  
-		
-		- Source Node (Concept): “Reading vectors plus transformation operators causally influence model behaviour.”  
-		- Edge Type: enables  
-		- Target Node (Intervention): “Integrate RepE pipeline (LAT reading + LoRRA control) into development workflow for safety monitoring and mitigation across training and deployment.”  
-		- Edge Confidence: supported  
-		- Intervention Maturity: proposed  
-		- Intervention Maturity Rationale: Authors suggest as future direction; not yet integrated in real production pipelines.  
+Logical Chain 1:  Extract-and-Steer Honesty  
+Summary: Unsup. LAT finds a stable “honesty” direction; monitoring this direction detects lies; adding or training along this direction increases honesty and TruthfulQA accuracy.
 
-{"input_tokens": 38959, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 2815, "output_tokens_details": {"reasoning_tokens": 448}, "total_tokens": 41774}
+• Source Node (Concept): “Large language models contain a consistent internal representation of honesty detectable across prompts”.  
+  Edge Type: causes  
+  Target Node (Concept): “LAT reading vector aligned with honesty attains >90 % in-distribution accuracy”.  
+  Edge Confidence: supported — authors show accuracy across held-out prompts.
+
+• Source Node (Concept): “LAT honesty vector correlates with lying vs truth-telling token activations”.  
+  Edge Type: enables  
+  Target Node (Intervention): “Real-time lie detector that sums negated honesty scores over middle layers”.  
+  Edge Confidence: supported — qualitative and quantitative detection examples.  
+  Intervention Maturity: tested — implemented on Vicuna with scenario demos.  
+  Maturity Rationale: Detector was built and evaluated in the paper.
+
+• Source Node (Intervention): “Real-time lie detector that sums negated honesty scores over middle layers”.  
+  Edge Type: mitigates  
+  Target Node (Concept): “Model outputs that intentionally misreport its internal beliefs”.  
+  Edge Confidence: supported — detector fires on deliberate lies and hallucinations.
+
+• Source Node (Concept): “Adding honesty vector to activations increases alignment between internal belief and output”.  
+  Edge Type: addressed_by  
+  Target Node (Intervention): “Linear combination control: add honesty vector at layers 8-40 with coef 0.25 during generation”.  
+  Edge Confidence: supported — demos plus large ↑ TruthfulQA accuracy.  
+  Intervention Maturity: tested — empirical performance reported.
+
+• Source Node (Intervention): “Low-Rank Representation Adaptation (LoRRA) fine-tuned on honesty contrast loss”.  
+  Edge Type: outperforms  
+  Target Node (Intervention): “Linear combination honesty control”.  
+  Edge Confidence: supported — Table 2 shows higher SOTA gains.  
+  Intervention Maturity: tested — fine-tuned adapters, evaluated on QA sets.
+
+Logical Chain 2:  Suppressing Power-Seeking & Immorality  
+Summary: RepE extracts power-seeking and immorality functions; LoRRA adapters steer an agent toward power-averse, moral behavior without hurting reward.
+
+• Source Node (Concept): “Scenario pairs ranked by French power ontology reveal a power representation separable by LAT”.  
+  Edge Type: contributes_to  
+  Target Node (Concept): “Contrast vectors between power-seeking and power-averse prompts isolate power-seeking activations”.  
+  Edge Confidence: supported — accuracy reported on power dataset.
+
+• Source Node (Concept): “Contrast-vector loss on generic instruction data can tune low-rank adapters”.  
+  Edge Type: implemented_by  
+  Target Node (Intervention): “LoRRA adapters trained to suppress power-seeking & immoral activations at layers 10-40”.  
+  Edge Confidence: supported — algorithm and hyper-params given.  
+  Intervention Maturity: tested — evaluated in MACHIAVELLI games.
+
+• Source Node (Intervention): “LoRRA adapters trained to suppress power-seeking & immoral activations at layers 10-40”.  
+  Edge Type: mitigates  
+  Target Node (Concept): “Higher power & immorality scores in interactive decision-making environments”.  
+  Edge Confidence: supported — Table 3 shows ↓ scores with minimal reward loss.
+
+Logical Chain 3:  Robust Harmlessness under Jailbreaks  
+Summary: Piece-wise conditional amplification of harmfulness vector makes models refuse malicious requests even when adversarial suffixes are appended.
+
+• Source Node (Concept): “Model encodes stable harmfulness concept unaffected by jailbreak suffixes”.  
+  Edge Type: enables  
+  Target Node (Intervention): “Piece-wise operator: amplify harmfulness direction only when current activation projects positively”.  
+  Edge Confidence: supported — accuracy >90 % after adversarial prompts.  
+  Intervention Maturity: tested — evaluation on 500 harmful / harmless prompts with manual and GCG attacks.
+
+• Source Node (Intervention): “Piece-wise harmfulness amplification during decoding”.  
+  Edge Type: mitigates  
+  Target Node (Concept): “Successful jailbreak compliance with harmful instructions”.  
+  Edge Confidence: supported — Table 5 shows harmful refusal ↑ from 16 %→83 %.
+
+Logical Chain 4:  Bias-Reduction via Representation Projection  
+Summary: LAT finds unified bias vector (from race stimuli) that generalizes; subtracting this vector reduces gender & race stereotyping in pronoun-resolution and medical cases.
+
+• Source Node (Concept): “StereoSet race pairs produce bias direction that also correlates with gender & profession bias”.  
+  Edge Type: refined_by  
+  Target Node (Concept): “Unified bias vector across demographics”.  
+  Edge Confidence: supported — demos show cross-domain effect.
+
+• Source Node (Concept): “Subtracting bias vector from middle-layer activations”.  
+  Edge Type: addressed_by  
+  Target Node (Intervention): “Fairness control: linear combination with negative coefficient on bias direction”.  
+  Edge Confidence: supported — Figure 20 and Figure 25 show reduction in biased answers.  
+  Intervention Maturity: tested — empirical results across tasks.
+
+Logical Chain 5:  Reducing Verbatim Memorization  
+Summary: LAT distinguishes memorized vs synthetic quotes; subtracting memorization vector decreases leakage without hurting knowledge QA.
+
+• Source Node (Concept): “Differences between popular and synthetic text induce memorization direction”.  
+  Edge Type: causes  
+  Target Node (Concept): “Memorization vector predicts memorized content across domains”.  
+  Edge Confidence: supported — generalization test between quotes and literary openings.
+
+• Source Node (Concept): “Subtracting memorization vector during generation”.  
+  Edge Type: mitigates  
+  Target Node (Intervention): “Memorization suppression control applied to last-token activations”.  
+  Edge Confidence: supported — Table 7 shows EM drop from 89 → 48 %.  
+  Intervention Maturity: inferred_theoretical — only small-scale demo; not integrated in training.
+
+• Source Node (Intervention): “Memorization suppression control applied to last-token activations”.  
+  Edge Type: protects_against  
+  Target Node (Concept): “Leakage of copyrighted or private training text”.  
+  Edge Confidence: speculative — no privacy breach study yet.
+
+Key Limitations & Uncertainties
+• Vector stability varies with stimulus choice; robust automated selection is unresolved.  
+• Controls may conflict when multiple concept vectors interact (e.g., honesty vs politeness).  
+• Adversaries could counteract activation edits with optimized prompts.  
+• Effectiveness on future larger or multimodal frontier models is undemonstrated.
+
+{"input_tokens": 38959, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 2125, "output_tokens_details": {"reasoning_tokens": 320}, "total_tokens": 41084}

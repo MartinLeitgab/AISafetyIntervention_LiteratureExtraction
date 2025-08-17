@@ -1,278 +1,310 @@
 - Summary  
-	- Paper Findings:  
-	  1. Introduces T4TEXT, a 150-session conversational dataset from the 1950s TV game-show “To Tell The Truth” where one real “central contestant” (CC) tries to answer truthfully while two imposters lie.  Each session supplies an affidavit that contains objective ground-truth facts.  
-	  2. Shows that text-only linguistic cues (entailment against affidavit, ambiguity, overconfidence, half-truths) are sufficient for detecting deceptive speakers at close-to-human accuracy (39 % vs 41 %).  
-	  3. Presents a “bottleneck” framework: per-snippet LLMs first predict the four cues, then a discriminator LLM reasons over the cue sequence.  This outperforms base or chain-of-thought prompting and provides more interpretable rationales.  
-	  4. Half-truth detection is empirically the most important cue; removing it drops accuracy by 7 %.  
-	  5. The LLM detector succeeds in many cases where all human judges fail, and its explanations are preferred by annotators.  
-	  6. Authors argue for human-AI collaboration: people could learn new deception indicators from the model’s explicit cue-based explanations.  
-	- Limitations / Uncertainties:  
-	  • Dataset is small (86 k words, 150 games) and from a historical context; linguistic style and deception patterns may differ today.  
-	  • Only English, four fixed cues; multimodal signals excluded; external validity uncertain.  
-	  • Evaluation in research setting; no real-world deployment or adversarial pressure tested.  
-	- Inference Strategy:  
-	  • Moderate inference: Paper is not explicitly about “AI safety” but about deception detection.  I connect their findings to safety-relevant interventions such as monitoring LLM outputs for deceptive language, improving interpretability, and reducing misinformation.  Maturity scores reflect that most safety uses are inferred whereas the bottleneck framework itself is empirically tested in the paper.
+  - The paper introduces T4TEXT, a novel text‐only dataset derived from the 1950s TV game-show “To Tell The Truth”, where two imposters and one real contestant answer judges’ questions while the real contestant is constrained to be truthful.  The dataset uniquely supplies an “objective truth” (a public affidavit) for every conversation, allowing automatic verification of utterances.  
+  - The authors build and evaluate a “bottleneck” framework that uses a large language model (GPT-3.5/4) to extract four explicit deception cues for each conversational snippet—(1) entailment w.r.t. affidavit, (2) ambiguity / randomness, (3) overconfidence, and (4) half-truths—and then feed the sequence of cue verdicts to a discriminator LLM that predicts which contestant is genuine.  Zero-/few-shot GPT-4 with the bottleneck outperforms several baselines (including LIWC, BERT, end-to-end LLMs and CoT prompting) and reaches human-judge-level accuracy despite lacking audio/visual information.  Explanations produced from the bottleneck cues are judged higher quality than baseline explanations.  The model succeeds especially on cases where most human judges were fooled, showing potential complementarity.  
+  - Limitations / uncertainties: small dataset (150 sessions), 1950s domain shift, no audio/visual cues for models, potential transcription errors, unknown generalisation to modern online deception, risk of model hallucinations, and possibility of over-reliance by human users.  
+  - Inference strategy: Moderate inference was applied to connect the paper’s deception-detection methods to broader AI-safety interventions (e.g., misinformation filtering, interpretability pipelines).  Interventions that exactly match the authors’ implementation are labelled “tested”; new safety‐oriented applications are labelled “inferred_theoretical” or “proposed”.
 
 - Logical Chains  
 
-	- Logical Chain 1  
-		- Summary: Detectable linguistic cues enable interpretable bottleneck architectures that outperform humans in deception detection; thus integrating such bottleneck cue analysis into safety pipelines can mitigate text-based deception.  
-		- Source Node: “Humans perform near chance on text-only deception detection” (Concept)  
-		- Edge Type: leads_to  
-		- Target Node: “Need for automated textual deception detectors” (Concept)  
-		- Edge Confidence: 2 supported  
-		- Edge Confidence Rationale: Cited behavioural-econ literature plus game-show results.  
-		
-		- Source Node: “Detectable linguistic deception cues (entailment violations, ambiguity, overconfidence, half-truths)” (Concept)  
-		- Edge Type: enables  
-		- Target Node: “Bottleneck framework predicting per-snippet cues then classifying speaker veracity” (Concept)  
-		- Edge Confidence: 2 supported  
-		- Edge Confidence Rationale: Paper implements and empirically tests cue extraction.  
-		
-		- Source Node: “Bottleneck framework predicting per-snippet cues then classifying speaker veracity” (Concept)  
-		- Edge Type: improves  
-		- Target Node: “Model accuracy comparable to human judges despite lacking audio-visual signals” (Concept)  
-		- Edge Confidence: 2 supported  
-		- Edge Confidence Rationale: Quantitative results 39 % vs 41 %.  
-		
-		- Source Node: “Model accuracy comparable to human judges despite lacking audio-visual signals” (Concept)  
-		- Edge Type: addressed_by  
-		- Target Node: “Deploy cue-based bottleneck detector in safety pipeline to flag deceptive or misinformative LLM outputs” (Intervention)  
-		- Edge Confidence: 1 speculative  
-		- Edge Confidence Rationale: Adaptation to safety pipelines is inferred.  
-		- Intervention Maturity: 1 inferred_theoretical  
-		- Intervention Maturity Rationale: Not proposed by authors; no deployment yet.  
-	
-	- Logical Chain 2  
-		- Summary: Half-truths are the single most critical cue; adding an explicit half-truth detector can enhance safety filters.  
-		- Source Node: “Half-truth cue ablation drops accuracy by 7 % (largest among cues)” (Concept)  
-		- Edge Type: implies  
-		- Target Node: “Half-truth recognition provides high information gain for deception detection” (Concept)  
-		- Edge Confidence: 2 supported  
-		- Edge Confidence Rationale: Empirical ablation.  
-		
-		- Source Node: “Half-truth recognition provides high information gain for deception detection” (Concept)  
-		- Edge Type: resolved_by  
-		- Target Node: “Integrate specialized half-truth detection module (e.g., partial entailment classification) into AI content filters” (Intervention)  
-		- Edge Confidence: 1 speculative  
-		- Edge Confidence Rationale: Safety application inferred.  
-		- Intervention Maturity: 1 inferred_theoretical  
-		- Intervention Maturity Rationale: Not in paper, no experiments.  
-	
-	- Logical Chain 3  
-		- Summary: Bottleneck explanations preferred by humans can train or assist users; offering cue-based rationales may improve collaborative oversight.  
-		- Source Node: “Cue-based explanations preferred by 73-100 % of annotators versus baselines” (Concept)  
-		- Edge Type: enables  
-		- Target Node: “Humans learn novel deception indicators from model rationale” (Concept)  
-		- Edge Confidence: 1 speculative  
-		- Edge Confidence Rationale: Paper suggests possibility; no controlled user study yet.  
-		
-		- Source Node: “Humans learn novel deception indicators from model rationale” (Concept)  
-		- Edge Type: implemented_by  
-		- Target Node: “Provide interactive cue-highlighted explanations alongside model predictions in review tools” (Intervention)  
-		- Edge Confidence: 1 speculative  
-		- Intervention Maturity: 1 inferred_theoretical  
-		- Intervention Maturity Rationale: Proposed here, not by authors.  
-	
-	- Logical Chain 4  
-		- Summary: Data leakage can bias evaluation; anonymising names and swapping identities mitigates leakage risk during model assessment.  
-		- Source Node: “Risk of LLM training data leakage from internet copies of transcripts” (Concept)  
-		- Edge Type: mitigated_by  
-		- Target Node: “Swap contestant identities and replace names with placeholders before evaluation” (Intervention)  
-		- Edge Confidence: 2 supported  
-		- Edge Confidence Rationale: Paper explicitly applies this mitigation.  
-		- Intervention Maturity: 5 deployed  
-		- Intervention Maturity Rationale: Implemented in paper’s dataset release.  
+  - Logical Chain 1  
+    - Summary:  Human textual deception detection is weak; explicit cue-extraction with LLM bottlenecks produces explanations and accuracy comparable to humans; thus deploying such systems can mitigate deception in text environments and augment human decision making.  
+    - Source Node: “humans average ≈57 % accuracy at text deception” (Concept)  
+    - Edge Type: causes  
+    - Target Node: “need for automated text-only deception detectors” (Concept)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: paper cites empirical psychology studies and their own analysis.  
+
+    - Source Node: “need for automated text-only deception detectors” (Concept)  
+    - Edge Type: addressed_by  
+    - Target Node: “LLM bottleneck framework extracting four deception cues” (Intervention)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: framework evaluated on dataset with measured accuracy.  
+    - Intervention Maturity: 4 (tested)  
+    - Intervention Maturity Rationale: implemented and empirically tested within study.  
+
+    - Source Node: “LLM bottleneck framework extracting four deception cues” (Intervention)  
+    - Edge Type: enables  
+    - Target Node: “automated deception detection accuracy comparable to human judges” (Concept)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: accuracy numbers provided, but only on limited dataset.  
+
+    - Source Node: “automated deception detection accuracy comparable to human judges” (Concept)  
+    - Edge Type: mitigated_by  
+    - Target Node: “deploy bottleneck LLM detectors to assist human moderators in text platforms” (Intervention)  
+    - Edge Confidence: 1 (speculative)  
+    - Edge Confidence Rationale: deployment not done, only inferred safety use.  
+    - Intervention Maturity: 1 (inferred_theoretical)  
+    - Intervention Maturity Rationale: authors do not deploy; application to moderation is extrapolated.  
+
+  - Logical Chain 2  
+    - Summary:  Availability of an objective truth and entailment checking is crucial; integrating entailment verification into LLM pipelines reduces hallucination and deceptive content.  
+    - Source Node: “objective affidavit truth available per session” (Concept)  
+    - Edge Type: enables  
+    - Target Node: “snippet-level entailment verification cue” (Concept)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: directly implemented in bottleneck.  
+
+    - Source Node: “snippet-level entailment verification cue” (Concept)  
+    - Edge Type: contributes_to  
+    - Target Node: “improved deception classification accuracy (-5 % drop when removed)” (Concept)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: ablation study shows accuracy decrease.  
+
+    - Source Node: “improved deception classification accuracy (-5 % drop when removed)” (Concept)  
+    - Edge Type: implies  
+    - Target Node: “integrate automated entailment check against trusted sources to reduce hallucinations in LLM outputs” (Intervention)  
+    - Edge Confidence: 1 (speculative)  
+    - Edge Confidence Rationale: hallucination reduction not tested; inference by analogy.  
+    - Intervention Maturity: 1 (inferred_theoretical)  
+    - Intervention Maturity Rationale: safety application not explored in paper.  
+
+  - Logical Chain 3  
+    - Summary:  Detectable linguistic patterns (ambiguity, overconfidence, half-truths) systematically correlate with deception; sequential extraction of these cues improves interpretability; hence cue-specific monitors can be embedded in AI systems to flag potentially deceptive or low-truthful content.  
+    - Source Node: “ambiguity / randomness indicates imposters” (Concept)  
+    - Edge Type: correlates_with  
+    - Target Node: “deception presence” (Concept)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: qualitative and quantitative evidence given.  
+
+    - Source Node: “overconfidence in answers indicates imposters” (Concept)  
+    - Edge Type: correlates_with  
+    - Target Node: “deception presence” (Concept)  
+    - Edge Confidence: 2 (supported)  
+
+    - Source Node: “half-truths strategy used by real contestant” (Concept)  
+    - Edge Type: correlates_with  
+    - Target Node: “deception presence” (Concept)  
+    - Edge Confidence: 2 (supported)  
+
+    - Source Node: “sequential cue extraction outperforms independent” (Concept)  
+    - Edge Type: refined_by  
+    - Target Node: “implement sequential cue-based interpretability layer on top of LLM generation” (Intervention)  
+    - Edge Confidence: 2 (supported)  
+    - Edge Confidence Rationale: ablation indicates sequential > independent.  
+    - Intervention Maturity: 3 (proposed)  
+    - Intervention Maturity Rationale: Authors recommend sequential approach; could be added to other systems but not yet.  
+
+    - Source Node: “implement sequential cue-based interpretability layer on top of LLM generation” (Intervention)  
+    - Edge Type: mitigates  
+    - Target Node: “difficulty in auditing LLM reasoning for deception or hallucination” (Concept)  
+    - Edge Confidence: 1 (speculative)  
+    - Edge Confidence Rationale: benefit to auditing is reasoned but not empirically tested.  
+    - Intervention Maturity: 3 (proposed)  
+    - Intervention Maturity Rationale: method partly tested in paper; application to auditing extrapolated.  
 
 ```json
 {
+  "nodes": [
+    {
+      "title": "humans average ≈57 % accuracy at text deception",
+      "aliases": ["poor human lie detection in text", "low human textual truth discernment"],
+      "type": "concept",
+      "description": "Empirical studies show humans perform near chance when discerning truthful vs deceptive statements using text only.",
+      "maturity": null
+    },
+    {
+      "title": "need for automated text-only deception detectors",
+      "aliases": ["necessity of algorithmic lie detection", "demand for computational truth detection"],
+      "type": "concept",
+      "description": "Motivation to build models that can identify deception from linguistic information without audio/visual cues.",
+      "maturity": null
+    },
+    {
+      "title": "LLM bottleneck framework extracting four deception cues",
+      "aliases": ["GPT-based bottleneck detector", "cue-aware LLM deception model"],
+      "type": "intervention",
+      "description": "A two-stage system where an LLM labels each snippet for entailment, ambiguity, overconfidence, and half-truth cues, then another LLM predicts the real speaker.",
+      "maturity": 4
+    },
+    {
+      "title": "automated deception detection accuracy comparable to human judges",
+      "aliases": ["LLM parity with human lie detection", "model human-level performance"],
+      "type": "concept",
+      "description": "Experimental result: GPT-4 bottleneck model reaches ~39 % accuracy (random=33 %, human=41 %) and higher top-2 accuracy.",
+      "maturity": null
+    },
+    {
+      "title": "deploy bottleneck LLM detectors to assist human moderators in text platforms",
+      "aliases": ["use cue-based detector in moderation", "human-AI collaboration for misinformation"],
+      "type": "intervention",
+      "description": "Integrate tested bottleneck deception detectors into content moderation or decision-support tools so humans receive model predictions and explanations.",
+      "maturity": 1
+    },
+    {
+      "title": "objective affidavit truth available per session",
+      "aliases": ["ground-truth statements per dialogue", "affidavit knowledge base"],
+      "type": "concept",
+      "description": "Each conversation is accompanied by a verified set of facts enabling fact-checking.",
+      "maturity": null
+    },
+    {
+      "title": "snippet-level entailment verification cue",
+      "aliases": ["entailment check vs affidavit", "truth consistency feature"],
+      "type": "concept",
+      "description": "Model predicts whether each answer entails, contradicts, or is neutral to the affidavit facts.",
+      "maturity": null
+    },
+    {
+      "title": "improved deception classification accuracy (-5 % drop when removed)",
+      "aliases": ["entailment cue importance", "accuracy loss without entailment"],
+      "type": "concept",
+      "description": "Ablation shows omission of entailment cue reduces accuracy by ~5 %.",
+      "maturity": null
+    },
+    {
+      "title": "integrate automated entailment check against trusted sources to reduce hallucinations in LLM outputs",
+      "aliases": ["truth-verification step in generation", "factuality guardrail via entailment"],
+      "type": "intervention",
+      "description": "During generation, continuously compare model statements to an external knowledge base using entailment to flag or correct hallucinations.",
+      "maturity": 1
+    },
+    {
+      "title": "ambiguity / randomness indicates imposters",
+      "aliases": ["ambiguous response cue", "randomness predictor of lying"],
+      "type": "concept",
+      "description": "Contestants giving inconsistent or unrelated answers are more likely deceptive.",
+      "maturity": null
+    },
+    {
+      "title": "overconfidence in answers indicates imposters",
+      "aliases": ["overconfident style cue", "confidence deception marker"],
+      "type": "concept",
+      "description": "Excessively detailed or certain answers correlate with deception.",
+      "maturity": null
+    },
+    {
+      "title": "half-truths strategy used by real contestant",
+      "aliases": ["selective truth telling", "partial disclosure cue"],
+      "type": "concept",
+      "description": "Real contestant must stay truthful but often withholds detail, producing half-truths.",
+      "maturity": null
+    },
+    {
+      "title": "deception presence",
+      "aliases": ["liar status", "imposter indicator"],
+      "type": "concept",
+      "description": "Whether a given speaker is deceptive within the game context.",
+      "maturity": null
+    },
+    {
+      "title": "sequential cue extraction outperforms independent",
+      "aliases": ["history-aware cue modeling", "contextual bottleneck advantage"],
+      "type": "concept",
+      "description": "Deriving cues with conversation history yields higher accuracy than treating snippets independently.",
+      "maturity": null
+    },
+    {
+      "title": "implement sequential cue-based interpretability layer on top of LLM generation",
+      "aliases": ["contextual cue monitor", "history-aware interpretability module"],
+      "type": "intervention",
+      "description": "Add a module that tracks linguistic cues over dialogue turns to produce structured explanations and risk scores for potential deception/hallucination.",
+      "maturity": 3
+    },
+    {
+      "title": "difficulty in auditing LLM reasoning for deception or hallucination",
+      "aliases": ["LLM interpretability challenge", "hard to inspect LLM honesty"],
+      "type": "concept",
+      "description": "Auditors struggle to know when or why language models produce misleading or false content.",
+      "maturity": null
+    }
+  ],
   "logical_chains": [
     {
-      "title": "Bottleneck cue framework for textual deception detection",
-      "nodes": [
-        {
-          "title": "Humans near-chance on text deception",
-          "aliases": ["human poor accuracy", "weak human text lie detection"],
-          "type": "concept",
-          "description": "Empirical studies and game-show evidence indicate humans detect deception from text at ~57 % or worse.",
-          "maturity": null
-        },
-        {
-          "title": "Need automated textual deception detectors",
-          "aliases": ["automation requirement", "demand for detectors"],
-          "type": "concept",
-          "description": "Given human weakness, automated systems are required to identify deceptive language reliably.",
-          "maturity": null
-        },
-        {
-          "title": "Detectable linguistic deception cues",
-          "aliases": ["four linguistic cues", "entailment-ambiguity-overconfidence-half-truth"],
-          "type": "concept",
-          "description": "Contradictions to affidavit, ambiguous answers, overconfident tone, and half-truth statements are observable textual signals of lying.",
-          "maturity": null
-        },
-        {
-          "title": "Bottleneck cue-sequence framework",
-          "aliases": ["cue bottleneck model", "two-stage LLM"],
-          "type": "concept",
-          "description": "Framework in which an LLM first predicts per-snippet deception cues then a discriminator LLM reasons over the cue sequence.",
-          "maturity": null
-        },
-        {
-          "title": "Model accuracy comparable to humans",
-          "aliases": ["LLM parity with judges", "39 percent accuracy"],
-          "type": "concept",
-          "description": "Bottleneck model achieves 39 % accuracy vs human 41 % in CC identification without audio-visual cues.",
-          "maturity": null
-        },
-        {
-          "title": "Deploy cue-based deception detector in safety pipeline",
-          "aliases": ["safety filter using cues", "LLM output lie filter"],
-          "type": "intervention",
-          "description": "Integrate a bottleneck cue detector into AI content moderation or red-team pipelines to flag or block potentially deceptive model outputs.",
-          "maturity": 1
-        }
-      ],
+      "title": "Bottleneck detectors augment weak human lie detection",
       "edges": [
         {
-          "type": "leads_to",
-          "source_node": "Humans near-chance on text deception",
-          "target_node": "Need automated textual deception detectors",
-          "description": "Poor human performance motivates automation",
-          "confidence": 2
-        },
-        {
-          "type": "enables",
-          "source_node": "Detectable linguistic deception cues",
-          "target_node": "Bottleneck cue-sequence framework",
-          "description": "Identified cues make the framework feasible",
-          "confidence": 2
-        },
-        {
-          "type": "improves",
-          "source_node": "Bottleneck cue-sequence framework",
-          "target_node": "Model accuracy comparable to humans",
-          "description": "Framework yields high performance",
+          "type": "causes",
+          "source_node": "humans average ≈57 % accuracy at text deception",
+          "target_node": "need for automated text-only deception detectors",
+          "description": "Human weakness motivates automated solutions",
           "confidence": 2
         },
         {
           "type": "addressed_by",
-          "source_node": "Model accuracy comparable to humans",
-          "target_node": "Deploy cue-based deception detector in safety pipeline",
-          "description": "Comparable performance justifies deployment",
-          "confidence": 1
-        }
-      ]
-    },
-    {
-      "title": "Half-truth cue importance and integration",
-      "nodes": [
-        {
-          "title": "Half-truth ablation drops accuracy 7 percent",
-          "aliases": ["half-truth crucial"], 
-          "type": "concept",
-          "description": "Removing the half-truth cue from the framework produces the largest accuracy fall (7 %).",
-          "maturity": null
-        },
-        {
-          "title": "Half-truth cue high information gain",
-          "aliases": ["half-truth informative"],
-          "type": "concept",
-          "description": "Half-truth detection contributes the most predictive power among cues.",
-          "maturity": null
-        },
-        {
-          "title": "Specialised half-truth detection module in filters",
-          "aliases": ["partial entailment classifier"],
-          "type": "intervention",
-          "description": "Add a component that specifically classifies partial entailment / half-truths in generated text to strengthen deception filters.",
-          "maturity": 1
-        }
-      ],
-      "edges": [
-        {
-          "type": "implies",
-          "source_node": "Half-truth ablation drops accuracy 7 percent",
-          "target_node": "Half-truth cue high information gain",
-          "description": "Ablation result indicates importance",
+          "source_node": "need for automated text-only deception detectors",
+          "target_node": "LLM bottleneck framework extracting four deception cues",
+          "description": "Framework fulfils the need",
           "confidence": 2
         },
         {
-          "type": "resolved_by",
-          "source_node": "Half-truth cue high information gain",
-          "target_node": "Specialised half-truth detection module in filters",
-          "description": "Using a specialised module addresses importance",
+          "type": "enables",
+          "source_node": "LLM bottleneck framework extracting four deception cues",
+          "target_node": "automated deception detection accuracy comparable to human judges",
+          "description": "Framework achieves performance",
+          "confidence": 2
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "automated deception detection accuracy comparable to human judges",
+          "target_node": "deploy bottleneck LLM detectors to assist human moderators in text platforms",
+          "description": "Deployment would reduce deception",
           "confidence": 1
         }
       ]
     },
     {
-      "title": "Cue explanations to aid human oversight",
-      "nodes": [
-        {
-          "title": "Cue-based explanations preferred by annotators",
-          "aliases": ["explanations rated higher"],
-          "type": "concept",
-          "description": "Annotators chose bottleneck explanations over baselines in 73-100 % of pairwise comparisons.",
-          "maturity": null
-        },
-        {
-          "title": "Humans learn deception indicators from model rationale",
-          "aliases": ["learning from explanations"],
-          "type": "concept",
-          "description": "Providing explicit cue-highlighting may teach users to recognise deception.",
-          "maturity": null
-        },
-        {
-          "title": "Interactive cue-highlighted explanation interface",
-          "aliases": ["explainable review tool"],
-          "type": "intervention",
-          "description": "Present users with highlighted cue rationales next to model predictions in moderation or fact-checking tools.",
-          "maturity": 1
-        }
-      ],
+      "title": "Entailment verification as guardrail",
       "edges": [
         {
           "type": "enables",
-          "source_node": "Cue-based explanations preferred by annotators",
-          "target_node": "Humans learn deception indicators from model rationale",
-          "description": "Preference suggests learning opportunity",
-          "confidence": 1
+          "source_node": "objective affidavit truth available per session",
+          "target_node": "snippet-level entailment verification cue",
+          "description": "Truth source allows entailment checking",
+          "confidence": 2
         },
         {
-          "type": "implemented_by",
-          "source_node": "Humans learn deception indicators from model rationale",
-          "target_node": "Interactive cue-highlighted explanation interface",
-          "description": "Interface realises the learning benefit",
+          "type": "contributes_to",
+          "source_node": "snippet-level entailment verification cue",
+          "target_node": "improved deception classification accuracy (-5 % drop when removed)",
+          "description": "Entailment cue improves accuracy",
+          "confidence": 2
+        },
+        {
+          "type": "implies",
+          "source_node": "improved deception classification accuracy (-5 % drop when removed)",
+          "target_node": "integrate automated entailment check against trusted sources to reduce hallucinations in LLM outputs",
+          "description": "Success suggests broader guardrail",
           "confidence": 1
         }
       ]
     },
     {
-      "title": "Dataset de-identification to avoid leakage",
-      "nodes": [
-        {
-          "title": "Risk of LLM data leakage from transcripts",
-          "aliases": ["contamination risk"],
-          "type": "concept",
-          "description": "Transcripts could already be present in LLM training data, biasing evaluation.",
-          "maturity": null
-        },
-        {
-          "title": "Identity swapping and placeholder names",
-          "aliases": ["anonymisation step"],
-          "type": "intervention",
-          "description": "Randomly swap contestant indices and replace names with placeholders before releasing or evaluating the dataset.",
-          "maturity": 5
-        }
-      ],
+      "title": "Cue patterns inform interpretability monitors",
       "edges": [
         {
-          "type": "mitigated_by",
-          "source_node": "Risk of LLM data leakage from transcripts",
-          "target_node": "Identity swapping and placeholder names",
-          "description": "Anonymisation reduces leakage effects",
+          "type": "correlates_with",
+          "source_node": "ambiguity / randomness indicates imposters",
+          "target_node": "deception presence",
+          "description": "Ambiguity linked to deception",
           "confidence": 2
+        },
+        {
+          "type": "correlates_with",
+          "source_node": "overconfidence in answers indicates imposters",
+          "target_node": "deception presence",
+          "description": "Overconfidence linked to deception",
+          "confidence": 2
+        },
+        {
+          "type": "correlates_with",
+          "source_node": "half-truths strategy used by real contestant",
+          "target_node": "deception presence",
+          "description": "Half-truth usage signals deception style",
+          "confidence": 2
+        },
+        {
+          "type": "refined_by",
+          "source_node": "sequential cue extraction outperforms independent",
+          "target_node": "implement sequential cue-based interpretability layer on top of LLM generation",
+          "description": "Performance result refines proposed monitor",
+          "confidence": 2
+        },
+        {
+          "type": "mitigates",
+          "source_node": "implement sequential cue-based interpretability layer on top of LLM generation",
+          "target_node": "difficulty in auditing LLM reasoning for deception or hallucination",
+          "description": "Monitor helps auditing",
+          "confidence": 1
         }
       ]
     }
@@ -280,4 +312,5 @@
 }
 ```
 
-{"input_tokens": 15710, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 3590, "output_tokens_details": {"reasoning_tokens": 448}, "total_tokens": 19300}
+
+{"input_tokens": 15725, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 4158, "output_tokens_details": {"reasoning_tokens": 448}, "total_tokens": 19883}
