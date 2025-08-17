@@ -1,0 +1,202 @@
+- Summary  
+  - Paper Findings: The authors compare three forms of assistance that can be given to humans while they verify the truthfulness of short claims: (i) only top-10 passages returned by a strong Wikipedia retriever; (ii) a single, non-contrastive explanation produced by GPT-3.5-turbo that also contains an implicit true/false answer; (iii) a “contrastive” pair of explanations (one supporting, one refuting) produced by the same model; and (iv) a combined interface that shows both passages and non-contrastive explanations.  
+    • Both passages and non-contrastive explanations raise accuracy over a no-help baseline (~73–74 % vs 59 %), but explanations are ~2.5× faster to read.  
+    • Humans strongly over-trust the non-contrastive explanation; when the model’s answer is wrong, human accuracy collapses to 35 % (below chance).  
+    • Contrastive explanations partially fix over-reliance (accuracy rises to 56 % on those difficult items) but reduce accuracy when the single-explanation was already right.  
+    • Retrieval + Explanation offers no accuracy benefit over retrieval alone and increases time.  
+    • Explanation correctness is highly sensitive to retrieval recall; missing evidence lowers explanation accuracy from 80 % to 68 %.  
+  - Limitations / Uncertainties: Medium-sized crowdworker sample; single domain (Wikipedia trivia); one LLM family (GPT-3.5-turbo-0613); no personalised or interactive explanations.  
+  - Inference Strategy: The paper itself tests two concrete interventions (contrastive explanations, retrieval-only interface). I additionally infer safety-relevant interventions such as “use high-recall retrieval before explanation generation” and “gate the interface on estimated explanation correctness” because the findings strongly support these but the authors did not explicitly implement them. All inferred steps are labelled “inferred_theoretical”.
+
+- Logical Chains  
+
+  - Logical Chain 1: Over-reliance → Contrastive Explanations  
+    - Source Node: Users over-trust single LLM explanations even when wrong. (Concept)  
+    - Edge Type: contributes_to  
+    - Target Node: Decreased human fact-checking accuracy on items with wrong explanations. (Concept)  
+    - Edge Confidence: 2 supported  
+    - Edge Confidence Rationale: Paper presents empirical statistics showing 35 % vs 49 % baseline accuracy (n≈320 judgments).  
+    - —  
+    - Source Node: Users over-trust single LLM explanations even when wrong. (Concept)  
+    - Edge Type: mitigated_by  
+    - Target Node: Presenting contrastive explanations that include both supporting and refuting arguments. (Intervention)  
+    - Edge Confidence: 2 supported  
+    - Edge Confidence Rationale: Experiment shows accuracy jump from 35 %→56 % on affected items.  
+    - Intervention Maturity: 4 tested  
+    - Intervention Maturity Rationale: Implemented and empirically evaluated with 16 users × 20 items.  
+  
+  - Logical Chain 2: High Stakes → Prefer Retrieval  
+    - Source Node: Over-reliance risk is harmful in high-stakes settings. (Concept)  
+    - Edge Type: addressed_by  
+    - Target Node: Supplying only high-recall retrieved passages without model answer in critical applications. (Intervention)  
+    - Edge Confidence: 1 speculative  
+    - Edge Confidence Rationale: Paper notes retrieval avoids severe accuracy drops but does not test high-stakes context directly.  
+    - Intervention Maturity: 1 inferred_theoretical  
+    - Intervention Maturity Rationale: Recommended here, not in paper, not evaluated.  
+  
+  - Logical Chain 3: Retrieval Recall → Explanation Accuracy → Safety  
+    - Source Node: Explanation accuracy depends on full recall of evidence passages. (Concept)  
+    - Edge Type: causes  
+    - Target Node: Missing evidence lowers explanation accuracy from 80 % to 68 %. (Concept)  
+    - Edge Confidence: 2 supported  
+    - Edge Confidence Rationale: Authors provide these percentages across 200 items.  
+    - —  
+    - Source Node: Missing evidence lowers explanation accuracy from 80 % to 68 %. (Concept)  
+    - Edge Type: mitigated_by  
+    - Target Node: Employing high-recall retrieval (e.g., ensemble retrievers or larger k) before generation. (Intervention)  
+    - Edge Confidence: 1 speculative  
+    - Edge Confidence Rationale: Not implemented, but logically follows.  
+    - Intervention Maturity: 1 inferred_theoretical  
+    - Intervention Maturity Rationale: Only inferred.  
+  
+  - Logical Chain 4: Interface Cost → Selective Display  
+    - Source Node: Retrieval + Explanation interface increases verification time without accuracy gain. (Concept)  
+    - Edge Type: implies  
+    - Target Node: Adaptive interface that shows explanation alone when its confidence is high, else shows retrieval. (Intervention)  
+    - Edge Confidence: 1 speculative  
+    - Edge Confidence Rationale: The adaptive idea is not tested but justified by findings.  
+    - Intervention Maturity: 1 inferred_theoretical  
+    - Intervention Maturity Rationale: Not implemented.  
+
+```json
+{
+  "nodes": [
+    {
+      "title": "users over-trust single LLM explanations even when wrong",
+      "aliases": ["explanation over-reliance", "blind trust in model rationale"],
+      "type": "concept",
+      "description": "Humans frequently accept the truth value implied by a single large-language-model explanation even when the explanation contains incorrect reasoning or answer.",
+      "maturity": null
+    },
+    {
+      "title": "decreased human fact-checking accuracy on items with wrong explanations",
+      "aliases": ["accuracy collapse under misinformation", "performance drop due to over-reliance"],
+      "type": "concept",
+      "description": "When the provided LLM explanation is incorrect, human verification accuracy falls to 35 %, below both baseline and retrieval-only conditions.",
+      "maturity": null
+    },
+    {
+      "title": "presenting contrastive explanations that include both supporting and refuting arguments",
+      "aliases": ["contrastive rationale display", "dual-sided explanation"],
+      "type": "intervention",
+      "description": "Prompt the language model to generate two short paragraphs—one defending the claim, one refuting—and show them side-by-side to the user.",
+      "maturity": 4
+    },
+    {
+      "title": "over-reliance risk is harmful in high-stakes settings",
+      "aliases": ["misplaced trust consequences", "danger of wrong AI explanations"],
+      "type": "concept",
+      "description": "In domains where erroneous decisions carry large costs, trusting misleading AI explanations can lead to critical failures.",
+      "maturity": null
+    },
+    {
+      "title": "supplying only high-recall retrieved passages without model answer in critical applications",
+      "aliases": ["retrieval-only interface", "evidence-first approach"],
+      "type": "intervention",
+      "description": "Hide the language-model’s binary verdict and show users the top-k evidence passages, forcing independent judgement when stakes are high.",
+      "maturity": 1
+    },
+    {
+      "title": "explanation accuracy depends on full recall of evidence passages",
+      "aliases": ["recall sensitivity of explanations"],
+      "type": "concept",
+      "description": "Accuracy of GPT-generated explanations drops notably when the retriever fails to include all necessary evidence.",
+      "maturity": null
+    },
+    {
+      "title": "missing evidence lowers explanation accuracy from 80 % to 68 %",
+      "aliases": ["explanation degradation under low recall"],
+      "type": "concept",
+      "description": "Empirical statistic: with incomplete retrieval the generated explanations mislabel more often.",
+      "maturity": null
+    },
+    {
+      "title": "employing high-recall retrieval before generation",
+      "aliases": ["retriever upgrade for explanations", "ensemble/high-k retrieval"],
+      "type": "intervention",
+      "description": "Use stronger or ensemble retrievers, larger k, or recall-optimised indexing so that the generation step is grounded on more complete evidence.",
+      "maturity": 1
+    },
+    {
+      "title": "retrieval + explanation interface increases verification time without accuracy gain",
+      "aliases": ["redundant dual interface", "inefficient combo UI"],
+      "type": "concept",
+      "description": "Showing both passages and single explanations makes users spend ~2.7 min instead of 1–2.5 min yet does not improve accuracy.",
+      "maturity": null
+    },
+    {
+      "title": "adaptive interface that shows explanation when confidence high else shows retrieval",
+      "aliases": ["confidence-gated display", "selective evidence surfacing"],
+      "type": "intervention",
+      "description": "Estimate explanation correctness (e.g., via self-consistency or uncertainty) and dynamically decide whether to reveal passages, the explanation, or both.",
+      "maturity": 1
+    }
+  ],
+  "logical_chains": [
+    {
+      "title": "contrastive explanations mitigate over-reliance",
+      "edges": [
+        {
+          "type": "contributes_to",
+          "source_node": "users over-trust single LLM explanations even when wrong",
+          "target_node": "decreased human fact-checking accuracy on items with wrong explanations",
+          "description": "Over-trust directly lowers accuracy when model is wrong",
+          "confidence": 2
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "users over-trust single LLM explanations even when wrong",
+          "target_node": "presenting contrastive explanations that include both supporting and refuting arguments",
+          "description": "Dual-sided explanations reduce blind acceptance",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "retrieval-only interface for high-stakes domains",
+      "edges": [
+        {
+          "type": "addressed_by",
+          "source_node": "over-reliance risk is harmful in high-stakes settings",
+          "target_node": "supplying only high-recall retrieved passages without model answer in critical applications",
+          "description": "Removing potentially misleading model verdict reduces harm",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "improve retrieval to improve explanation safety",
+      "edges": [
+        {
+          "type": "causes",
+          "source_node": "explanation accuracy depends on full recall of evidence passages",
+          "target_node": "missing evidence lowers explanation accuracy from 80 % to 68 %",
+          "description": "Low recall leads to incorrect reasoning",
+          "confidence": 2
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "missing evidence lowers explanation accuracy from 80 % to 68 %",
+          "target_node": "employing high-recall retrieval before generation",
+          "description": "Higher recall should raise explanation correctness",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "adaptive interface to save time without losing accuracy",
+      "edges": [
+        {
+          "type": "implies",
+          "source_node": "retrieval + explanation interface increases verification time without accuracy gain",
+          "target_node": "adaptive interface that shows explanation when confidence high else shows retrieval",
+          "description": "Inefficiency motivates selective display strategy",
+          "confidence": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+{"input_tokens": 15189, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 3046, "output_tokens_details": {"reasoning_tokens": 512}, "total_tokens": 18235}
