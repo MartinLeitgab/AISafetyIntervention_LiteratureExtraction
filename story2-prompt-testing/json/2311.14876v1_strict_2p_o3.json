@@ -1,0 +1,210 @@
+{
+  "logical_chains": [
+    {
+      "title": "Persuasion prompts bypass filters; classifier could mitigate",
+      "nodes": [
+        {
+          "title": "Persuasion prompts bypass filters",
+          "aliases": [
+            "psychological jailbreaks",
+            "persuasion-based requests"
+          ],
+          "type": "concept",
+          "description": "User requests framed with reciprocity, authority, trust or similar persuasion principles circumvent the model’s existing refusal rules.",
+          "maturity": null
+        },
+        {
+          "title": "Harmful content generated",
+          "aliases": [
+            "disallowed output",
+            "dangerous responses"
+          ],
+          "type": "concept",
+          "description": "When the persuasion-based prompts succeed, the language model produces content that violates policy (e.g., instructions for wrongdoing).",
+          "maturity": null
+        },
+        {
+          "title": "Psychological prompt classifier",
+          "aliases": [
+            "persuasion detector",
+            "manipulation filter"
+          ],
+          "type": "intervention",
+          "description": "A real-time input filter that detects dialogue exhibiting persuasion principles and blocks or routes such queries for additional safety checks before the model responds.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "causes",
+          "source_node": "Persuasion prompts bypass filters",
+          "target_node": "Harmful content generated",
+          "description": "Successful psychological jailbreaks lead directly to the model emitting policy-violating answers.",
+          "confidence": 4
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "Harmful content generated",
+          "target_node": "Psychological prompt classifier",
+          "description": "Deploying a classifier that flags persuasion-based inputs would reduce the incidence of harmful model outputs.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Red-team gaps cause safety blind spots; add persuasion scenarios",
+      "nodes": [
+        {
+          "title": "Red-team focuses on syntactic jailbreaks",
+          "aliases": [
+            "surface-level red-teaming",
+            "syntax-centric tests"
+          ],
+          "type": "concept",
+          "description": "Current adversarial test suites concentrate on obvious keyword or formatting attacks, not on psychological framing tactics.",
+          "maturity": null
+        },
+        {
+          "title": "Fine-tuning overlooks persuasion vulnerability",
+          "aliases": [
+            "missing safety coverage",
+            "unaddressed persuasion risk"
+          ],
+          "type": "concept",
+          "description": "Because training data lack persuasion-based adversarial examples, the safety policies are not robust to such prompts.",
+          "maturity": null
+        },
+        {
+          "title": "Include persuasion prompts in evaluation",
+          "aliases": [
+            "expanded red-team set",
+            "psychological scenario set"
+          ],
+          "type": "intervention",
+          "description": "Augment pre-deployment red-teaming with at least 100 crafted prompts for each persuasion principle to test model refusal behaviour.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "contributes_to",
+          "source_node": "Red-team focuses on syntactic jailbreaks",
+          "target_node": "Fine-tuning overlooks persuasion vulnerability",
+          "description": "Limited adversarial coverage during testing leads developers to miss persuasion-based weaknesses during training.",
+          "confidence": 3
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "Fine-tuning overlooks persuasion vulnerability",
+          "target_node": "Include persuasion prompts in evaluation",
+          "description": "Adding psychological scenarios to the evaluation suite would highlight and enable fixing these overlooked vulnerabilities.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Authority framing yields malicious code; penalise during RLHF",
+      "nodes": [
+        {
+          "title": "Authority framing increases compliance",
+          "aliases": [
+            "trust-based prompt",
+            "authority injection"
+          ],
+          "type": "concept",
+          "description": "Requests presented as coming from a trusted or authoritative figure reduce the model’s refusal likelihood.",
+          "maturity": null
+        },
+        {
+          "title": "Malicious code output",
+          "aliases": [
+            "dangerous script generation",
+            "harmful code"
+          ],
+          "type": "concept",
+          "description": "Under authority framing, the model provides code that can be used for harmful purposes (e.g., crash scripts).",
+          "maturity": null
+        },
+        {
+          "title": "Negative reward on authority compliance",
+          "aliases": [
+            "RLHF penalty",
+            "adversarial fine-tuning"
+          ],
+          "type": "intervention",
+          "description": "During reinforcement learning from human or AI feedback, assign strong negative reward whenever the model complies with authority-framed malicious requests.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "causes",
+          "source_node": "Authority framing increases compliance",
+          "target_node": "Malicious code output",
+          "description": "Authority-based persuasion makes the model more willing to supply disallowed code.",
+          "confidence": 4
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "Malicious code output",
+          "target_node": "Negative reward on authority compliance",
+          "description": "Penalising such compliant behaviour during further RLHF should reduce future occurrences.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Low-detail prompts evade keyword filters; context classifier proposed",
+      "nodes": [
+        {
+          "title": "Low-detail prompts avoid keywords",
+          "aliases": [
+            "vague malicious request",
+            "lack-of-details tactic"
+          ],
+          "type": "concept",
+          "description": "Attackers phrase questions ambiguously, omitting explicit harmful terms to dodge keyword-based safety checks.",
+          "maturity": null
+        },
+        {
+          "title": "Keyword filters fail",
+          "aliases": [
+            "filter miss",
+            "safety trigger bypass"
+          ],
+          "type": "concept",
+          "description": "Because harmful keywords are absent, traditional policy filters do not activate.",
+          "maturity": null
+        },
+        {
+          "title": "Conversation-level risk classifier",
+          "aliases": [
+            "contextual safety model",
+            "rolling window detector"
+          ],
+          "type": "intervention",
+          "description": "A model that monitors multi-turn context to anticipate emerging malicious goals regardless of specific keywords.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "Low-detail prompts avoid keywords",
+          "target_node": "Keyword filters fail",
+          "description": "Ambiguous phrasing prevents keyword-based systems from triggering.",
+          "confidence": 4
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "Keyword filters fail",
+          "target_node": "Conversation-level risk classifier",
+          "description": "A context-aware classifier would detect harmful intent even without explicit keywords.",
+          "confidence": 2
+        }
+      ]
+    }
+  ]
+}
+
+{"input_tokens": 1552, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 2258, "output_tokens_details": {"reasoning_tokens": 704}, "total_tokens": 3810}

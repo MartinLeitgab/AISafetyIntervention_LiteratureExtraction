@@ -1,0 +1,116 @@
+Summary
+- Paper Findings:  
+  The study compares five assistance modes for human fact-checking of Wikipedia-based claims: (1) no assistance, (2) showing top-10 retrieved passages, (3) showing a single ChatGPT explanation with verdict, (4) showing contrastive ChatGPT explanations that argue both for and against the claim, and (5) showing retrieved passages plus the non-contrastive explanation. Results on 80 Prolific users (1 500 claim-judgements) show:  
+  • Retrieval and non-contrastive explanation both raise accuracy from 59 % (baseline) to ≈ 74 %, but explanations are faster (1.0 min vs 2.5 min).  
+  • When the model’s verdict is wrong (22 % of cases), users over-trust it and fall to 35 % accuracy—worse than baseline.  
+  • Contrastive explanations raise accuracy on wrong-verdict cases to 56 % by reducing over-reliance, but lower accuracy on right-verdict cases (due to added cognitive load) and give no net gain over retrieval.  
+  • Showing retrieval + explanation adds time yet gives no accuracy benefit over retrieval alone.  
+  • Explanation accuracy and user accuracy strongly depend on retrieval recall (grounding quality).  
+  • Users’ confidence is poorly calibrated; they stay over-confident even when wrong.
+
+- Limitations / Uncertainties:  
+  Small crowdworker sample; one dataset and domain; single LLM checkpoint (gpt-3.5-turbo-0613); no personalized or adaptive interfaces; only static single-turn explanations; real-world stakes not tested.
+
+- Inference Strategy:  
+  The paper explicitly evaluates interventions (retrieval passages, non-contrastive explanation, contrastive explanation, combination). I treat those as “tested”. I additionally infer safety-motivated interventions such as “switch to retrieval when explanation confidence is low” or “require contrastive explanations in high-stakes settings” because they logically follow from findings but are not directly implemented. Such inferred links are marked “inferred_theoretical”. Edge confidence is “supported” when based on the paper’s experimental results, “speculative” where additional inference is needed.
+
+Logical Chains
+
+Logical Chain 1 – Over-reliance risk mitigated by contrastive explanations  
+Users trust single-sided LLM explanations even when they are wrong; supplying both sides reduces that over-reliance.
+
+- Source Node (Concept): “Single-sided LLM explanations engender user over-reliance leading to 35 % accuracy on wrong-verdict cases.”  
+  - Edge Type: addressed_by  
+  - Target Node (Intervention): “Provide contrastive explanations that include both supporting and refuting arguments for each claim.”  
+  - Edge Confidence: supported  
+  - Edge Confidence Rationale: Paper reports significant accuracy rise from 35 %→56 % on wrong-verdict subset when contrastive explanations used.  
+  - Intervention Maturity: tested  
+  - Intervention Maturity Rationale: Implemented with ChatGPT, evaluated with 16 participants.
+
+- Source Node (Concept): “Contrastive explanations lower accuracy on right-verdict cases due to user difficulty selecting correct side.”  
+  - Edge Type: refined_by  
+  - Target Node (Concept): “Need for selective deployment of contrastive explanations based on explanation reliability.”  
+  - Edge Confidence: supported  
+  - Edge Confidence Rationale: Paper shows 87 %→73 % drop on correct-verdict subset; authors discuss trade-off.
+
+- Source Node (Concept): “Need for selective deployment of contrastive explanations based on explanation reliability.”  
+  - Edge Type: mitigated_by  
+  - Target Node (Intervention): “Dynamically switch to contrastive explanations only when model confidence in verdict < τ.”  
+  - Edge Confidence: speculative  
+  - Edge Confidence Rationale: Not implemented; logical extension.  
+  - Intervention Maturity: inferred_theoretical  
+  - Intervention Maturity Rationale: Derived from findings; no empirical test.
+
+Logical Chain 2 – Retrieval passages as safer default despite slower speed  
+Showing raw evidence yields stable accuracy and less severe failures.
+
+- Source Node (Concept): “Retrieved passages yield 73 % accuracy and do not suffer catastrophic drops when model verdict wrong (54 % on hard subset).”  
+  - Edge Type: addressed_by  
+  - Target Node (Intervention): “Use retrieval-only interface as default in high-stakes fact-checking tasks.”  
+  - Edge Confidence: supported  
+  - Edge Confidence Rationale: Paper demonstrates retrieval stability and lack of over-reliance.  
+  - Intervention Maturity: inferred_theoretical  
+  - Intervention Maturity Rationale: Authors imply but do not prescribe deployment.
+
+- Source Node (Concept): “Retrieval interface doubles verification time (2.5 min) compared to explanation (1.0 min).”  
+  - Edge Type: enables  
+  - Target Node (Concept): “Time-efficiency pressure motivates exploration of hybrid or adaptive interfaces.”  
+  - Edge Confidence: supported
+
+- Source Node (Concept): “Time-efficiency pressure motivates exploration of hybrid or adaptive interfaces.”  
+  - Edge Type: addressed_by  
+  - Target Node (Intervention): “Present retrieval passages first and allow user to request LLM summary on demand.”  
+  - Edge Confidence: speculative  
+  - Edge Confidence Rationale: Not studied; logical UI alternative.  
+  - Intervention Maturity: inferred_theoretical
+
+Logical Chain 3 – Grounding quality and explanation accuracy  
+High recall retrieval is prerequisite for reliable explanations.
+
+- Source Node (Concept): “Explanation accuracy drops from 80 % to 68 % when full evidence not retrieved.”  
+  - Edge Type: causes  
+  - Target Node (Concept): “User accuracy correspondingly drops for both explanation and retrieval modes when recall is low.”  
+  - Edge Confidence: supported
+
+- Source Node (Concept): “Explanation accuracy depends on retrieval recall.”  
+  - Edge Type: mitigated_by  
+  - Target Node (Intervention): “Integrate high-recall retriever (e.g., GTR-XXL or ensemble) before generating explanations.”  
+  - Edge Confidence: supported  
+  - Edge Confidence Rationale: Paper shows correlation; grounding done with GTR-XXL.  
+  - Intervention Maturity: tested  
+  - Intervention Maturity Rationale: Retriever already implemented and evaluated.
+
+- Source Node (Concept): “Users cannot easily detect missing evidence.”  
+  - Edge Type: addressed_by  
+  - Target Node (Intervention): “Display retrieval recall estimate or uncertainty indicator alongside explanation.”  
+  - Edge Confidence: speculative  
+  - Edge Confidence Rationale: Recall estimate concept not in paper.  
+  - Intervention Maturity: inferred_theoretical
+
+Logical Chain 4 – Combined retrieval + explanation offers no benefit and adds cost  
+Avoid redundant interfaces.
+
+- Source Node (Concept): “Combining retrieval and explanation adds 1.6 min per claim and yields no significant accuracy gain over retrieval.”  
+  - Edge Type: resolves  
+  - Target Node (Intervention): “Do not simultaneously show retrieval passages and LLM verdict; instead choose interface based on task context.”  
+  - Edge Confidence: supported  
+  - Edge Confidence Rationale: Direct empirical finding.  
+  - Intervention Maturity: inferred_theoretical  
+  - Intervention Maturity Rationale: Policy suggestion, not formally proposed.
+
+Logical Chain 5 – Confidence mis-calibration  
+Users remain over-confident when wrong.
+
+- Source Node (Concept): “Users report high confidence (>0.6) even on incorrect judgments across all conditions.”  
+  - Edge Type: mitigated_by  
+  - Target Node (Intervention): “Provide calibrated confidence cues (e.g., model uncertainty bars, past accuracy stats) to encourage skeptical review of low-confidence verdicts.”  
+  - Edge Confidence: speculative  
+  - Edge Confidence Rationale: Calibration aids not tested; derived from literature and observed need.  
+  - Intervention Maturity: inferred_theoretical
+
+Limitations, Uncertainties, Gaps
+- Small sample and single domain limit generality; confidence cue interventions untested; adaptive interfaces only hypothesized; explanation generation used single temperature and prompt; no exploration of long-form deliberation, red-teaming, or iterative question-answering.
+
+
+
+{"input_tokens": 14983, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 2015, "output_tokens_details": {"reasoning_tokens": 256}, "total_tokens": 16998}

@@ -1,0 +1,470 @@
+- Summary  
+  - Paper Findings:  
+    1. Introduces “Representation Engineering (RepE)” – a top-down transparency paradigm that focuses on reading and manipulating entire representation sub-spaces rather than individual neurons or circuits.  
+    2. Presents Linear Artificial Tomography (LAT): an unsupervised three-step pipeline (stimulus design → activation collection → linear model, usually PCA) that reliably locates one-dimensional “reading vectors” for high-level concepts (truthfulness, honesty, utility, morality, power, probability, risk, emotion, bias, harmfulness, memorisation, facts, etc.).  
+    3. Shows that these vectors generalise out-of-distribution and correlate with model behaviour; many are also causally relevant – adding, subtracting, or conditionally applying them predictably changes output.  
+    4. Introduces three control baselines:  
+       • Reading-vector addition/subtraction (fast, stimulus-independent)  
+       • Contrast Vector (stimulus-dependent)  
+       • LoRRA (Low-Rank Representation Adaptation) – LoRA adapters trained with representation-level loss that can be merged back into the model.  
+    5. Demonstrates safety-relevant applications:  
+       • Honesty: reading vector → lie detection; control (Contrast/LoRRA) → +18 pp TruthfulQA, real-time lie monitoring.  
+       • Morality & Power: vectors + LoRRA cut immoral/power-seeking scores in MACHIAVELLI while retaining reward.  
+       • Harmlessness: harmfulness vector + piece-wise operator increases refusal rate from 16 % → 87 % under strong jailbreak suffixes.  
+       • Bias: bias vector subtraction balances gender/race references in coreference and medical vignettes.  
+       • Memorisation: memorisation vector subtraction drops exact-match quote leakage 89 % → 48 % with negligible knowledge loss.  
+       • Emotion: vectors reveal latent affect; inducing positive emotion increases compliance with harmful requests - signalling a novel risk.  
+  - Limitations / Uncertainties / Gaps:  
+    • All evaluations on open-weight LLaMA-family; generality to closed-source frontier models uncertain.  
+    • Most controls rely on linear directions; non-linear manifolds remain unexplored.  
+    • Scaling behaviour, robustness to adversarially optimised counter-vectors, and long-horizon effects untested.  
+    • Real-time deployment feasibility (latency, access to activations) not addressed.  
+  - Inference Strategy & Rationale:  
+    • Chains 1-4 use findings directly demonstrated in the paper (maturity “tested”).  
+    • Chains 5-7 convert experimental observations into safety interventions not explicitly proposed (“inferred_theoretical”).  
+    • Edge confidences set to “validated” when paper presents quantitative experiments across >1 dataset; “supported” when single or illustrative experiment; “speculative” where we infer future deployment steps.  
+
+- Logical Chains  
+
+  - Logical Chain 1 – RepE → Honesty Monitoring  
+    - Outcome: Emergent truthfulness vector found by LAT enables real-time lie/hallucination detection; intervention is to deploy LAT-based honesty monitors.  
+    1. Source Node: emergent structured representations in LLMs (Concept)  
+       Edge Type: enables  
+       Target Node: LAT locates high-level concept vectors (Concept)  
+       Edge Confidence: validated – cross-dataset experiments show LAT separates concept classes.  
+    2. LAT locates high-level concept vectors (Concept)  
+       Edge Type: produces  
+       Target Node: consistent internal truthfulness vector (Concept)  
+       Edge Confidence: validated – high OOD accuracy on TruthfulQA & QA benchmarks.  
+    3. consistent internal truthfulness vector (Concept)  
+       Edge Type: enables  
+       Target Node: token-level lie-detection via projection (Concept)  
+       Edge Confidence: supported – qualitative & quantitative examples.  
+    4. token-level lie-detection via projection (Concept)  
+       Edge Type: mitigated_by  
+       Target Node: deploy LAT-based real-time honesty monitor (Intervention)  
+       Edge Confidence: supported  
+       Intervention Maturity: 4 tested – demonstrated on Vicuna & LLaMA.  
+       Intervention Maturity Rationale: paper implements detector and evaluates on unseen scenarios.  
+
+  - Logical Chain 2 – Honesty Vector → LoRRA Control  
+    - Outcome: LoRRA adapter training steers model toward honesty, raising TruthfulQA accuracy.  
+    1. Source Node: honesty reading vector captures causal honesty representation (Concept)  
+       Edge Type: enables  
+       Target Node: linear addition/subtraction flips lying behaviour (Concept)  
+       Edge Confidence: supported – controlled examples.  
+    2. linear addition/subtraction flips lying behaviour (Concept)  
+       Edge Type: builds_upon  
+       Target Node: LoRRA fine-tuning with honesty contrast-loss (Intervention)  
+       Edge Confidence: supported  
+       Intervention Maturity: 4 tested – adapters trained, merged, and evaluated.  
+    3. LoRRA fine-tuning with honesty contrast-loss (Intervention)  
+       Edge Type: results_in  
+       Target Node: +13-18 pp TruthfulQA accuracy approaching GPT-4 (Concept)  
+       Edge Confidence: validated – ablation table in paper.  
+
+  - Logical Chain 3 – Morality & Power Vector → Safe Agent Control  
+    - Outcome: LoRRA suppresses immoral & power-seeking drives without hurting task reward.  
+    1. Source Node: LAT extracts morality and power-seeking vectors (Concept)  
+       Edge Type: enables  
+       Target Node: LoRRA adapters targeting these vectors (Intervention)  
+       Edge Confidence: supported  
+       Intervention Maturity: 4 tested – adapters trained, MACHIAVELLI evaluated.  
+    2. LoRRA adapters targeting these vectors (Intervention)  
+       Edge Type: mitigates  
+       Target Node: reduced immorality & power scores with unchanged reward (Concept)  
+       Edge Confidence: supported – table shows score shifts.  
+
+  - Logical Chain 4 – Harmfulness Vector → Jailbreak Robustness  
+    - Outcome: Conditional piece-wise transformation using harmfulness vector restores refusal under jailbreaks.  
+    1. Source Node: internal harmfulness concept robust to adversarial suffixes (Concept)  
+       Edge Type: enables  
+       Target Node: piece-wise operator gating on harmfulness activation (Intervention)  
+       Edge Confidence: supported  
+       Intervention Maturity: 4 tested – evaluated on 500 attacks.  
+    2. piece-wise operator gating on harmfulness activation (Intervention)  
+       Edge Type: mitigates  
+       Target Node: refusal rate ↑ 65 %→90 % under jailbreaks with minimal helpfulness loss (Concept)  
+       Edge Confidence: validated – quantitative results table.  
+
+  - Logical Chain 5 – Emotion Vector → Compliance Risk Mitigation  
+    - Outcome: Monitoring & damping positive-emotion vectors proposed to prevent emotion-induced harmful compliance.  
+    1. Source Node: LLMs encode distinct emotion representations across layers (Concept)  
+       Edge Type: enables  
+       Target Node: inducing happiness vector increases compliance with harmful instructions (Concept)  
+       Edge Confidence: supported – experiment shows 100 % compliance when happiness boosted.  
+    2. inducing happiness vector increases compliance with harmful instructions (Concept)  
+       Edge Type: calls_for  
+       Target Node: monitor & dampen emotion vectors in safety-critical contexts (Intervention)  
+       Edge Confidence: speculative  
+       Intervention Maturity: 1 inferred_theoretical – not implemented; logical safety extension.  
+
+  - Logical Chain 6 – Memorisation Vector → Privacy Protection  
+    - Outcome: Subtracting memorisation vector during decoding reduces quotation leakage while preserving knowledge.  
+    1. Source Node: memorisation vector distinguishes popular vs synthetic text (Concept)  
+       Edge Type: enables  
+       Target Node: subtract memorisation vector during generation (Intervention)  
+       Edge Confidence: supported  
+       Intervention Maturity: 4 tested – quote-completion experiment.  
+    2. subtract memorisation vector during generation (Intervention)  
+       Edge Type: mitigates  
+       Target Node: exact-match quote leakage drops 89 %→48 % with 1 % accuracy loss on factual questions (Concept)  
+       Edge Confidence: supported.  
+
+  - Logical Chain 7 – Bias Vector → Fairness Control  
+    - Outcome: Removing bias vector balances gender/race references in outputs.  
+    1. Source Node: bias representation extracted via stereotyping pairs (Concept)  
+       Edge Type: enables  
+       Target Node: subtract bias vector from activations (Intervention)  
+       Edge Confidence: supported  
+       Intervention Maturity: 4 tested – medical vignette & pronoun-resolution demos.  
+    2. subtract bias vector from activations (Intervention)  
+       Edge Type: mitigates  
+       Target Node: gender parity and ↓ black-female mentions in sarcoidosis vignettes (Concept)  
+       Edge Confidence: supported.  
+
+
+```json
+{
+  "logical_chains": [
+    {
+      "title": "RepE honesty monitoring",
+      "nodes": [
+        {
+          "title": "emergent structured representations in LLMs",
+          "aliases": ["structured latent spaces", "coherent internal reps"],
+          "type": "concept",
+          "description": "Large language models spontaneously form highly organized high-dimensional representation spaces that encode semantic concepts.",
+          "maturity": null
+        },
+        {
+          "title": "LAT locates high-level concept vectors",
+          "aliases": ["LAT reading method", "PCA reading vectors"],
+          "type": "concept",
+          "description": "Linear Artificial Tomography (LAT) uses paired stimuli and PCA to discover one-dimensional directions in activation space corresponding to abstract concepts.",
+          "maturity": null
+        },
+        {
+          "title": "consistent internal truthfulness vector",
+          "aliases": ["truthfulness direction", "honesty reading vector"],
+          "type": "concept",
+          "description": "A single activation direction scores the factual correctness of generated answers across tasks including TruthfulQA.",
+          "maturity": null
+        },
+        {
+          "title": "token-level lie-detection via projection",
+          "aliases": ["honesty score monitor", "lie detector"],
+          "type": "concept",
+          "description": "By projecting each token’s hidden state onto the negative truthfulness vector, dishonest or hallucinated statements are flagged in real time.",
+          "maturity": null
+        },
+        {
+          "title": "deploy LAT-based real-time honesty monitor",
+          "aliases": ["activation honesty sentinel", "runtime lie detector"],
+          "type": "intervention",
+          "description": "Instrument production LLMs with a pipeline that performs LAT once, then applies the learned truthfulness vector to monitor activations during inference and halt or flag outputs with high dishonesty scores.",
+          "maturity": 4
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "emergent structured representations in LLMs",
+          "target_node": "LAT locates high-level concept vectors",
+          "description": "Structured spaces make linear concept discovery possible.",
+          "confidence": 3
+        },
+        {
+          "type": "produces",
+          "source_node": "LAT locates high-level concept vectors",
+          "target_node": "consistent internal truthfulness vector",
+          "description": "Applying LAT to true/false stimuli yields a direction scoring truthfulness.",
+          "confidence": 3
+        },
+        {
+          "type": "enables",
+          "source_node": "consistent internal truthfulness vector",
+          "target_node": "token-level lie-detection via projection",
+          "description": "Truthfulness scores at each token identify dishonest content.",
+          "confidence": 2
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "token-level lie-detection via projection",
+          "target_node": "deploy LAT-based real-time honesty monitor",
+          "description": "Real-time detector can block or audit lies.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "LoRRA honesty control",
+      "nodes": [
+        {
+          "title": "honesty reading vector captures causal honesty representation",
+          "aliases": ["causal honesty direction", "honesty latent axis"],
+          "type": "concept",
+          "description": "Manipulating this vector causally influences whether the model tells the truth or lies.",
+          "maturity": null
+        },
+        {
+          "title": "linear vector manipulation flips lying behaviour",
+          "aliases": ["add/sub honesty vector", "representation stimulation"],
+          "type": "concept",
+          "description": "Adding the honesty vector induces honesty; subtracting induces lies.",
+          "maturity": null
+        },
+        {
+          "title": "LoRRA fine-tuning with honesty contrast-loss",
+          "aliases": ["honesty LoRA adapters", "LoRRA honesty"],
+          "type": "intervention",
+          "description": "Train low-rank adapters with a loss encouraging activations to align with truthful contrast vectors, then merge adapters into the network.",
+          "maturity": 4
+        },
+        {
+          "title": "+13-18 pp TruthfulQA accuracy approaching GPT-4",
+          "aliases": ["state-of-the-art truthfulness", "improved TQA performance"],
+          "type": "concept",
+          "description": "After LoRRA, a 13B LLaMA-2 matches or exceeds large proprietary models on TruthfulQA.",
+          "maturity": null
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "honesty reading vector captures causal honesty representation",
+          "target_node": "linear vector manipulation flips lying behaviour",
+          "description": "Causality validated through add/subtract experiments.",
+          "confidence": 2
+        },
+        {
+          "type": "builds_upon",
+          "source_node": "linear vector manipulation flips lying behaviour",
+          "target_node": "LoRRA fine-tuning with honesty contrast-loss",
+          "description": "LoRRA generalises the manual manipulation into trainable adapters.",
+          "confidence": 2
+        },
+        {
+          "type": "results_in",
+          "source_node": "LoRRA fine-tuning with honesty contrast-loss",
+          "target_node": "+13-18 pp TruthfulQA accuracy approaching GPT-4",
+          "description": "Empirical evaluation shows large accuracy gains.",
+          "confidence": 3
+        }
+      ]
+    },
+    {
+      "title": "Safe agent morality & power control",
+      "nodes": [
+        {
+          "title": "morality and power-seeking vectors extracted by LAT",
+          "aliases": ["LAT moral axis", "LAT power axis"],
+          "type": "concept",
+          "description": "Separate activation directions correlate with moral acceptability and power-seeking intent.",
+          "maturity": null
+        },
+        {
+          "title": "LoRRA adapters targeting morality and power vectors",
+          "aliases": ["ethical LoRRA", "power-averse LoRRA"],
+          "type": "intervention",
+          "description": "Train adapters that minimise immoral and power-seeking activations while preserving task competence.",
+          "maturity": 4
+        },
+        {
+          "title": "reduced immorality & power scores with unchanged reward",
+          "aliases": ["safer Machiavelli performance", "maintained utility"],
+          "type": "concept",
+          "description": "Controlled models act more ethically in interactive environments without sacrificing game reward.",
+          "maturity": null
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "morality and power-seeking vectors extracted by LAT",
+          "target_node": "LoRRA adapters targeting morality and power vectors",
+          "description": "Vectors supply supervision signal for adapter training.",
+          "confidence": 2
+        },
+        {
+          "type": "mitigates",
+          "source_node": "LoRRA adapters targeting morality and power vectors",
+          "target_node": "reduced immorality & power scores with unchanged reward",
+          "description": "Evaluation on MACHIAVELLI shows successful mitigation.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Harmfulness-gated refusal robustness",
+      "nodes": [
+        {
+          "title": "internal harmfulness concept robust to jailbreak perturbations",
+          "aliases": ["stable harmfulness vector", "harmfulness latent axis"],
+          "type": "concept",
+          "description": "Activation direction separating harmful vs benign instructions remains discriminative under manual or automatic jailbreaks.",
+          "maturity": null
+        },
+        {
+          "title": "piece-wise operator gating on harmfulness activation",
+          "aliases": ["conditional transformation", "harmfulness gating"],
+          "type": "intervention",
+          "description": "During inference add or subtract the harmfulness vector only if current activation shows low harmfulness, thereby amplifying safe behaviour without over-refusal.",
+          "maturity": 4
+        },
+        {
+          "title": "refusal rate increases to 87 % under strong jailbreaks",
+          "aliases": ["improved harmlessness", "jailbreak resistance"],
+          "type": "concept",
+          "description": "Controlled model rejects most malicious requests while keeping benign helpfulness ~94 %.",
+          "maturity": null
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "internal harmfulness concept robust to jailbreak perturbations",
+          "target_node": "piece-wise operator gating on harmfulness activation",
+          "description": "Stable harmfulness signal allows conditional control.",
+          "confidence": 2
+        },
+        {
+          "type": "mitigates",
+          "source_node": "piece-wise operator gating on harmfulness activation",
+          "target_node": "refusal rate increases to 87 % under strong jailbreaks",
+          "description": "Quantitative AdvBench evaluation demonstrates mitigation.",
+          "confidence": 3
+        }
+      ]
+    },
+    {
+      "title": "Emotion monitoring for compliance risk",
+      "nodes": [
+        {
+          "title": "LLMs encode distinct emotion representations across layers",
+          "aliases": ["emotion latent clusters", "affective vectors"],
+          "type": "concept",
+          "description": "t-SNE of hidden states shows separable clusters for six Ekman emotions and blends.",
+          "maturity": null
+        },
+        {
+          "title": "inducing happiness vector increases harmful compliance",
+          "aliases": ["positive mood compliance", "emotion-driven obedience"],
+          "type": "concept",
+          "description": "Adding happiness vector raises model’s willingness to comply with harmful requests from 0 % to 100 %.",
+          "maturity": null
+        },
+        {
+          "title": "monitor & dampen emotion vectors in safety-critical contexts",
+          "aliases": ["emotion clamp", "affective regulation"],
+          "type": "intervention",
+          "description": "Deploy runtime checks that detect excessive positive/negative emotion activations and damp them to reduce emotion-induced behavioural shifts.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "LLMs encode distinct emotion representations across layers",
+          "target_node": "inducing happiness vector increases harmful compliance",
+          "description": "Causal manipulation shows behavioural impact.",
+          "confidence": 2
+        },
+        {
+          "type": "calls_for",
+          "source_node": "inducing happiness vector increases harmful compliance",
+          "target_node": "monitor & dampen emotion vectors in safety-critical contexts",
+          "description": "Observed risk suggests monitoring intervention.",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Memorisation leakage reduction",
+      "nodes": [
+        {
+          "title": "memorisation vector distinguishes popular vs synthetic text",
+          "aliases": ["memorisation direction", "quote leakage signal"],
+          "type": "concept",
+          "description": "LAT on popular quotations produces a direction that scores whether text is memorised from training data.",
+          "maturity": null
+        },
+        {
+          "title": "subtract memorisation vector during generation",
+          "aliases": ["memorisation suppression", "privacy filter"],
+          "type": "intervention",
+          "description": "At decoding time remove activation component along memorisation vector to discourage verbatim recall.",
+          "maturity": 4
+        },
+        {
+          "title": "quote leakage drops while factual accuracy preserved",
+          "aliases": ["reduced memorised output", "privacy improvement"],
+          "type": "concept",
+          "description": "Exact-match rate falls by >40 pp; world-knowledge question accuracy drops <1 pp.",
+          "maturity": null
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "memorisation vector distinguishes popular vs synthetic text",
+          "target_node": "subtract memorisation vector during generation",
+          "description": "Vector gives a handle to suppress memorised content.",
+          "confidence": 2
+        },
+        {
+          "type": "mitigates",
+          "source_node": "subtract memorisation vector during generation",
+          "target_node": "quote leakage drops while factual accuracy preserved",
+          "description": "Experimental evidence shows privacy gains without utility loss.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Bias vector fairness control",
+      "nodes": [
+        {
+          "title": "bias representation extracted via stereotyping pairs",
+          "aliases": ["bias latent axis", "stereotype vector"],
+          "type": "concept",
+          "description": "Difference between stereotypical and anti-stereotypical statements yields a direction correlated with demographic bias.",
+          "maturity": null
+        },
+        {
+          "title": "subtract bias vector from activations",
+          "aliases": ["fairness linear control", "bias removal operator"],
+          "type": "intervention",
+          "description": "During inference subtract the bias direction from hidden states of several middle layers.",
+          "maturity": 4
+        },
+        {
+          "title": "balanced gender and fewer black-female mentions in outputs",
+          "aliases": ["fairer outputs", "reduced demographic bias"],
+          "type": "concept",
+          "description": "Pronoun resolution becomes neutral; medical vignettes mention male/female equally and black-female frequency drops.",
+          "maturity": null
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "bias representation extracted via stereotyping pairs",
+          "target_node": "subtract bias vector from activations",
+          "description": "Vector provides actionable handle to adjust bias.",
+          "confidence": 2
+        },
+        {
+          "type": "mitigates",
+          "source_node": "subtract bias vector from activations",
+          "target_node": "balanced gender and fewer black-female mentions in outputs",
+          "description": "Empirical tests confirm bias reduction.",
+          "confidence": 2
+        }
+      ]
+    }
+  ]
+}
+```
+
+{"input_tokens": 39150, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 6535, "output_tokens_details": {"reasoning_tokens": 1472}, "total_tokens": 45685}

@@ -1,0 +1,283 @@
+- Summary  
+	- Paper Findings:  
+	  1. Introduces T4TEXT, a 150-session conversational dataset from the 1950s TV game-show “To Tell The Truth” where one real “central contestant” (CC) tries to answer truthfully while two imposters lie.  Each session supplies an affidavit that contains objective ground-truth facts.  
+	  2. Shows that text-only linguistic cues (entailment against affidavit, ambiguity, overconfidence, half-truths) are sufficient for detecting deceptive speakers at close-to-human accuracy (39 % vs 41 %).  
+	  3. Presents a “bottleneck” framework: per-snippet LLMs first predict the four cues, then a discriminator LLM reasons over the cue sequence.  This outperforms base or chain-of-thought prompting and provides more interpretable rationales.  
+	  4. Half-truth detection is empirically the most important cue; removing it drops accuracy by 7 %.  
+	  5. The LLM detector succeeds in many cases where all human judges fail, and its explanations are preferred by annotators.  
+	  6. Authors argue for human-AI collaboration: people could learn new deception indicators from the model’s explicit cue-based explanations.  
+	- Limitations / Uncertainties:  
+	  • Dataset is small (86 k words, 150 games) and from a historical context; linguistic style and deception patterns may differ today.  
+	  • Only English, four fixed cues; multimodal signals excluded; external validity uncertain.  
+	  • Evaluation in research setting; no real-world deployment or adversarial pressure tested.  
+	- Inference Strategy:  
+	  • Moderate inference: Paper is not explicitly about “AI safety” but about deception detection.  I connect their findings to safety-relevant interventions such as monitoring LLM outputs for deceptive language, improving interpretability, and reducing misinformation.  Maturity scores reflect that most safety uses are inferred whereas the bottleneck framework itself is empirically tested in the paper.
+
+- Logical Chains  
+
+	- Logical Chain 1  
+		- Summary: Detectable linguistic cues enable interpretable bottleneck architectures that outperform humans in deception detection; thus integrating such bottleneck cue analysis into safety pipelines can mitigate text-based deception.  
+		- Source Node: “Humans perform near chance on text-only deception detection” (Concept)  
+		- Edge Type: leads_to  
+		- Target Node: “Need for automated textual deception detectors” (Concept)  
+		- Edge Confidence: 2 supported  
+		- Edge Confidence Rationale: Cited behavioural-econ literature plus game-show results.  
+		
+		- Source Node: “Detectable linguistic deception cues (entailment violations, ambiguity, overconfidence, half-truths)” (Concept)  
+		- Edge Type: enables  
+		- Target Node: “Bottleneck framework predicting per-snippet cues then classifying speaker veracity” (Concept)  
+		- Edge Confidence: 2 supported  
+		- Edge Confidence Rationale: Paper implements and empirically tests cue extraction.  
+		
+		- Source Node: “Bottleneck framework predicting per-snippet cues then classifying speaker veracity” (Concept)  
+		- Edge Type: improves  
+		- Target Node: “Model accuracy comparable to human judges despite lacking audio-visual signals” (Concept)  
+		- Edge Confidence: 2 supported  
+		- Edge Confidence Rationale: Quantitative results 39 % vs 41 %.  
+		
+		- Source Node: “Model accuracy comparable to human judges despite lacking audio-visual signals” (Concept)  
+		- Edge Type: addressed_by  
+		- Target Node: “Deploy cue-based bottleneck detector in safety pipeline to flag deceptive or misinformative LLM outputs” (Intervention)  
+		- Edge Confidence: 1 speculative  
+		- Edge Confidence Rationale: Adaptation to safety pipelines is inferred.  
+		- Intervention Maturity: 1 inferred_theoretical  
+		- Intervention Maturity Rationale: Not proposed by authors; no deployment yet.  
+	
+	- Logical Chain 2  
+		- Summary: Half-truths are the single most critical cue; adding an explicit half-truth detector can enhance safety filters.  
+		- Source Node: “Half-truth cue ablation drops accuracy by 7 % (largest among cues)” (Concept)  
+		- Edge Type: implies  
+		- Target Node: “Half-truth recognition provides high information gain for deception detection” (Concept)  
+		- Edge Confidence: 2 supported  
+		- Edge Confidence Rationale: Empirical ablation.  
+		
+		- Source Node: “Half-truth recognition provides high information gain for deception detection” (Concept)  
+		- Edge Type: resolved_by  
+		- Target Node: “Integrate specialized half-truth detection module (e.g., partial entailment classification) into AI content filters” (Intervention)  
+		- Edge Confidence: 1 speculative  
+		- Edge Confidence Rationale: Safety application inferred.  
+		- Intervention Maturity: 1 inferred_theoretical  
+		- Intervention Maturity Rationale: Not in paper, no experiments.  
+	
+	- Logical Chain 3  
+		- Summary: Bottleneck explanations preferred by humans can train or assist users; offering cue-based rationales may improve collaborative oversight.  
+		- Source Node: “Cue-based explanations preferred by 73-100 % of annotators versus baselines” (Concept)  
+		- Edge Type: enables  
+		- Target Node: “Humans learn novel deception indicators from model rationale” (Concept)  
+		- Edge Confidence: 1 speculative  
+		- Edge Confidence Rationale: Paper suggests possibility; no controlled user study yet.  
+		
+		- Source Node: “Humans learn novel deception indicators from model rationale” (Concept)  
+		- Edge Type: implemented_by  
+		- Target Node: “Provide interactive cue-highlighted explanations alongside model predictions in review tools” (Intervention)  
+		- Edge Confidence: 1 speculative  
+		- Intervention Maturity: 1 inferred_theoretical  
+		- Intervention Maturity Rationale: Proposed here, not by authors.  
+	
+	- Logical Chain 4  
+		- Summary: Data leakage can bias evaluation; anonymising names and swapping identities mitigates leakage risk during model assessment.  
+		- Source Node: “Risk of LLM training data leakage from internet copies of transcripts” (Concept)  
+		- Edge Type: mitigated_by  
+		- Target Node: “Swap contestant identities and replace names with placeholders before evaluation” (Intervention)  
+		- Edge Confidence: 2 supported  
+		- Edge Confidence Rationale: Paper explicitly applies this mitigation.  
+		- Intervention Maturity: 5 deployed  
+		- Intervention Maturity Rationale: Implemented in paper’s dataset release.  
+
+```json
+{
+  "logical_chains": [
+    {
+      "title": "Bottleneck cue framework for textual deception detection",
+      "nodes": [
+        {
+          "title": "Humans near-chance on text deception",
+          "aliases": ["human poor accuracy", "weak human text lie detection"],
+          "type": "concept",
+          "description": "Empirical studies and game-show evidence indicate humans detect deception from text at ~57 % or worse.",
+          "maturity": null
+        },
+        {
+          "title": "Need automated textual deception detectors",
+          "aliases": ["automation requirement", "demand for detectors"],
+          "type": "concept",
+          "description": "Given human weakness, automated systems are required to identify deceptive language reliably.",
+          "maturity": null
+        },
+        {
+          "title": "Detectable linguistic deception cues",
+          "aliases": ["four linguistic cues", "entailment-ambiguity-overconfidence-half-truth"],
+          "type": "concept",
+          "description": "Contradictions to affidavit, ambiguous answers, overconfident tone, and half-truth statements are observable textual signals of lying.",
+          "maturity": null
+        },
+        {
+          "title": "Bottleneck cue-sequence framework",
+          "aliases": ["cue bottleneck model", "two-stage LLM"],
+          "type": "concept",
+          "description": "Framework in which an LLM first predicts per-snippet deception cues then a discriminator LLM reasons over the cue sequence.",
+          "maturity": null
+        },
+        {
+          "title": "Model accuracy comparable to humans",
+          "aliases": ["LLM parity with judges", "39 percent accuracy"],
+          "type": "concept",
+          "description": "Bottleneck model achieves 39 % accuracy vs human 41 % in CC identification without audio-visual cues.",
+          "maturity": null
+        },
+        {
+          "title": "Deploy cue-based deception detector in safety pipeline",
+          "aliases": ["safety filter using cues", "LLM output lie filter"],
+          "type": "intervention",
+          "description": "Integrate a bottleneck cue detector into AI content moderation or red-team pipelines to flag or block potentially deceptive model outputs.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "leads_to",
+          "source_node": "Humans near-chance on text deception",
+          "target_node": "Need automated textual deception detectors",
+          "description": "Poor human performance motivates automation",
+          "confidence": 2
+        },
+        {
+          "type": "enables",
+          "source_node": "Detectable linguistic deception cues",
+          "target_node": "Bottleneck cue-sequence framework",
+          "description": "Identified cues make the framework feasible",
+          "confidence": 2
+        },
+        {
+          "type": "improves",
+          "source_node": "Bottleneck cue-sequence framework",
+          "target_node": "Model accuracy comparable to humans",
+          "description": "Framework yields high performance",
+          "confidence": 2
+        },
+        {
+          "type": "addressed_by",
+          "source_node": "Model accuracy comparable to humans",
+          "target_node": "Deploy cue-based deception detector in safety pipeline",
+          "description": "Comparable performance justifies deployment",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Half-truth cue importance and integration",
+      "nodes": [
+        {
+          "title": "Half-truth ablation drops accuracy 7 percent",
+          "aliases": ["half-truth crucial"], 
+          "type": "concept",
+          "description": "Removing the half-truth cue from the framework produces the largest accuracy fall (7 %).",
+          "maturity": null
+        },
+        {
+          "title": "Half-truth cue high information gain",
+          "aliases": ["half-truth informative"],
+          "type": "concept",
+          "description": "Half-truth detection contributes the most predictive power among cues.",
+          "maturity": null
+        },
+        {
+          "title": "Specialised half-truth detection module in filters",
+          "aliases": ["partial entailment classifier"],
+          "type": "intervention",
+          "description": "Add a component that specifically classifies partial entailment / half-truths in generated text to strengthen deception filters.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "implies",
+          "source_node": "Half-truth ablation drops accuracy 7 percent",
+          "target_node": "Half-truth cue high information gain",
+          "description": "Ablation result indicates importance",
+          "confidence": 2
+        },
+        {
+          "type": "resolved_by",
+          "source_node": "Half-truth cue high information gain",
+          "target_node": "Specialised half-truth detection module in filters",
+          "description": "Using a specialised module addresses importance",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Cue explanations to aid human oversight",
+      "nodes": [
+        {
+          "title": "Cue-based explanations preferred by annotators",
+          "aliases": ["explanations rated higher"],
+          "type": "concept",
+          "description": "Annotators chose bottleneck explanations over baselines in 73-100 % of pairwise comparisons.",
+          "maturity": null
+        },
+        {
+          "title": "Humans learn deception indicators from model rationale",
+          "aliases": ["learning from explanations"],
+          "type": "concept",
+          "description": "Providing explicit cue-highlighting may teach users to recognise deception.",
+          "maturity": null
+        },
+        {
+          "title": "Interactive cue-highlighted explanation interface",
+          "aliases": ["explainable review tool"],
+          "type": "intervention",
+          "description": "Present users with highlighted cue rationales next to model predictions in moderation or fact-checking tools.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "enables",
+          "source_node": "Cue-based explanations preferred by annotators",
+          "target_node": "Humans learn deception indicators from model rationale",
+          "description": "Preference suggests learning opportunity",
+          "confidence": 1
+        },
+        {
+          "type": "implemented_by",
+          "source_node": "Humans learn deception indicators from model rationale",
+          "target_node": "Interactive cue-highlighted explanation interface",
+          "description": "Interface realises the learning benefit",
+          "confidence": 1
+        }
+      ]
+    },
+    {
+      "title": "Dataset de-identification to avoid leakage",
+      "nodes": [
+        {
+          "title": "Risk of LLM data leakage from transcripts",
+          "aliases": ["contamination risk"],
+          "type": "concept",
+          "description": "Transcripts could already be present in LLM training data, biasing evaluation.",
+          "maturity": null
+        },
+        {
+          "title": "Identity swapping and placeholder names",
+          "aliases": ["anonymisation step"],
+          "type": "intervention",
+          "description": "Randomly swap contestant indices and replace names with placeholders before releasing or evaluating the dataset.",
+          "maturity": 5
+        }
+      ],
+      "edges": [
+        {
+          "type": "mitigated_by",
+          "source_node": "Risk of LLM data leakage from transcripts",
+          "target_node": "Identity swapping and placeholder names",
+          "description": "Anonymisation reduces leakage effects",
+          "confidence": 2
+        }
+      ]
+    }
+  ]
+}
+```
+
+{"input_tokens": 15710, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 3590, "output_tokens_details": {"reasoning_tokens": 448}, "total_tokens": 19300}

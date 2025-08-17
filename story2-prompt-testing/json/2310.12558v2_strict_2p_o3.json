@@ -1,0 +1,315 @@
+{
+  "logical_chains": [
+    {
+      "title": "Mitigating over-reliance on single-sided LLM explanations",
+      "nodes": [
+        {
+          "title": "Over-reliance on single-sided explanations lowers accuracy",
+          "aliases": [
+            "blind trust in model",
+            "user over-reliance risk"
+          ],
+          "type": "concept",
+          "description": "Users tend to accept one-sided ChatGPT verdicts; when the model is wrong their accuracy falls to 35 %.",
+          "maturity": null
+        },
+        {
+          "title": "Provide contrastive explanations",
+          "aliases": [
+            "two-sided rationale",
+            "pro-con explanation"
+          ],
+          "type": "intervention",
+          "description": "Show both supporting and refuting arguments with an overall verdict to help users evaluate competing evidence.",
+          "maturity": 3
+        },
+        {
+          "title": "Contrastive explanations can hurt correct cases",
+          "aliases": [
+            "accuracy trade-off",
+            "added cognitive load"
+          ],
+          "type": "concept",
+          "description": "While helping on wrong-verdict items, contrastive explanations lower accuracy on correct-verdict items (87 %→73 %).",
+          "maturity": null
+        },
+        {
+          "title": "Need selective deployment of contrastive mode",
+          "aliases": [
+            "conditional use strategy",
+            "adaptive explanation policy"
+          ],
+          "type": "concept",
+          "description": "Because contrastive explanations have mixed effects, systems should enable them only when the model’s own confidence is low.",
+          "maturity": null
+        },
+        {
+          "title": "Dynamically switch to contrastive when confidence low",
+          "aliases": [
+            "confidence-based toggling",
+            "adaptive contrastive UI"
+          ],
+          "type": "intervention",
+          "description": "Use the model’s self-estimated certainty threshold τ to decide whether to show a single-sided or contrastive explanation.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "addressed_by",
+          "source_node": "Over-reliance on single-sided explanations lowers accuracy",
+          "target_node": "Provide contrastive explanations",
+          "description": "Two-sided reasoning helps users avoid blindly trusting wrong verdicts.",
+          "confidence": 4
+        },
+        {
+          "type": "results_in",
+          "source_node": "Provide contrastive explanations",
+          "target_node": "Contrastive explanations can hurt correct cases",
+          "description": "Added cognitive load from dual arguments decreases accuracy when the LLM is actually correct.",
+          "confidence": 4
+        },
+        {
+          "type": "leads_to",
+          "source_node": "Contrastive explanations can hurt correct cases",
+          "target_node": "Need selective deployment of contrastive mode",
+          "description": "Mixed performance motivates context-dependent use.",
+          "confidence": 4
+        },
+        {
+          "type": "addressed_by",
+          "source_node": "Need selective deployment of contrastive mode",
+          "target_node": "Dynamically switch to contrastive when confidence low",
+          "description": "Adaptive interface shows contrastive rationales only for low-confidence verdicts.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Retrieval passages as safer but slower default",
+      "nodes": [
+        {
+          "title": "Retrieval passages give stable accuracy",
+          "aliases": [
+            "evidence-only UI",
+            "retriever baseline performance"
+          ],
+          "type": "concept",
+          "description": "Showing top-10 Wikipedia passages yields 73 % accuracy and avoids catastrophic errors when the model verdict is wrong.",
+          "maturity": null
+        },
+        {
+          "title": "Use retrieval-only interface by default",
+          "aliases": [
+            "evidence-first policy",
+            "no LLM verdict mode"
+          ],
+          "type": "intervention",
+          "description": "Adopt an interface that provides raw passages without an automated decision in high-stakes fact-checking.",
+          "maturity": 1
+        },
+        {
+          "title": "Retrieval interface doubles task time",
+          "aliases": [
+            "slower verification",
+            "time cost of evidence"
+          ],
+          "type": "concept",
+          "description": "Participants spent ≈2.5 min per claim with retrieval versus 1 min with explanations.",
+          "maturity": null
+        },
+        {
+          "title": "Time-efficiency pressure motivates hybrids",
+          "aliases": [
+            "need faster UI",
+            "motivation for adaptive interfaces"
+          ],
+          "type": "concept",
+          "description": "Longer verification times create demand for interfaces that balance speed and safety.",
+          "maturity": null
+        },
+        {
+          "title": "Present retrieval first then optional summary",
+          "aliases": [
+            "evidence-then-summary",
+            "on-demand LLM rationale"
+          ],
+          "type": "intervention",
+          "description": "Show passages initially and allow the user to request an LLM summary if needed, aiming to save time while retaining safety.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "addressed_by",
+          "source_node": "Retrieval passages give stable accuracy",
+          "target_node": "Use retrieval-only interface by default",
+          "description": "Safer accuracy profile justifies evidence-only default in critical contexts.",
+          "confidence": 4
+        },
+        {
+          "type": "causes",
+          "source_node": "Retrieval interface doubles task time",
+          "target_node": "Time-efficiency pressure motivates hybrids",
+          "description": "Slower speed creates need for alternative designs.",
+          "confidence": 4
+        },
+        {
+          "type": "addressed_by",
+          "source_node": "Time-efficiency pressure motivates hybrids",
+          "target_node": "Present retrieval first then optional summary",
+          "description": "Hybrid UI seeks to regain speed without losing evidence transparency.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Grounding quality governs explanation and user accuracy",
+      "nodes": [
+        {
+          "title": "Explanation accuracy drops with low recall",
+          "aliases": [
+            "missing evidence harms LLM",
+            "low retrieval recall effect"
+          ],
+          "type": "concept",
+          "description": "ChatGPT verdict correctness falls from 80 % to 68 % when the retriever fails to surface all necessary evidence.",
+          "maturity": null
+        },
+        {
+          "title": "User accuracy drops when recall low",
+          "aliases": [
+            "human performance tied to recall",
+            "user accuracy decline"
+          ],
+          "type": "concept",
+          "description": "Both explanation and retrieval interfaces see lower human accuracy when essential passages are missing.",
+          "maturity": null
+        },
+        {
+          "title": "Integrate high-recall retriever",
+          "aliases": [
+            "better retriever",
+            "improved evidence recall"
+          ],
+          "type": "intervention",
+          "description": "Employ larger or ensemble retrievers (e.g., GTR-XXL) to maximize evidence recall before explanation generation.",
+          "maturity": 4
+        },
+        {
+          "title": "Users cannot detect missing evidence",
+          "aliases": [
+            "undetected recall gaps",
+            "user blind to omissions"
+          ],
+          "type": "concept",
+          "description": "Participants rarely notice when critical passages are absent, limiting their ability to compensate.",
+          "maturity": null
+        },
+        {
+          "title": "Display recall estimate or uncertainty cue",
+          "aliases": [
+            "recall confidence bar",
+            "evidence sufficiency indicator"
+          ],
+          "type": "intervention",
+          "description": "Show an estimated recall metric or uncertainty visualization to alert users when evidence may be incomplete.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "causes",
+          "source_node": "Explanation accuracy drops with low recall",
+          "target_node": "User accuracy drops when recall low",
+          "description": "Inaccurate model output and missing passages directly lower human correctness.",
+          "confidence": 4
+        },
+        {
+          "type": "mitigated_by",
+          "source_node": "Explanation accuracy drops with low recall",
+          "target_node": "Integrate high-recall retriever",
+          "description": "Better recall is expected to restore explanation quality.",
+          "confidence": 4
+        },
+        {
+          "type": "addressed_by",
+          "source_node": "Users cannot detect missing evidence",
+          "target_node": "Display recall estimate or uncertainty cue",
+          "description": "Explicit cues inform users about evidence sufficiency gaps.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "title": "Avoid redundant retrieval+explanation interface",
+      "nodes": [
+        {
+          "title": "Combined interface adds time without accuracy gain",
+          "aliases": [
+            "no benefit from combo",
+            "redundant UI cost"
+          ],
+          "type": "concept",
+          "description": "Showing both passages and a non-contrastive explanation increases time by 1.6 min per claim but yields no accuracy improvement over retrieval alone.",
+          "maturity": null
+        },
+        {
+          "title": "Choose interface based on context, not both",
+          "aliases": [
+            "either-or policy",
+            "avoid simultaneous views"
+          ],
+          "type": "intervention",
+          "description": "Systems should present either evidence passages or an LLM verdict, but not both concurrently, unless a clear benefit is demonstrated.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "addressed_by",
+          "source_node": "Combined interface adds time without accuracy gain",
+          "target_node": "Choose interface based on context, not both",
+          "description": "Eliminating redundant displays reduces effort with no loss in correctness.",
+          "confidence": 4
+        }
+      ]
+    },
+    {
+      "title": "Calibrating user confidence",
+      "nodes": [
+        {
+          "title": "Users remain over-confident when wrong",
+          "aliases": [
+            "confidence mis-calibration",
+            "high self-belief on errors"
+          ],
+          "type": "concept",
+          "description": "Participants give confidence ratings >0.6 even on incorrect judgments across all assistance modes.",
+          "maturity": null
+        },
+        {
+          "title": "Provide calibrated confidence cues",
+          "aliases": [
+            "uncertainty visualization",
+            "confidence nudges"
+          ],
+          "type": "intervention",
+          "description": "Show model uncertainty bars or past accuracy statistics to align user confidence with actual correctness.",
+          "maturity": 1
+        }
+      ],
+      "edges": [
+        {
+          "type": "mitigated_by",
+          "source_node": "Users remain over-confident when wrong",
+          "target_node": "Provide calibrated confidence cues",
+          "description": "Additional signals aim to temper unjustified user certainty.",
+          "confidence": 2
+        }
+      ]
+    }
+  ]
+}
+
+{"input_tokens": 2142, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 3408, "output_tokens_details": {"reasoning_tokens": 1024}, "total_tokens": 5550}
