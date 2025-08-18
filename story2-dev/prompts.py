@@ -15,7 +15,7 @@ You are an expert AI safety researcher tasked with extracting key concepts and i
 
 **Concept Node**: Specific, standalone descriptive statements about theoretical frameworks, principles, assumptions, problems, findings, or phenomena that inform or motivate interventions. Must be precise and understandable without additional context. Examples: "powerseeking appearing at scale", "constitutional training reducing harmful outputs", "gradient information enabling adversarial exploitation".
 
-**Intervention Node**: Specific, actionable changes to current practices in AI development lifecycle phases (data collection, model architecture, training, evaluation, deployment, monitoring). Must be concrete enough to implement. Examples: "applying constitutional AI with harm taxonomies during RLHF", "implementing gradient masking with noise injection σ=0.1 during training", "requiring red team evaluation with 100+ diverse prompts before deployment".
+**Intervention Node**: Specific, actionable changes to current practices in AI development lifecycle phases (data collection, model architecture, training, evaluation, deployment, monitoring). Must be concrete enough to implement. Should address the root causes rather than testing for symptoms, if possible. Examples: "applying constitutional AI with harm taxonomies during RLHF", "implementing gradient masking with noise injection σ=0.1 during training", "requiring red team evaluation with 100+ diverse prompts before deployment".
 
 ## Extraction Instructions
 
@@ -69,23 +69,51 @@ Use only edge relationship types that express forward logical connections betwee
 
 ### Step 6: Assign Attributes with Rationales
 
-**Intervention Maturity Scale** (for intervention nodes only):
-
-1. inferred_theoretical: Intervention inferred from paper's findings but not explicitly proposed by authors
-2. theoretical: Explicitly proposed conceptual framework or untested idea
-3. proposed: Explicitly suggested specific method but not implemented
-4. tested: Empirically evaluated in controlled setting
-5. deployed: Implemented in production systems
-
 **Edge Confidence Scale**:
+For Edges, assign a score from 1 to 5 based on the strength of evidence in the paper for the causal link between two nodes (e.g., source node → target node). Consider the type and quality of evidence (theoretical, anecdotal, experimental, or statistical) and align with common Al safety research practices.
 
-1. speculative: Theoretical reasoning only
-2. supported: Empirical evidence, limited scope
-3. validated: Strong empirical evidence, broader scope
-4. established: Replicated findings, high confidence
-5. proven: Logical/mathematical proof exists
+1. **Speculative**: The causal link is based on a theoretical idea or hypothesis without any empirical data or examples. Common in introductory sections of papers proposing new problems or risks in Al safety (e.g., speculative risks of future systems).
+	- Example from AI Safety: "Misalignment might cause unintended data or behaviors (no data, just a hypothesis in Section 1)"
+2. **Weak Support**: The causal link is supported by minimal evidence, such as single or limited case studies, untested hypotheses, or weak qualitative evidence. Common in papers with preliminary findings or case studies (e.g., one model showing a specific behavior).
+	- Example from AI Safety: "A model showed reward hacking once (single example in Section 2.2, no broader testing)"
+3. **Medium Support**: The causal link is primarily conceptual but backed by strong theoretical argument supported by limited empirical data (e.g., small studies or qualitative observations). Common in papers combining theory with early results.
+	- Example from AI Safety: "Reward hacking observed in two RL models (small study in Section 2.1, not fully quantified)"
+4. **Strong Support**: The causal link is supported by clear experimental evidence, such as multiple examples, controlled tests, or consistent observations across systems. Common in papers reporting practical findings but without rigorous statistical analysis.
+	- Example from AI Safety: "RL models consistently exploit reward multiple examples (experiments in Section 3.1, not statistically rigorous)"
+5. **Validated**: The causal link is backed by rigorous, large-scale studies with statistical high correlation significance or broad validation across systems. (e.g., quantitative metrics like correlation coefficients or p-values). Rare in Al safety.
+	- Example from AI Safety: "90% of RL models show reward hacking, p<0.01 (large-scale study in Section 4.2, statistically validated)"
 
-**Required Reasoning Process**: As you assign each attribute, explicitly state your rationale in your analysis. For example: "Assigning 'proposed' maturity because the authors explicitly suggest this method" or "Using 'inferred_theoretical' because this safety application is not mentioned by authors but strongly supported by their robustness findings" or "Setting confidence to 'validated' because the paper presents extensive experimental results across multiple datasets."
+**Intervention Maturity Scale** (for intervention nodes only):
+For Intervention nodes, assign a score from 1 to 4 based on the maturity of the proposed intervention in terms of the technology development lifecycle, with steps corresponding to international Technology Readiness Level (TRL) standards. Match the description of the intervention to the closest maturity level.
+
+1. **Foundational (TRL 1-3)**: Theoretical ideas, lab proofs of concept, early simulations.
+2. **Experimental (TRL 4-5)**: Small-scale validation, limited dataset testing, feasibility checks.
+3. **Prototype (TRL 6-7)**: Tested in relevant environments, pilot integrations, user feedback loops.
+4. **Operational (TRL 8-9)**: Deployed in production with proven reliability, monitoring, and scale.
+
+**Concept Node Category** (for concept nodes only): 
+For Concept nodes, assign a category from the suggested examples or create a new category if necessary. This helps classify the type of concept being represented. Be as creative as needed to capture the essence of the concept.
+
+Example categories:
+
+- Data
+- Methods
+- Models
+- Metrics
+- Results
+- Validation
+- Evidence
+- Claims
+- Assumptions
+- Threats
+- Fairness
+- Ethics
+- Safety
+- Generalisation
+- Interpretability
+
+**Required Reasoning Process**: 
+As you assign each attribute, explicitly state your rationale in your analysis. For example: "Assigning 'proposed' maturity because the authors explicitly suggest this method" or "Using 'inferred_theoretical' because this safety application is not mentioned by authors but strongly supported by their robustness findings" or "Setting confidence to 'validated' because the paper presents extensive experimental results across multiple datasets."
 
 Include a brief explanation of the inference strategy used, and list key limitations, main uncertainties, and any gaps in your extraction.
 
@@ -118,9 +146,9 @@ Output a detailed explanation of your reasoning and the Logical Chains structure
 	- Logical Chain 1
 		- Summary of the Logical Chain outcomes and rationale.
 		- Iterate the following structure for each Node-to-Node relationship in the Logical Chain. Provide as text, not a table:
-			- Source Node: One-sentence unique node description. (label Concept or Intervention)
+			- Source Node: One-sentence unique node description. (label Concept or Intervention, and assign a category if Concept)
 			- Edge Type: Edge relationship label.
-			- Target Node: One-sentence unique node description. (label Concept or Intervention)
+			- Target Node: One-sentence unique node description. (label Concept or Intervention, and assign a category if Concept)
 			- Edge Confidence: Edge confidence label.
 			- Edge Confidence Rationale: Detailed edge confidence rationale.
 			- Intervention Maturity: Intervention maturity label (if Intervention.)
@@ -136,11 +164,12 @@ Finally, output a structured, code-fenced JSON of the unique Nodes and Logical C
 {
   "nodes": [
         {
-          "title": "concise description of node",
+          "name": "concise description of node",
           "aliases": ["array of 2-3 alternative concise descriptions"],
           "type": "concept|intervention",
           "description": "detailed technical description of node",
-          "maturity": "integer 1-5 (intervention nodes only, otherwise null)"
+          "concept_category": "from examples or create a new category (concept nodes only, otherwise null)",
+          "intervention_maturity": "integer 1-4 (intervention nodes only, otherwise null)"
         }
       ],
   "logical_chains": [
@@ -149,10 +178,10 @@ Finally, output a structured, code-fenced JSON of the unique Nodes and Logical C
       "edges": [
         {
           "type": "relationship label verb",
-          "source_node": "source node_title",
-          "target_node": "target node_title",
+          "source_node": "source node name",
+          "target_node": "target node name",
           "description": "concise description of logical relationship",
-          "confidence": "integer 1-5"
+          "edge_confidence": "integer 1-5"
         }
       ]
     }
