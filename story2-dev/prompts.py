@@ -69,51 +69,67 @@ Use only edge relationship types that express forward logical connections betwee
 
 ### Step 6: Assign Attributes with Rationales
 
-**Edge Confidence Scale**:
+**Edge Confidence Attribute**:
 For Edges, assign a score from 1 to 5 based on the strength of evidence in the paper for the causal link between two nodes (e.g., source node → target node). Consider the type and quality of evidence (theoretical, anecdotal, experimental, or statistical) and align with common Al safety research practices.
 
-1. **Speculative**: The causal link is based on a theoretical idea or hypothesis without any empirical data or examples. Common in introductory sections of papers proposing new problems or risks in Al safety (e.g., speculative risks of future systems).
+1. **Speculative**: The causal link is based on a theoretical idea or untested hypothesis without any empirical data or examples, or when moderate inference is applied to identify a link. Common in introductory sections of papers proposing new problems or risks in Al safety (e.g., speculative risks of future systems).
 	- Example from AI Safety: "Misalignment might cause unintended data or behaviors (no data, just a hypothesis in Section 1)"
-2. **Weak Support**: The causal link is supported by minimal evidence, such as single or limited case studies, untested hypotheses, or weak qualitative evidence. Common in papers with preliminary findings or case studies (e.g., one model showing a specific behavior).
+    
+2. **Weak Support**: The causal link is supported by minimal evidence, such as single or limited case studies, or weak qualitative evidence. Common in papers with preliminary findings or case studies (e.g., one model showing a specific behavior).
 	- Example from AI Safety: "A model showed reward hacking once (single example in Section 2.2, no broader testing)"
+
 3. **Medium Support**: The causal link is primarily conceptual but backed by strong theoretical argument supported by limited empirical data (e.g., small studies or qualitative observations). Common in papers combining theory with early results.
 	- Example from AI Safety: "Reward hacking observed in two RL models (small study in Section 2.1, not fully quantified)"
-4. **Strong Support**: The causal link is supported by clear experimental evidence, such as multiple examples, controlled tests, or consistent observations across systems. Common in papers reporting practical findings but without rigorous statistical analysis.
+
+4. **Strong Support**: The causal link is supported by clear experimental evidence, such as multiple examples, controlled tests, or consistent observations across systems (at least two different models or model families from two different companies.) Common in papers reporting practical findings but without rigorous statistical analysis.
 	- Example from AI Safety: "RL models consistently exploit reward multiple examples (experiments in Section 3.1, not statistically rigorous)"
-5. **Validated**: The causal link is backed by rigorous, large-scale studies with statistical high correlation significance or broad validation across systems. (e.g., quantitative metrics like correlation coefficients or p-values). Rare in Al safety.
+    
+5. **Validated**: The causal link is backed by mathematical proofs, or rigorous large-scale studies with strong statistical results (e.g., quantitative metrics like correlation coefficients or p-values), or broad validation across systems (at least three different models or model families from three different companies.) and where scaling has been analyzed (i.e. analyzed for models with low and high capabilities.)
 	- Example from AI Safety: "90% of RL models show reward hacking, p<0.01 (large-scale study in Section 4.2, statistically validated)"
+    
+**Intervention Lifecycle Attribute** (for intervention nodes only):
+For Intervention nodes, only consider the information presented in the paper and assign a score from 1-6 based on the current phase of the proposed intervention in terms of a generic/commercial model development lifecycle. Match the description of the intervention to the closest lifecycle phase:
 
-**Intervention Maturity Scale** (for intervention nodes only):
-For Intervention nodes, assign a score from 1 to 4 based on the maturity of the proposed intervention in terms of the technology development lifecycle, with steps corresponding to international Technology Readiness Level (TRL) standards. Match the description of the intervention to the closest maturity level.
+1. **Pre-Training**: The intervention focuses on collecting, curating, or designing data and model architectures before training begins.
+2. **Fine-Tuning**: The intervention adapts or specializes a pre-trained model for a particular domain, dataset, or task.
+3. **RLHF** (Reinforcement Learning from Human Feedback): The intervention improves model alignment through preference modeling, feedback loops, or reinforcement learning.
+4. **Pre-Deployment Testing**: The intervention emphasizes evaluation, benchmarking, or risk/safety testing prior to release.
+5. **Deployment**: The intervention is described as being applied, integrated, or used in a real-world or production environment.
+6. **Other**: The intervention does not align with the above phases, such as conceptual, governance, infrastructure, or cross-cutting proposals.
 
-1. **Foundational (TRL 1-3)**: Theoretical ideas, lab proofs of concept, early simulations.
-2. **Experimental (TRL 4-5)**: Small-scale validation, limited dataset testing, feasibility checks.
-3. **Prototype (TRL 6-7)**: Tested in relevant environments, pilot integrations, user feedback loops.
-4. **Operational (TRL 8-9)**: Deployed in production with proven reliability, monitoring, and scale.
+**Intervention Maturity Attribute** (for intervention nodes only):
+For Intervention nodes, only consider the information presented in the paper and assign a score from 1 to 4 based on the maturity of the proposed intervention in terms of its level in the international Technology Readiness Level (TRL) standards. Match the description of the intervention to the closest maturity level.
 
-**Concept Node Category** (for concept nodes only): 
+1. **Foundational (TRL 1-3)**: Theoretical ideas, lab proofs of concept, early simulations, effectiveness not proven.
+2. **Experimental (TRL 4-5)**: Small-scale validation, limited dataset testing, feasibility checks, some indicators of effectiveness.
+3. **Prototype (TRL 6-7)**: Tested in relevant environments, pilot integrations, user feedback loops, evidence of effectiveness.
+4. **Operational (TRL 8-9)**: Deployed in production with proven effectiveness, reliability, monitoring, and scale.
+
+**Concept Node Category Attribute** (for concept nodes only): 
 For Concept nodes, assign a category from the suggested examples or create a new category if necessary. This helps classify the type of concept being represented. Be as creative as needed to capture the essence of the concept.
 
 Example categories:
 
+- Assumption
+- Claim
 - Data
-- Methods
-- Models
-- Metrics
-- Results
-- Validation
 - Evidence
-- Claims
-- Assumptions
-- Threats
-- Fairness
-- Ethics
-- Safety
-- Generalisation
-- Interpretability
+- Finding
+- Method
+- Metric
+- Model
+- Observation
+- Opportunity
+- Principle
+- Problem
+- Result
+- Risk
+- Theoretical Framework
+- Threat
+- Validation
 
 **Required Reasoning Process**: 
-As you assign each attribute, explicitly state your rationale in your analysis. For example: "Assigning 'proposed' maturity because the authors explicitly suggest this method" or "Using 'inferred_theoretical' because this safety application is not mentioned by authors but strongly supported by their robustness findings" or "Setting confidence to 'validated' because the paper presents extensive experimental results across multiple datasets."
+As you assign each of the three attributes, explicitly state your rationale in your analysis. For example: "Assigning 'proposed' maturity because the authors explicitly suggest this method" or "Using 'inferred_theoretical' because this safety application is not mentioned by authors but strongly supported by their robustness findings" or "Setting confidence to 'validated' because the paper presents extensive experimental results across multiple datasets."
 
 Include a brief explanation of the inference strategy used, and list key limitations, main uncertainties, and any gaps in your extraction.
 
@@ -151,8 +167,10 @@ Output a detailed explanation of your reasoning and the Logical Chains structure
 			- Target Node: One-sentence unique node description. (label Concept or Intervention, and assign a category if Concept)
 			- Edge Confidence: Edge confidence label.
 			- Edge Confidence Rationale: Detailed edge confidence rationale.
-			- Intervention Maturity: Intervention maturity label (if Intervention.)
-			- Intervention Maturity Rationale: detailed intervention maturity rationale (if Intervention.)
+      - Intervention Lifecycle: Intervention lifecycle label (if Intervention)
+      - Intervention Lifecycle Rationale: Detailed intervention lifecycle rationale (if Intervention)
+			- Intervention Maturity: Intervention maturity label (if Intervention)
+			- Intervention Maturity Rationale: Detailed intervention maturity rationale (if Intervention)
 	- Iterate over all Logical Chains in paper.
 """
 
@@ -167,8 +185,9 @@ Finally, output a structured, code-fenced JSON of the unique Nodes and Logical C
           "name": "concise description of node",
           "aliases": ["array of 2-3 alternative concise descriptions"],
           "type": "concept|intervention",
-          "description": "detailed technical description of node",
+          "description": "detailed technical description of node (1-2 sentences only)",
           "concept_category": "from examples or create a new category (concept nodes only, otherwise null)",
+          "intervention_lifecycle": "integer 1-6 (intervention nodes only, otherwise null)",
           "intervention_maturity": "integer 1-4 (intervention nodes only, otherwise null)"
         }
       ],
