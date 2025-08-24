@@ -2,16 +2,14 @@
 FalkorDB graph importer: nodes, edges, UUIDs, alias normalization, and index setup.
 
 Usage (as a library):
-    from falkordb_import_refactored import FalkorImporter
+    from falkordb_import import FalkorImporter
     importer = FalkorImporter(host="localhost", port=6379, graph="test")
     ok, info = importer.ingest(data_or_path="path/to.json")  # or pass a dict via data_or_path=dict(...)
 """
 
 from __future__ import annotations
 
-import argparse
 import json
-import os
 import sys
 import traceback
 import uuid
