@@ -38,6 +38,8 @@ class AISafetyGraph:
     def upsert_edge(self, paper_id: str, edge) -> None:
         g = self.db.select_graph(GRAPH)
         n = edge.target_node
+        # assumes that two nodes having the same name are the same node
+        # (could be problematic as there are multiple nodes with the same name under different contexts)
         g.query(
             f"MERGE (t:{n.type} {{name: {lit(n.name)}}}) "
             f"SET t.canonical_name = {lit(n.canonical_name)}, "
@@ -46,6 +48,7 @@ class AISafetyGraph:
             f"t.notes = {lit(n.notes)} "
             f"RETURN t"
         )
+        # We'll be pushing a single paper schema and merging them?
         g.query(
             f"MATCH (p:PAPER {{id: '{paper_id}'}}), (t:{n.type} {{name: {lit(n.name)}}}) "
             f"MERGE (p)-[r:{edge.type}]->(t) "
@@ -59,7 +62,6 @@ class AISafetyGraph:
         for json_path in tqdm(paths):
             with open(json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            doc = OutputSchema(**data)
             paper_id = json_path.stem
             self.upsert_paper(paper_id)
             for edge in doc.edges:
