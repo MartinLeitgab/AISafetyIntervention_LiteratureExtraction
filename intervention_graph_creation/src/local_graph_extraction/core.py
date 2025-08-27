@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Any
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 
 
@@ -14,6 +14,7 @@ class Node(BaseModel):
                                                   description="1-6 (only for intervention nodes)")
     intervention_maturity: Optional[int] = Field(default=None, ge=1, le=4,
                                                  description="1-4 (only for intervention nodes)")
+    meta: Optional[List['Meta']] = Field(default_factory=list, description="metadata key/value pairs for this node")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -64,6 +65,7 @@ class Edge(BaseModel):
     target_node: str = Field(min_length=1, description="target node name")
     description: str = Field(min_length=1, description="concise description of logical connection")
     edge_confidence: int = Field(ge=1, le=5, description="1-5")
+    meta: Optional[List['Meta']] = Field(default_factory=list, description="metadata key/value pairs for this edge")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -84,13 +86,13 @@ class Edge(BaseModel):
 
 class Meta(BaseModel):
     key: str = Field(min_length=1, max_length=64, description="metadata key")
-    value: str = Field(min_length=1, max_length=256, description="metadata value")
+    value: Any = Field(description="metadata value (string, number, bool, or array)")
 
     model_config = ConfigDict(extra="forbid")
 
-    @field_validator("key", "value")
+    @field_validator("key")
     @classmethod
-    def _strip_nonempty(cls, v: str) -> str:
+    def _strip_nonempty_key(cls, v: str) -> str:
         v2 = v.strip()
         if not v2:
             raise ValueError("must be non-empty")
