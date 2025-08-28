@@ -7,6 +7,11 @@ def lit(v):
         return "'" + v.replace("\\", "\\\\").replace("'", "\\'") + "'"
     if isinstance(v, (list, tuple)):
         return "[" + ", ".join(lit(x) for x in v) + "]"
+    if isinstance(v, dict):
+        items = []
+        for k, val in v.items():
+            items.append(f"{k}: {lit(val)}")
+        return "{" + ", ".join(items) + "}"
     return "'" + str(v).replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 import json
 from falkordb import FalkorDB
 from tqdm import tqdm
@@ -10,6 +11,7 @@ from intervention_graph_creation.src.local_graph_extraction.db.helpers import la
 
 
 SETTINGS = load_settings()
+logger = logging.getLogger(__name__)
 
 
 class AISafetyGraph:
@@ -18,18 +20,24 @@ class AISafetyGraph:
 
     # ---------- nodes ----------
 
-    def upsert_node(self, node: Node, paper_id: str) -> None:
+    def upsert_node(self, node: Node, meta_kv: dict) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
         label = label_for(node.type)
         # Uniqueness by (name, type) → prevents duplicates for same typed name
+        set_parts = [
+            f"n.description = {lit(node.description)}",
+            f"n.aliases = {lit(node.aliases)}",
+            f"n.concept_category = {lit(node.concept_category)}",
+            f"n.intervention_lifecycle = {lit(node.intervention_lifecycle)}",
+            f"n.intervention_maturity = {lit(node.intervention_maturity)}",
+        ]
+        for k, v in (meta_kv or {}).items():
+            if k and v is not None:
+                set_parts.append(f"n.{k} = {lit(v)}")
+        set_clause = ", ".join(set_parts)
         g.query(
             f"MERGE (n:{label} {{name: {lit(node.name)}, type: {lit(node.type)}}}) "
-            f"SET n.description = {lit(node.description)}, "
-            f"n.aliases = {lit(node.aliases)}, "
-            f"n.concept_category = {lit(node.concept_category)}, "
-            f"n.intervention_lifecycle = {lit(node.intervention_lifecycle)}, "
-            f"n.intervention_maturity = {lit(node.intervention_maturity)}, "
-            f"n.paper_id = {lit(paper_id)} "
+            f"SET {set_clause} "
             f"RETURN n"
         )
 
@@ -37,7 +45,7 @@ class AISafetyGraph:
     # Multiple edges between same nodes are allowed,
     # but for the same etype we update the existing edge (MERGE by etype).
 
-    def upsert_edge(self, edge: Edge, paper_id: str) -> None:
+    def upsert_edge(self, edge: Edge, meta_kv: dict) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
         s = lit(edge.source_node)
         t = lit(edge.target_node)
@@ -48,20 +56,30 @@ class AISafetyGraph:
         g.query(f"MERGE (b {{name: {t}}}) RETURN b")
 
         # One :EDGE per (a,b,etype). If exists → update props; else → create.
+        set_parts = [
+            "r.description = " + lit(edge.description),
+            "r.edge_confidence = " + lit(edge.edge_confidence),
+        ]
+        for k, v in (meta_kv or {}).items():
+            if k and v is not None:
+                set_parts.append("r." + k + " = " + lit(v))
+        set_clause = ", ".join(set_parts)
         g.query(
             "MATCH (a {name: " + s + "}), (b {name: " + t + "}) "
             "MERGE (a)-[r:EDGE {etype: " + etype + "}]->(b) "
-            "SET r.description = " + lit(edge.description) + ", "
-            "    r.edge_confidence = " + lit(edge.edge_confidence) + ", "
-            "    r.paper_id = " + lit(paper_id) + " "
+            "SET " + set_clause + " "
             "RETURN r"
         )
 
     # ---------- ingest ----------
 
     def ingest_file(self, json_path: Path) -> None:
-        data = json.loads(Path(json_path).read_text(encoding="utf-8"))
-        doc = PaperSchema(**data)
+        try:
+            data = json.loads(Path(json_path).read_text(encoding="utf-8"))
+            doc = PaperSchema(**data)
+        except Exception as e:
+            logger.exception("Failed to parse or validate JSON file: %s", json_path)
+            raise
 
         # Basic file-level checks
         names = [n.name for n in doc.nodes]
@@ -79,14 +97,33 @@ class AISafetyGraph:
         if missing:
             raise ValueError(f"Edges reference unknown nodes in {json_path.name}: {missing[:5]}...")
 
-        paper_id = json_path.stem
+        # Serialize paper-level metadata once; attach to all nodes/edges
+        try:
+            meta_kv = {m.key: m.value for m in (doc.meta or [])}
+        except Exception:
+            logger.exception("Failed to construct meta_kv for %s; defaulting to empty metadata", json_path.name)
+            meta_kv = {}
 
         for n in doc.nodes:
-            self.upsert_node(n, paper_id)
+            try:
+                self.upsert_node(n, meta_kv)
+            except Exception:
+                logger.exception("Node upsert failed for '%s' (type=%s) in %s", n.name, n.type, json_path.name)
+                continue
 
         for ch in doc.logical_chains:
             for e in ch.edges:
-                self.upsert_edge(e, paper_id)
+                try:
+                    self.upsert_edge(e, meta_kv)
+                except Exception:
+                    logger.exception(
+                        "Edge upsert failed (%s: %s -> %s) in %s",
+                        e.type,
+                        e.source_node,
+                        e.target_node,
+                        json_path.name,
+                    )
+                    continue
 
     def ingest_dir(self, input_dir: Path = SETTINGS.paths.output_dir) -> None:
         base = Path(input_dir)
@@ -94,9 +131,13 @@ class AISafetyGraph:
         for d in tqdm(sorted(subdirs)):
             json_path = d / f"{d.name}.json"
             if not json_path.exists():
-                print(f"⚠️ Skipping {d.name}: {json_path} not found")
+                logger.warning("Skipping %s: %s not found", d.name, json_path)
                 continue
-            self.ingest_file(json_path)
+            try:
+                self.ingest_file(json_path)
+            except Exception:
+                logger.exception("Ingest failed for %s", json_path)
+                continue
 
     # ---------- utils ----------
 

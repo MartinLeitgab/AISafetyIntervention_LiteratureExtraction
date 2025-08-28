@@ -2,7 +2,7 @@ import os
 import json
 from pathlib import Path
 
-from extractor import Extractor
+from .extractor import Extractor
 
 INPUT_JSON_FILE = Path('intervention_graph_creation/data/raw/ard_json_test/agentmodels.jsonl')
 INPUT_JSON_DIR = Path('intervention_graph_creation/data/raw/ard_json_test')
