@@ -32,6 +32,9 @@ class GraphEdge(Edge):
     embedding: Optional[np.ndarray] = None
     logical_chain_title: Optional[str] = None  # Equivalent to title in LogicalChain
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    is_tombstone: Optional[bool] = False
+    merge_rationale: Optional[str] = None
+    cycle_id: Optional[str] = None
 
     def __init__(self, **data):
         # Handle embedding separately to avoid pydantic validation issues

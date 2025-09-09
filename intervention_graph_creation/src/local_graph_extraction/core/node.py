@@ -63,6 +63,9 @@ class GraphNode(Node):
     """Extended Node class with embedding support."""
     embedding: Optional[np.ndarray] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    is_tombstone: Optional[bool] = False
+    is_leaf: Optional[bool] = True
+    cycle_id: Optional[str] = None
 
     def __init__(self, **data):
         # Handle embedding separately to avoid pydantic validation issues
