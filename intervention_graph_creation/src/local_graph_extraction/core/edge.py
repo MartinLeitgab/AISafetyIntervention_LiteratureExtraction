@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 import numpy as np
+import time
 
 
 class Edge(BaseModel):
@@ -32,6 +33,12 @@ class GraphEdge(Edge):
     embedding: Optional[np.ndarray] = None
     logical_chain_title: Optional[str] = None  # Equivalent to title in LogicalChain
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    # semantic compression
+    is_tombstone: Optional[bool] =  False
+    merge_rational: Optional[str] = None
+    cycled_id: Optional[str] = None
+    created_at: Optional[int] = None
+    updated_at: Optional[int] = None
 
     def __init__(self, **data):
         # Handle embedding separately to avoid pydantic validation issues
@@ -39,4 +46,6 @@ class GraphEdge(Edge):
         logical_chain_title = data.pop('logical_chain_title', None)
         super().__init__(**data)
         self.embedding = embedding
+        self.created_at = int(time.time() * 1000)
+        self.updated_at = int(time.time() * 1000)
         self.logical_chain_title = logical_chain_title
