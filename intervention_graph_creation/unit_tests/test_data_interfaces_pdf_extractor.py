@@ -8,7 +8,7 @@ SRC_DIR = os.path.join(REPO_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from data_interfaces.utils import split_references, parse_arxiv_id_from_filename  # type: ignore
+from data_interfaces.utils import split_references, parse_arxiv_id_from_filename  # noqa: E402 type: ignore
 
 
 def extract_text_from_pdf(file_path: str) -> str:
@@ -27,7 +27,9 @@ def write_text(path: str, text: str) -> None:
         f.write(text)
 
 
-def dump_for_pdfs(pdf_dir: str, out_dir: str, limit: int = 5) -> List[Tuple[str, str, str]]:
+def dump_for_pdfs(
+    pdf_dir: str, out_dir: str, limit: int = 5
+) -> List[Tuple[str, str, str]]:
     """
     For up to `limit` PDFs in `pdf_dir`, extract original text, split content/references,
     and write to files under `out_dir`.

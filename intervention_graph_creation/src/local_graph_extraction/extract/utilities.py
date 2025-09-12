@@ -34,14 +34,14 @@ def split_text_and_json(s: str) -> Tuple[str, Optional[str]]:
     s = s or ""
     m = FENCE_RE.search(s)
     if m:
-        return (s[:m.start()] + s[m.end():]).strip(), m.group(1).strip()
+        return (s[: m.start()] + s[m.end() :]).strip(), m.group(1).strip()
 
     i, j = s.find("{"), s.rfind("}")
     if i != -1 and j != -1 and i < j:
-        candidate = s[i:j + 1].strip()
+        candidate = s[i : j + 1].strip()
         # Let json library decide validity; JSONDecodeError will bubble up
         json.loads(candidate)
-        return (s[:i] + s[j + 1:]).strip(), candidate
+        return (s[:i] + s[j + 1 :]).strip(), candidate
 
     return s.strip(), None
 
@@ -52,7 +52,7 @@ def stringify_response(resp: Any) -> str:
         return resp.model_dump_json() if hasattr(resp, "model_dump_json") else str(resp)
     except Exception:
         return str(resp)
-    
+
 
 def url_to_id(url: str) -> str:
     parsed = urlparse(url)
@@ -76,15 +76,14 @@ def write_failure(out_dir: Path, pdf_name: str, e: Exception) -> None:
     json_path = out_dir / f"{stem}.json"
     summary_path = out_dir / f"{stem}_summary.txt"
 
-    diag = (
-        f"Processing failed for {pdf_name}\n"
-        f"{type(e).__name__}: {e}\n\n"
-    )
+    diag = f"Processing failed for {pdf_name}\n{type(e).__name__}: {e}\n\n"
     print(diag)
     diag += f"Traceback:\n{traceback.format_exc()}"
     safe_write(raw_path, diag)
     safe_write(summary_path, "")
-    safe_write(json_path, json.dumps(
-        {"error": f"{type(e).__name__}: {str(e)}"},
-        ensure_ascii=False, indent=2
-    ))
+    safe_write(
+        json_path,
+        json.dumps(
+            {"error": f"{type(e).__name__}: {str(e)}"}, ensure_ascii=False, indent=2
+        ),
+    )

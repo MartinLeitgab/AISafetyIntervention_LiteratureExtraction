@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-def dedupe_publications(publications: List[Publication], prefer: str = "latest_date") -> List[Publication]:
+def dedupe_publications(
+    publications: List[Publication], prefer: str = "latest_date"
+) -> List[Publication]:
     """Deduplicate publications by arXiv ID if present, else by (normalized title, authors set).
 
     prefer:

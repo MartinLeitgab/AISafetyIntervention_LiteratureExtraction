@@ -23,11 +23,22 @@ from intervention_graph_creation.src.local_graph_extraction.extract.utilities im
 MODEL = "o3"
 REASONING_EFFORT = "medium"
 SETTINGS = load_settings()
-META_KEYS = frozenset(['authors', 'date_published', 'filename', 'source', 'source_filetype', 'title', 'url'])
+META_KEYS = frozenset(
+    [
+        "authors",
+        "date_published",
+        "filename",
+        "source",
+        "source_filetype",
+        "title",
+        "url",
+    ]
+)
 
 
 class Extractor:
     """Upload PDF -> call model -> save raw/summary/json."""
+
     def __init__(self) -> None:
         load_dotenv()
         api_key = os.getenv("OPENAI_API_KEY")
@@ -47,13 +58,15 @@ class Extractor:
         return f.id
 
     def call_openai_file(self, file_id: str) -> Any:
-        messages = [{
-            "role": "user",
-            "content": [
-                {"type": "input_file", "file_id": file_id},
-                {"type": "input_text", "text": PROMPT_EXTRACT},
-            ],
-        }]
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_file", "file_id": file_id},
+                    {"type": "input_text", "text": PROMPT_EXTRACT},
+                ],
+            }
+        ]
         return self.client.responses.parse(
             model=MODEL,
             input=messages,
@@ -61,13 +74,18 @@ class Extractor:
         )
 
     def call_openai_text(self, file_text: str) -> Any:
-        messages = [{
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": PROMPT_EXTRACT},
-                {"type": "input_text", "text": f"\n\nHere is the paper for analysis:\n\n{file_text}"},
-            ],
-        }]
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": PROMPT_EXTRACT},
+                    {
+                        "type": "input_text",
+                        "text": f"\n\nHere is the paper for analysis:\n\n{file_text}",
+                    },
+                ],
+            }
+        ]
         return self.client.responses.parse(
             model=MODEL,
             input=messages,
@@ -92,7 +110,7 @@ class Extractor:
         parsed = json.loads(json_part)
 
         if meta:
-            parsed['meta'] = meta
+            parsed["meta"] = meta
 
         safe_write(json_path, json.dumps(parsed, ensure_ascii=False, indent=2))
 
@@ -115,7 +133,7 @@ class Extractor:
                     tout = int(u.get("output_tokens", 0))
                     ttot = int(u.get("total_tokens", tin + tout))
                     return tin, tout, ttot
-                out0 = (as_dict.get("output") or [{}])
+                out0 = as_dict.get("output") or [{}]
                 if isinstance(out0, list) and out0:
                     u = out0[0].get("usage", {}) or {}
                     tin = int(u.get("input_tokens", 0))
@@ -126,7 +144,9 @@ class Extractor:
             pass
         return 0, 0, 0
 
-    def _accumulate_and_print(self, label: str, name: str, t0: float, resp: Any) -> None:
+    def _accumulate_and_print(
+        self, label: str, name: str, t0: float, resp: Any
+    ) -> None:
         tin, tout, ttot = self._usage_from_resp(resp)
         sec = time.time() - t0
         tqdm.write(
@@ -134,7 +154,7 @@ class Extractor:
         )
         self._n += 1
         self._sum_sec += sec
-        self._sum_in  += tin
+        self._sum_in += tin
         self._sum_out += tout
         self._sum_tot += ttot
 
@@ -172,7 +192,11 @@ class Extractor:
                         pbar.update(1)
                         continue
 
-                    paper_id = path.stem + "__" + url_to_id(paper_json.get('url', f'line_{idx}'))
+                    paper_id = (
+                        path.stem
+                        + "__"
+                        + url_to_id(paper_json.get("url", f"line_{idx}"))
+                    )
                     out_dir = SETTINGS.paths.output_dir / paper_id
                     if out_dir.exists():
                         processed += 1
@@ -181,7 +205,7 @@ class Extractor:
 
                     try:
                         t0 = time.time()
-                        resp = self.call_openai_text(paper_json['text'])
+                        resp = self.call_openai_text(paper_json["text"])
                         meta = filter_dict(paper_json, META_KEYS)
                         out_dir.mkdir(parents=True, exist_ok=True)
                         self.write_outputs(out_dir, paper_id, resp, meta)
@@ -199,13 +223,15 @@ class Extractor:
     def process_dir(self, input_dir: Path, first_n: Optional[int] = None) -> None:
         SETTINGS.paths.output_dir.mkdir(parents=True, exist_ok=True)
 
-        pdf_files = list(input_dir.glob('*.pdf'))
-        jsonl_files = list(input_dir.glob('*.jsonl'))
+        pdf_files = list(input_dir.glob("*.pdf"))
+        jsonl_files = list(input_dir.glob("*.jsonl"))
 
         if first_n:
             pdf_files = pdf_files[:first_n]
 
-        print(f"Found {len(pdf_files)} PDFs and {len(jsonl_files)} JSONLs in {input_dir} to process.")
+        print(
+            f"Found {len(pdf_files)} PDFs and {len(jsonl_files)} JSONLs in {input_dir} to process."
+        )
         print(pdf_files + jsonl_files)
 
         for file in tqdm(pdf_files, desc="PDFs"):
@@ -233,7 +259,9 @@ class Extractor:
             print(f"Papers processed:     {self._n}")
             print(f"Total time (sec):     {self._sum_sec:.2f}")
             print(f"Avg time/paper (sec): {avg_sec:.2f}")
-            print(f"Total tokens:         {self._sum_tot} (in={self._sum_in}, out={self._sum_out})")
+            print(
+                f"Total tokens:         {self._sum_tot} (in={self._sum_in}, out={self._sum_out})"
+            )
             print(f"Avg tokens/paper:     {int(avg_tok)}")
         else:
             print("\nNo papers processed.")
