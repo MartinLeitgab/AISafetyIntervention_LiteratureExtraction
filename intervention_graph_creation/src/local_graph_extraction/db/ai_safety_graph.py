@@ -42,6 +42,7 @@ class AISafetyGraph:
         # - MERGE uses ONLY the base label so existing nodes (without :NODE) still match.
         # - We add :NODE after MERGE via SET n:NODE.
         # - For embedding, we conditionally set vecf32(...) only when provided; otherwise set NULL.
+        # - create [:FROM] relationship to :Source node
         cypher = f"""
         MERGE (n:{base_label} {{name: $name, type: $type}})
         SET n:{generic_label},
@@ -51,8 +52,11 @@ class AISafetyGraph:
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
             n.paper_id = $paper_id
-        WITH n, $embedding AS emb
+        WITH n, $embedding AS emb, $paper_id AS pid
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
+        WITH n, pid
+        MERGE (p:Source {{url: pid}})
+        MERGE (n)-[:FROM]->(p)
         RETURN n
         """
 
@@ -78,7 +82,10 @@ class AISafetyGraph:
 
         # Assume nodes already exist with correct labels; do not create them here.
         # One :EDGE per (a,b,etype). If exists → update props; else → create.
-        cypher = f"""
+        # create [:FROM] relationship to :Source node
+
+        # First, create/update the edge
+        edge_cypher = f"""
         MATCH (a {{name: $s}}), (b {{name: $t}})
         MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
         SET r.description = $description,
@@ -86,8 +93,89 @@ class AISafetyGraph:
             r.paper_id = $paper_id
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
+        RETURN ID(r) AS edge_id
+        """
+
+        result = g.query(edge_cypher, params)
+        edge_id = result.result_set[0][0] if result.result_set else None
+
+        # Then create the relationship from edge to source node
+        if edge_id is not None:
+            rel_cypher = f"""
+            MATCH (r) WHERE ID(r) = {edge_id}
+            MERGE (p:Source {{url: $paper_id}})
+            MERGE (r)-[:FROM]->(p)
+            """
+            g.query(rel_cypher, {"paper_id": params["paper_id"]})
+
+
+    def ingest_metadata(self, metadata: List[Dict[str, Any]]) -> None:
+        """Ingest metadata as :Source nodes in the graph."""
+        g = self.db.select_graph(SETTINGS.falkordb.graph)
+
+        # Convert metadata list to dictionary for easier processing
+        meta_dict = {item.key: item.value for item in metadata}
+
+        # Extract all metadata fields from META_KEYS
+        url = meta_dict.get("url", "")
+        title = meta_dict.get("title", "")
+        authors = meta_dict.get("authors", [])
+        date_published = meta_dict.get("date_published", "")
+        source = meta_dict.get("source", "")
+        filename = meta_dict.get("filename", "")
+        source_filetype = meta_dict.get("source_filetype", "")
+
+        # Ensure authors is a list
+        if isinstance(authors, str):
+            authors = [authors]
+
+
+        cypher = """
+        MERGE (p:Source {url: $url})
+        SET p.title = $title,
+            p.authors = $authors,
+            p.date_published = $date_published,
+            p.source = $source,
+            p.filename = $filename,
+            p.source_filetype = $source_filetype
+        RETURN p
+        """
+
+        params = {
+            "url": url,
+            "title": title,
+            "authors": authors,
+            "date_published": date_published,
+            "source": source,
+            "filename": filename,
+            "source_filetype": source_filetype
+        }
+
+        g.query(cypher, params)
+
+    def ingest_rationale(self, rationale_path: Path, url: str) -> None:
+        """Ingest rationale record as :Rationale node linked to :Source node."""
+        if not rationale_path.exists():
+            return
+
+        g = self.db.select_graph(SETTINGS.falkordb.graph)
+
+        # Read the rationale content
+        with open(rationale_path, 'r', encoding='utf-8') as f:
+            rationale_content = f.read()
+
+        cypher = """
+        MERGE (p:Source {url: $url})
+        MERGE (r:Rationale {url: $url})
+        SET r.content = $content
+        MERGE (p)-[:HAS_RATIONALE]->(r)
         RETURN r
-        """ 
+        """
+
+        params = {
+            "url": url,
+            "content": rationale_content
+        }
 
         g.query(cypher, params)
 
@@ -146,6 +234,18 @@ class AISafetyGraph:
     def ingest_file(self, json_path: Path, errors: dict) -> bool:
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
         doc = PaperSchema(**data)
+
+        # Extract URL from metadata for use in rationale ingestion
+        meta_dict = {item.key: item.value for item in doc.meta}
+        url = meta_dict.get("url", "")
+
+        # Ingest metadata before the local graph
+        self.ingest_metadata(doc.meta)
+
+        # Ingest rationale if available
+        rationale_path = json_path.with_stem(json_path.stem + '_summary')
+        if rationale_path.exists():
+            self.ingest_rationale(rationale_path, url)
 
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
         if local_graph is None:
