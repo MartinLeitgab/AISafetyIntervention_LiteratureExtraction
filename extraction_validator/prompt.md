@@ -10,36 +10,27 @@ Validate extraction quality against source material, ensure structural integrity
 {
   "nodes": [
     {
-      "id": "unique_stable_string",
-      "name": "concise description of node", 
+      "name": "concise description of node",
       "aliases": ["array of 2-3 alternative concise descriptions"],
       "type": "concept|intervention",
-      "props": {
-        "description": "detailed technical description (1-2 sentences max)",
-        "concept_category": "string if type=concept, else null",
-        "intervention_lifecycle": "integer 1-6 if type=intervention, else null", 
-        "intervention_maturity": "integer 1-4 if type=intervention, else null"
-      }
+      "description": "detailed technical description of node (1-2 sentences only)",
+      "concept_category": "string if type=concept, otherwise null",
+      "intervention_lifecycle": "integer 1-6 if type=intervention, otherwise null",
+      "intervention_maturity": "integer 1-4 if type=intervention, otherwise null"
     }
   ],
-  "edges": [
+  "logical_chains": [
     {
-      "id": "unique_stable_string",
-      "type": "relationship_verb",
-      "source": "source_node_id",
-      "target": "target_node_id", 
-      "props": {
-        "description": "concise relationship description",
-        "confidence": "integer 1-5"
-      }
-    }
-  ],
-  "chains": [
-    {
-      "id": "unique_stable_string",
-      "title": "concise chain description",
-      "steps": ["node_id", "edge_id", "node_id", "edge_id", "node_id"],
-      "rationale": "logical justification for chain"
+      "title": "concise description of logical chain",
+      "edges": [
+        {
+          "type": "relationship label verb",
+          "source_node": "source node name",
+          "target_node": "target node name",
+          "description": "concise description of logical relationship",
+          "edge_confidence": "integer 1-5"
+        }
+      ]
     }
   ]
 }
@@ -49,16 +40,15 @@ Validate extraction quality against source material, ensure structural integrity
 
 ### 1. JSON & Schema Validation (BLOCKER if fails)
 - Parse JSON successfully without errors
-- All required fields present (`nodes[].id|type|name`, `edges[].id|type|source|target`)
+- All required fields present (`nodes[].name|type, logical_chains[].title`)
 - Unique IDs across all nodes, edges, chains
 - Valid data types and constraints
 - No malformed structures
 
 ### 2. Referential Integrity (BLOCKER if fails) 
-- All `edges.source/target` reference existing `node.id`
-- All `chains.steps` alternate valid `node.id` and `edge.id`
-- Chains start and end with `node.id`
-- No dangling references
+- All `logical_chains[].edges[].source_node/target_node` reference existing `node.name`
+- No dangling references to non-existent nodes
+- Consistent node name usage across references
 
 ### 3. Orphan Analysis (MAJOR issues)
 - Identify nodes with degree=0 (not referenced in edges or chains)
@@ -170,25 +160,23 @@ Validate extraction quality against source material, ensure structural integrity
         }
       }
     ],
-    "add_edges": [
+      "add_logical_chains": [
       {
-        "id": "new_edge_id",
-        "type": "relationship_verb",
-        "source": "source_node_id",
-        "target": "target_node_id"
-      }
-    ],
-    "add_chains": [
-      {
-        "id": "new_chain_id", 
-        "title": "chain description",
-        "steps": ["node_id", "edge_id", "node_id"],
-        "rationale": "justification with source citation"
+        "title": "chain_title",
+        "edges": [
+          {
+            "type": "relationship_verb",
+            "source_node": "source_name",
+            "target_node": "target_name",
+            "description": "relationship description",
+            "edge_confidence": 4
+          }
+        ]
       }
     ],
     "edits": [
       {
-        "target_type": "node|edge|chain",
+        "target_type": "node|chain",
         "target_id": "element_id",
         "changes": {
           "field_name": "new_value"
@@ -196,28 +184,26 @@ Validate extraction quality against source material, ensure structural integrity
       }
     ],
     "merges": [
-      {
-        "keep_id": "primary_id",
-        "absorb_ids": ["secondary_id1", "secondary_id2"], 
-        "retarget_edges": ["edge_id1", "edge_id2"]
+       {
+        "target_name": "primary_name",
+        "absorbed_names": ["secondary_name1", "secondary_name2"],
+        "retargeted_references": ["chain_title1", "chain_title2"]
       }
     ],
     "deletions": [
-      {
-        "target_type": "node|edge|chain",
-        "target_id": "element_id",
+       {
+        "kind": "node|chain",
+        "target": "element_name_or_title",
         "reason": "duplicate|unsupported|invalid"
       }
     ]
   },
-  "corrected_graph": {
+  "final_graph": {
     "nodes": [],
-    "edges": [], 
-    "chains": [],
+    "logical_chains": [],
     "meta": {
-      "version": "1.1",
-      "source_hash": "deterministic_hash",
-      "validation_timestamp": "iso_datetime"
+      "version": "1.0",
+      "source_hash": "deterministic_hash"
     }
   },
   "audit_trail": {
