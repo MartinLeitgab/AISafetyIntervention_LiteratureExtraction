@@ -2,6 +2,7 @@ import os
 import json
 import networkx as nx
 
+
 def sanitize(value):
     """Convert None or non-strings to safe exportable values for GEXF."""
     if value is None:
@@ -10,18 +11,24 @@ def sanitize(value):
         return json.dumps(value, ensure_ascii=False)
     return str(value)
 
+
 def _merge_aliases(existing_aliases_str, new_aliases_list):
-    existing = [a.strip() for a in existing_aliases_str.split(",")] if existing_aliases_str else []
+    existing = (
+        [a.strip() for a in existing_aliases_str.split(",")]
+        if existing_aliases_str
+        else []
+    )
     new = [a.strip() for a in (new_aliases_list or [])]
     merged = sorted({a for a in existing + new if a})
     return ", ".join(merged)
 
+
 def merge_local_graphs_to_gexf(input_dir, output_file):
     #  MultiDiGraph so we don't lose parallel edges with different relations/descriptions
     G = nx.MultiDiGraph()
-    
+
     total_files = 0
-    # Goes through each json in each subfolder in processed directory 
+    # Goes through each json in each subfolder in processed directory
     for root, _, files in os.walk(input_dir):
         for fname in files:
             if not fname.lower().endswith(".json"):
@@ -35,7 +42,7 @@ def merge_local_graphs_to_gexf(input_dir, output_file):
                 print(f"Skipping {json_path} (read error: {e})")
                 continue
 
-            # Nodes 
+            # Nodes
             for node in data.get("nodes", []):
                 node_id = sanitize(node.get("name"))
                 if not node_id:
@@ -43,24 +50,30 @@ def merge_local_graphs_to_gexf(input_dir, output_file):
 
                 attrs = {
                     "aliases": sanitize(", ".join(node.get("aliases", []))),
-                    "type": sanitize(node.get("type")),  
+                    "type": sanitize(node.get("type")),
                     "description": sanitize(node.get("description")),
                     "concept_category": sanitize(node.get("concept_category")),
-                    "intervention_lifecycle": sanitize(node.get("intervention_lifecycle")),
-                    "intervention_maturity": sanitize(node.get("intervention_maturity")),
+                    "intervention_lifecycle": sanitize(
+                        node.get("intervention_lifecycle")
+                    ),
+                    "intervention_maturity": sanitize(
+                        node.get("intervention_maturity")
+                    ),
                 }
 
                 if G.has_node(node_id):
                     # merge aliases; fill empty attrs only
                     existing = G.nodes[node_id]
-                    existing["aliases"] = _merge_aliases(existing.get("aliases", ""), node.get("aliases", []))
+                    existing["aliases"] = _merge_aliases(
+                        existing.get("aliases", ""), node.get("aliases", [])
+                    )
                     for k, v in attrs.items():
                         if not existing.get(k) and v:
                             existing[k] = v
                 else:
                     G.add_node(node_id, **attrs)
 
-            # Edges from logical_chains 
+            # Edges from logical_chains
             for chain in data.get("logical_chains", []):
                 for edge in chain.get("edges", []):
                     src = sanitize(edge.get("source_node"))
@@ -85,10 +98,10 @@ def merge_local_graphs_to_gexf(input_dir, output_file):
 
     nx.write_gexf(G, output_file)
     print(f" Processed {total_files} JSON files")
-    print(f" Exported merged graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges to {output_file}")
+    print(
+        f" Exported merged graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges to {output_file}"
+    )
+
 
 if __name__ == "__main__":
-    merge_local_graphs_to_gexf(
-        "processed",
-        "merged_local_graphs.gexf"
-    )
+    merge_local_graphs_to_gexf("processed", "merged_local_graphs.gexf")

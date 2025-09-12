@@ -6,8 +6,12 @@ from tqdm import tqdm
 from typing import List, Dict, Any
 
 from config import load_settings
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
-from intervention_graph_creation.src.local_graph_extraction.core.local_graph import LocalGraph
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    PaperSchema,
+)
+from intervention_graph_creation.src.local_graph_extraction.core.local_graph import (
+    LocalGraph,
+)
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.db.helpers import label_for
@@ -23,7 +27,7 @@ class AISafetyGraph:
 
     def upsert_node(self, node: GraphNode, paper_id: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
-        base_label = label_for(node.type)            # "Concept" or "Intervention"
+        base_label = label_for(node.type)  # "Concept" or "Intervention"
         generic_label = "NODE"
 
         # Prepare params
@@ -36,7 +40,9 @@ class AISafetyGraph:
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
             "paper_id": paper_id,
-            "embedding": (node.embedding.tolist() if node.embedding is not None else None),
+            "embedding": (
+                node.embedding.tolist() if node.embedding is not None else None
+            ),
         }
 
         # - MERGE uses ONLY the base label so existing nodes (without :NODE) still match.
@@ -73,21 +79,23 @@ class AISafetyGraph:
             "description": edge.description,
             "edge_confidence": edge.edge_confidence,
             "paper_id": paper_id,
-            "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
+            "embedding": (
+                edge.embedding.tolist() if edge.embedding is not None else None
+            ),
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
         # One :EDGE per (a,b,etype). If exists → update props; else → create.
-        cypher = f"""
-        MATCH (a {{name: $s}}), (b {{name: $t}})
-        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
+        cypher = """
+        MATCH (a {name: $s}), (b {name: $t})
+        MERGE (a)-[r:EDGE {etype: $etype}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
             r.paper_id = $paper_id
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN r
-        """ 
+        """
 
         g.query(cypher, params)
 
@@ -113,10 +121,14 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR (n:NODE) ON (n.embedding)")
             except Exception as e:
-                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
-                
+                print(
+                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
+                )
+
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query(
+            "CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}"
+        )
         print("Created vector index on (n:NODE).embedding.")
 
         # Check for existing vector index on [r:EDGE].embedding
@@ -136,9 +148,13 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding)")
             except Exception as e:
-                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
+                print(
+                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
+                )
         print("Creating new vector index on [r:EDGE].embedding...")
-        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query(
+            "CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}"
+        )
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
@@ -150,7 +166,11 @@ class AISafetyGraph:
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
         if local_graph is None:
             # Error already logged by from_paper_schema
-            errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
+            errors[json_path.stem] = (
+                [error_msg]
+                if error_msg
+                else ["Invalid paper: see error log for details."]
+            )
             return True
         for node in local_graph.nodes:
             local_graph.add_embeddings_to_nodes(node)
@@ -204,7 +224,9 @@ class AISafetyGraph:
     def get_graph(self) -> Dict[str, List[Dict[str, Any]]]:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        node_res = g.ro_query("MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node")
+        node_res = g.ro_query(
+            "MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node"
+        )
         nodes = []
         for row in node_res.result_set:
             node_id = row[0]
@@ -274,7 +296,9 @@ class AISafetyGraph:
 
         # If no relationships, just delete the node (parameterized)
         if not rel_types:
-            return graph.query("MATCH (a {name: $remove}) DELETE a", {"remove": remove_name})
+            return graph.query(
+                "MATCH (a {name: $remove}) DELETE a", {"remove": remove_name}
+            )
 
         # 2) Build the merge query dynamically with the discovered relationship types.
         #    NOTE: relationship *types* cannot be parameterized in Cypher.
@@ -306,7 +330,7 @@ class AISafetyGraph:
         """
 
         return graph.query(merge_q, {"remove": remove_name, "keep": keep_name})
-    
+
 
 def main():
     graph = AISafetyGraph()
