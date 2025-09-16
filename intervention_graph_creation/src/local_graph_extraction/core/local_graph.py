@@ -3,6 +3,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
+import torch
 
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
@@ -93,14 +94,21 @@ class LocalGraph(BaseModel):
 
     def _get_embedding(self, text: str) -> np.ndarray:
         """Get embedding for a given text using SentenceTransformers."""
+
+        # Check if MPS is available and set the device accordingly
+        if torch.backends.mps.is_available():
+            device = torch.device("mps")
+        else:
+            device = torch.device("cpu")
+
         try:
             # Lazy load the model
             if self.embedding_model is None:
                 print(f"Loading embedding model: {self.embedding_model_name}")
-                self.embedding_model = SentenceTransformer(self.embedding_model_name)
+                self.embedding_model = SentenceTransformer(self.embedding_model_name).to(device)
 
             # Get embedding
-            embedding = self.embedding_model.encode(text, batch_size=16, convert_to_numpy=True)
+            embedding = self.embedding_model.encode(text, batch_size=24, convert_to_numpy=True)
             return embedding.astype(np.float32)
         except Exception as e:
             print(f"Error getting embedding for text: {e}")
