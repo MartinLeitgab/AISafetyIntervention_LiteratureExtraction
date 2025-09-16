@@ -52,6 +52,8 @@ def load_settings(config_path: Path | None = None) -> Settings:
         paths=Paths(
             input_dir=rel(paths_cfg.get("input_dir", "./intervention_graph_creation/data/raw/pdfs_local")),
             output_dir=rel(paths_cfg.get("output_dir", "./intervention_graph_creation/data/processed")),
+            # for testing on subset of data:
+            # output_dir=rel(paths_cfg.get("output_dir", "./intervention_graph_creation/data/copy")),
         ),
         falkordb=FalkorDB(
             host=falkor_cfg.get("host", "localhost"),
