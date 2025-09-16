@@ -54,7 +54,7 @@ class AISafetyGraph:
             n.url = $url
         WITH n, $embedding AS emb, $url AS source_url
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
-        WITH n, source_url
+        WITH n, $url AS source_url
         MERGE (p:Source {{url: source_url}})
         MERGE (n)-[:FROM]->(p)
         RETURN n
