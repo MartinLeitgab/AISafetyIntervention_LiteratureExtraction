@@ -241,4 +241,4 @@ class Extractor:
 
 if __name__ == "__main__":
     extractor = Extractor()
-    extractor.process_dir(SETTINGS.paths.input_dir, 200)
+    extractor.process_dir(SETTINGS.paths.input_dir, 50)
