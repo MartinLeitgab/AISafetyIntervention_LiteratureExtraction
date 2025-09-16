@@ -2,7 +2,7 @@ from falkordb import FalkorDB
 import pandas as pd
 
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, silhouette_samples
+from sklearn.metrics import silhouette_score
 from sklearn.decomposition import PCA
 
 import matplotlib.cm as cm
@@ -45,7 +45,7 @@ class Cluster:
             'cluster': 'count'  # Count rows per cluster
             }).rename(columns={'cluster': 'count'})
 
-        cluster_table.to_csv('cluster_report.csv')
+        cluster_table.to_csv('reports/cluster_report.csv')
 
 
     def extract_embeds(self, res, embed_key="embedding"):
@@ -110,7 +110,7 @@ class Cluster:
         fig.update_layout(height=600, width=600)
         # fig.show()
         # save fig as html
-        fig.write_html("3d_scatter.html")
+        fig.write_html("reports/3d_scatter.html")
 
 
     def sil_scores(self, X, n_cluster_start, n_cluster_end):
