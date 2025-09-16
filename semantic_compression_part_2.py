@@ -18,6 +18,7 @@ class MergeSet:
 
 def merge_judge(context: str) -> List[MergeSet]:
     """ 
+    ii.
     A placeholder function for the merge judge logic. Ie a judge who decides which nodes to merge
     and provides a merge rationale.
     # TODO get in contact with Mitali and integrate her merge judge code from her pull request
@@ -25,8 +26,9 @@ def merge_judge(context: str) -> List[MergeSet]:
     # TODO implement merge judge from Mitali's PR
     return []
 
-def get_context_for_merge_judge(cluster_paths: List[List[Path]]) -> str:
+def get_prompt_for_merge_judge(cluster_paths: List[List[Path]]) -> str:
     """
+    ii.
     Given a list of paths representing the context of a cluster of similar nodes,
     generate a textual context to be provided to the merge judge.
 
@@ -46,6 +48,13 @@ def compress_cluster(g: Graph, cluster_nodes: List[int]):
     # and use bidirectional path traversal
     # to find all connected nodes regardless of which is source or target
     # https://docs.falkordb.com/cypher/match.html#bidirectional-path-traversal
+
+    # i. For each node in the set, collect all edge information and all 
+    # immediate neighbor nodes information (only nodes of neighbors, 
+    # not all edges of neighbors except the one connecting back to the node in the set here) 
+    # @ArdhitoN 's code, @jonpsy ’s 
+    # suggestion in Issue [Story 4/5] 
+    # Integrating database-driven approach for supernodes and superedges #35
 
     cypher_query = """
     // Find all paths between nodes (non-tombstone) in the cluster with length 0 or 1
@@ -69,11 +78,12 @@ def compress_cluster(g: Graph, cluster_nodes: List[int]):
 
 
     #Pass the information and an appropriate compression prompt (to be developed) to the compression LLM for combining of the set (creates one or more parent nodes from nodes in the set and returns JSON, with data structure as laid out in @MartinLeitgab 's comment to @ArdhitoN 's PR LLM-assisted Graph-Merging - Step 1 - data-only LLM input prep for node comparisons eamag/AISafetyIntervention_LiteratureExtraction#1 (comment)). (maybe partially implemented
-    context = get_context_for_merge_judge(result.result_set)
+    # ii.
+    context = get_prompt_for_merge_judge(result.result_set)
     merge_sets = merge_judge(context)
 
 
-
+    # iii.
     # Now, for each MergeSet, perform the merge operation in the graph
     for merge_set in merge_sets:
         # Extract node and edge information
