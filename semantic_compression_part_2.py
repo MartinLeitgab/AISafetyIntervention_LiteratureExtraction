@@ -17,7 +17,7 @@ class MergeSet:
     nodes: Set[int]
     rationale: str
 
-def merge_judge(context: str) -> List[MergeSet]:
+def merge_llm(context: str) -> List[MergeSet]:
     """ 
     ii.
     A placeholder function for the merge judge logic. Ie a judge who decides which nodes to merge
@@ -27,7 +27,7 @@ def merge_judge(context: str) -> List[MergeSet]:
     # TODO implement merge judge from Mitali's PR
     return []
 
-def get_prompt_for_merge_judge(cluster_paths: List[List[Path]]) -> str:
+def get_prompt_for_merge_llm(cluster_paths: List[List[Path]]) -> str:
     """
     ii.
     Given a list of paths representing the context of a cluster of similar nodes,
@@ -100,8 +100,8 @@ def compress_cluster(g: Graph, cluster_nodes: List[int]):
   
     #Pass the information and an appropriate compression prompt (to be developed) to the compression LLM for combining of the set (creates one or more parent nodes from nodes in the set and returns JSON, with data structure as laid out in @MartinLeitgab 's comment to @ArdhitoN 's PR LLM-assisted Graph-Merging - Step 1 - data-only LLM input prep for node comparisons eamag/AISafetyIntervention_LiteratureExtraction#1 (comment)). (maybe partially implemented
     # ii.
-    context = get_prompt_for_merge_judge(result.result_set)
-    merge_sets = merge_judge(context)
+    context = get_prompt_for_merge_llm(result.result_set)
+    merge_sets = merge_llm(context)
 
 
     # iii.
