@@ -2,7 +2,7 @@
 #TODO rename file and move to appropriate location
 from falkordb import FalkorDB, Graph, Path
 
-from typing import List, Set
+from typing import List, Set, Optional
 from config import load_settings
 import os
 import json
@@ -14,6 +14,9 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
+import dotenv
+dotenv.load_dotenv()
+
 SETTINGS = load_settings()
 
 
@@ -23,16 +26,14 @@ class MergeSet:
     Each MergeSet should contain at least two node IDs.
     Each node ID should be unique across all MergeSets, ensuring no node ID appears in more than one set.
     """
-    def __init__(self, nodes: Set[int], rationale: str):
+    def __init__(self, nodes: Set[int], rationale: str, parameters: Optional[dict] = None):
         self.nodes = nodes
         self.rationale = rationale
-
-    # nodes: Set[int]
-    # rationale: str
+        self.parameters = parameters or {}
 
 
 
-def get_prompt_for_merge_llm(cluster_paths: List[Path]) -> str:
+def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[int]) -> str:
     """
     Given a list of paths representing the context of a cluster of similar nodes,
     generate a textual context to be provided to the merge judge LLM.
@@ -49,21 +50,30 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path]) -> str:
             edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'source', '')} to {getattr(edge, 'target', '')}")
 
     prompt = (
-        "You are an expert in AI safety knowledge graph compression.\n"
-        "Given the following nodes and their relationships, decide which nodes should be merged into a single concept, and provide a rationale for your decision.\n\n"
+        "# AI Safety Knowledge Graph Semantic Compression\n"
+        "You are an expert in AI safety knowledge graph compression. Given the following nodes and their relationships, your task is to:\n"
+        "1. Decide which nodes should be merged into a single supernode (merged concept).\n"
+        "2. Provide a clear rationale for each merge decision.\n"
+        "3. For each merge set, generate merged parameters for the supernode: name, description, type, and any other relevant attributes.\n\n"
         "Nodes:\n" + "\n".join(node_infos) +
         "\n\nEdges:\n" + "\n".join(edge_infos) +
-        "\n\nOutput a JSON object with the following format:\n"
+        "\n\nOutput Instructions:\n"
+        "Return ONLY a valid JSON object with the following format:\n"
         "{\n"
         "  \"merge_sets\": [\n"
         "    {\n"
         "      \"node_ids\": [list of node IDs to merge],\n"
-        "      \"rationale\": \"reason for merging\"\n"
+        "      \"rationale\": \"reason for merging\",\n"
+        "      \"parameters\": {\n"
+        "        \"name\": \"string - concise name for the supernode\",\n"
+        "        \"type\": \"string - node type\",\n"
+        "        \"description\": \"string - comprehensive description\",\n"
+        "        // ...add other merged attributes as needed\n"
+        "      }\n"
         "    }\n"
         "  ]\n"
         "}\n"
     )
-    
     return prompt
 
 
@@ -73,6 +83,12 @@ def merge_llm(context: str) -> List[MergeSet]:
     Returns a list of MergeSet objects.
     """
     if not OPENAI_AVAILABLE:
+        print("OpenAI library not installed. Returning empty merge sets.")
+        return []
+
+    try:
+        from openai import OpenAI
+    except ImportError:
         print("OpenAI library not installed. Returning empty merge sets.")
         return []
 
@@ -90,24 +106,48 @@ def merge_llm(context: str) -> List[MergeSet]:
             {"role": "user", "content": context}
         ],
         temperature=0.1,
-        max_tokens=1000
+        max_tokens=70000
     )
     content = response.choices[0].message.content
-    # Try to extract JSON from the response
+    # First, try to parse the whole response as JSON
     try:
-        # If the response is wrapped in code block, extract it
-        import re
-        match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
-        json_str = match.group(1) if match else content
-        result = json.loads(json_str)
-        merge_sets = []
-        for ms in result.get("merge_sets", []):
-            merge_sets.append(MergeSet(nodes=set(ms["node_ids"]), rationale=ms["rationale"]))
-        return merge_sets
-    except Exception as e:
-        print("Error parsing LLM response:", e)
-        print("Raw response:", content)
-        return []
+        result = json.loads(content)
+        if "merge_sets" in result:
+            merge_sets = []
+            for ms in result.get("merge_sets", []):
+                merge_sets.append(MergeSet(nodes=set(ms["node_ids"]), rationale=ms["rationale"], parameters=ms.get("parameters", {})))
+            return merge_sets
+    except Exception:
+        pass
+    # Try to extract code-fenced JSON (```json ... ```
+    import re
+    code_json_match = re.search(r'```json\s*([\s\S]*?)\s*```', content)
+    if code_json_match:
+        json_str = code_json_match.group(1)
+        try:
+            result = json.loads(json_str)
+            if "merge_sets" in result:
+                merge_sets = []
+                for ms in result.get("merge_sets", []):
+                    merge_sets.append(MergeSet(nodes=set(ms["node_ids"]), rationale=ms["rationale"], parameters=ms.get("parameters", {})))
+                return merge_sets
+        except Exception:
+            pass
+    # Fallback: extract first JSON object using regex
+    json_candidates = re.findall(r'\{[\s\S]*?\}', content)
+    for json_str in json_candidates:
+        try:
+            result = json.loads(json_str)
+            if "merge_sets" in result:
+                merge_sets = []
+                for ms in result.get("merge_sets", []):
+                    merge_sets.append(MergeSet(nodes=set(ms["node_ids"]), rationale=ms["rationale"], parameters=ms.get("parameters", {})))
+                return merge_sets
+        except Exception:
+            continue
+    print("Error: No valid merge_sets JSON found in LLM response.")
+    print("Raw response:", content)
+    return []
 
 
 def get_cluster_paths(g: Graph, cluster_nodes: List[int]) -> List[List[Path]]:
@@ -167,12 +207,8 @@ def compress_cluster(g: Graph, cluster_nodes: List[int]):
     # now results should return 1 path for each edge between nodes in the cluster
     # and 1 path for each isolated node in the cluster
 
-    # Create a self-loop edge on Node 1 using MERGE
-    
-  
-    #Pass the information and an appropriate compression prompt (to be developed) to the compression LLM for combining of the set (creates one or more parent nodes from nodes in the set and returns JSON, with data structure as laid out in @MartinLeitgab 's comment to @ArdhitoN 's PR LLM-assisted Graph-Merging - Step 1 - data-only LLM input prep for node comparisons eamag/AISafetyIntervention_LiteratureExtraction#1 (comment)). (maybe partially implemented
-    # ii.
-    context = get_prompt_for_merge_llm(result.result_set)
+    #Pass the information and an appropriate compression prompt to the LLM
+    context = get_prompt_for_merge_llm(result, cluster_nodes)
     merge_sets = merge_llm(context)
 
 
@@ -215,3 +251,4 @@ if __name__ == "__main__":
     
     # Compress the cluster
     compress_cluster(g, example_cluster)
+
