@@ -68,7 +68,6 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
         "        \"name\": \"string - concise name for the supernode\",\n"
         "        \"type\": \"string - node type\",\n"
         "        \"description\": \"string - comprehensive description\",\n"
-        "        // ...add other merged attributes as needed\n"
         "      }\n"
         "    }\n"
         "  ]\n"
