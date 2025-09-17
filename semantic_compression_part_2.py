@@ -4,6 +4,15 @@ from falkordb import FalkorDB, Graph, Path
 
 from typing import List, Set
 from config import load_settings
+import os
+import json
+from typing import List, Set
+# If using OpenAI, import the client
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
 
 SETTINGS = load_settings()
 
@@ -14,29 +23,91 @@ class MergeSet:
     Each MergeSet should contain at least two node IDs.
     Each node ID should be unique across all MergeSets, ensuring no node ID appears in more than one set.
     """
-    nodes: Set[int]
-    rationale: str
+    def __init__(self, nodes: Set[int], rationale: str):
+        self.nodes = nodes
+        self.rationale = rationale
 
-def merge_llm(context: str) -> List[MergeSet]:
-    """ 
-    ii.
-    A placeholder function for the merge judge logic. Ie a judge who decides which nodes to merge
-    and provides a merge rationale.
-    # TODO get in contact with Mitali and integrate her merge judge code from her pull request
-    """
-    # TODO implement merge judge from Mitali's PR
-    return []
+    # nodes: Set[int]
+    # rationale: str
+
+
 
 def get_prompt_for_merge_llm(cluster_paths: List[List[Path]]) -> str:
     """
-    ii.
     Given a list of paths representing the context of a cluster of similar nodes,
-    generate a textual context to be provided to the merge judge.
-
+    generate a textual context to be provided to the merge judge LLM.
     Each path contains nodes and edges, which can be used to extract relevant information.
     """
-    # TODO implement context extraction logic from Mitali's PR
-    return ""
+    node_infos = []
+    edge_infos = []
+    node_ids = set()
+    for path in cluster_paths:
+        for node in path.nodes:
+            node_ids.add(node.id)
+            node_infos.append(f"Node ID: {node.id}\nName: {getattr(node, 'name', '')}\nType: {getattr(node, 'type', '')}\nDescription: {getattr(node, 'description', '')}\n")
+        for edge in path.edges:
+            edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'source', '')} to {getattr(edge, 'target', '')}")
+
+    prompt = (
+        "You are an expert in AI safety knowledge graph compression.\n"
+        "Given the following nodes and their relationships, decide which nodes should be merged into a single concept, and provide a rationale for your decision.\n\n"
+        "Nodes:\n" + "\n".join(node_infos) +
+        "\n\nEdges:\n" + "\n".join(edge_infos) +
+        "\n\nOutput a JSON object with the following format:\n"
+        "{\n"
+        "  \"merge_sets\": [\n"
+        "    {\n"
+        "      \"node_ids\": [list of node IDs to merge],\n"
+        "      \"rationale\": \"reason for merging\"\n"
+        "    }\n"
+        "  ]\n"
+        "}\n"
+    )
+    
+    return prompt
+
+
+def merge_llm(context: str) -> List[MergeSet]:
+    """
+    Calls an LLM to decide which nodes to merge and why.
+    Returns a list of MergeSet objects.
+    """
+    if not OPENAI_AVAILABLE:
+        print("OpenAI library not installed. Returning empty merge sets.")
+        return []
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("No OpenAI API key found. Returning empty merge sets.")
+        return []
+
+    client = OpenAI(api_key=api_key)
+    model = os.environ.get("OPENAI_MODEL_NAME", "gpt-3.5-turbo")
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are an expert AI safety knowledge graph compression assistant."},
+            {"role": "user", "content": context}
+        ],
+        temperature=0.1,
+        max_tokens=1000
+    )
+    content = response.choices[0].message.content
+    # Try to extract JSON from the response
+    try:
+        # If the response is wrapped in code block, extract it
+        import re
+        match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
+        json_str = match.group(1) if match else content
+        result = json.loads(json_str)
+        merge_sets = []
+        for ms in result.get("merge_sets", []):
+            merge_sets.append(MergeSet(nodes=set(ms["node_ids"]), rationale=ms["rationale"]))
+        return merge_sets
+    except Exception as e:
+        print("Error parsing LLM response:", e)
+        print("Raw response:", content)
+        return []
 
 
 def get_cluster_paths(g: Graph, cluster_nodes: List[int]) -> List[List[Path]]:
