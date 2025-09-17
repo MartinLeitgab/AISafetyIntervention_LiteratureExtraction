@@ -32,7 +32,7 @@ class MergeSet:
 
 
 
-def get_prompt_for_merge_llm(cluster_paths: List[List[Path]]) -> str:
+def get_prompt_for_merge_llm(cluster_paths: List[Path]) -> str:
     """
     Given a list of paths representing the context of a cluster of similar nodes,
     generate a textual context to be provided to the merge judge LLM.
