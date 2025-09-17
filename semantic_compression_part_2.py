@@ -52,9 +52,11 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
     prompt = (
         "# AI Safety Knowledge Graph Semantic Compression\n"
         "You are an expert in AI safety knowledge graph compression. Given the following nodes and their relationships, your task is to:\n"
-        "1. Decide which nodes should be merged into a single supernode (merged concept).\n"
-        "2. Provide a clear rationale for each merge decision.\n"
-        "3. For each merge set, generate merged parameters for the supernode: name, description, type, and any other relevant attributes.\n\n"
+        "1. Only consider merging the primary nodes listed below. Do NOT merge or suggest merging any neighbor nodes.\n"
+        "2. Decide which primary nodes should be merged into a single supernode (merged concept).\n"
+        "3. Provide a clear rationale for each merge decision.\n"
+        "4. For each merge set, generate merged parameters for the supernode: name, description, type, and any other relevant attributes.\n\n"
+        f"Primary nodes to consider for merging: {primary_node_ids}\n\n"
         "Nodes:\n" + "\n".join(node_infos) +
         "\n\nEdges:\n" + "\n".join(edge_infos) +
         "\n\nOutput Instructions:\n"
