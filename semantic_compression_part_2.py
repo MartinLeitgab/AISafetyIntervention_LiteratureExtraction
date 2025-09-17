@@ -46,6 +46,7 @@ def get_cluster_paths(g: Graph, cluster_nodes: List[int]) -> List[List[Path]]:
 
     Each path should include nodes and edges, which can be used to extract relevant information.
     """
+
     cypher_query = """
     // Find all paths between nodes (non-tombstone) in the cluster with length 0 or 1
     // the search is bidirectional
@@ -54,7 +55,7 @@ def get_cluster_paths(g: Graph, cluster_nodes: List[int]) -> List[List[Path]]:
     WHERE id(n) IN $cluster
       AND (
         // if path length is 0, n is isolated, include it
-        (length(p) = 0 AND NOT (n)-[:EDGE]-())
+        (length(p) = 0 AND NOT (n)-[:EDGE {is_tombstone:false}]-() OR (n)-[:EDGE]-(:NODE {is_tombstone: true}))
         OR
         (length(p) = 1 AND (
                 NOT id(m) IN $cluster 
@@ -130,20 +131,7 @@ def compress_cluster(g: Graph, cluster_nodes: List[int]):
     # TODO Write post-merging parent node back into DB, e.g. setting tombstone flags on raw nodes that have been merged so that only the merged node is used in future queries, and keeping info of merged raw nodes store parent nodes with lists of edges/pointers to their child nodes (TBD code, maybe not implemented yet- see @jonpsy ’s suggestion in Issue [Story 4/5] Integrating database-driven approach for supernodes and superedges #35 )
 
 
-# TODO Things to test in unit tests:
-# part i.
-# - Test that all nodes in the cluster are included
-# - Test that all edges between the nodes in the cluster are included
-# - Test that multihop doesn't happen, only direct connections are found
-# - Test that tombstone nodes and edges are not included
-# - Test that isolated nodes (no edges) are included
-# - Test that if both nodes in an edge are in the cluster, the edge is included only once
-# - What if a node in the cluster has an edge to itself (self-loop)?
-#   create self_loop_query = """
-#     MATCH (n:NODE)
-#     WHERE id(n) = 1
-#     MERGE (n)-[r:EDGE {is_tombstone: false}]->(n)
-#     """
+
 if __name__ == "__main__":
 
     db = FalkorDB(host=SETTINGS.falkordb.host, port=SETTINGS.falkordb.port)

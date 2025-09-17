@@ -23,6 +23,8 @@ def export_graph(graph_name = SETTINGS.falkordb.graph,
     nodes_result = g.ro_query("MATCH (n) RETURN ID(n), labels(n), properties(n)")
     nodes_by_label = defaultdict(list)
 
+
+    # all_nodes = []
     for record in nodes_result.result_set:
         node_id = record[0]
         labels = record[1]
@@ -31,7 +33,7 @@ def export_graph(graph_name = SETTINGS.falkordb.graph,
         # Handle nodes with multiple labels or no labels
         if labels:
             for label in labels:
-                node = {"id": node_id}
+                node = {"_": node_id}
                 node.update(props)
                 nodes_by_label[label].append(node)
         else:
@@ -40,7 +42,6 @@ def export_graph(graph_name = SETTINGS.falkordb.graph,
             node.update(props)
             nodes_by_label["unlabeled"].append(node)
 
-    # Export each node label to its own CSV file
     for label, nodes in nodes_by_label.items():
         filename = f"nodes_{label}.csv"
         pd.DataFrame(nodes).to_csv(join(out_dir, filename), index=False)
@@ -53,14 +54,14 @@ def export_graph(graph_name = SETTINGS.falkordb.graph,
     edges_by_type = defaultdict(list)
 
     for record in edges_result.result_set:
-        edge_id = record[0]
+        # edge_id = record[0]
         edge_type = record[1]
         from_id = record[2]
         to_id = record[3]
         props = record[4] or {}
 
         edge = {
-            "id": edge_id,
+            # "id": edge_id,
             "from_id": from_id,
             "to_id": to_id
         }

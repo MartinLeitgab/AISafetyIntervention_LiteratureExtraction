@@ -55,7 +55,7 @@ class AISafetyGraph:
             n.concept_category = $concept_category,
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
-            n.url = $url
+            n.url = $url,
             n.is_tombstone = $is_tombstone,
             n.is_leaf = $is_leaf,
             n.cycled_id = $cycled_id,
@@ -63,7 +63,7 @@ class AISafetyGraph:
             n.updated_at = $updated_at
         WITH n, $embedding AS emb
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
-        WITH n, source_url
+        WITH n,  $url AS source_url
         MERGE (p:Source {{url: source_url}})
         MERGE (n)-[:FROM]->(p)
         RETURN n
@@ -104,7 +104,7 @@ class AISafetyGraph:
         MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
-            r.url = $url
+            r.url = $url,
             r.is_tombstone = $is_tombstone,
             r.merge_rational = $merge_rational,
             r.cycled_id = $cycled_id,
