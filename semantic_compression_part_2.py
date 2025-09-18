@@ -72,6 +72,7 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
         "2. Decide which primary nodes should be merged into a single supernode (merged concept).\n"
         "3. Provide a clear rationale for each merge decision. Reason step by step\n"
         "4. For each merge set, generate merged parameters for the supernode: name, description, type, and any other relevant attributes.\n\n"
+        "5. Reason step by step for each merge decision to ensure the highest quality rationale.\n\n"
         f"Consider only these nodes for merging: {primary_node_ids}\n\n"
         "Nodes:\n" + "\n".join(node_infos) +
         "\n\nEdges:\n" + "\n".join(edge_infos) +
