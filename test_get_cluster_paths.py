@@ -1,13 +1,13 @@
 # pyright: standard
 # TODO put this file in the appropriate location
-from falkordb import FalkorDB, Graph, Path, Edge, Node, QueryResult
+from falkordb import FalkorDB, Graph, Path, Edge, Node
 import pytest
 from semantic_compression_part_2 import get_cluster_paths, SETTINGS
-from falkordb_bulk_loader.bulk_insert import bulk_insert
-from click.testing import CliRunner
+from upload_test_graph_to_falkordb import upload_test_graph_to_falkordb
 from collections import Counter
 from dataclasses import dataclass
 from typing import Literal, List, cast
+from os import environ
 
 @dataclass
 class GraphFixture:
@@ -115,30 +115,8 @@ def load_test_graph() -> GraphFixture:
         pass
 
     server_url = f"redis://{SETTINGS.falkordb.host}:{SETTINGS.falkordb.port}"
-    runner = CliRunner()
-    result = runner.invoke(
-        bulk_insert,
-        [
-            graph_name,
-            "--server-url", server_url,
-            "--nodes-with-label", "CONCEPT", "./test_graph/nodes_Concept.csv",
-            "--nodes-with-label", "INTERVENTION", "./test_graph/nodes_Intervention.csv",
-            "--nodes-with-label", "RATIONALE", "./test_graph/nodes_Rationale.csv",
-            "--nodes-with-label", "SOURCE", "./test_graph/nodes_Source.csv",
-         
-            "--relations-with-type", "EDGE", "./test_graph/edges_EDGE.csv",
-            "--relations-with-type", "FROM", "./test_graph/edges_FROM.csv",
-            "--relations-with-type", "HAS_RATIONALE", "./test_graph/edges_HAS_RATIONALE.csv",
-        ],
-    )
-    if result.exit_code != 0:
-        raise RuntimeError(f"bulk_insert failed: {result.output}\n{result.exception}")
+    upload_test_graph_to_falkordb(db,server_url, graph_name)
     graph = db.select_graph(graph_name)
-    graph.query("""
-    MATCH (n)
-    SET n:NODE
-    """)
-
     l = FixtureNodeList(graph)
 
     alone_node_list, _ = l.get_result("""
@@ -328,11 +306,11 @@ def shared_graph():
     try:
         yield graph
     finally:
-        # comment this out if you want to inspect the
-        # graphs in the falkorDB server after tests
+        # run with `SAVE_DEBUG_DATA=1 uv run pytest $ThisFile` to keep the graph
         #     To find all test nodes look use
         # MATCH p=(:TEST)-[:EDGE*0..50]-() RETURN p
-        graph.graph.delete()
+        if not environ.get("SAVE_DEBUG_DATA") == "1":
+            graph.graph.delete()
 
 @pytest.fixture
 def single_test_graph():
@@ -341,7 +319,8 @@ def single_test_graph():
     try:
         yield graph
     finally:
-        graph.graph.delete()
+        if not environ.get("SAVE_DEBUG_DATA") == "1":
+            graph.graph.delete()
 
 
 def test_1(shared_graph: GraphFixture):

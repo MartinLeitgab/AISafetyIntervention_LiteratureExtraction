@@ -1,12 +1,14 @@
 # pyright: standard
 #TODO rename file and move to appropriate location
-from falkordb import FalkorDB, Graph, Path
+from falkordb import FalkorDB, Graph, Path, Node
 
 from typing import List, Set, Optional
 from config import load_settings
 import os
 import json
 from typing import List, Set
+from pathlib import Path
+from dataclasses import dataclass, field
 # If using OpenAI, import the client
 try:
     from openai import OpenAI
@@ -19,17 +21,23 @@ dotenv.load_dotenv()
 
 SETTINGS = load_settings()
 
-
+@dataclass
 class MergeSet:
     """
     A set of node IDs to be merged, along with a rationale for the merge decision.
     Each MergeSet should contain at least two node IDs.
     Each node ID should be unique across all MergeSets, ensuring no node ID appears in more than one set.
     """
-    def __init__(self, nodes: Set[int], rationale: str, parameters: Optional[dict] = None):
-        self.nodes = nodes
-        self.rationale = rationale
-        self.parameters = parameters or {}
+    nodes: Set[int]
+    rationale: str
+    parameters: dict = field(default_factory={})
+    def to_dict(self):
+        """Convert the MergeSet to a dictionary for JSON serialization."""
+        return {
+            'nodes': list(self.nodes),
+            'rationale': self.rationale,
+            'parameters': self.parameters
+        }
 
 
 
@@ -43,10 +51,10 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
     edge_infos = []
     node_ids = set()
     for path in cluster_paths:
-        for node in path.nodes:
+        for node in path.nodes():
             node_ids.add(node.id)
             node_infos.append(f"Node ID: {node.id}\nName: {getattr(node, 'name', '')}\nType: {getattr(node, 'type', '')}\nDescription: {getattr(node, 'description', '')}\n")
-        for edge in path.edges:
+        for edge in path.edges():
             edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'source', '')} to {getattr(edge, 'target', '')}")
 
     prompt = (
@@ -107,7 +115,8 @@ def merge_llm(context: str) -> List[MergeSet]:
             {"role": "user", "content": context}
         ],
         temperature=0.1,
-        max_tokens=70000
+        # max_tokens=70000
+        max_tokens=4096 # gpt-3.5-turbo limit is 4096
     )
     content = response.choices[0].message.content
     # First, try to parse the whole response as JSON
@@ -243,9 +252,7 @@ def compress_cluster(g: Graph, cluster_nodes: List[int]):
 if __name__ == "__main__":
 
     db = FalkorDB(host=SETTINGS.falkordb.host, port=SETTINGS.falkordb.port)
-    
     g = db.select_graph(SETTINGS.falkordb.graph)
-
 
     # Example cluster of similar node IDs
     example_cluster = [1, 2, 3, 133]
