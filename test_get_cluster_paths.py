@@ -340,6 +340,8 @@ def test_1(shared_graph: GraphFixture):
             assert isinstance(path, Path)
             for node in path.nodes():
                 if node.id is not None:
+                    assert node.properties["name"] != ""
+                    assert node.properties["description"] != ""
                     not_found_in_cluster.discard(node.id)
                     not_found_in_neighbor.discard(node.id)
                     if node.id not in cluster and node.id not in shared_graph.neighbor_nodes:

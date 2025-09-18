@@ -1,20 +1,17 @@
 # pyright: standard
 #TODO rename file and move to appropriate location
-from falkordb import FalkorDB, Graph, Path, Node
+from falkordb import FalkorDB, Graph, Path, Node, Edge
 
 from typing import List, Set, Optional
 from config import load_settings
 import os
 import json
 from typing import List, Set
-from pathlib import Path
 from dataclasses import dataclass, field
-# If using OpenAI, import the client
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
+import re
+from pathlib import Path as PathLibPath
+from openai import OpenAI
+from os import environ
 
 import dotenv
 dotenv.load_dotenv()
@@ -30,7 +27,7 @@ class MergeSet:
     """
     nodes: Set[int]
     rationale: str
-    parameters: dict = field(default_factory={})
+    parameters: dict = field(default_factory=dict)
     def to_dict(self):
         """Convert the MergeSet to a dictionary for JSON serialization."""
         return {
@@ -50,12 +47,18 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
     node_infos = []
     edge_infos = []
     node_ids = set()
+
+    nodes: dict[int, Node] = {}
     for path in cluster_paths:
         for node in path.nodes():
             node_ids.add(node.id)
-            node_infos.append(f"Node ID: {node.id}\nName: {getattr(node, 'name', '')}\nType: {getattr(node, 'type', '')}\nDescription: {getattr(node, 'description', '')}\n")
+            nodes[node.id or -1] = node
         for edge in path.edges():
-            edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'source', '')} to {getattr(edge, 'target', '')}")
+            edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'src_node', '')} to {getattr(edge, 'dest_node', '')}")
+
+    for node_id, node in nodes.items():
+        node_infos.append(f"Node ID: {node_id}\nName: {node.properties['name']}\nType: {node.properties['type']}\nDescription: {node.properties['description']}\n")
+
 
     prompt = (
         "# AI Safety Knowledge Graph Semantic Compression\n"
@@ -91,16 +94,6 @@ def merge_llm(context: str) -> List[MergeSet]:
     Calls an LLM to decide which nodes to merge and why.
     Returns a list of MergeSet objects.
     """
-    if not OPENAI_AVAILABLE:
-        print("OpenAI library not installed. Returning empty merge sets.")
-        return []
-
-    try:
-        from openai import OpenAI
-    except ImportError:
-        print("OpenAI library not installed. Returning empty merge sets.")
-        return []
-
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         print("No OpenAI API key found. Returning empty merge sets.")
@@ -118,7 +111,14 @@ def merge_llm(context: str) -> List[MergeSet]:
         # max_tokens=70000
         max_tokens=4096 # gpt-3.5-turbo limit is 4096
     )
+    if environ.get("SAVE_DEBUG_DATA") == "1":
+        out_path = PathLibPath("./test_output_data/merge_llm_response.json")
+        out_path.parent.mkdir(exist_ok=True, parents=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(response.model_dump_json())
     content = response.choices[0].message.content
+    if content is None:
+        raise ValueError("LLM response has no content.")
     # First, try to parse the whole response as JSON
     try:
         result = json.loads(content)
@@ -130,7 +130,6 @@ def merge_llm(context: str) -> List[MergeSet]:
     except Exception:
         pass
     # Try to extract code-fenced JSON (```json ... ```
-    import re
     code_json_match = re.search(r'```json\s*([\s\S]*?)\s*```', content)
     if code_json_match:
         json_str = code_json_match.group(1)
@@ -157,7 +156,8 @@ def merge_llm(context: str) -> List[MergeSet]:
             continue
     print("Error: No valid merge_sets JSON found in LLM response.")
     print("Raw response:", content)
-    return []
+    raise ValueError("No valid merge_sets JSON found in LLM response.")
+    # return []
 
 
 def get_cluster_paths(g: Graph, cluster_nodes: List[int]) -> List[List[Path]]:
