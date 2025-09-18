@@ -46,12 +46,18 @@ def upload_test_graph_to_falkordb(
     if result.exit_code != 0:
         raise RuntimeError(f"bulk_insert failed: {result.output}\n{result.exception}")
     g = db.select_graph(graph_name)
-    r = g.query(
+    g.query("""
+    CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}
+    """)
+    g.query(
         """
     MATCH (n)
     SET n:NODE
+    SET n.embedding = CASE WHEN n.embedding IS NULL THEN NULL ELSE vecf32(n.embedding) END
     """
     )
+   
+
 
 
 if __name__ == "__main__":

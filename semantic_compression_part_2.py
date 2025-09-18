@@ -52,12 +52,17 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
     for path in cluster_paths:
         for node in path.nodes():
             node_ids.add(node.id)
-            nodes[node.id or -1] = node
+            nodes[node.id if node.id is not None else -1] = node
         for edge in path.edges():
-            edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'src_node', '')} to {getattr(edge, 'dest_node', '')}")
+            edge_infos.append(f"Edge: { edge.properties.get('type', 'unknown')} from {edge.src_node} to {edge.dest_node}")
 
-    for node_id, node in nodes.items():
-        node_infos.append(f"Node ID: {node_id}\nName: {node.properties['name']}\nType: {node.properties['type']}\nDescription: {node.properties['description']}\n")
+    for node_id, node in sorted(nodes.items()):
+        node_infos.append(
+            f"Node ID: {node_id}\n"
+            f"Name: {node.properties.get('name', 'unknown')}\n"
+            f"Type: {node.properties.get('type', 'unknown')}\n"
+            f"Description: {node.properties.get('description', 'unknown')}\n"
+        )
 
 
     prompt = (
@@ -65,9 +70,9 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
         "You are an expert in AI safety knowledge graph compression. Given the following nodes and their relationships, your task is to:\n"
         "1. Only consider merging the primary nodes listed below. Do NOT merge or suggest merging any neighbor nodes.\n"
         "2. Decide which primary nodes should be merged into a single supernode (merged concept).\n"
-        "3. Provide a clear rationale for each merge decision.\n"
+        "3. Provide a clear rationale for each merge decision. Reason step by step\n"
         "4. For each merge set, generate merged parameters for the supernode: name, description, type, and any other relevant attributes.\n\n"
-        f"Primary nodes to consider for merging: {primary_node_ids}\n\n"
+        f"Consider only these nodes for merging: {primary_node_ids}\n\n"
         "Nodes:\n" + "\n".join(node_infos) +
         "\n\nEdges:\n" + "\n".join(edge_infos) +
         "\n\nOutput Instructions:\n"
@@ -100,16 +105,19 @@ def merge_llm(context: str) -> List[MergeSet]:
         return []
 
     client = OpenAI(api_key=api_key)
-    model = os.environ.get("OPENAI_MODEL_NAME", "gpt-3.5-turbo")
+    # model = os.environ.get("OPENAI_MODEL_NAME", "gpt-3.5-turbo")
+    model = os.environ.get("OPENAI_MODEL_NAME", "o3")
     response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": "You are an expert AI safety knowledge graph compression assistant."},
             {"role": "user", "content": context}
         ],
-        temperature=0.1,
-        # max_tokens=70000
-        max_tokens=4096 # gpt-3.5-turbo limit is 4096
+        # temperature=0.1,
+        # max_tokens=2000
+        # max_tokens=70000 not compaitible with o series models
+        # max_tokens=4096 # gpt-3.5-turbo limit is 4096
+        # max_tokens=8000 # o1/o3 limit is 8192
     )
     if environ.get("SAVE_DEBUG_DATA") == "1":
         out_path = PathLibPath("./test_output_data/merge_llm_response.json")
