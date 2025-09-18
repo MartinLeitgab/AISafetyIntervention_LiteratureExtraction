@@ -45,7 +45,7 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
     for path in cluster_paths:
         for node in path.nodes:
             node_ids.add(node.id)
-            node_infos.append(f"Node ID: {node.id}\nName: {getattr(node, 'name', '')}\nType: {getattr(node, 'type', '')}\nDescription: {getattr(node, 'description', '')}\n")
+            node_infos.append(f"Node ID: {node.id}\nName: {getattr(node.properties, 'name', '')}\nType: {getattr(node.properties, 'type', '')}\nDescription: {getattr(node.properties, 'description', '')}\n")
         for edge in path.edges:
             edge_infos.append(f"Edge: {getattr(edge, 'type', '')} from {getattr(edge, 'source', '')} to {getattr(edge, 'target', '')}")
 
@@ -107,7 +107,7 @@ def merge_llm(context: str) -> List[MergeSet]:
             {"role": "user", "content": context}
         ],
         temperature=0.1,
-        max_tokens=70000
+        max_tokens=2000
     )
     content = response.choices[0].message.content
     # First, try to parse the whole response as JSON
