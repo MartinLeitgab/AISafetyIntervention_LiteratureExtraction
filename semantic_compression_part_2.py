@@ -50,17 +50,21 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
     node_infos = []
     edge_infos = []
     node_ids = set()
+    nodes: dict[int, Node] = {}
     for path in cluster_paths:
         for node in path.nodes():
             node_ids.add(node.id)
-            node_infos.append(
-                f"Node ID: {node.id}\n"
-                f"Name: {node.properties['name']}\n"
-                f"Type: {node.properties['type']}\n"
-                f"Description: {node.properties['description']}\n"
-            )
+            nodes[node.id if node.id is not None else -1] = node
         for edge in path.edges():
-            edge_infos.append(f"Edge: {edge.properties['type']} from {edge.properties['src_node']} to {edge.properties['dest_node']}")
+            edge_infos.append(f"Edge: {edge.properties['type']} from {edge.src_node} to {edge.dest_node}")
+
+    for node_id, node in sorted(nodes.items()):
+        node_infos.append(
+            f"Node ID: {node_id}\n"
+            f"Name: {node.properties['name']}\n"
+            f"Type: {node.properties['type']}\n"
+            f"Description: {node.properties['description']}\n"
+        )
 
     prompt = (
         "# AI Safety Knowledge Graph Semantic Compression\n"
@@ -69,6 +73,7 @@ def get_prompt_for_merge_llm(cluster_paths: List[Path], primary_node_ids: List[i
         "2. Decide which primary nodes should be merged into a single supernode (merged concept).\n"
         "3. Provide a clear rationale for each merge decision.\n"
         "4. For each merge set, generate merged parameters for the supernode: name, description, type, and any other relevant attributes.\n\n"
+        "5. Reason step by step for each merge decision to ensure the highest quality rationale.\n\n"
         f"Primary nodes to consider for merging: {primary_node_ids}\n\n"
         "Nodes:\n" + "\n".join(node_infos) +
         "\n\nEdges:\n" + "\n".join(edge_infos) +
@@ -112,7 +117,7 @@ def merge_llm(context: str) -> List[MergeSet]:
         return []
 
     client = OpenAI(api_key=api_key)
-    model = os.environ.get("OPENAI_MODEL_NAME", "gpt-3.5-turbo")
+    model = os.environ.get("OPENAI_MODEL_NAME", "gpt-4o")
     response = client.chat.completions.create(
         model=model,
         messages=[
