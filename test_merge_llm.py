@@ -27,11 +27,26 @@ class GraphFixture:
 def should_save_debug_data() -> bool:
     return environ.get("SAVE_DEBUG_DATA") == "1"
 
+def use_jeff_graph() -> bool:
+    return environ.get("JEFF_TEST_GRAPH") == "1"
+
 
 def load_test_graph() -> GraphFixture:
     """
     Load a test graph from CSV files using the bulk loader. Then make some more nodes for corner cases.
     """
+
+    if use_jeff_graph():
+        # loading jeff's validation graph for now
+        graph_name = "validation"
+        db = FalkorDB(host=SETTINGS.falkordb.host, port=SETTINGS.falkordb.port)
+        graph = db.select_graph(graph_name)
+        graph.query("""
+                    MATCH (n:NODE)
+                    SET n.is_tombstone = false
+                    """)
+        return GraphFixture(graph)
+
     graph_name = "TEST_merg_llm"
     db = FalkorDB(host=SETTINGS.falkordb.host, port=SETTINGS.falkordb.port)
     graph = db.select_graph(graph_name)
@@ -116,98 +131,6 @@ def single_test_graph():
         if not should_save_debug_data():
             graph.graph.delete()
 
-class Clusters:
-    clusters: Dict[int, List[Node]] = {}
-    node_id_to_cluster_id: Dict[int, int] = {}
-    def __init__(self, max_cluster_size: int = 10) -> None:
-        self.clusters = {}
-        self.node_id_to_cluster_id = {}
-        self.max_cluster_size = max_cluster_size
-
-    def get_cluster_id(self, node: Node) -> int | None:
-        return self.node_id_to_cluster_id.get(node.id if node.id is not None else -1, None)
-
-    def add_node(self, cluster_id: int, node: Node) -> None:
-        """Add a node to a cluster. If the cluster does not exist, create it.
-        If the cluster is full, create a new cluster with the node's ID as the cluster ID.
-        """
-        assert self.get_cluster_id(node) is None, "Node is already in a cluster"
-        if len(self.clusters.get(cluster_id, [])) >= self.max_cluster_size:
-            cluster_id = node.id if node.id is not None else -1
-        if cluster_id not in self.clusters:
-            self.clusters[cluster_id] = []
-        self.clusters[cluster_id].append(node)
-        if node.id is not None:
-            self.node_id_to_cluster_id[node.id] = cluster_id
-
-    def merge_clusters(self, cluster_id1: int, cluster_id2: int) -> None:
-        """Merge two clusters. The nodes from cluster_id2 are added to cluster_id1.
-        If the resulting cluster is too large, split the cluster into multiple clusters.
-        With the last in first out order.
-        """
-        if cluster_id1 == cluster_id2:
-            return
-        if cluster_id1 not in self.clusters or cluster_id2 not in self.clusters:
-            return
-        nodes_to_move = self.clusters[cluster_id2]
-
-        if len(self.clusters[cluster_id1]) + len(nodes_to_move) <= self.max_cluster_size:
-            # simple case, just add all nodes to cluster_id1
-            self.clusters[cluster_id1].extend(nodes_to_move)
-            for node in nodes_to_move:
-                if node.id is not None:
-                    self.node_id_to_cluster_id[node.id] = cluster_id1
-            del self.clusters[cluster_id2]
-            return
-        # complex case, need to split the cluster
-        while len(self.clusters[cluster_id1]) < self.max_cluster_size:
-            node = nodes_to_move.pop(0)
-            self.clusters[cluster_id1].append(node)
-            if node.id is not None:
-                self.node_id_to_cluster_id[node.id] = cluster_id1
-            continue
-        if len(nodes_to_move) == 0:
-            del self.clusters[cluster_id2]
-            return
-        new_cluster_id = nodes_to_move[0].id if nodes_to_move[0].id is not None else -1
-        self.clusters[new_cluster_id] = nodes_to_move
-        del self.clusters[cluster_id2]
-        for node in nodes_to_move:
-            if node.id is not None:
-                self.node_id_to_cluster_id[node.id] = new_cluster_id
-
-    def cluster_results(self, results: QueryResult) -> List[List[Node]]:
-        """
-        greedily build clusters of up to 10 nodes
-        works semi-well because we order the result set by
-        score ascending so prioritize more similar nodes first
-        """
-        for seed, node, score in results.result_set:
-            assert isinstance(seed, Node)
-            assert isinstance(node, Node)
-            assert isinstance(score, float)
-            if seed.id is None or node.id is None:
-                assert False, "Node ID should not be None"
-                continue
-            if (cluster_id := self.get_cluster_id(seed)) is not None:
-                if (node_cluster_id := self.get_cluster_id(node)) is not None:
-                    # both seed and node are already in clusters
-                    self.merge_clusters(cluster_id, node_cluster_id)
-                    continue
-                self.add_node(cluster_id, node)
-                continue
-            # seed not in a cluster
-            if (cluster_id := self.get_cluster_id(node)) is not None:
-                self.add_node(cluster_id, seed)
-                continue
-            # neither seed nor node are in a cluster
-            cluster_id = seed.id
-            self.add_node(cluster_id, seed)
-            self.add_node(cluster_id, node)
-            continue
-        return list(self.clusters.values())
-
-
 def test_1(shared_graph: GraphFixture):
     """In this test we will check all of the nodes in the test graph.
     Assuming then entire graph is a cluster.
@@ -215,8 +138,9 @@ def test_1(shared_graph: GraphFixture):
     graph = shared_graph.graph
 
     result = graph.query(
-         """
+         f"""
         MATCH (seed:NODE)
+        // jeff's graph does not have tombstone nodes
         WHERE seed.is_tombstone = false AND seed.embedding IS NOT NULL
         WITH seed
         CALL db.idx.vector.queryNodes('NODE', 'embedding', 10, seed.embedding)
@@ -224,57 +148,85 @@ def test_1(shared_graph: GraphFixture):
         // note that queryNodes produces cosine distance = 1 - cosine similarity
         // so smaller distance means more similar
         // we filter to only very similar nodes
-        // we also filter to id(seed) < id(node) to avoid duplicate pairs and self-matches
-        WHERE score < 0.4 AND id(seed) < id(node)
+        WHERE score < 0.1 AND seed <> node
         RETURN seed, node, score
+        // order by ascending so the most similar nodes are processed first
         ORDER BY score ASC
                  """)
-    clusters = (Clusters()).cluster_results(result)
 
-    if should_save_debug_data():
-        debug_path = PathLibPath("./test_output_data/vector_query_result.json")
-        debug_path.parent.mkdir(exist_ok=True, parents=True)
-        with open(debug_path, "w", encoding="utf-8") as f:
-            json.dump(clusters, f, cls=GraphJSONEncoder, indent=4)
-
-    all_nodes: List[List[Node]] = graph.query(
-        """
-    MATCH (n:NODE)
-    RETURN n
-    """
-    ).result_set
-    all_node_ids = {n[0].id for n in all_nodes if n[0].id is not None}
-    all_node_ids = list(all_node_ids)
-
-    # only test 100 nodes at a time
-    selected_node_ids = all_node_ids[:100]
-
-    list_of_list_of_paths = get_cluster_paths(graph, selected_node_ids)
-    assert len(list_of_list_of_paths) > 0
     
+    seed_to_nodes: Dict[int, List[Node]] = {}
+    for seed, node ,_score in result.result_set:
+        assert seed.id is not None, "Node ID should not be None"
+        seed_to_nodes.setdefault(seed.id, [seed]).append(node)
 
-    # Get cluster paths returns a list of list of paths
-    # but they should only have one path in each list
-    # TODO adjust get_cluster_paths to return a list of paths
-    for paths in list_of_list_of_paths:
-        assert len(paths) > 0
 
-    paths = [paths[0] for paths in list_of_list_of_paths]
-    if should_save_debug_data():
-        paths_path = PathLibPath("./test_output_data/paths.txt")
-        paths_path.parent.mkdir(exist_ok=True, parents=True)
-        dump_paths(paths, paths_path)
 
-    merge_prompt = get_prompt_for_merge_llm(paths, primary_node_ids=selected_node_ids)
-    if should_save_debug_data():
-        merge_prompt_path = PathLibPath("./test_output_data/merge_prompt.txt")
-        merge_prompt_path.parent.mkdir(exist_ok=True, parents=True)
-        with open(merge_prompt_path, "w") as f:
-            f.write(merge_prompt)
-    merge_set = merge_llm(merge_prompt)
-    # TODO actual tests to see if merge set is correct
-    # for now, just pass the test, but save the merge set
-    if should_save_debug_data():
-        merge_set_path = PathLibPath("test_output_data/merge_set.txt")
-        with open(merge_set_path, "w") as f:
-            json.dump([m.to_dict() for m in merge_set], f, indent=4)
+    clusters_by_size = sorted(seed_to_nodes.values(), key=lambda item: len(item), reverse=True)
+    assert len(clusters_by_size) > 0
+    assert len(clusters_by_size[0]) > 0
+    assert len(clusters_by_size[0]) >= len(clusters_by_size[-1])
+
+    target_cluster = clusters_by_size[5]
+    for target_cluster_i in [15,25,35,45]:
+        target_cluster = clusters_by_size[target_cluster_i]
+
+        # biggest_cluster: List[Node] | None = None
+
+        # for _seed_id, nodes in seed_to_nodes.items():
+        #     biggest_cluster = nodes if biggest_cluster is None or len(nodes) > len(biggest_cluster) else biggest_cluster
+        #     if len(biggest_cluster) == 11:
+        #         break
+        # assert biggest_cluster is not None
+        # target_cluster = biggest_cluster
+        out_folder = f"./test_output_data/cluster_{target_cluster_i}"
+        if use_jeff_graph():
+            selected_cluster = target_cluster
+            selected_node_ids = [node.id for node in selected_cluster if node.id is not None]
+            assert len(selected_node_ids) > 0
+            if should_save_debug_data():
+                debug_path = PathLibPath(f"{out_folder}/cluster_being_tested.json")
+                debug_path.parent.mkdir(exist_ok=True, parents=True)
+                with open(debug_path, "w", encoding="utf-8") as f:
+                    json.dump(selected_cluster, f, cls=GraphJSONEncoder, indent=4)
+        else:
+            all_nodes: List[List[Node]] = graph.query(
+                """
+            MATCH (n:NODE)
+            RETURN n
+            """
+            ).result_set
+            all_node_ids = {n[0].id for n in all_nodes if n[0].id is not None}
+            all_node_ids = list(all_node_ids)
+
+            # only test 100 nodes at a time
+            selected_node_ids = all_node_ids[:100]
+            
+        list_of_list_of_paths = get_cluster_paths(graph, selected_node_ids)
+        assert len(list_of_list_of_paths) > 0
+
+        # Get cluster paths returns a list of list of paths
+        # but they should only have one path in each list
+        # TODO adjust get_cluster_paths to return a list of paths
+        for paths in list_of_list_of_paths:
+            assert len(paths) > 0
+
+        paths = [paths[0] for paths in list_of_list_of_paths]
+        if should_save_debug_data():
+            paths_path = PathLibPath(f"{out_folder}/paths.txt")
+            paths_path.parent.mkdir(exist_ok=True, parents=True)
+            dump_paths(paths, paths_path)
+
+        merge_prompt = get_prompt_for_merge_llm(paths, primary_node_ids=selected_node_ids)
+        if should_save_debug_data():
+            merge_prompt_path = PathLibPath(f"{out_folder}/merge_prompt.txt")
+            merge_prompt_path.parent.mkdir(exist_ok=True, parents=True)
+            with open(merge_prompt_path, "w") as f:
+                f.write(merge_prompt)
+        merge_set = merge_llm(merge_prompt)
+        # TODO actual tests to see if merge set is correct
+        # for now, just pass the test, but save the merge set
+        if should_save_debug_data():
+            merge_set_path = PathLibPath(f"{out_folder}/merge_set.txt")
+            with open(merge_set_path, "w") as f:
+                json.dump([m.to_dict() for m in merge_set], f, indent=4)
