@@ -8,6 +8,7 @@ This repository contains all outcomes created in the 2025 Eleuther AI Summer of 
 
 - [UV](https://github.com/astral-sh/uv) (Python package installer and resolver)
 - [pre-commit](https://pre-commit.com/) (Git hooks manager)
+- docker (to start local FalkorDB instance) 
 
 ### Installation
 
