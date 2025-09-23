@@ -7,7 +7,6 @@ import yaml
 
 # ---- Data models ------------------------------------------------------------
 
-
 @dataclass(frozen=True)
 class Paths:
     input_dir: Path
@@ -30,7 +29,6 @@ class Settings:
 
 # ---- Loader -----------------------------------------------------------------
 
-
 def load_settings(config_path: Path | None = None) -> Settings:
     """
     Load settings from config.yaml.
@@ -52,16 +50,8 @@ def load_settings(config_path: Path | None = None) -> Settings:
     return Settings(
         project_root=project_root,
         paths=Paths(
-            input_dir=rel(
-                paths_cfg.get(
-                    "input_dir", "./intervention_graph_creation/data/raw/pdfs_local"
-                )
-            ),
-            output_dir=rel(
-                paths_cfg.get(
-                    "output_dir", "./intervention_graph_creation/data/processed"
-                )
-            ),
+            input_dir=rel(paths_cfg.get("input_dir", "./intervention_graph_creation/data/raw/pdfs_local")),
+            output_dir=rel(paths_cfg.get("output_dir", "./intervention_graph_creation/data/processed")),
         ),
         falkordb=FalkorDB(
             host=falkor_cfg.get("host", "localhost"),

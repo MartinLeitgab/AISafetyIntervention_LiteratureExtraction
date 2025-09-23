@@ -27,9 +27,7 @@ def write_text(path: str, text: str) -> None:
         f.write(text)
 
 
-def dump_for_pdfs(
-    pdf_dir: str, out_dir: str, limit: int = 5
-) -> List[Tuple[str, str, str]]:
+def dump_for_pdfs(pdf_dir: str, out_dir: str, limit: int = 5) -> List[Tuple[str, str, str]]:
     """
     For up to `limit` PDFs in `pdf_dir`, extract original text, split content/references,
     and write to files under `out_dir`.

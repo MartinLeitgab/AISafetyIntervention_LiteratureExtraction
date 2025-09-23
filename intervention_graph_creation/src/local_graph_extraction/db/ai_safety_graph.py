@@ -6,12 +6,8 @@ from tqdm import tqdm
 from typing import List, Dict, Any
 
 from config import load_settings
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
-    PaperSchema,
-)
-from intervention_graph_creation.src.local_graph_extraction.core.local_graph import (
-    LocalGraph,
-)
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
+from intervention_graph_creation.src.local_graph_extraction.core.local_graph import LocalGraph
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.db.helpers import label_for
@@ -27,7 +23,7 @@ class AISafetyGraph:
 
     def upsert_node(self, node: GraphNode, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
-        base_label = label_for(node.type)  # "Concept" or "Intervention"
+        base_label = label_for(node.type)            # "Concept" or "Intervention"
         generic_label = "NODE"
 
         # Prepare params
@@ -40,9 +36,7 @@ class AISafetyGraph:
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
             "url": url,
-            "embedding": (
-                node.embedding.tolist() if node.embedding is not None else None
-            ),
+            "embedding": (node.embedding.tolist() if node.embedding is not None else None),
         }
 
         # - MERGE uses ONLY the base label so existing nodes (without :NODE) still match.
@@ -83,9 +77,7 @@ class AISafetyGraph:
             "description": edge.description,
             "edge_confidence": edge.edge_confidence,
             "url": url,
-            "embedding": (
-                edge.embedding.tolist() if edge.embedding is not None else None
-            ),
+            "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
@@ -93,9 +85,9 @@ class AISafetyGraph:
         # Keep url as property AND create [:FROM] relationship to :Source node
 
         # First, create/update the edge
-        edge_cypher = """
-        MATCH (a {name: $s}), (b {name: $t})
-        MERGE (a)-[r:EDGE {etype: $etype}]->(b)
+        edge_cypher = f"""
+        MATCH (a {{name: $s}}), (b {{name: $t}})
+        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
             r.url = $url
@@ -115,6 +107,7 @@ class AISafetyGraph:
             MERGE (r)-[:FROM]->(p)
             """
             g.query(rel_cypher, {"url": params["url"]})
+
 
     def ingest_metadata(self, metadata: List[Dict[str, Any]]) -> None:
         """Ingest metadata as :Source nodes in the graph."""
@@ -136,6 +129,7 @@ class AISafetyGraph:
         if isinstance(authors, str):
             authors = [authors]
 
+
         cypher = """
         MERGE (p:Source {url: $url})
         SET p.title = $title,
@@ -154,7 +148,7 @@ class AISafetyGraph:
             "date_published": date_published,
             "source": source,
             "filename": filename,
-            "source_filetype": source_filetype,
+            "source_filetype": source_filetype
         }
 
         g.query(cypher, params)
@@ -167,7 +161,7 @@ class AISafetyGraph:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
         # Read the rationale content
-        with open(rationale_path, "r", encoding="utf-8") as f:
+        with open(rationale_path, 'r', encoding='utf-8') as f:
             rationale_content = f.read()
 
         cypher = """
@@ -178,7 +172,10 @@ class AISafetyGraph:
         RETURN r
         """
 
-        params = {"url": url, "content": rationale_content}
+        params = {
+            "url": url,
+            "content": rationale_content
+        }
 
         g.query(cypher, params)
 
@@ -204,14 +201,10 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR (n:NODE) ON (n.embedding)")
             except Exception as e:
-                print(
-                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
-                )
-
+                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
+                
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query(
-            "CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}"
-        )
+        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
         print("Created vector index on (n:NODE).embedding.")
 
         # Check for existing vector index on [r:EDGE].embedding
@@ -231,13 +224,9 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding)")
             except Exception as e:
-                print(
-                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
-                )
+                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
         print("Creating new vector index on [r:EDGE].embedding...")
-        g.query(
-            "CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}"
-        )
+        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
@@ -246,10 +235,8 @@ class AISafetyGraph:
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
 
         # Filter out metadata entries with None values to avoid validation errors
-        if "meta" in data and data["meta"]:
-            data["meta"] = [
-                meta for meta in data["meta"] if meta.get("value") is not None
-            ]
+        if 'meta' in data and data['meta']:
+            data['meta'] = [meta for meta in data['meta'] if meta.get('value') is not None]
 
         doc = PaperSchema(**data)
 
@@ -261,20 +248,14 @@ class AISafetyGraph:
         self.ingest_metadata(doc.meta)
 
         # Ingest rationale if available
-        rationale_path = json_path.with_stem(json_path.stem + "_summary").with_suffix(
-            ".txt"
-        )
+        rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
         if rationale_path.exists():
             self.ingest_rationale(rationale_path, url)
 
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
         if local_graph is None:
             # Error already logged by from_paper_schema
-            errors[json_path.stem] = (
-                [error_msg]
-                if error_msg
-                else ["Invalid paper: see error log for details."]
-            )
+            errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
             return True
         for node in local_graph.nodes:
             local_graph.add_embeddings_to_nodes(node)
@@ -328,9 +309,7 @@ class AISafetyGraph:
     def get_graph(self) -> Dict[str, List[Dict[str, Any]]]:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        node_res = g.ro_query(
-            "MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node"
-        )
+        node_res = g.ro_query("MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node")
         nodes = []
         for row in node_res.result_set:
             node_id = row[0]
@@ -400,9 +379,7 @@ class AISafetyGraph:
 
         # If no relationships, just delete the node (parameterized)
         if not rel_types:
-            return graph.query(
-                "MATCH (a {name: $remove}) DELETE a", {"remove": remove_name}
-            )
+            return graph.query("MATCH (a {name: $remove}) DELETE a", {"remove": remove_name})
 
         # 2) Build the merge query dynamically with the discovered relationship types.
         #    NOTE: relationship *types* cannot be parameterized in Cypher.
@@ -434,7 +411,7 @@ class AISafetyGraph:
         """
 
         return graph.query(merge_q, {"remove": remove_name, "keep": keep_name})
-
+    
 
 def main():
     graph = AISafetyGraph()

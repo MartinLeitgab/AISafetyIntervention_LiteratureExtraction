@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 def normalize_title(title: str) -> str:
     s = title.strip().lower()
     s = re.sub(r"\s+", " ", s)
-    s = re.sub(
-        r"[\u2010-\u2015\-_:;,.!?]+", "", s
-    )  # Remove special characters for normalization
+    s = re.sub(r"[\u2010-\u2015\-_:;,.!?]+", "", s)  # Remove special characters for normalization
     return s
 
 
@@ -45,7 +43,7 @@ def split_references(text: str) -> Tuple[str, Optional[str]]:
         "Works Cited",
         "Literature Cited",
         "References and Notes",
-        "Reference List",
+        "Reference List"
     ]
     keywords_pattern = "|".join(re.escape(k) for k in keywords)
     heading_re = re.compile(
@@ -62,18 +60,17 @@ def split_references(text: str) -> Tuple[str, Optional[str]]:
 
     return s, None
 
-
 def remove_references_from_pdf(pdf_file_path: str) -> None:
     """Remove references section from the PDF file by creating a new PDF with only the content before references."""
     if not pdf_file_path:
         return
-
+        
     import os
     from pypdf import PdfReader, PdfWriter
-
+    
     # Read the original PDF
     reader = PdfReader(pdf_file_path)
-
+    
     # Extract all text to find references section
     full_text = ""
     page_texts = []
@@ -81,34 +78,33 @@ def remove_references_from_pdf(pdf_file_path: str) -> None:
         page_text = page.extract_text() or ""
         page_texts.append(page_text)
         full_text += page_text + "\n"
-
+    
     # Use the same logic as split_references to find where references start
     from .utils import split_references
-
     content_before_refs, _ = split_references(full_text)
-
+    
     if not content_before_refs or content_before_refs == full_text:
         # No references found or references are the entire content, don't modify
         return
-
+        
     # Find which page the references section starts on
     current_text = ""
     split_page = len(page_texts)  # Default to last page if not found
-
+    
     for i, page_text in enumerate(page_texts):
         if len(current_text + page_text) >= len(content_before_refs):
             # References section starts somewhere on this page or later
             split_page = i + 1  # Keep pages up to and including this one
             break
         current_text += page_text + "\n"
-
+    
     # Create new PDF with only pages before references
     writer = PdfWriter()
-
+    
     # Add pages up to where references start
     for i in range(min(split_page, len(reader.pages))):
         writer.add_page(reader.pages[i])
-
+    
     # Write the modified PDF back to the same path
     backup_path = pdf_file_path + ".backup"
     os.rename(pdf_file_path, backup_path)

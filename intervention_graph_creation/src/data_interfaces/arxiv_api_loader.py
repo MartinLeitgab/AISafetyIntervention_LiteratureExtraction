@@ -18,9 +18,7 @@ _ARXIV_ATOM_NS = {
 }
 
 
-def _fetch_arxiv_metadata(
-    arxiv_id: str,
-) -> Tuple[Optional[str], List[str], Optional[str], Optional[str]]:
+def _fetch_arxiv_metadata(arxiv_id: str) -> Tuple[Optional[str], List[str], Optional[str], Optional[str]]:
     """Fetch (title, authors, published, summary) for a given arXiv id using the arXiv Atom API."""
     url = f"https://export.arxiv.org/api/query?id_list={arxiv_id}"
     with urllib.request.urlopen(url, timeout=20) as resp:
@@ -41,14 +39,8 @@ def _fetch_arxiv_metadata(
     authors = [a for a in authors if a]
 
     title = title_el.text.strip() if title_el is not None and title_el.text else None
-    summary = (
-        summary_el.text.strip() if summary_el is not None and summary_el.text else None
-    )
-    published = (
-        published_el.text.strip()
-        if published_el is not None and published_el.text
-        else None
-    )
+    summary = summary_el.text.strip() if summary_el is not None and summary_el.text else None
+    published = published_el.text.strip() if published_el is not None and published_el.text else None
     return title, authors, published, summary
 
 
@@ -80,9 +72,7 @@ def load_publications_from_folder(folder_path: str) -> List[Publication]:
         if not title:
             raise ValueError(f"Missing title from arXiv metadata for id {arxiv_id}")
         if not isinstance(published, str) or not published:
-            raise ValueError(
-                f"Missing published date from arXiv metadata for id {arxiv_id}"
-            )
+            raise ValueError(f"Missing published date from arXiv metadata for id {arxiv_id}")
 
         text = _extract_text_from_pdf(pdf_path)
 
@@ -109,10 +99,7 @@ def ensure_dir(path: str) -> None:
 
 def _download_file(url: str, dest_path: str, timeout: int = 30) -> None:
     tmp_path = dest_path + ".part"
-    with (
-        urllib.request.urlopen(url, timeout=timeout) as resp,
-        open(tmp_path, "wb") as out,
-    ):
+    with urllib.request.urlopen(url, timeout=timeout) as resp, open(tmp_path, "wb") as out:
         out.write(resp.read())
     os.replace(tmp_path, dest_path)
 
@@ -133,9 +120,7 @@ def load_publications_from_arxiv_ids(
         if not t:
             raise ValueError(f"Missing title from arXiv metadata for id {arxiv_id}")
         if not p:
-            raise ValueError(
-                f"Missing published date from arXiv metadata for id {arxiv_id}"
-            )
+            raise ValueError(f"Missing published date from arXiv metadata for id {arxiv_id}")
 
         text = ""
         pdf_path = None

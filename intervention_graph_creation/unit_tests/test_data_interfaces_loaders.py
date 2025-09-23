@@ -18,10 +18,7 @@ from data_interfaces import (
     load_publications_from_hf_ard,
     load_publications_from_arxiv_ids,
 )
-from data_interfaces.utils import (
-    parse_arxiv_id_from_filename,
-    extract_arxiv_id_from_url,
-)
+from data_interfaces.utils import parse_arxiv_id_from_filename, extract_arxiv_id_from_url
 
 import re
 
@@ -32,9 +29,7 @@ def test_load_from_folder():
     print(f"Loaded {len(pubs)} publications from folder")
     for p in pubs[:3]:
         refs_len = len(p.references) if p.references else 0
-        print(
-            f"- {p.title} | authors={len(p.authors)} | date={p.date_published} | abstract_len={len(p.abstract)} | text_len={len(p.text)} | refs_len={refs_len}"
-        )
+        print(f"- {p.title} | authors={len(p.authors)} | date={p.date_published} | abstract_len={len(p.abstract)} | text_len={len(p.text)} | refs_len={refs_len}")
 
 
 def test_load_from_hf():
@@ -48,9 +43,7 @@ def test_load_from_hf():
         print(f"Loaded {len(pubs)} publications from HF ARD")
         for p in pubs[:3]:
             refs_len = len(p.references) if p.references else 0
-            print(
-                f"- {p.title} | authors={p.authors} | date={p.date_published} | text_len={len(p.text)} | refs_len={refs_len}"
-            )
+            print(f"- {p.title} | authors={p.authors} | date={p.date_published} | text_len={len(p.text)} | refs_len={refs_len}")
     except Exception:
         print("HF ARD test failed:")
         traceback.print_exc()
@@ -97,16 +90,12 @@ def test_load_from_arxiv_ids():
     # Keep the test lightweight
     ids = ids[:3]
     pubs = load_publications_from_arxiv_ids(
-        ids,
-        download_pdf=True,
-        pdf_dir=os.path.join(REPO_ROOT, "data", "raw", "pdfs_local"),
+        ids, download_pdf=True, pdf_dir=os.path.join(REPO_ROOT, "data", "raw", "pdfs_local")
     )
     print(f"Loaded {len(pubs)} publications from arXiv IDs: {ids}")
     for p in pubs:
         refs_len = len(p.references) if p.references else 0
-        print(
-            f"- {p.title} | authors={len(p.authors)} | date={p.date_published} | abstract_len={len(p.abstract)} | text_len={len(p.text)} | refs_len={refs_len} | pdf_path={p.pdf_file_path}"
-        )
+        print(f"- {p.title} | authors={len(p.authors)} | date={p.date_published} | abstract_len={len(p.abstract)} | text_len={len(p.text)} | refs_len={refs_len} | pdf_path={p.pdf_file_path}")
 
 
 if __name__ == "__main__":

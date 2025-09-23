@@ -6,14 +6,11 @@ from sentence_transformers import SentenceTransformer
 
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
-    PaperSchema,
-)
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
 
 
 class LocalGraph(BaseModel):
     """Container for graph data with nodes and edges that have embeddings."""
-
     nodes: List[GraphNode]
     edges: List[GraphEdge]
     paper_id: str
@@ -26,14 +23,9 @@ class LocalGraph(BaseModel):
         return len(self.nodes) + len(self.edges)
 
     @classmethod
-    def from_paper_schema(
-        self, paper_schema: PaperSchema, json_path: Path
-    ) -> "tuple[LocalGraph | None, str | None]":
+    def from_paper_schema(self, paper_schema: PaperSchema, json_path: Path) -> "tuple[LocalGraph | None, str | None]":
         """Create a LocalGraph from a PaperSchema. Logs errors and returns (None, error_msg) if invalid."""
-        from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
-            write_failure,
-        )
-
+        from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
         names = [n.name for n in paper_schema.nodes]
         if len(names) != len(set(names)):
             dupes = sorted({x for x in names if names.count(x) > 1})
@@ -62,9 +54,7 @@ class LocalGraph(BaseModel):
             for edge in logical_chain.edges:
                 graph_edge = GraphEdge(**edge.model_dump())
                 graph_edges.append(graph_edge)
-        local_graph = LocalGraph(
-            nodes=graph_nodes, edges=graph_edges, paper_id=json_path.stem
-        )
+        local_graph = LocalGraph(nodes=graph_nodes, edges=graph_edges, paper_id=json_path.stem)
         return local_graph, None
 
     def add_embeddings_to_nodes(self, node: GraphNode) -> None:
@@ -110,9 +100,7 @@ class LocalGraph(BaseModel):
                 self.embedding_model = SentenceTransformer(self.embedding_model_name)
 
             # Get embedding
-            embedding = self.embedding_model.encode(
-                text, batch_size=16, convert_to_numpy=True
-            )
+            embedding = self.embedding_model.encode(text, batch_size=16, convert_to_numpy=True)
             return embedding.astype(np.float32)
         except Exception as e:
             print(f"Error getting embedding for text: {e}")
