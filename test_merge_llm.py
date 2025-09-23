@@ -148,7 +148,7 @@ def test_1(shared_graph: GraphFixture):
         // note that queryNodes produces cosine distance = 1 - cosine similarity
         // so smaller distance means more similar
         // we filter to only very similar nodes
-        WHERE score < 0.1 AND seed <> node
+        WHERE score < 0.02 AND seed <> node
         RETURN seed, node, score
         // order by ascending so the most similar nodes are processed first
         ORDER BY score ASC
@@ -179,7 +179,7 @@ def test_1(shared_graph: GraphFixture):
         #         break
         # assert biggest_cluster is not None
         # target_cluster = biggest_cluster
-        out_folder = f"./test_output_data/cluster_{target_cluster_i}"
+        out_folder = f"./test_output_data_0.98/cluster_{target_cluster_i}"
         if use_jeff_graph():
             selected_cluster = target_cluster
             selected_node_ids = [node.id for node in selected_cluster if node.id is not None]
