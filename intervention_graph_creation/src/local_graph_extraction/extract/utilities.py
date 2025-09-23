@@ -11,7 +11,9 @@ FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.S | re.I)
 
 def extract_output_text(resp: Any) -> str:
     """Return assistant's textual output, tolerating various SDK shapes."""
-    value = getattr(resp, "output_text", "")
+    value = getattr(
+        resp, "output_text", resp["output_text"] if "output_text" in resp else ""
+    )
     return value if isinstance(value, str) else str(value or "")
 
 
