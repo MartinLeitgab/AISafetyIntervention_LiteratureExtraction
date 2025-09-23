@@ -8,7 +8,7 @@ SRC_DIR = os.path.join(REPO_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from data_interfaces.utils import split_references, parse_arxiv_id_from_filename  # noqa: E402 type: ignore
+from data_interfaces.utils import split_references, parse_arxiv_id_from_filename  # type: ignore
 
 
 def extract_text_from_pdf(file_path: str) -> str:

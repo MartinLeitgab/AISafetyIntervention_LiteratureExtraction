@@ -13,17 +13,17 @@ SRC_DIR = os.path.join(REPO_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from data_interfaces import (  # noqa: E402
+from data_interfaces import (
     load_publications_from_folder,
     load_publications_from_hf_ard,
     load_publications_from_arxiv_ids,
 )
-from data_interfaces.utils import (  # noqa: E402
+from data_interfaces.utils import (
     parse_arxiv_id_from_filename,
     extract_arxiv_id_from_url,
 )
 
-import re  # noqa: E402
+import re
 
 
 def test_load_from_folder():
