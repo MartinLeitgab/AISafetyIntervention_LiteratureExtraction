@@ -6,8 +6,15 @@ from tqdm import tqdm
 from typing import List, Dict, Any
 
 from config import load_settings
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
-from intervention_graph_creation.src.local_graph_extraction.core.local_graph import LocalGraph
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    PaperSchema,
+)
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    Meta,
+)
+from intervention_graph_creation.src.local_graph_extraction.core.local_graph import (
+    LocalGraph,
+)
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.db.helpers import label_for
@@ -23,7 +30,7 @@ class AISafetyGraph:
 
     def upsert_node(self, node: GraphNode, paper_id: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
-        base_label = label_for(node.type)            # "Concept" or "Intervention"
+        base_label = label_for(node.type)  # "Concept" or "Intervention"
         generic_label = "NODE"
 
         # Prepare params
@@ -36,7 +43,9 @@ class AISafetyGraph:
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
             "paper_id": paper_id,
-            "embedding": (node.embedding.tolist() if node.embedding is not None else None),
+            "embedding": (
+                node.embedding.tolist() if node.embedding is not None else None
+            ),
         }
 
         # - MERGE uses ONLY the base label so existing nodes (without :NODE) still match.
@@ -73,21 +82,23 @@ class AISafetyGraph:
             "description": edge.description,
             "edge_confidence": edge.edge_confidence,
             "paper_id": paper_id,
-            "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
+            "embedding": (
+                edge.embedding.tolist() if edge.embedding is not None else None
+            ),
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
         # One :EDGE per (a,b,etype). If exists → update props; else → create.
-        cypher = f"""
-        MATCH (a {{name: $s}}), (b {{name: $t}})
-        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
+        cypher = """
+        MATCH (a {name: $s}), (b {name: $t})
+        MERGE (a)-[r:EDGE {etype: $etype}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
             r.paper_id = $paper_id
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN r
-        """ 
+        """
 
         g.query(cypher, params)
 
@@ -113,10 +124,14 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR (n:NODE) ON (n.embedding)")
             except Exception as e:
-                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
-                
+                print(
+                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
+                )
+
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query(
+            "CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}"
+        )
         print("Created vector index on (n:NODE).embedding.")
 
         # Check for existing vector index on [r:EDGE].embedding
@@ -136,21 +151,119 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding)")
             except Exception as e:
-                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
+                print(
+                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
+                )
         print("Creating new vector index on [r:EDGE].embedding...")
-        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query(
+            "CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}"
+        )
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
 
+    def clear_graph(self) -> None:
+        """Delete all nodes and edges from the graph"""
+        g = self.db.select_graph(SETTINGS.falkordb.graph)  # ← Use the settings
+
+        print(f"Clearing all data from graph '{SETTINGS.falkordb.graph}'...")
+
+        # Delete all relationships first, then nodes
+        g.query("MATCH ()-[r]-() DELETE r")
+        g.query("MATCH (n) DELETE n")
+
+        print("Graph cleared successfully")
+
+    def clear_and_ingest(self, input_dir: Path) -> None:
+        """Clear existing data and ingest new data"""
+        self.clear_graph()
+        self.ingest_dir(input_dir)
+
     def ingest_file(self, json_path: Path, errors: dict) -> bool:
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
-        doc = PaperSchema(**data)
+        # doc = PaperSchema.model_validate(data, strict=False)
+
+        try:
+            # Construct nodes manually without validation
+            nodes = []
+            for node_data in data.get("nodes", []):
+                node = GraphNode.model_construct(**node_data)
+                nodes.append(node)
+
+            # Handle edges - check if they're in logical_chains or at top level
+            edges = []
+            logical_chains = []
+
+            if "logical_chains" in data and data["logical_chains"]:
+                # Original format: edges are nested within logical_chains
+                for chain_data in data["logical_chains"]:
+                    chain_edges = []
+                    for edge_data in chain_data.get("edges", []):
+                        edge = GraphEdge.model_construct(**edge_data)
+                        chain_edges.append(edge)
+                        edges.append(edge)  # Also add to global edges list
+
+                    # Create chain with constructed edges
+                    chain_data_copy = chain_data.copy()
+                    chain_data_copy["edges"] = chain_edges
+                    # chain = LogicalChain.model_construct(**chain_data_copy)
+                    # logical_chains.append(chain)
+
+            elif "edges" in data and data["edges"]:
+                # New format: edges are at the same level as nodes
+                for edge_data in data["edges"]:
+                    edge = GraphEdge.model_construct(**edge_data)
+                    edges.append(edge)
+
+                # Create empty logical_chains for compatibility
+                logical_chains = []
+
+            else:
+                # No edges found in either format
+                edges = []
+                logical_chains = []
+
+            # Construct meta manually
+            meta = []
+            for meta_data in data.get("meta", []):
+                meta_obj = Meta.model_construct(**meta_data)
+                meta.append(meta_obj)
+
+            # Create the PaperSchema with all constructed objects
+            doc = PaperSchema.model_construct(
+                nodes=nodes, logical_chains=logical_chains, meta=meta
+            )
+
+            # If using the new format, you might also want to store edges separately
+            # Add this if your code needs direct access to edges:
+            if hasattr(doc, "edges"):
+                doc.edges = edges
+
+            print("PaperSchema created with:")
+            print(f"  - {len(doc.nodes)} nodes")
+            print(
+                f"  - logical_chains: {hasattr(doc, 'logical_chains')} ({len(getattr(doc, 'logical_chains', []))} items)"
+            )
+            print(
+                f"  - edges: {hasattr(doc, 'edges')} ({len(getattr(doc, 'edges', []))} items)"
+            )
+            if hasattr(doc, "edges") and doc.edges:
+                print(
+                    f"  - First edge: {doc.edges[0].source_node} -> {doc.edges[0].target_node}"
+                )
+
+        except Exception as e:
+            print(f"Error during adaptive construction: {e}")
+            raise e
 
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
         if local_graph is None:
             # Error already logged by from_paper_schema
-            errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
+            errors[json_path.stem] = (
+                [error_msg]
+                if error_msg
+                else ["Invalid paper: see error log for details."]
+            )
             return True
         for node in local_graph.nodes:
             local_graph.add_embeddings_to_nodes(node)
@@ -204,7 +317,9 @@ class AISafetyGraph:
     def get_graph(self) -> Dict[str, List[Dict[str, Any]]]:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        node_res = g.ro_query("MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node")
+        node_res = g.ro_query(
+            "MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node"
+        )
         nodes = []
         for row in node_res.result_set:
             node_id = row[0]
@@ -274,7 +389,9 @@ class AISafetyGraph:
 
         # If no relationships, just delete the node (parameterized)
         if not rel_types:
-            return graph.query("MATCH (a {name: $remove}) DELETE a", {"remove": remove_name})
+            return graph.query(
+                "MATCH (a {name: $remove}) DELETE a", {"remove": remove_name}
+            )
 
         # 2) Build the merge query dynamically with the discovered relationship types.
         #    NOTE: relationship *types* cannot be parameterized in Cypher.
@@ -306,11 +423,18 @@ class AISafetyGraph:
         """
 
         return graph.query(merge_q, {"remove": remove_name, "keep": keep_name})
-    
+
 
 def main():
+    print("starting script")
     graph = AISafetyGraph()
+    print(
+        f"Starting ingestion into FalkorDB graph '{SETTINGS.falkordb.graph}' at {SETTINGS.falkordb.host}:{SETTINGS.falkordb.port}..."
+    )
+    graph.clear_graph()
+    print(f"Ingesting from {SETTINGS.paths.output_dir}...")
     graph.ingest_dir(SETTINGS.paths.output_dir)
+    print("Ingestion complete, saving graph to json...")
     graph.save_graph_to_json("graph.json")
 
 

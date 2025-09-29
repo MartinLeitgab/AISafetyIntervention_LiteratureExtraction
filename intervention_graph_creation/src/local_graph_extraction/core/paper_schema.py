@@ -7,7 +7,9 @@ from intervention_graph_creation.src.local_graph_extraction.core.node import Gra
 
 class Meta(BaseModel):
     key: str = Field(min_length=1, max_length=64, description="metadata key")
-    value: Union[str, List[str]] = Field(min_length=1, max_length=256, description="metadata value")
+    value: Union[str, List[str]] = Field(
+        min_length=1, max_length=256, description="metadata value"
+    )
 
     model_config = ConfigDict(extra="forbid")
 
@@ -33,7 +35,10 @@ class Meta(BaseModel):
 
 
 class LogicalChain(BaseModel):
-    title: Optional[str] = Field(default=None, description="concise natural-language description of logical chain")
+    title: Optional[str] = Field(
+        default=None,
+        description="concise natural-language description of logical chain",
+    )
     edges: List[GraphEdge] = Field(default_factory=list)
     model_config = ConfigDict(extra="forbid")
 
@@ -41,5 +46,11 @@ class LogicalChain(BaseModel):
 class PaperSchema(BaseModel):
     nodes: List[GraphNode] = Field(default_factory=list)
     logical_chains: List[LogicalChain] = Field(default_factory=list)
+    edges: List[GraphEdge] = Field(default_factory=list)  # Add this line
     meta: List[Meta] = Field(default_factory=list)
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="allow",
+        arbitrary_types_allowed=True,
+        validate_assignment=False,
+        validate_default=False,
+    )
