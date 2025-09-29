@@ -1,12 +1,13 @@
-from typing import List, Optional
+from typing import List
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 from pathlib import Path
-from sentence_transformers import SentenceTransformer
+import json
 
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
+from intervention_graph_creation.src.utils import short_id
 
 
 class LocalGraph(BaseModel):
@@ -15,15 +16,13 @@ class LocalGraph(BaseModel):
     edges: List[GraphEdge]
     paper_id: str
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
-    embedding_model_name: str = "BAAI/bge-large-en-v1.5"
-    embedding_model: Optional[SentenceTransformer] = None
 
     def __len__(self) -> int:
         """Return total number of nodes and edges."""
         return len(self.nodes) + len(self.edges)
 
     @classmethod
-    def from_paper_schema(self, paper_schema: PaperSchema, json_path: Path) -> "tuple[LocalGraph | None, str | None]":
+    def from_paper_schema(cls, paper_schema: PaperSchema, json_path: Path) -> "tuple[LocalGraph | None, str | None]":
         """Create a LocalGraph from a PaperSchema. Logs errors and returns (None, error_msg) if invalid."""
         from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
         names = [n.name for n in paper_schema.nodes]
@@ -54,55 +53,38 @@ class LocalGraph(BaseModel):
             for edge in logical_chain.edges:
                 graph_edge = GraphEdge(**edge.model_dump())
                 graph_edges.append(graph_edge)
+
         local_graph = LocalGraph(nodes=graph_nodes, edges=graph_edges, paper_id=json_path.stem)
         return local_graph, None
 
-    def add_embeddings_to_nodes(self, node: GraphNode) -> None:
-        """Add embeddings to all nodes in the local graph."""
-        # Create text representation for embedding
-        text_parts = []
-        if node.name:
-            text_parts.append(f"Name: {node.name}")
-        if node.description:
-            text_parts.append(f"Description: {node.description}")
-        if node.aliases:
-            text_parts.append(f"Aliases: {', '.join(node.aliases)}")
-        if node.concept_category:
-            text_parts.append(f"Category: {node.concept_category}")
+    def add_embeddings_to_nodes(self, node: GraphNode, json_path: Path) -> None:
+        """Load embeddings for a node from embeddings folder."""
+        node_id = short_id(f"{node.name}|{node.type}")
+        emb_path = json_path.parent / "embeddings" / f"{node_id}.json"
+        if emb_path.exists():
+            try:
+                with open(emb_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                node.embedding = np.array(data["embedding"], dtype=np.float32)
+            except Exception as e:
+                print(f"[WARN] Failed to load embedding for node {node.name}: {e}")
+                node.embedding = np.zeros(1024, dtype=np.float32)
+        else:
+            print(f"[WARN] Embedding file not found for node {node.name} -> {emb_path}")
+            node.embedding = np.zeros(1024, dtype=np.float32)
 
-        text = " | ".join(text_parts)
-        node.embedding = self._get_embedding(text)
-
-    def add_embeddings_to_edges(self, edge: GraphEdge) -> None:
-        """Add embeddings to all edges in the local graph."""
-        # Create text representation for embedding
-        text_parts = []
-        if edge.type:
-            text_parts.append(f"Type: {edge.type}")
-        if edge.description:
-            text_parts.append(f"Description: {edge.description}")
-        if edge.logical_chain_title:
-            text_parts.append(f"Concept: {edge.logical_chain_title}")
-        if edge.source_node:
-            text_parts.append(f"From: {edge.source_node}")
-        if edge.target_node:
-            text_parts.append(f"To: {edge.target_node}")
-
-        text = " | ".join(text_parts)
-        edge.embedding = self._get_embedding(text)
-
-    def _get_embedding(self, text: str) -> np.ndarray:
-        """Get embedding for a given text using SentenceTransformers."""
-        try:
-            # Lazy load the model
-            if self.embedding_model is None:
-                print(f"Loading embedding model: {self.embedding_model_name}")
-                self.embedding_model = SentenceTransformer(self.embedding_model_name)
-
-            # Get embedding
-            embedding = self.embedding_model.encode(text, batch_size=16, convert_to_numpy=True)
-            return embedding.astype(np.float32)
-        except Exception as e:
-            print(f"Error getting embedding for text: {e}")
-            # Return zero vector as fallback (BGE-large-v1.5 has 1024 dimensions)
-            return np.zeros(1024, dtype=np.float32)
+    def add_embeddings_to_edges(self, edge: GraphEdge, json_path: Path) -> None:
+        """Load embeddings for an edge from embeddings folder."""
+        edge_id = short_id(f"{edge.type}|{edge.source_node}|{edge.target_node}")
+        emb_path = json_path.parent / "embeddings" / f"{edge_id}.json"
+        if emb_path.exists():
+            try:
+                with open(emb_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                edge.embedding = np.array(data["embedding"], dtype=np.float32)
+            except Exception as e:
+                print(f"[WARN] Failed to load embedding for edge {edge.type} ({edge.source_node}->{edge.target_node}): {e}")
+                edge.embedding = np.zeros(1024, dtype=np.float32)
+        else:
+            print(f"[WARN] Embedding file not found for edge {edge.type} ({edge.source_node}->{edge.target_node}) -> {emb_path}")
+            edge.embedding = np.zeros(1024, dtype=np.float32)

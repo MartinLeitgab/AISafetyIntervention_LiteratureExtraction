@@ -273,8 +273,8 @@ class AISafetyGraph:
         subdirs = [d for d in base.iterdir() if d.is_dir()]
 
         for d in tqdm(sorted(subdirs)):
-            if d.name == "issues":
-                continue  # Skip the issues directory itself
+            if d.name == "issues" or d.name == "error":
+                continue  # Skip the issues directory itself AND skip error directory.
             json_path = d / f"{d.name}.json"
             if not json_path.exists():
                 print(f"⚠️ Skipping {d.name}: {json_path} not found")

@@ -21,19 +21,22 @@ class FalkorDB:
 
 
 @dataclass(frozen=True)
+class Embeddings:
+    model: str
+    batch_size: int
+
+
+@dataclass(frozen=True)
 class Settings:
     project_root: Path
     paths: Paths
     falkordb: FalkorDB
+    embeddings: Embeddings
 
 
 # ---- Loader -----------------------------------------------------------------
 
 def load_settings(config_path: Path | None = None) -> Settings:
-    """
-    Load settings from config.yaml.
-    Paths in YAML are treated as relative to this file's directory.
-    """
     project_root = Path(__file__).resolve().parent
     cfg_file = config_path or (project_root / "config.yaml")
 
@@ -43,9 +46,9 @@ def load_settings(config_path: Path | None = None) -> Settings:
     def rel(p: str) -> Path:
         return (project_root / p).resolve()
 
-    # Defaults (in case some keys are missing in YAML)
     paths_cfg = cfg.get("paths", {})
     falkor_cfg = cfg.get("falkordb", {})
+    emb_cfg = cfg.get("embeddings", {})
 
     return Settings(
         project_root=project_root,
@@ -57,5 +60,9 @@ def load_settings(config_path: Path | None = None) -> Settings:
             host=falkor_cfg.get("host", "localhost"),
             port=int(falkor_cfg.get("port", 6379)),
             graph=falkor_cfg.get("graph", "AISafetyIntervention"),
+        ),
+        embeddings=Embeddings(
+            model=emb_cfg.get("model", "text-embedding-3-large"),
+            batch_size=int(emb_cfg.get("batch_size", 256)),
         ),
     )
