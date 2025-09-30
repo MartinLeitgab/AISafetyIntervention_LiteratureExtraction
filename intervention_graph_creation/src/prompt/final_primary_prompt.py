@@ -139,7 +139,7 @@ Take your time, be thorough, remember you can zoom in on details.
 <final_output_format>
 **Summary Required**:
 - Data source overview (2-3 sentences)
-- Report EXTRACTION CONFIDENCE[XX], where XX is an integer between 0 and 100, inclusive, indicating your confidence that the output is correct, follows instructions, and the JSON is well-formatted. Please explain in detail why there are edges directly connecting intervention nodes to risk nodes without any intermediate nodes in between even though expressly forbidden in these instructions, and why there are unconnected isolated nodes even though expressly forbidden in these instructions- none of these items should exist! 
+- Report EXTRACTION CONFIDENCE[XX], where XX is an integer between 0 and 100, inclusive, indicating your confidence that the output is correct, follows instructions, and the JSON is well-formatted. Please explain in detail how this instruction set can be improved to extract the complete knowledge fabric presented in this data source linking all risks to all proposed interventions. 
 - Inference strategy justification
 - Extraction completeness explanation
 - Key limitations
