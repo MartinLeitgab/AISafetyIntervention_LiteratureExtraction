@@ -38,7 +38,7 @@ There are concept nodes and intervention nodes.
 
 ### Concept Node Categories & Name Patterns in preferred order of causal-interventional flow**
 
-1. **Risk**: "[Canonical Phenomenon/Problem Name] in [Context]"
+1. **Risk**: "[Canonical Specific Phenomenon/Problem Name] in [Context]"
 2. **Problem Analysis**: "[Mechanism Causing Risk] in [Context]" 
 3. **Theoretical Insight**: "[Assumption/Hypothesized Resolution Opportunity of Problem/Claim] in [Context]"
 4. **Design Rationale**: "[Solution Approach to Resolve Problem] in [Context]"
@@ -67,9 +67,9 @@ Start with action verbs, include as much implementation detail as presented in t
 
 ### Intervention Node Attributes
 
-**Lifecycle (1-6)**: Model Design, Pre-Training, Fine-Tuning/RL, Pre-Deployment Testing, Deployment, Other
+**Lifecycle (1-6)**: 1 Model Design, 2 Pre-Training, 3 Fine-Tuning/RL, 4 Pre-Deployment Testing, 5 Deployment, 6 Other
 
-**Maturity (1-4)**: Foundational/Theoretical, Experimental/Proof-of-Concept, Prototype/Pilot Studies/Systematic Validation, Operational/Deployment/Large-scale Validation
+**Maturity (1-4)**: 1 Foundational/Theoretical, 2 Experimental/Proof-of-Concept, 3 Prototype/Pilot Studies/Systematic Validation, 4 Operational/Deployment/Large-scale Validation
 
 **If no interventions explicitly stated**: Apply moderate inference to identify AI safety-relevant interventions, or focus on transferable interventions  
 - Example: data source on "gradient clipping for training stability" → Infer "Apply gradient clipping to prevent adversarial optimization during safety training"
@@ -81,7 +81,7 @@ Start with action verbs, include as much implementation detail as presented in t
 <step_3>
 ## Node Causal-Interventional Edges
 
-**Canonical edge types list, or closely related**: caused_by, required_by, enabled_by, preceded_by, addressed_by, mitigated_by, implemented_by, specified_by, refined_by, validated_by, motivates ('motivates' from validation evidence to intervention) 
+**Canonical edge types list, or closely related**: caused_by, required_by, enabled_by, preceded_by, addressed_by, mitigated_by, implemented_by, specified_by, refined_by, validated_by, motivates (use 'motivates' from validation evidence to intervention) 
 
 **Edge evidence confidence (1-5) per explicit information provided in the data source**:
 - 5: Very Strong, mathematical proofs, rigorous studies (p<0.05), independent replications
@@ -95,10 +95,10 @@ Start with action verbs, include as much implementation detail as presented in t
 ## Knowledge Fabric Construction
 
 **Putting it all together**: Every knowledge fabric path should start with a risk node, flow through the six concept node categories defined above, and end with an intervention node as closely as possible. 
-- Multiple nodes with the same category can exist in the reasoning path if concept richness warrants more refinement.
-- If the required flow and succession of node types/categories is not explicitly supported by the data source, use moderate inference to construct knowledge fabric paths as close to this intent as possible and mark appropriately in edge confidence and edge rationale where inference was used (confidence must be 1 or 2 with inference).
 - DO NOT connect risk nodes directly to intervention nodes- ALWAYS build the reasoning path between risk and interventions nodes with the six concept node categories.
 - ALWAYS end paths with the intervention node, NEVER create edges going out of intervention nodes unless they are refinements of the intervention implementation. All nodes building the rationale for a proposed intervention MUST flow into the intervention node, NOT out of the intervention node. If concept nodes appear to flow out of intervention nodes, check if the intervention node is not better converted into a conceot node (e.g. implementation mechanism or design rationale category).
+- If the required flow and succession of node types/categories is not explicitly supported by the data source, use moderate inference to construct knowledge fabric paths as close to this intent as possible and mark appropriately in edge confidence and edge rationale where inference was used (confidence must be 1 or 2 with inference).
+- Multiple nodes with the same category can exist in the reasoning path if concept richness as presented in the data source warrants more refinement.
 
 <Knowledge_Fabric_Path_Template>
 **Always start at risk node, always flow through all intermediate nodes, and always end at intervention node**
@@ -111,8 +111,8 @@ node (concept:validation evidence) "Sycophancy evaluation benchmark improvement"
 end node (intervention) "Fine-tune/RL train models with constitutional AI to reduce sycophantic responses"
 </Knowledge_Fabric_Path_Template>
 
-- Data sources often contain multiple concepts that may present branches off of some of these nodes, e.g. multiple risks explained by the same problem analysis, multiple design rationales branching from the same theoretical insight, or multiple interventions addressing the same problem. Capture all such branches that are part of any core reasoning pathway.
-- The knowledge fabric extraction goal is achieved by connecting all such paths via shared nodes and interconnecting edges. 
+- Data sources often contain multiple sub-concepts that may present branches off of primary concepts, e.g. multiple problem analyses that originate from the same primary risks, multiple design rationales branching from the same theoretical insight, or multiple interventions proposed from the same validation evidence. Capture all such branches that are part of any core reasoning pathway in additional node paths.
+- The knowledge fabric extraction goal is achieved by connecting all paths via shared nodes and interconnecting edges. 
 - Feedback/circular loops are allowed for concept nodes, but outgoing edges from intervention nodes are not allowed unless they refine the intervention implementation.
 - If isolated nodes cannot be connected to the fabric even with modest inference, remove them. No satellite/unconnected nodes are allowed- every node must connect to the overall fabric! 
 </step_4>
@@ -120,9 +120,9 @@ end node (intervention) "Fine-tune/RL train models with constitutional AI to red
 <step_5>
 ## MANDATORY VERIFICATION CHECKLIST
 
-- [ ] All intervention nodes are connected with risk nodes through intermediate nodes- no intervention node exists that does not meet this requirement!
+- [ ] All intervention nodes are indirectly connected with risk nodes via intermediate node paths- no intervention node exists that does not meet this requirement!
 - [ ] All pathways are interconnected with each other- no isolated reasoning paths exist that are not connected with the main knowledge fabric!
-- [ ] If new frameworks introduced in data source, framework is decomposed into component nodes
+- [ ] If new frameworks are introduced in data source, framework is decomposed into component nodes
 - [ ] Node names follow granularity examples and are connected to other nodes- no isolated/satellite nodes and no duplicate nodes exist!
 - [ ] JSON structure exactly matches required format
 
