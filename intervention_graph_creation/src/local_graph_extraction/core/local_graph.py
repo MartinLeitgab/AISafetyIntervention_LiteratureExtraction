@@ -7,7 +7,7 @@ import json
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
-from intervention_graph_creation.src.utils import short_id
+from intervention_graph_creation.src.utils import short_id_edge, short_id_node
 
 
 class LocalGraph(BaseModel):
@@ -59,7 +59,7 @@ class LocalGraph(BaseModel):
 
     def add_embeddings_to_nodes(self, node: GraphNode, json_path: Path) -> None:
         """Load embeddings for a node from embeddings folder."""
-        node_id = short_id(f"{node.name}|{node.type}")
+        node_id = short_id_node(node)
         emb_path = json_path.parent / "embeddings" / f"{node_id}.json"
         if emb_path.exists():
             try:
@@ -75,7 +75,7 @@ class LocalGraph(BaseModel):
 
     def add_embeddings_to_edges(self, edge: GraphEdge, json_path: Path) -> None:
         """Load embeddings for an edge from embeddings folder."""
-        edge_id = short_id(f"{edge.type}|{edge.source_node}|{edge.target_node}")
+        edge_id = short_id_edge(edge)
         emb_path = json_path.parent / "embeddings" / f"{edge_id}.json"
         if emb_path.exists():
             try:

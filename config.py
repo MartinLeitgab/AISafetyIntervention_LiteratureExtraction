@@ -11,6 +11,7 @@ import yaml
 class Paths:
     input_dir: Path
     output_dir: Path
+    logs_dir: Path
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class FalkorDB:
 class Embeddings:
     model: str
     batch_size: int
+    max_cuncurrent_batches: int
 
 
 @dataclass(frozen=True)
@@ -55,6 +57,7 @@ def load_settings(config_path: Path | None = None) -> Settings:
         paths=Paths(
             input_dir=rel(paths_cfg.get("input_dir", "./intervention_graph_creation/data/raw/pdfs_local")),
             output_dir=rel(paths_cfg.get("output_dir", "./intervention_graph_creation/data/processed")),
+            logs_dir=rel(paths_cfg.get("logs_dir", "./logs")),
         ),
         falkordb=FalkorDB(
             host=falkor_cfg.get("host", "localhost"),
@@ -64,5 +67,6 @@ def load_settings(config_path: Path | None = None) -> Settings:
         embeddings=Embeddings(
             model=emb_cfg.get("model", "text-embedding-3-large"),
             batch_size=int(emb_cfg.get("batch_size", 256)),
+            max_cuncurrent_batches=int(emb_cfg.get("max_cuncurrent_batches", 120))
         ),
     )

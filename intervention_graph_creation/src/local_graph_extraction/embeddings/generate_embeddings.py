@@ -1,5 +1,5 @@
 """
-Batch embeddings generator for local graph JSONs.
+Batch embeddings generator for local graph JSONs (async version).
 
 Features:
 - Reads config from config.yaml (paths, embeddings params).
@@ -8,6 +8,9 @@ Features:
 - Deterministic IDs: sha1 hash of key fields (first 10 hex chars).
 - Resumable: skips already processed files.
 - Logs errors to SETTINGS.paths.output_dir / "embedding_errors".
+- Async processing with configurable concurrency.
+- Automatic retries (max_retries=3) with exponential backoff (2–5s).
+- Logging to ./logs/run_YYYYMMDD_HHMM.log
 """
 
 import os
@@ -15,14 +18,20 @@ import json
 import random
 import time
 import traceback
+import asyncio
+from asyncio import Semaphore
 from pathlib import Path
 from typing import List, Optional
+import logging
+from datetime import datetime
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from config import load_settings
-from intervention_graph_creation.src.utils import short_id
+from intervention_graph_creation.src.utils import short_id_node, short_id_edge
+from intervention_graph_creation.src.local_graph_extraction.core.node import Node
+from intervention_graph_creation.src.local_graph_extraction.core.edge import Edge
 
 # -----------------------------------------------------------------------------
 # Settings
@@ -36,6 +45,18 @@ OUTPUT_DIR = SETTINGS.paths.output_dir
 ERRORS_DIR = OUTPUT_DIR / "embedding_errors"
 ERRORS_DIR.mkdir(parents=True, exist_ok=True)
 
+MAX_CONCURRENT_BATCHES = SETTINGS.embeddings.max_cuncurrent_batches
+
+LOGS_DIR = SETTINGS.paths.logs_dir
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+log_file = LOGS_DIR / f"embeddings_{datetime.now().strftime('%m-%d_%H-%M')}.log"
+
+logging.basicConfig(
+    filename=log_file,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -47,7 +68,6 @@ client = OpenAI(api_key=api_key)
 # Utils
 # -----------------------------------------------------------------------------
 
-
 def atomic_write_json(path: Path, data: dict) -> None:
     """Safe atomic write to JSON file."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -55,8 +75,6 @@ def atomic_write_json(path: Path, data: dict) -> None:
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     tmp.replace(path)
-
-
 
 def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
     """Save error info to embedding_errors/<id>.json"""
@@ -70,7 +88,6 @@ def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     atomic_write_json(error_path, payload)
-
 
 # -----------------------------------------------------------------------------
 # Text builders
@@ -88,7 +105,6 @@ def node_text(node: dict) -> str:
         parts.append(f"Category: {node['concept_category']}")
     return " | ".join(parts)
 
-
 def edge_text(edge: dict, logical_chain_title: Optional[str]) -> str:
     parts = []
     if edge.get("type"):
@@ -102,7 +118,6 @@ def edge_text(edge: dict, logical_chain_title: Optional[str]) -> str:
     if edge.get("target_node"):
         parts.append(f"To: {edge['target_node']}")
     return " | ".join(parts)
-
 
 # -----------------------------------------------------------------------------
 # Task enumeration
@@ -119,93 +134,170 @@ class EmbTask:
     def out_path(self) -> Path:
         return self.embeddings_dir / f"{self.obj_id}.json"
 
-
 def enumerate_tasks(paper_json: Path) -> List[EmbTask]:
     """Build embedding tasks for one paper.json"""
     data = json.loads(paper_json.read_text(encoding="utf-8"))
     embeddings_dir = paper_json.parent / "embeddings"
     tasks: List[EmbTask] = []
 
-    # Nodes
     for node in data.get("nodes", []):
-        nid = short_id(f"{node.get('name','')}|{node.get('type','')}")
+        nid = short_id_node(Node(**node))
         tasks.append(EmbTask(embeddings_dir, "node", nid, node_text(node)))
 
-    # Edges
     for chain in data.get("logical_chains", []):
         title = chain.get("title")
         for edge in chain.get("edges", []):
-            eid = short_id(f"{edge.get('type','')}|{edge.get('source_node','')}|{edge.get('target_node','')}")
+            eid = short_id_edge(Edge(**edge))
             tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge, title)))
 
     return tasks
 
-
 # -----------------------------------------------------------------------------
-# Embeddings client
-# -----------------------------------------------------------------------------
-
-def embed_batch(texts: List[str]) -> List[List[float]]:
-    """Call OpenAI API for a batch of texts."""
-    resp = client.embeddings.create(model=MODEL, input=texts)
-    return [item.embedding for item in resp.data]
-
-
-# -----------------------------------------------------------------------------
-# Main
+# Async Embeddings client with retries
 # -----------------------------------------------------------------------------
 
-def main():
-    json_files = list(OUTPUT_DIR.rglob("*.json"))
-    json_files = [p for p in json_files if p.parent.name not in ("embedding_errors", "issues", "error")]
+async def embed_batch_async(
+    batch: List[EmbTask],
+    sem: Semaphore,
+    stats: dict,
+    max_retries: int = 3
+):
+    """
+    Send one batch to OpenAI with retries:
+    - up to max_retries attempts
+    - exponential backoff: 2–5s with jitter
+    - update counters in stats
+    """
+    async with sem:
+        delay = 2.0
+        for attempt in range(1, max_retries + 1):
+            try:
+                texts = [t.text for t in batch]
+                resp = await asyncio.to_thread(
+                    client.embeddings.create,
+                    model=MODEL,
+                    input=texts,
+                )
+                embs = [item.embedding for item in resp.data]
+
+                if len(embs) != len(batch):
+                    raise ValueError(
+                        f"Embedding count mismatch: expected {len(batch)}, got {len(embs)}"
+                    )
+
+                for t, emb in zip(batch, embs):
+                    atomic_write_json(
+                        t.out_path,
+                        {
+                            "id": t.obj_id,
+                            "type": t.obj_type,
+                            "text": t.text,
+                            "embedding": emb,
+                        },
+                    )
+
+                stats["done"] += len(batch)
+                logger.info(
+                    "Batch done (%d items, %.2fs). Progress: %d/%d, Remaining: %d",
+                    len(batch),
+                    delay,
+                    stats["done"],
+                    stats["total"],
+                    stats["total"] - stats["done"],
+                )
+                return
+
+            except Exception as e:
+                if attempt >= max_retries:
+                    for t in batch:
+                        log_error(t.obj_id, t.obj_type, t.text, e)
+                    stats["errors"] += len(batch)
+                    logger.error(
+                        "Batch failed after %d attempts (%d items): %s",
+                        attempt,
+                        len(batch),
+                        e,
+                    )
+                    return
+
+                sleep_for = delay + random.uniform(0, 3.0)
+                logger.warning(
+                    "Batch failed (attempt %d/%d, %d items). Error: %s. Sleeping %.1fs ...",
+                    attempt,
+                    max_retries,
+                    len(batch),
+                    e,
+                    sleep_for,
+                )
+                await asyncio.sleep(sleep_for)
+                delay = min(delay * 2.0, 10.0)
+
+# -----------------------------------------------------------------------------
+# Async main
+# -----------------------------------------------------------------------------
+
+async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
+    # ищем все JSON кроме исключённых директорий
+    json_files = [
+        p for p in OUTPUT_DIR.rglob("*.json")
+        if not any(part in {"embedding_errors", "issues", "error", "embeddings"} for part in p.parts)
+    ]
     if not json_files:
-        print("No JSON files found.")
+        logger.info("No JSON files found.")
         return
 
     all_tasks: List[EmbTask] = []
+    skipped_files = 0
+    processed_files = 0
+
     for jf in json_files:
         try:
             if (jf.parent / "embeddings").exists():
-                print(f"[SKIP] {jf} -> embeddings folder already exists")
+                skipped_files += 1
                 continue
-
-            all_tasks.extend(enumerate_tasks(jf))
+            tasks = enumerate_tasks(jf)
+            if tasks:
+                all_tasks.extend(tasks)
+                processed_files += 1
         except Exception as e:
-            print(f"[WARN] Failed to enumerate {jf}: {e}")
+            logger.warning(
+                "Failed to enumerate %s: %s\n%s",
+                jf, str(e), traceback.format_exc()
+            )
 
     unique: dict[str, EmbTask] = {t.obj_id: t for t in all_tasks}
     tasks = list(unique.values())
-    print(f"Total tasks: {len(all_tasks)}, Pending: {len(tasks)}")
+
+    logger.info(
+        "JSON files: %d, Skipped: %d, Processed files: %d, Tasks: %d",
+        len(json_files), skipped_files, processed_files, len(tasks)
+    )
 
     if not tasks:
-        print("✅ All embeddings already computed. Nothing to do.")
+        logger.info("✅ All embeddings already computed. Nothing to do.")
         return
 
-    batch_size = BATCH_SIZE
-    i = 0
-    while i < len(tasks):
-        batch = tasks[i:i + batch_size]
-        i += batch_size
-        try:
-            embs = embed_batch([t.text for t in batch])
-            for t, emb in zip(batch, embs):
-                atomic_write_json(t.out_path, {
-                    "id": t.obj_id,
-                    "type": t.obj_type,
-                    "text": t.text,
-                    "embedding": emb,
-                })
-        except Exception as e:
-            for t in batch:
-                log_error(t.obj_id, t.obj_type, t.text, e)
-            print(f"[ERROR] Batch failed with {len(batch)} items: {e}")
-            if len(batch) > 1:
-                i -= len(batch)
-                batch_size = max(1, batch_size // 2)
-                print(f"[INFO] Reducing batch size to {batch_size} and retrying...")
+    batches = [tasks[i:i + BATCH_SIZE] for i in range(0, len(tasks), BATCH_SIZE)]
+    logger.info(
+        "Planned batches: %d (batch_size=%d, concurrency=%d)",
+        len(batches), BATCH_SIZE, max_concurrent_batches
+    )
 
-    print("Done.")
+    sem = Semaphore(max_concurrent_batches)
+    stats = {"done": 0, "errors": 0, "total": len(tasks)}
 
+    start_time = time.time()
+    await asyncio.gather(*(embed_batch_async(batch, sem, stats) for batch in batches))
+    duration = time.time() - start_time
+
+    logger.info(
+        "Done. Success: %d, Errors: %d, Duration: %.1fs",
+        stats["done"], stats["errors"], duration
+    )
+
+
+def main():
+    asyncio.run(async_main(MAX_CONCURRENT_BATCHES))
 
 if __name__ == "__main__":
     main()

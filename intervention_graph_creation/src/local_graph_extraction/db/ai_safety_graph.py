@@ -204,7 +204,7 @@ class AISafetyGraph:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
                 
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (n:NODE).embedding.")
 
         # Check for existing vector index on [r:EDGE].embedding
@@ -226,7 +226,7 @@ class AISafetyGraph:
             except Exception as e:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
         print("Creating new vector index on [r:EDGE].embedding...")
-        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
@@ -258,9 +258,9 @@ class AISafetyGraph:
             errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
             return True
         for node in local_graph.nodes:
-            local_graph.add_embeddings_to_nodes(node)
+            local_graph.add_embeddings_to_nodes(node, json_path)
         for edge in local_graph.edges:
-            local_graph.add_embeddings_to_edges(edge)
+            local_graph.add_embeddings_to_edges(edge, json_path)
         self.ingest_local_graph(local_graph, url)
 
         return False
