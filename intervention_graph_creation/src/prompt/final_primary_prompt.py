@@ -120,11 +120,11 @@ end node (intervention) "Fine-tune/RL train models with constitutional AI to red
 <step_5>
 ## MANDATORY VERIFICATION CHECKLIST
 
-- [ ] All intervention nodes are indirectly connected with risk nodes via intermediate node paths- no intervention node exists that does not meet this requirement!
-- [ ] All pathways are interconnected with each other- no isolated reasoning paths exist that are not connected with the main knowledge fabric!
-- [ ] If new frameworks are introduced in data source, framework is decomposed into component nodes
-- [ ] Node names follow granularity examples and are connected to other nodes- no isolated/satellite nodes and no duplicate nodes exist!
-- [ ] JSON structure exactly matches required format
+- [ ] Confirm that no edge connects an intervention node and a risk node directly, this is not allowed! Risk and intervention nodes are only allowed to connect with intermediate nodes but never with each other! 
+- [ ] Confirm that all pathways are interconnected with each other- no isolated reasoning paths exist that are not connected with the main knowledge fabric!
+- [ ] Confirm that each node has at least one edge referring to it, no isolated/satellite nodes and no duplicate nodes exist!
+- [ ] If new frameworks are introduced in data source, confirm that the framework is decomposed into component nodes
+- [ ] Confirm that JSON structure exactly matches required format and confirm that node names follow granularity examples
 
 If any of these checks reveal an issue, fix them and go through the full checklist again. 
 Every error is a MAJOR ISSUE THAT YOU NEED TO FIX! 
@@ -139,7 +139,7 @@ Take your time, be thorough, remember you can zoom in on details.
 <final_output_format>
 **Summary Required**:
 - Data source overview (2-3 sentences)
-- Report EXTRACTION CONFIDENCE[XX], where XX is an integer between 0 and 100, inclusive, indicating your confidence that the output is correct, follows instructions, and the JSON is well-formatted. Please explain in detail all improvement opportunities for this instruction set/prompt to best achieve the inteded complete knowledge fabric from the data source.
+- Report EXTRACTION CONFIDENCE[XX], where XX is an integer between 0 and 100, inclusive, indicating your confidence that the output is correct, follows instructions, and the JSON is well-formatted. Please explain in detail how this instruction set can be improved to extract the complete knowledge fabric presented in this data source linking all risks to all proposed interventions. 
 - Inference strategy justification
 - Extraction completeness explanation
 - Key limitations
