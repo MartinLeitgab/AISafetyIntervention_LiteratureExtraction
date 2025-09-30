@@ -28,7 +28,7 @@ class AISafetyGraph:
 
     # ---------- nodes ----------
 
-    def upsert_node(self, node: GraphNode, paper_id: str) -> None:
+    def upsert_node(self, node: GraphNode, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
         base_label = label_for(node.type)  # "Concept" or "Intervention"
         generic_label = "NODE"
@@ -42,15 +42,14 @@ class AISafetyGraph:
             "concept_category": node.concept_category,
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
-            "paper_id": paper_id,
-            "embedding": (
-                node.embedding.tolist() if node.embedding is not None else None
-            ),
+            "url": url,
+            "embedding": (node.embedding.tolist() if node.embedding is not None else None),
         }
 
         # - MERGE uses ONLY the base label so existing nodes (without :NODE) still match.
         # - We add :NODE after MERGE via SET n:NODE.
         # - For embedding, we conditionally set vecf32(...) only when provided; otherwise set NULL.
+        # - Keep url as property AND create [:FROM] relationship to :Source node
         cypher = f"""
         MERGE (n:{base_label} {{name: $name, type: $type}})
         SET n:{generic_label},
@@ -59,9 +58,12 @@ class AISafetyGraph:
             n.concept_category = $concept_category,
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
-            n.paper_id = $paper_id
-        WITH n, $embedding AS emb
+            n.url = $url
+        WITH n, $embedding AS emb, $url AS source_url
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
+        WITH n, source_url
+        MERGE (p:Source {{url: source_url}})
+        MERGE (n)-[:FROM]->(p)
         RETURN n
         """
 
@@ -71,7 +73,7 @@ class AISafetyGraph:
     # Multiple edges between same nodes are allowed,
     # but for the same etype we update the existing edge (MERGE by etype).
 
-    def upsert_edge(self, edge: GraphEdge, paper_id: str) -> None:
+    def upsert_edge(self, edge: GraphEdge, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
         # Prepare params
@@ -81,24 +83,106 @@ class AISafetyGraph:
             "etype": edge.type,
             "description": edge.description,
             "edge_confidence": edge.edge_confidence,
-            "paper_id": paper_id,
-            "embedding": (
-                edge.embedding.tolist() if edge.embedding is not None else None
-            ),
+            "url": url,
+            "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
         # One :EDGE per (a,b,etype). If exists → update props; else → create.
-        cypher = """
-        MATCH (a {name: $s}), (b {name: $t})
-        MERGE (a)-[r:EDGE {etype: $etype}]->(b)
+        # Keep url as property AND create [:FROM] relationship to :Source node
+
+        # First, create/update the edge
+        edge_cypher = f"""
+        MATCH (a {{name: $s}}), (b {{name: $t}})
+        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
-            r.paper_id = $paper_id
+            r.url = $url
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
+        RETURN ID(r) AS edge_id
+        """
+
+        result = g.query(edge_cypher, params)
+        edge_id = result.result_set[0][0] if result.result_set else None
+
+        # Then create the relationship from edge to source node
+        if edge_id is not None:
+            rel_cypher = f"""
+            MATCH (r) WHERE ID(r) = {edge_id}
+            MERGE (p:Source {{url: $url}})
+            MERGE (r)-[:FROM]->(p)
+            """
+            g.query(rel_cypher, {"url": params["url"]})
+
+
+    def ingest_metadata(self, metadata: List[Dict[str, Any]]) -> None:
+        """Ingest metadata as :Source nodes in the graph."""
+        g = self.db.select_graph(SETTINGS.falkordb.graph)
+
+        # Convert metadata list to dictionary for easier processing
+        meta_dict = {item.key: item.value for item in metadata}
+
+        # Extract all metadata fields from META_KEYS
+        url = meta_dict.get("url", "")
+        title = meta_dict.get("title", "")
+        authors = meta_dict.get("authors", [])
+        date_published = meta_dict.get("date_published", "")
+        source = meta_dict.get("source", "")
+        filename = meta_dict.get("filename", "")
+        source_filetype = meta_dict.get("source_filetype", "")
+
+        # Ensure authors is a list
+        if isinstance(authors, str):
+            authors = [authors]
+
+
+        cypher = """
+        MERGE (p:Source {url: $url})
+        SET p.title = $title,
+            p.authors = $authors,
+            p.date_published = $date_published,
+            p.source = $source,
+            p.filename = $filename,
+            p.source_filetype = $source_filetype
+        RETURN p
+        """
+
+        params = {
+            "url": url,
+            "title": title,
+            "authors": authors,
+            "date_published": date_published,
+            "source": source,
+            "filename": filename,
+            "source_filetype": source_filetype
+        }
+
+        g.query(cypher, params)
+
+    def ingest_rationale(self, rationale_path: Path, url: str) -> None:
+        """Ingest rationale record as :Rationale node linked to :Source node."""
+        if not rationale_path.exists():
+            return
+
+        g = self.db.select_graph(SETTINGS.falkordb.graph)
+
+        # Read the rationale content
+        with open(rationale_path, 'r', encoding='utf-8') as f:
+            rationale_content = f.read()
+
+        cypher = """
+        MERGE (p:Source {url: $url})
+        MERGE (r:Rationale {url: $url})
+        SET r.content = $content
+        MERGE (p)-[:HAS_RATIONALE]->(r)
         RETURN r
         """
+
+        params = {
+            "url": url,
+            "content": rationale_content
+        }
 
         g.query(cypher, params)
 
@@ -181,80 +265,24 @@ class AISafetyGraph:
 
     def ingest_file(self, json_path: Path, errors: dict) -> bool:
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
-        # doc = PaperSchema.model_validate(data, strict=False)
 
-        try:
-            # Construct nodes manually without validation
-            nodes = []
-            for node_data in data.get("nodes", []):
-                node = GraphNode.model_construct(**node_data)
-                nodes.append(node)
+        # Filter out metadata entries with None values to avoid validation errors
+        if 'meta' in data and data['meta']:
+            data['meta'] = [meta for meta in data['meta'] if meta.get('value') is not None]
 
-            # Handle edges - check if they're in logical_chains or at top level
-            edges = []
-            logical_chains = []
+        doc = PaperSchema(**data)
 
-            if "logical_chains" in data and data["logical_chains"]:
-                # Original format: edges are nested within logical_chains
-                for chain_data in data["logical_chains"]:
-                    chain_edges = []
-                    for edge_data in chain_data.get("edges", []):
-                        edge = GraphEdge.model_construct(**edge_data)
-                        chain_edges.append(edge)
-                        edges.append(edge)  # Also add to global edges list
+        # Extract URL from metadata for use in rationale ingestion
+        meta_dict = {item.key: item.value for item in doc.meta}
+        url = meta_dict.get("url", "")
 
-                    # Create chain with constructed edges
-                    chain_data_copy = chain_data.copy()
-                    chain_data_copy["edges"] = chain_edges
-                    # chain = LogicalChain.model_construct(**chain_data_copy)
-                    # logical_chains.append(chain)
+        # Ingest metadata before the local graph
+        self.ingest_metadata(doc.meta)
 
-            elif "edges" in data and data["edges"]:
-                # New format: edges are at the same level as nodes
-                for edge_data in data["edges"]:
-                    edge = GraphEdge.model_construct(**edge_data)
-                    edges.append(edge)
-
-                # Create empty logical_chains for compatibility
-                logical_chains = []
-
-            else:
-                # No edges found in either format
-                edges = []
-                logical_chains = []
-
-            # Construct meta manually
-            meta = []
-            for meta_data in data.get("meta", []):
-                meta_obj = Meta.model_construct(**meta_data)
-                meta.append(meta_obj)
-
-            # Create the PaperSchema with all constructed objects
-            doc = PaperSchema.model_construct(
-                nodes=nodes, logical_chains=logical_chains, meta=meta
-            )
-
-            # If using the new format, you might also want to store edges separately
-            # Add this if your code needs direct access to edges:
-            if hasattr(doc, "edges"):
-                doc.edges = edges
-
-            print("PaperSchema created with:")
-            print(f"  - {len(doc.nodes)} nodes")
-            print(
-                f"  - logical_chains: {hasattr(doc, 'logical_chains')} ({len(getattr(doc, 'logical_chains', []))} items)"
-            )
-            print(
-                f"  - edges: {hasattr(doc, 'edges')} ({len(getattr(doc, 'edges', []))} items)"
-            )
-            if hasattr(doc, "edges") and doc.edges:
-                print(
-                    f"  - First edge: {doc.edges[0].source_node} -> {doc.edges[0].target_node}"
-                )
-
-        except Exception as e:
-            print(f"Error during adaptive construction: {e}")
-            raise e
+        # Ingest rationale if available
+        rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
+        if rationale_path.exists():
+            self.ingest_rationale(rationale_path, url)
 
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
         if local_graph is None:
@@ -269,7 +297,7 @@ class AISafetyGraph:
             local_graph.add_embeddings_to_nodes(node)
         for edge in local_graph.edges:
             local_graph.add_embeddings_to_edges(edge)
-        self.ingest_local_graph(local_graph)
+        self.ingest_local_graph(local_graph, url)
 
         return False
 
@@ -306,11 +334,11 @@ class AISafetyGraph:
 
         self.set_index()
 
-    def ingest_local_graph(self, local_graph: LocalGraph) -> None:
+    def ingest_local_graph(self, local_graph: LocalGraph, url: str) -> None:
         for node in local_graph.nodes:
-            self.upsert_node(node, local_graph.paper_id)
+            self.upsert_node(node, url)
         for edge in local_graph.edges:
-            self.upsert_edge(edge, local_graph.paper_id)
+            self.upsert_edge(edge, url)
 
     # ---------- utils ----------
 
