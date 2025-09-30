@@ -769,8 +769,8 @@ class Extractor:
     def process_pdf(self, path: Path) -> None:
         print("executing function process_pdf")
         out_dir = SETTINGS.paths.output_dir / path.stem
-        # if out_dir.exists():
-        # return # overwrite outputs
+        if out_dir.exists():
+            return
         out_dir.mkdir(parents=True, exist_ok=True)
 
         t0 = time.time()
@@ -811,11 +811,11 @@ class Extractor:
                         + url_to_id(paper_json.get("url", f"line_{idx}"))
                     )
                     out_dir = SETTINGS.paths.output_dir / paper_id
-                    """if out_dir.exists():
+                    if out_dir.exists():
                         processed += 1
                         pbar.update(1)
                         continue
-"""
+
                     try:
                         t0 = time.time()
                         resp = self.call_openai_text(paper_json["text"])
