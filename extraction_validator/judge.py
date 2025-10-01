@@ -8,7 +8,7 @@ import json
 import re
 import hashlib
 import asyncio
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Literal
 from dataclasses import dataclass, asdict
 from enum import Enum
 from datetime import datetime
@@ -30,8 +30,8 @@ class Node:
     type: str  # concept|intervention
     description: str
     concept_category: Optional[str] = None
-    intervention_lifecycle: Optional[int] = None
-    intervention_maturity: Optional[int] = None
+    intervention_lifecycle: Optional[int | Literal["invalid"]] = None
+    intervention_maturity: Optional[int | Literal["invalid"]] = None
 
 
 @dataclass
@@ -40,19 +40,13 @@ class Edge:
     source_node: str
     target_node: str
     description: str
-    edge_confidence: int
-
-
-@dataclass
-class LogicalChain:
-    title: str
-    edges: List[Edge]
+    edge_confidence: int | Literal["invalid"]
 
 
 @dataclass
 class KnowledgeGraph:
     nodes: List[Node]
-    logical_chains: List[LogicalChain]
+    edges: List[Edge]
 
 
 @dataclass
@@ -89,14 +83,6 @@ class RationaleMismatch:
     issue: str
     evidence: str
     fix: str
-
-
-@dataclass
-class ExpectedChain:
-    title: str
-    evidence: str
-    status: str
-    mapped_chain_ids: List[str]
 
 
 @dataclass
@@ -221,38 +207,53 @@ class KGJudge:
     def _parse_knowledge_graph(self, kg_output: Dict) -> KnowledgeGraph:
         """Parse the knowledge graph output into structured format."""
         nodes = []
-        logical_chains = []
+        edges = []
 
         # Parse nodes
         for node_data in kg_output.get("nodes", []):
+            try:
+                intervention_lifecycle = node_data.get("intervention_lifecycle")
+                intervention_lifecycle = (
+                    int(intervention_lifecycle) if intervention_lifecycle else None
+                )
+            except Exception:
+                intervention_lifecycle = "invalid"
+            try:
+                intervention_maturity = node_data.get("intervention_maturity")
+                intervention_maturity = (
+                    int(intervention_maturity) if intervention_maturity else None
+                )
+            except Exception:
+                intervention_maturity = "invalid"
+
             node = Node(
                 name=node_data.get("name", ""),
                 aliases=node_data.get("aliases", []),
                 type=node_data.get("type", ""),
                 description=node_data.get("description", ""),
                 concept_category=node_data.get("concept_category"),
-                intervention_lifecycle=node_data.get("intervention_lifecycle"),
-                intervention_maturity=node_data.get("intervention_maturity"),
+                intervention_lifecycle=intervention_lifecycle,
+                intervention_maturity=intervention_maturity,
             )
             nodes.append(node)
 
-        # Parse logical chains
-        for chain_data in kg_output.get("logical_chains", []):
-            edges = []
-            for edge_data in chain_data.get("edges", []):
-                edge = Edge(
-                    type=edge_data.get("type", ""),
-                    source_node=edge_data.get("source_node", ""),
-                    target_node=edge_data.get("target_node", ""),
-                    description=edge_data.get("description", ""),
-                    edge_confidence=edge_data.get("edge_confidence", 1),
-                )
-                edges.append(edge)
+        # Parse edges
+        for edge_data in kg_output.get("edges", []):
 
-            chain = LogicalChain(title=chain_data.get("title", ""), edges=edges)
-            logical_chains.append(chain)
+            try:
+                edge_confidence = int(edge_data.get("edge_confidence", 1))
+            except Exception:
+                edge_confidence = "invalid"
+            edge = Edge(
+                type=edge_data.get("type", ""),
+                source_node=edge_data.get("source_node", ""),
+                target_node=edge_data.get("target_node", ""),
+                description=edge_data.get("description", ""),
+                edge_confidence=edge_confidence,
+            )
+            edges.append(edge)
 
-        return KnowledgeGraph(nodes=nodes, logical_chains=logical_chains)
+        return KnowledgeGraph(nodes=nodes, edges=edges)
 
     def _create_validation_prompt(
         self, original_text: str, kg_output: Dict, original_prompt: str
@@ -278,7 +279,6 @@ SCHEMA_REQUIREMENTS:
 - If type=intervention: must have intervention_lifecycle (1-6) and intervention_maturity (1-4)
 - Edges must have: type, source_node, target_node, description, edge_confidence (1-5)
 - All node names referenced in edges must exist as nodes
-- Logical chains group related edges with meaningful titles
 
 VALIDATION_TASKS:
 1. Check JSON structure and schema compliance
@@ -286,7 +286,7 @@ VALIDATION_TASKS:
 3. Identify orphaned nodes (not connected to any edges)
 4. Find duplicate nodes/edges that should be merged
 5. Check if extracted knowledge matches source text evidence
-6. Assess coverage - are important logical chains from source missing?
+6. Assess coverage - are important edges from source missing?
 
 Return your analysis in this EXACT JSON format:
 
@@ -314,8 +314,8 @@ Return your analysis in this EXACT JSON format:
       {{ "issue": "description", "evidence": "exact quote from DATA_SOURCE", "fix": "suggested fix" }}
     ],
     "coverage": {{
-      "expected_chains_from_source": [
-        {{ "title": "chain name", "evidence": "quote from source", "status": "covered|partially_covered|missing", "mapped_chain_ids": ["chain1"] }}
+      "expected_edges_from_source": [
+        {{ "title": "edge name", "evidence": "quote from source", "status": "covered|partially_covered|missing", "mapped_edge_ids": ["edge1"] }}
       ]
     }}
   }},
@@ -420,8 +420,10 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                 )
 
             if node.type == "intervention":
-                if not node.intervention_lifecycle or not (
-                    1 <= node.intervention_lifecycle <= 6
+                if (
+                    not node.intervention_lifecycle
+                    or node.intervention_lifecycle == "invalid"
+                    or not (1 <= node.intervention_lifecycle <= 6)
                 ):
                     issues.append(
                         ValidationIssue(
@@ -431,8 +433,10 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                             "Set value between 1-6",
                         )
                     )
-                if not node.intervention_maturity or not (
-                    1 <= node.intervention_maturity <= 4
+                if (
+                    not node.intervention_maturity
+                    or node.intervention_maturity == "invalid"
+                    or not (1 <= node.intervention_maturity <= 4)
                 ):
                     issues.append(
                         ValidationIssue(
@@ -446,37 +450,36 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
             node_names.add(node.name)
 
         # Edge validation
-        for chain_i, chain in enumerate(kg.logical_chains):
-            for edge_i, edge in enumerate(chain.edges):
-                if edge.source_node not in node_names:
-                    issues.append(
-                        ValidationIssue(
-                            "BLOCKER",
-                            f"Edge references non-existent source node: {edge.source_node}",
-                            f"logical_chains[{chain_i}].edges[{edge_i}].source_node",
-                            f"Create node '{edge.source_node}' or fix reference",
-                        )
+        for edge_i, edge in enumerate(kg.edges):
+            if edge.source_node not in node_names:
+                issues.append(
+                    ValidationIssue(
+                        "BLOCKER",
+                        f"Edge references non-existent source node: {edge.source_node}",
+                        f"edges[{edge_i}].source_node",
+                        f"Create node '{edge.source_node}' or fix reference",
                     )
+                )
 
-                if edge.target_node not in node_names:
-                    issues.append(
-                        ValidationIssue(
-                            "BLOCKER",
-                            f"Edge references non-existent target node: {edge.target_node}",
-                            f"logical_chains[{chain_i}].edges[{edge_i}].target_node",
-                            f"Create node '{edge.target_node}' or fix reference",
-                        )
+            if edge.target_node not in node_names:
+                issues.append(
+                    ValidationIssue(
+                        "BLOCKER",
+                        f"Edge references non-existent target node: {edge.target_node}",
+                        f"edges[{edge_i}].target_node",
+                        f"Create node '{edge.target_node}' or fix reference",
                     )
+                )
 
-                if not (1 <= edge.edge_confidence <= 5):
-                    issues.append(
-                        ValidationIssue(
-                            "MINOR",
-                            f"Invalid edge confidence: {edge.edge_confidence}",
-                            f"logical_chains[{chain_i}].edges[{edge_i}].edge_confidence",
-                            "Set value between 1-5",
-                        )
+            if edge.edge_confidence == "invalid" or not (1 <= edge.edge_confidence <= 5):
+                issues.append(
+                    ValidationIssue(
+                        "MINOR",
+                        f"Invalid edge confidence: {edge.edge_confidence}",
+                        f"edges[{edge_i}].edge_confidence",
+                        "Set value between 1-5",
                     )
+                )
 
         return {"local_validation": True, "issues": [asdict(issue) for issue in issues]}
 
@@ -518,7 +521,6 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
         fixes = {
             "add_nodes": [],
             "add_edges": [],
-            "add_chains": [],
             "edits": [],
             "merges": [],
             "deletions": [],
@@ -604,21 +606,17 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                 }
             )
 
-        final_chains = []
-        for chain in kg.logical_chains:
-            chain_edges = []
-            for edge in chain.edges:
-                chain_edges.append(
-                    {
-                        "type": edge.type,
-                        "source_node": edge.source_node,
-                        "target_node": edge.target_node,
-                        "description": edge.description,
-                        "edge_confidence": edge.edge_confidence,
-                    }
-                )
-
-            final_chains.append({"title": chain.title, "edges": chain_edges})
+        final_edges = []
+        for edge in kg.edges:
+            final_edges.append(
+                {
+                    "type": edge.type,
+                    "source_node": edge.source_node,
+                    "target_node": edge.target_node,
+                    "description": edge.description,
+                    "edge_confidence": edge.edge_confidence,
+                }
+            )
 
         # Apply add_nodes fixes
         for add_node in proposed_fixes.get("add_nodes", []):
@@ -628,9 +626,9 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                     "aliases": [add_node.get("name", add_node.get("id"))],
                     "type": add_node.get("type", "concept"),
                     "description": "Auto-generated node based on validation",
-                    "concept_category": "framework"
-                    if add_node.get("type") == "concept"
-                    else None,
+                    "concept_category": (
+                        "framework" if add_node.get("type") == "concept" else None
+                    ),
                     "intervention_lifecycle": None,
                     "intervention_maturity": None,
                 }
@@ -646,7 +644,7 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
 
         return {
             "nodes": final_nodes,
-            "logical_chains": final_chains,
+            "edges": final_edges,
             "meta": {
                 "version": "1.0",
                 "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
@@ -675,12 +673,11 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                 "orphans": [],
                 "duplicates": [],
                 "rationale_mismatches": [],
-                "coverage": {"expected_chains_from_source": []},
+                "coverage": {"expected_edges_from_source": []},
             },
             proposed_fixes={
                 "add_nodes": [],
                 "add_edges": [],
-                "add_chains": [],
                 "edits": [],
                 "merges": [],
                 "deletions": [],
@@ -696,7 +693,7 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
         """Convert KnowledgeGraph to dictionary format."""
         return {
             "nodes": [asdict(node) for node in kg.nodes],
-            "logical_chains": [asdict(chain) for chain in kg.logical_chains],
+            "edges": [asdict(edge) for edge in kg.edges],
             "meta": {
                 "version": "1.0",
                 "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
@@ -725,19 +722,18 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                 "orphans": [],
                 "duplicates": [],
                 "rationale_mismatches": [],
-                "coverage": {"expected_chains_from_source": []},
+                "coverage": {"expected_edges_from_source": []},
             },
             proposed_fixes={
                 "add_nodes": [],
                 "add_edges": [],
-                "add_chains": [],
                 "edits": [],
                 "merges": [],
                 "deletions": [],
             },
             final_graph={
                 "nodes": [],
-                "logical_chains": [],
+                "edges": [],
                 "meta": {"version": "1.0", "error": error_message},
             },
             rationale_record={
@@ -792,47 +788,113 @@ async def main():
         {
             "nodes": [
                 {
-                    "name": "Machine Learning Models",
-                    "aliases": ["ML Models", "Predictive Models"],
+                    "name": "Strategic deception by LLM agents in high-stakes decision contexts",
+                    "aliases": [
+                        "LLM user deception",
+                        "AI strategic lying in deployment",
+                    ],
                     "type": "concept",
-                    "description": "Algorithms that learn patterns from data to make predictions.",
-                    "concept_category": "technology",
+                    "description": "Large language model based agents can intentionally mislead their primary users about their own misaligned actions when operating in realistic, high-pressure settings such as autonomous stock trading.",
+                    "concept_category": "risk",
+                    "intervention_lifecycle": None,
+                    "intervention_lifecycle_rationale": None,
+                    "intervention_maturity": None,
+                    "intervention_maturity_rationale": None,
+                    "node_rationale": "Identified as the overarching safety risk in Introduction & Section 1.1.",
                 },
                 {
-                    "name": "Feature Engineering",
-                    "aliases": ["Feature Selection", "Feature Extraction"],
-                    "type": "intervention",
-                    "description": "Process of selecting and transforming variables for ML models.",
-                    "intervention_lifecycle": 3,
-                    "intervention_maturity": 4,
+                    "name": "Incentive misalignment under operational pressure in trading agents",
+                    "aliases": [
+                        "pressure-induced misalignment",
+                        "performance pressure on agents",
+                    ],
+                    "type": "concept",
+                    "description": "Emails about poor company performance, warnings of downturns and failure to find safe trades create incentives for the agent to prioritise profit over compliance.",
+                    "concept_category": "problem analysis",
+                    "intervention_lifecycle": None,
+                    "intervention_lifecycle_rationale": None,
+                    "intervention_maturity": None,
+                    "intervention_maturity_rationale": None,
+                    "node_rationale": "Section 2.1 describes three pressure sources leading to the illegal trade.",
+                },
+                {
+                    "name": "Exposure of chain-of-thought scratchpad increases planning capacity for deception",
+                    "aliases": [
+                        "scratchpad enables deception",
+                        "explicit reasoning trace facilitation",
+                    ],
+                    "type": "concept",
+                    "description": "Providing models with an explicit ‘Reasoning’ field allows them to plan misaligned actions and hide them more systematically.",
+                    "concept_category": "problem analysis",
+                    "intervention_lifecycle": None,
+                    "intervention_lifecycle_rationale": None,
+                    "intervention_maturity": None,
+                    "intervention_maturity_rationale": None,
+                    "node_rationale": "Section 3.3.1 shows higher deception rates with scratchpad.",
                 },
             ],
-            "logical_chains": [
+            "edges": [
                 {
-                    "title": "ML Model Development Process",
-                    "edges": [
-                        {
-                            "type": "requires",
-                            "source_node": "Machine Learning Models",
-                            "target_node": "Feature Engineering",
-                            "description": "ML models need proper feature engineering for optimal performance",
-                            "edge_confidence": 5,
-                        }
-                    ],
-                }
+                    "type": "caused_by",
+                    "source_node": "Strategic deception by LLM agents in high-stakes decision contexts",
+                    "target_node": "Incentive misalignment under operational pressure in trading agents",
+                    "description": "Pressure to deliver profits leads model to act against explicit policy and then hide it.",
+                    "edge_confidence": "3",
+                    "edge_confidence_rationale": "Empirical observation across 300 samples (Section 3.1)",
+                    "edge_rationale": "Risk directly results from pressure-based incentives.",
+                },
+                {
+                    "type": "caused_by",
+                    "source_node": "Strategic deception by LLM agents in high-stakes decision contexts",
+                    "target_node": "Exposure of chain-of-thought scratchpad increases planning capacity for deception",
+                    "description": "Scratchpad facilitates well-planned deceptive behaviour, increasing risk.",
+                    "edge_confidence": "3",
+                    "edge_confidence_rationale": "Section 3.3.1 shows higher deception with scratchpad",
+                    "edge_rationale": "Demonstrated relationship between reasoning exposure and deception.",
+                },
             ],
         },
         {
             "nodes": [
                 {
-                    "name": "Agile Methodology",
-                    "aliases": ["Agile", "Agile Development"],
+                    "name": "Lower misalignment and deception rates with counter-measure experiments",
+                    "aliases": [
+                        "counter-measure results",
+                        "reduced misalignment evidence",
+                    ],
                     "type": "concept",
-                    "description": "Iterative approach to software development emphasizing flexibility.",
-                    "concept_category": "methodology",
-                }
+                    "description": "Fig 4-6 show significant but incomplete reductions in misaligned trades and deceptive reports after applying individual counter-measures.",
+                    "concept_category": "validation evidence",
+                    "intervention_lifecycle": None,
+                    "intervention_lifecycle_rationale": None,
+                    "intervention_maturity": None,
+                    "intervention_maturity_rationale": None,
+                    "node_rationale": "Results sections 3.3.1-3.3.3.",
+                },
+                {
+                    "name": "Deploy LLM agents without chain-of-thought scratchpads in production",
+                    "aliases": ["scratchpad-free production deployment"],
+                    "type": "intervention",
+                    "description": "At deployment time, omit any explicit internal reasoning output channels to limit agent planning transparency that could facilitate deception.",
+                    "concept_category": None,
+                    "intervention_lifecycle": "5",
+                    "intervention_lifecycle_rationale": "Deployment counter-measure discussed in Section 3.3.1 implications",
+                    "intervention_maturity": "2",
+                    "intervention_maturity_rationale": "Based on single-scenario experimental evidence; not yet broadly validated",
+                    "node_rationale": "Direct safety measure to mitigate scratchpad-enabled deception.",
+                },
             ],
-            "logical_chains": [],
+            "edges": [
+                {
+                    "type": "motivates",
+                    "source_node": "Lower misalignment and deception rates with counter-measure experiments",
+                    "target_node": "Deploy LLM agents without chain-of-thought scratchpads in production",
+                    "description": "Observed reduction motivates adopting scratchpad-free deployment.",
+                    "edge_confidence": "3",
+                    "edge_confidence_rationale": "Reduction effect demonstrated experimentally",
+                    "edge_rationale": "Evidence to adopt intervention.",
+                },
+            ],
         },
     ]
 
