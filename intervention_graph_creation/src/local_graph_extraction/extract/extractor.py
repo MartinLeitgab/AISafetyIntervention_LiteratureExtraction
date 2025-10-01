@@ -1,6 +1,8 @@
 import os
 import json
 import time
+import httpx  # Add this line
+
 from pathlib import Path
 from typing import Any, Optional, List, Dict
 import asyncio  # Async method
@@ -46,7 +48,26 @@ class Extractor:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY is not set")
-        self.client = OpenAI(api_key=api_key)
+
+            # Create custom HTTP client with keep-alive settings
+        http_client = httpx.Client(
+            timeout=httpx.Timeout(300.0),  # 5 minutes total timeout
+            limits=httpx.Limits(
+                max_keepalive_connections=10,
+                max_connections=20,
+                keepalive_expiry=300.0,  # Keep connections alive for 5 minutes
+            ),
+            headers={"Connection": "keep-alive", "Keep-Alive": "timeout=300, max=1000"},
+            transport=httpx.HTTPTransport(retries=3, verify=True),
+        )
+
+        # self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(
+            api_key=api_key,
+            timeout=300.0,  # 5 minute timeout
+            max_retries=3,
+            http_client=http_client,
+        )
 
         self._n = 0
         self._sum_sec = 0.0
@@ -95,6 +116,7 @@ class Extractor:
         )
 
     def write_outputs(self, out_dir: Path, stem: str, resp: Any, meta: json) -> None:
+        print("executing function write_outputs")
         raw_path = out_dir / f"{stem}_raw_response.txt"
         json_path = out_dir / f"{stem}.json"
         summary_path = out_dir / f"{stem}_summary.txt"
@@ -745,6 +767,7 @@ class Extractor:
     # Async implementation ends here
 
     def process_pdf(self, path: Path) -> None:
+        print("executing function process_pdf")
         out_dir = SETTINGS.paths.output_dir / path.stem
         if out_dir.exists():
             return
@@ -752,12 +775,16 @@ class Extractor:
 
         t0 = time.time()
         file_id = self.upload_pdf_get_id(path)
+        print(f"Uploaded {path.name} as file ID {file_id}")
         resp = self.call_openai_file(file_id)
+        print(f"Received response{resp}")
         meta = [{"key": "filename", "value": path.name}]
+        print(f"meta for {path.name}: {meta}")
         self.write_outputs(out_dir, path.stem, resp, meta)
         self._accumulate_and_print("PDF", path.name, t0, resp)
 
     def process_jsonl(self, path: Path, max_items: Optional[int] = None) -> int:
+        print("executing function process_jsonl")
         processed = 0
         try:
             with path.open("r", encoding="utf-8") as f:

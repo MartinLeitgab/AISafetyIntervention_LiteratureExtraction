@@ -34,10 +34,11 @@ class LocalGraph(BaseModel):
             return None, msg
 
         known = set(names)
+
+
         missing = [
             (e.source_node, e.target_node)
-            for ch in paper_schema.logical_chains
-            for e in ch.edges
+            for e in paper_schema.edges
             if e.source_node not in known or e.target_node not in known
         ]
         if missing:
@@ -48,12 +49,13 @@ class LocalGraph(BaseModel):
         # Convert to LocalGraph
         graph_nodes = [GraphNode(**node.model_dump()) for node in paper_schema.nodes]
 
-        # Convert logical chains to edges with concept metadata
+        # Handle both edge formats
         graph_edges = []
-        for logical_chain in paper_schema.logical_chains:
-            for edge in logical_chain.edges:
-                graph_edge = GraphEdge(**edge.model_dump())
-                graph_edges.append(graph_edge)
+        for edge in paper_schema.edges:
+            graph_edge = GraphEdge.model_construct(**edge.model_dump())
+            graph_edges.append(graph_edge)
+
+        # Create the LocalGraph - THIS LINE WAS MISSING OR MISPLACED
         local_graph = LocalGraph(nodes=graph_nodes, edges=graph_edges, paper_id=json_path.stem)
         return local_graph, None
 
@@ -81,8 +83,6 @@ class LocalGraph(BaseModel):
             text_parts.append(f"Type: {edge.type}")
         if edge.description:
             text_parts.append(f"Description: {edge.description}")
-        if edge.logical_chain_title:
-            text_parts.append(f"Concept: {edge.logical_chain_title}")
         if edge.source_node:
             text_parts.append(f"From: {edge.source_node}")
         if edge.target_node:
