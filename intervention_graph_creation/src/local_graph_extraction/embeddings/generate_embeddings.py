@@ -105,14 +105,12 @@ def node_text(node: dict) -> str:
         parts.append(f"Category: {node['concept_category']}")
     return " | ".join(parts)
 
-def edge_text(edge: dict, logical_chain_title: Optional[str]) -> str:
+def edge_text(edge: dict) -> str:
     parts = []
     if edge.get("type"):
         parts.append(f"Type: {edge['type']}")
     if edge.get("description"):
         parts.append(f"Description: {edge['description']}")
-    if logical_chain_title:
-        parts.append(f"Concept: {logical_chain_title}")
     if edge.get("source_node"):
         parts.append(f"From: {edge['source_node']}")
     if edge.get("target_node"):
@@ -144,11 +142,9 @@ def enumerate_tasks(paper_json: Path) -> List[EmbTask]:
         nid = short_id_node(Node(**node))
         tasks.append(EmbTask(embeddings_dir, "node", nid, node_text(node)))
 
-    for chain in data.get("logical_chains", []):
-        title = chain.get("title")
-        for edge in chain.get("edges", []):
-            eid = short_id_edge(Edge(**edge))
-            tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge, title)))
+    for edge in data.get("edges", []):
+        eid = short_id_edge(Edge(**edge))
+        tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge)))
 
     return tasks
 
@@ -238,6 +234,7 @@ async def embed_batch_async(
 
 async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
     # ищем все JSON кроме исключённых директорий
+    # Machine translation: We search for all JSON except in excluded directories
     json_files = [
         p for p in OUTPUT_DIR.rglob("*.json")
         if not any(part in {"embedding_errors", "issues", "error", "embeddings"} for part in p.parts)
