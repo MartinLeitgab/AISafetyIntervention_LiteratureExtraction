@@ -189,7 +189,7 @@ class Extractor:
         batch_requests = []
 
         pdf_files = list(input_dir.glob("*.pdf"))
-        # jsonl_files = list(input_dir.glob("*.jsonl"))
+        jsonl_files = list(input_dir.glob("*.jsonl"))
 
         if first_n:
             pdf_files = pdf_files[:first_n]
@@ -235,9 +235,7 @@ class Extractor:
 
         # Process JSONL files
         json_items_cap = first_n if first_n else None
-        # TEMPORARY: Only process arxiv.jsonl
-        arxiv_jsonl_path = input_dir / "arxiv.jsonl"
-        jsonl_files_filtered = [arxiv_jsonl_path] if arxiv_jsonl_path.exists() else []
+        jsonl_files_filtered = jsonl_files
 
         # for jsonl_path in jsonl_files:
         for jsonl_path in jsonl_files_filtered:
