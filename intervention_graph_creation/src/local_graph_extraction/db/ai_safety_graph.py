@@ -250,6 +250,23 @@ class AISafetyGraph:
 
     # ---------- ingest ----------
 
+    def clear_graph(self) -> None:
+        """Delete all nodes and edges from the graph"""
+        g = self.db.select_graph(SETTINGS.falkordb.graph)  # ← Use the settings
+
+        print(f"Clearing all data from graph '{SETTINGS.falkordb.graph}'...")
+
+        # Delete all relationships first, then nodes
+        g.query("MATCH ()-[r]-() DELETE r")
+        g.query("MATCH (n) DELETE n")
+
+        print("Graph cleared successfully")
+
+    def clear_and_ingest(self, input_dir: Path) -> None:
+        """Clear existing data and ingest new data"""
+        self.clear_graph()
+        self.ingest_dir(input_dir)
+
     def ingest_file(self, json_path: Path, errors: dict) -> bool:
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
 
@@ -430,11 +447,18 @@ class AISafetyGraph:
         """
 
         return graph.query(merge_q, {"remove": remove_name, "keep": keep_name})
-    
+
 
 def main():
+    print("starting script")
     graph = AISafetyGraph()
+    print(
+        f"Starting ingestion into FalkorDB graph '{SETTINGS.falkordb.graph}' at {SETTINGS.falkordb.host}:{SETTINGS.falkordb.port}..."
+    )
+    graph.clear_graph()
+    print(f"Ingesting from {SETTINGS.paths.output_dir}...")
     graph.ingest_dir(SETTINGS.paths.output_dir)
+    print("Ingestion complete, saving graph to json...")
     graph.save_graph_to_json("graph.json")
 
 
