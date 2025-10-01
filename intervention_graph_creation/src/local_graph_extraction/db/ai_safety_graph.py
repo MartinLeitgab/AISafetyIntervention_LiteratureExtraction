@@ -65,7 +65,7 @@ class AISafetyGraph:
 
     # ---------- edges ----------
     # Multiple edges between same nodes are allowed,
-    # but for the same etype we update the existing edge (MERGE by etype).
+    # but for the same type we update the existing edge (MERGE by type).
 
     def upsert_edge(self, edge: GraphEdge, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
@@ -74,7 +74,7 @@ class AISafetyGraph:
         params = {
             "s": edge.source_node,
             "t": edge.target_node,
-            "etype": edge.type,
+            "type": edge.type,
             "description": edge.description,
             "edge_confidence": edge.edge_confidence,    
             "url": url,
@@ -82,13 +82,13 @@ class AISafetyGraph:
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
-        # One :EDGE per (a,b,etype). If exists → update props; else → create.
+        # One :EDGE per (a,b,type). If exists → update props; else → create.
         # Keep url as property AND create [:FROM] relationship to :Source node
 
         # First, create/update the edge
         edge_cypher = f"""
         MATCH (a {{name: $s}}), (b {{name: $t}})
-        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
+        MERGE (a)-[r:EDGE {{type: $type}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
             r.url = $url,
