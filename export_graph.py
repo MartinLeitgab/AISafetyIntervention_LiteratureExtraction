@@ -8,6 +8,7 @@ from falkordb import FalkorDB
 import pandas as pd
 from config import load_settings
 from os.path import join
+from pathlib import Path
 SETTINGS = load_settings()
 
 def export_graph(graph_name = SETTINGS.falkordb.graph, 
@@ -41,7 +42,7 @@ def export_graph(graph_name = SETTINGS.falkordb.graph,
             node = {"id": node_id}
             node.update(props)
             nodes_by_label["unlabeled"].append(node)
-
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
     for label, nodes in nodes_by_label.items():
         filename = f"nodes_{label}.csv"
         pd.DataFrame(nodes).to_csv(join(out_dir, filename), index=False)

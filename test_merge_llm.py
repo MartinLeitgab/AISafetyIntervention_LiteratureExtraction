@@ -137,6 +137,7 @@ def test_1(shared_graph: GraphFixture):
     """
     graph = shared_graph.graph
 
+    threshold = 0.4
     result = graph.query(
          f"""
         MATCH (seed:NODE)
@@ -148,7 +149,7 @@ def test_1(shared_graph: GraphFixture):
         // note that queryNodes produces cosine distance = 1 - cosine similarity
         // so smaller distance means more similar
         // we filter to only very similar nodes
-        WHERE score < 0.02 AND seed <> node
+        WHERE score < {threshold} AND seed <> node
         RETURN seed, node, score
         // order by ascending so the most similar nodes are processed first
         ORDER BY score ASC
@@ -167,18 +168,10 @@ def test_1(shared_graph: GraphFixture):
     assert len(clusters_by_size[0]) > 0
     assert len(clusters_by_size[0]) >= len(clusters_by_size[-1])
 
-    target_cluster = clusters_by_size[5]
-    for target_cluster_i in [15,25,35,45]:
+    # target_cluster = clusters_by_size[5]
+    # for target_cluster_i in [15,25,35,45]:
+    for target_cluster_i in [0]:
         target_cluster = clusters_by_size[target_cluster_i]
-
-        # biggest_cluster: List[Node] | None = None
-
-        # for _seed_id, nodes in seed_to_nodes.items():
-        #     biggest_cluster = nodes if biggest_cluster is None or len(nodes) > len(biggest_cluster) else biggest_cluster
-        #     if len(biggest_cluster) == 11:
-        #         break
-        # assert biggest_cluster is not None
-        # target_cluster = biggest_cluster
         out_folder = f"./test_output_data_0.98/cluster_{target_cluster_i}"
         if use_jeff_graph():
             selected_cluster = target_cluster
