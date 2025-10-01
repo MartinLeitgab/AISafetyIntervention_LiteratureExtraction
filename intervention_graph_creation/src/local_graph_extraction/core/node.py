@@ -45,6 +45,17 @@ class Node(BaseModel):
             if len(s) > 200:
                 raise ValueError("alias too long (>200 chars)")
         return cleaned
+    
+    @model_validator(mode='before')
+    @classmethod
+    def remove_unwanted_fields(cls, values):
+        """Rationale fields are not stored in the database"""
+        if isinstance(values, dict):
+            ignored_fields = ["intervention_maturity_rationale", "intervention_lifecycle_rationale",
+                              "node_rationale"]
+            for field in ignored_fields:
+                values.pop(field, None)
+        return values
 
     @model_validator(mode="after")
     def _cross_field_rules(self):

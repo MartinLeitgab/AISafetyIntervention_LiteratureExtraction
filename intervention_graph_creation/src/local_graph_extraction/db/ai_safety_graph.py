@@ -51,7 +51,8 @@ class AISafetyGraph:
             n.concept_category = $concept_category,
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
-            n.url = $url
+            n.url = $url,
+            n.is_tombstone = false
         WITH n, $embedding AS emb, $url AS source_url
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         WITH n, source_url
@@ -64,7 +65,7 @@ class AISafetyGraph:
 
     # ---------- edges ----------
     # Multiple edges between same nodes are allowed,
-    # but for the same etype we update the existing edge (MERGE by etype).
+    # but for the same type we update the existing edge (MERGE by type).
 
     def upsert_edge(self, edge: GraphEdge, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
@@ -73,24 +74,25 @@ class AISafetyGraph:
         params = {
             "s": edge.source_node,
             "t": edge.target_node,
-            "etype": edge.type,
+            "type": edge.type,
             "description": edge.description,
-            "edge_confidence": edge.edge_confidence,
+            "edge_confidence": edge.edge_confidence,    
             "url": url,
             "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
-        # One :EDGE per (a,b,etype). If exists → update props; else → create.
+        # One :EDGE per (a,b,type). If exists → update props; else → create.
         # Keep url as property AND create [:FROM] relationship to :Source node
 
         # First, create/update the edge
         edge_cypher = f"""
         MATCH (a {{name: $s}}), (b {{name: $t}})
-        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
+        MERGE (a)-[r:EDGE {{type: $type}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
-            r.url = $url
+            r.url = $url,
+            r.is_tombstone = false
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN ID(r) AS edge_id
@@ -230,6 +232,23 @@ class AISafetyGraph:
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
+
+    def clear_graph(self) -> None:
+        """Delete all nodes and edges from the graph"""
+        g = self.db.select_graph(SETTINGS.falkordb.graph)  # ← Use the settings
+
+        print(f"Clearing all data from graph '{SETTINGS.falkordb.graph}'...")
+
+        # Delete all relationships first, then nodes
+        g.query("MATCH ()-[r]-() DELETE r")
+        g.query("MATCH (n) DELETE n")
+
+        print("Graph cleared successfully")
+
+    def clear_and_ingest(self, input_dir: Path) -> None:
+        """Clear existing data and ingest new data"""
+        self.clear_graph()
+        self.ingest_dir(input_dir)
 
     def ingest_file(self, json_path: Path, errors: dict) -> bool:
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
@@ -411,11 +430,18 @@ class AISafetyGraph:
         """
 
         return graph.query(merge_q, {"remove": remove_name, "keep": keep_name})
-    
+
 
 def main():
+    print("starting script")
     graph = AISafetyGraph()
+    print(
+        f"Starting ingestion into FalkorDB graph '{SETTINGS.falkordb.graph}' at {SETTINGS.falkordb.host}:{SETTINGS.falkordb.port}..."
+    )
+    graph.clear_graph()
+    print(f"Ingesting from {SETTINGS.paths.output_dir}...")
     graph.ingest_dir(SETTINGS.paths.output_dir)
+    print("Ingestion complete, saving graph to json...")
     graph.save_graph_to_json("graph.json")
 
 
