@@ -1,6 +1,7 @@
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, Dict
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 import numpy as np
+import time
 
 
 class Node(BaseModel):
@@ -74,9 +75,16 @@ class GraphNode(Node):
     """Extended Node class with embedding support."""
     embedding: Optional[np.ndarray] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    is_tombstone: Optional[bool] =  False
+    is_leaf: Optional[bool] = True
+    cycled_id: Optional[str] = None
+    created_at: Optional[int] = None
+    updated_at: Optional[int] = None
 
     def __init__(self, **data):
         # Handle embedding separately to avoid pydantic validation issues
         embedding = data.pop('embedding', None)
         super().__init__(**data)
+        self.created_at = int(time.time() * 1000)
+        self.updated_at = int(time.time() * 1000)
         self.embedding = embedding

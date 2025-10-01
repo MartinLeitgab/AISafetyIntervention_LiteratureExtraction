@@ -14,7 +14,6 @@ from intervention_graph_creation.src.local_graph_extraction.db.helpers import la
 
 SETTINGS = load_settings()
 
-
 class AISafetyGraph:
     def __init__(self) -> None:
         self.db = FalkorDB(host=SETTINGS.falkordb.host, port=SETTINGS.falkordb.port)
@@ -36,6 +35,11 @@ class AISafetyGraph:
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
             "url": url,
+            "is_tombstone": node.is_tombstone,
+            "is_leaf": node.is_leaf,
+            "cycled_id": node.cycled_id or "",
+            "created_at": node.created_at,
+            "updated_at": node.updated_at,
             "embedding": (node.embedding.tolist() if node.embedding is not None else None),
         }
 
@@ -52,10 +56,14 @@ class AISafetyGraph:
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
             n.url = $url,
-            n.is_tombstone = false
-        WITH n, $embedding AS emb, $url AS source_url
+            n.is_tombstone = $is_tombstone,
+            n.is_leaf = $is_leaf,
+            n.cycled_id = $cycled_id,
+            n.created_at = coalesce(n.created_at, $created_at),
+            n.updated_at = $updated_at
+        WITH n, $embedding AS emb
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
-        WITH n, source_url
+        WITH n,  $url AS source_url
         MERGE (p:Source {{url: source_url}})
         MERGE (n)-[:FROM]->(p)
         RETURN n
@@ -72,12 +80,17 @@ class AISafetyGraph:
 
         # Prepare params
         params = {
-            "s": edge.source_node,
-            "t": edge.target_node,
-            "type": edge.type,
-            "description": edge.description,
-            "edge_confidence": edge.edge_confidence,    
+            "s": edge.source_node or "",
+            "t": edge.target_node or "",
+            "type": edge.type or "",
+            "description": edge.description or "",
+            "edge_confidence": edge.edge_confidence,
             "url": url,
+            "is_tombstone": edge.is_tombstone,
+            "merge_rational": edge.merge_rational or "",
+            "cycled_id": edge.cycled_id or "",
+            "created_at": edge.created_at,
+            "updated_at": edge.updated_at,
             "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
 
@@ -92,7 +105,11 @@ class AISafetyGraph:
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
             r.url = $url,
-            r.is_tombstone = false
+            r.is_tombstone = $is_tombstone,
+            r.merge_rational = $merge_rational,
+            r.cycled_id = $cycled_id,
+            r.created_at = coalesce(r.created_at, $created_at),
+            r.updated_at = $updated_at
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN ID(r) AS edge_id
