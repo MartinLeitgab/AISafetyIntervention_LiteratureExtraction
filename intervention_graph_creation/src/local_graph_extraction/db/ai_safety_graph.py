@@ -51,7 +51,8 @@ class AISafetyGraph:
             n.concept_category = $concept_category,
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
-            n.url = $url
+            n.url = $url,
+            n.is_tombstone = false
         WITH n, $embedding AS emb, $url AS source_url
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         WITH n, source_url
@@ -75,7 +76,7 @@ class AISafetyGraph:
             "t": edge.target_node,
             "etype": edge.type,
             "description": edge.description,
-            "edge_confidence": edge.edge_confidence,
+            "edge_confidence": edge.edge_confidence,    
             "url": url,
             "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
@@ -90,7 +91,8 @@ class AISafetyGraph:
         MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
-            r.url = $url
+            r.url = $url,
+            r.is_tombstone = false
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN ID(r) AS edge_id
