@@ -233,8 +233,6 @@ async def embed_batch_async(
 # -----------------------------------------------------------------------------
 
 async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
-    # ищем все JSON кроме исключённых директорий
-    # Machine translation: We search for all JSON except in excluded directories
     json_files = [
         p for p in OUTPUT_DIR.rglob("*.json")
         if not any(part in {"embedding_errors", "issues", "error", "embeddings"} for part in p.parts)

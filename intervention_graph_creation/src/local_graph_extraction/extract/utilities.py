@@ -56,15 +56,14 @@ def url_to_id(url: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
 
 
-def write_failure(base_dir: Path, paper_id: str, err: Exception) -> None:
+def write_failure(base_dir: Path, output_dir: Path,  paper_id: str, err: Exception) -> None:
     """
     Save failure information for a paper into the extraction_error directory.
     - Moves any already generated files (raw_response, summary, json) from output/.
     - Always writes error.txt with exception type, message, and traceback.
     - Removes empty paper folder from output/.
     """
-    err_dir = base_dir / "extraction_error" / paper_id
-    err_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     orig_dir = base_dir / paper_id
     candidate_files = [
@@ -75,13 +74,13 @@ def write_failure(base_dir: Path, paper_id: str, err: Exception) -> None:
 
     for src in candidate_files:
         if src.exists():
-            dst = err_dir / src.name
+            dst = output_dir / src.name
             try:
                 shutil.move(str(src), str(dst))
             except Exception as move_err:
                 logger.warning("Could not move %s → %s: %s", src, dst, move_err)
 
-    error_file = err_dir / "error.txt"
+    error_file = output_dir / "error.txt"
     diag = (
         f"❌ Processing failed for {paper_id}\n"
         f"{type(err).__name__}: {err}\n\n"

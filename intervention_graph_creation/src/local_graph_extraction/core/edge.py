@@ -43,7 +43,4 @@ class GraphEdge(Edge):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __init__(self, **data):
-        # Handle embedding separately to avoid pydantic validation issues
-        embedding = data.pop('embedding', None)
         super().__init__(**data)
-        self.embedding = embedding

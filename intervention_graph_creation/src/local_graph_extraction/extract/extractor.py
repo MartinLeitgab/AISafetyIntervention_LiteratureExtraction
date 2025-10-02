@@ -74,22 +74,15 @@ class Extractor:
             http_client=http_client,
         )
 
-        # per-article statuses & tokens; per-batch times
         self._papers_status: List[Dict[str, Any]] = []
         self._batch_times: List[float] = []
 
-        # progress counters
         self.total_batches = 0
         self.completed_batches = 0
-
-    # =========================
-    # Methods output results
-    # =========================
 
     def write_batch_outputs(
         self, out_dir: Path, stem: str, response_body: Dict, meta: Dict
     ) -> None:
-        """Записываем результаты одного документа."""
         raw_path = out_dir / f"{stem}_raw_response.txt"
         json_path = out_dir / f"{stem}.json"
         summary_path = out_dir / f"{stem}_summary.txt"
@@ -107,7 +100,7 @@ class Extractor:
                     parsed["meta"] = meta
                 safe_write(json_path, json.dumps(parsed, ensure_ascii=False, indent=2))
         except Exception as e:
-            write_failure(SETTINGS.paths.output_dir, stem, f"JSON parse error: {e}")
+            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, stem, e)
 
     def get_output_text_from_response_body(self, response_body: Dict) -> str:
         if "output" not in response_body:
@@ -121,14 +114,9 @@ class Extractor:
             raise ValueError("No output_text found")
         return text_obj["text"]
 
-    # =========================
-    # Batch Requests
-    # =========================
-
     def create_batch_requests(
         self, input_dir: Path, first_n: Optional[int] = None
     ) -> List[Dict]:
-        """Формируем batch-запросы из PDF и JSONL файлов."""
         batch_requests: List[Dict] = []
 
         pdf_files = list(input_dir.glob("*.pdf"))
@@ -137,11 +125,13 @@ class Extractor:
         if first_n:
             pdf_files = pdf_files[:first_n]
 
-        # PDFs
         for idx, pdf_path in enumerate(pdf_files):
-            out_dir = SETTINGS.paths.output_dir / pdf_path.stem
-            if out_dir.exists():
-                logger.info("Skipping already-processed PDF: %s", pdf_path.name)
+            paper_id = pdf_path.stem
+            out_dir = SETTINGS.paths.output_dir / paper_id
+            err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+
+            if out_dir.exists() or err_dir.exists():
+                logger.info("Skipping already processed or failed PDF: %s", pdf_path.name)
                 continue
 
             try:
@@ -177,9 +167,8 @@ class Extractor:
                     }
                 )
             except Exception as e:
-                write_failure(SETTINGS.paths.output_dir, pdf_path.stem, e)
+                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, e)
 
-        # JSONLs
         json_items_cap = first_n if first_n else None
         for jsonl_path in jsonl_files:
             if json_items_cap is not None and json_items_cap <= 0:
@@ -197,14 +186,17 @@ class Extractor:
                             paper_json = json.loads(line)
                         except Exception as e:
                             pid = f"{jsonl_path.stem}__badjson_{idx}"
-                            write_failure(SETTINGS.paths.output_dir, pid, e)
+                            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, pid, e)
                             continue
 
                         paper_id = jsonl_path.stem + "__" + url_to_id(
                             paper_json.get("url", f"line_{idx}")
                         )
                         out_dir = SETTINGS.paths.output_dir / paper_id
-                        if out_dir.exists():
+                        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+
+                        if out_dir.exists() or err_dir.exists():
+                            logger.info("Skipping already processed or failed JSONL: %s", paper_id)
                             continue
 
                         custom_id = f"jsonl_{paper_id}_{idx}"
@@ -232,13 +224,13 @@ class Extractor:
                         batch_requests.append(
                             {
                                 "request": request,
-                                "paper_id": paper_id,
+                                "file_path": jsonl_path,
                                 "file_type": "jsonl",
                                 "meta": filter_dict(paper_json, META_KEYS),
                             }
                         )
             except Exception as e:
-                write_failure(SETTINGS.paths.output_dir, jsonl_path.stem, e)
+                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, jsonl_path.stem, e)
 
         return batch_requests
 
@@ -266,10 +258,6 @@ class Extractor:
             metadata={"description": description},
         )
         return batch.id
-
-    # =========================
-    # Async Batch Processing
-    # =========================
 
     async def process_dir_batch_async(
         self,
@@ -343,7 +331,6 @@ class Extractor:
         last_log_time = 0.0
         while True:
             batch = await self._run_in_thread(self.client.batches.retrieve, batch_id)
-            logger.info("Batch %d status: %s", batch_num, batch.status)
             if batch.status == "completed":
                 return batch
             if batch.status in ["failed", "expired", "cancelled"]:
@@ -367,24 +354,6 @@ class Extractor:
         custom_id_map = {req["request"]["custom_id"]: req for req in batch_requests}
         processed_ids = set()
 
-        if getattr(batch, "error_file_id", None):
-            file_response = self.client.files.content(batch.error_file_id)
-            for line in file_response.text.strip().split("\n"):
-                if not line:
-                    continue
-                try:
-                    result = json.loads(line)
-                    cid = result.get("custom_id")
-                    err_msg = result.get("error", "Unknown error")
-                    req = custom_id_map.get(cid)
-                    paper_id = req.get("file_path", req.get("paper_id")).stem if req else "unknown"
-                    write_failure(SETTINGS.paths.output_dir, paper_id, Exception(err_msg))
-                    self._papers_status.append({"status": "failed"})
-                    processed_ids.add(cid)
-                except Exception as e:
-                    write_failure(SETTINGS.paths.output_dir, "unknown", e)
-                    self._papers_status.append({"status": "failed"})
-
         if getattr(batch, "output_file_id", None):
             file_response = self.client.files.content(batch.output_file_id)
             for line in file_response.text.strip().split("\n"):
@@ -396,9 +365,16 @@ class Extractor:
                     processed_ids.add(cid)
 
                     if result.get("error"):
+                        error_obj = result["error"]
+                        err_msg = f"{error_obj.get('code')}: {error_obj.get('message')}" if isinstance(error_obj, dict) else str(error_obj or "Unknown error")
+                        error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
                         req = custom_id_map.get(cid)
-                        paper_id = req.get("file_path", req.get("paper_id")).stem if req else "unknown"
-                        write_failure(SETTINGS.paths.output_dir, paper_id, Exception(result["error"]))
+                        file_path = req.get("file_path") if req else None
+                        paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
+                        diag = f"❌ Processing failed for {paper_id}\n{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
+                        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+                        err_dir.mkdir(parents=True, exist_ok=True)
+                        (err_dir / "error.txt").write_text(diag, encoding="utf-8")
                         self._papers_status.append({"status": "failed"})
                         continue
 
@@ -406,42 +382,57 @@ class Extractor:
                     req = custom_id_map.get(cid)
                     if not req:
                         continue
-
-                    if req["file_type"] == "pdf":
-                        stem = req["file_path"].stem
-                        out_dir = SETTINGS.paths.output_dir / stem
-                    else:
-                        stem = req["paper_id"]
-                        out_dir = SETTINGS.paths.output_dir / stem
-
+                    file_path = req.get("file_path")
+                    paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
+                    out_dir = SETTINGS.paths.output_dir / paper_id
                     out_dir.mkdir(parents=True, exist_ok=True)
-                    self.write_batch_outputs(out_dir, stem, resp_body, req.get("meta"))
+                    self.write_batch_outputs(out_dir, paper_id, resp_body, req.get("meta"))
                     tokens = resp_body.get("usage", {}).get("total_tokens", 0)
                     self._papers_status.append({"status": "success", "elapsed": elapsed, "tokens": tokens})
 
                 except Exception as e:
                     cid = result.get("custom_id")
                     req = custom_id_map.get(cid)
-                    paper_id = req.get("file_path", req.get("paper_id")).stem if req else "unknown"
-                    write_failure(SETTINGS.paths.output_dir, paper_id, e)
+                    file_path = req.get("file_path") if req else None
+                    paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
+                    write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, e)
+                    self._papers_status.append({"status": "failed"})
+
+        if getattr(batch, "error_file_id", None):
+            file_response = self.client.files.content(batch.error_file_id)
+            for line in file_response.text.strip().split("\n"):
+                if not line:
+                    continue
+                try:
+                    result = json.loads(line)
+                    cid = result.get("custom_id")
+                    processed_ids.add(cid)
+                    error_obj = result.get("error")
+                    err_msg = f"{error_obj.get('code')}: {error_obj.get('message')}" if isinstance(error_obj, dict) else str(error_obj or "Unknown error")
+                    error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
+                    req = custom_id_map.get(cid)
+                    file_path = req.get("file_path") if req else None
+                    paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
+                    diag = f"❌ Processing failed for {paper_id}\n{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
+                    err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+                    err_dir.mkdir(parents=True, exist_ok=True)
+                    (err_dir / "error.txt").write_text(diag, encoding="utf-8")
+                    self._papers_status.append({"status": "failed"})
+                except Exception as e:
+                    write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, "unknown", e)
                     self._papers_status.append({"status": "failed"})
 
         for cid, req in custom_id_map.items():
             if cid not in processed_ids:
-                paper_id = req.get("file_path", req.get("paper_id")).stem if req else "unknown"
-                write_failure(SETTINGS.paths.output_dir, paper_id, Exception("No response in batch output"))
+                file_path = req.get("file_path") if req else None
+                paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
+                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, Exception("No response in batch output"))
                 self._papers_status.append({"status": "failed"})
-
-
 
     async def _run_in_thread(self, func, *args, **kwargs):
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as executor:
             return await loop.run_in_executor(executor, func, *args, **kwargs)
-
-    # =========================
-    # Final report
-    # =========================
 
     def print_summary(self) -> None:
         total = len(self._papers_status)
@@ -472,16 +463,12 @@ class Extractor:
             logger.info("Total:   %d", sum(tokens))
 
 
-# =========================
-# MAIN
-# =========================
-
 if __name__ == "__main__":
     extractor = Extractor()
 
     input_dir = SETTINGS.paths.input_dir
-    total_articles = 7
-    batch_size = 2
+    total_articles = 100
+    batch_size = 10
 
     async def main():
         await extractor.process_dir_batch_async(

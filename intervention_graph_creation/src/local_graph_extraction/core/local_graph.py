@@ -8,6 +8,9 @@ from intervention_graph_creation.src.local_graph_extraction.core.edge import Gra
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
 from intervention_graph_creation.src.utils import short_id_edge, short_id_node
+from config import load_settings
+
+SETTINGS = load_settings()
 
 
 class LocalGraph(BaseModel):
@@ -29,7 +32,7 @@ class LocalGraph(BaseModel):
         if len(names) != len(set(names)):
             dupes = sorted({x for x in names if names.count(x) > 1})
             msg = f"Duplicate node names in {json_path.name}: {dupes}"
-            write_failure(json_path.parent, json_path.name, Exception(msg))
+            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.graph_error_dir, json_path.name, Exception(msg))
             return None, msg
 
         known = set(names)
@@ -42,20 +45,10 @@ class LocalGraph(BaseModel):
         ]
         if missing:
             msg = f"Edges reference unknown nodes in {json_path.name}: {missing[:5]}..."
-            write_failure(json_path.parent, json_path.name, Exception(msg))
+            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.graph_error_dir, json_path.name, Exception(msg))
             return None, msg
 
-        # Convert to LocalGraph
-        graph_nodes = [GraphNode(**node.model_dump()) for node in paper_schema.nodes]
-
-        # Handle both edge formats
-        graph_edges = []
-        for edge in paper_schema.edges:
-            graph_edge = GraphEdge.model_construct(**edge.model_dump())
-            graph_edges.append(graph_edge)
-
-        # Create the LocalGraph - THIS LINE WAS MISSING OR MISPLACED
-        local_graph = LocalGraph(nodes=graph_nodes, edges=graph_edges, paper_id=json_path.stem)
+        local_graph = LocalGraph(nodes=paper_schema.nodes, edges=paper_schema.edges, paper_id=json_path.stem)
         return local_graph, None
 
     def add_embeddings_to_nodes(self, node: GraphNode, json_path: Path) -> None:
@@ -69,10 +62,10 @@ class LocalGraph(BaseModel):
                 node.embedding = np.array(data["embedding"], dtype=np.float32)
             except Exception as e:
                 print(f"[WARN] Failed to load embedding for node {node.name}: {e}")
-                node.embedding = np.zeros(1024, dtype=np.float32)
+                node.embedding = np.zeros(1536, dtype=np.float32)
         else:
             print(f"[WARN] Embedding file not found for node {node.name} -> {emb_path}")
-            node.embedding = np.zeros(1024, dtype=np.float32)
+            node.embedding = np.zeros(1536, dtype=np.float32)
 
     def add_embeddings_to_edges(self, edge: GraphEdge, json_path: Path) -> None:
         """Load embeddings for an edge from embeddings folder."""
@@ -85,7 +78,7 @@ class LocalGraph(BaseModel):
                 edge.embedding = np.array(data["embedding"], dtype=np.float32)
             except Exception as e:
                 print(f"[WARN] Failed to load embedding for edge {edge.type} ({edge.source_node}->{edge.target_node}): {e}")
-                edge.embedding = np.zeros(1024, dtype=np.float32)
+                edge.embedding = np.zeros(1536, dtype=np.float32)
         else:
             print(f"[WARN] Embedding file not found for edge {edge.type} ({edge.source_node}->{edge.target_node}) -> {emb_path}")
-            edge.embedding = np.zeros(1024, dtype=np.float32)
+            edge.embedding = np.zeros(1536, dtype=np.float32)

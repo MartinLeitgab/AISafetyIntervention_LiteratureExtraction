@@ -320,13 +320,11 @@ class AISafetyGraph:
     def ingest_dir(self, input_dir: Path = SETTINGS.paths.output_dir) -> None:
         errors = {}
         base = Path(input_dir)
-        issues_dir = base / "issues"
+        issues_dir = SETTINGS.paths.graph_error_dir
         issues_dir.mkdir(exist_ok=True)
         subdirs = [d for d in base.iterdir() if d.is_dir()]
 
         for d in tqdm(sorted(subdirs)):
-            if d.name == "issues" or d.name == "error":
-                continue  # Skip the issues directory itself AND skip error directory.
             json_path = d / f"{d.name}.json"
             if not json_path.exists():
                 print(f"⚠️ Skipping {d.name}: {json_path} not found")
