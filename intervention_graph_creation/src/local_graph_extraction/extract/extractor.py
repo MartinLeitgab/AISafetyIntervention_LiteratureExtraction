@@ -80,6 +80,9 @@ class Extractor:
         self.total_batches = 0
         self.completed_batches = 0
 
+        self._last_log_time = 0.0
+        self._log_lock = asyncio.Lock()
+
     def write_batch_outputs(
         self, out_dir: Path, stem: str, response_body: Dict, meta: Dict
     ) -> None:
@@ -164,6 +167,7 @@ class Extractor:
                         "file_path": pdf_path,
                         "file_type": "pdf",
                         "meta": {"filename": pdf_path.name},
+                        "paper_id": paper_id,
                     }
                 )
             except Exception as e:
@@ -226,6 +230,7 @@ class Extractor:
                                 "request": request,
                                 "file_path": jsonl_path,
                                 "file_type": "jsonl",
+                                "paper_id": paper_id,
                                 "meta": filter_dict(paper_json, META_KEYS),
                             }
                         )
@@ -326,26 +331,29 @@ class Extractor:
         return completed_batch
 
     async def _wait_for_batch_completion_async(
-        self, batch_id: str, batch_num: int, check_interval: int = 60
-    ) -> Any:
-        last_log_time = 0.0
-        while True:
-            batch = await self._run_in_thread(self.client.batches.retrieve, batch_id)
-            if batch.status == "completed":
-                return batch
-            if batch.status in ["failed", "expired", "cancelled"]:
-                raise RuntimeError(f"Batch {batch_num} ended with status {batch.status}")
+            self, batch_id: str, batch_num: int, check_interval: int = 60
+        ) -> Any:
+            while True:
+                batch = await self._run_in_thread(self.client.batches.retrieve, batch_id)
 
-            now = time.time()
-            if now - last_log_time >= check_interval:
-                in_progress = self.total_batches - self.completed_batches
-                logger.info(
-                    "Progress update: Processed: %d / In progress: %d / Total: %d",
-                    self.completed_batches, in_progress, self.total_batches
-                )
-                last_log_time = now
+                if batch.status == "completed":
+                    return batch
 
-            await asyncio.sleep(60)
+                if batch.status in ["failed", "expired", "cancelled"]:
+                    raise RuntimeError(f"Batch {batch_num} ended with status {batch.status}")
+
+                now = time.time()
+
+                async with self._log_lock:
+                    if now - self._last_log_time >= check_interval:
+                        in_progress = self.total_batches - self.completed_batches
+                        logger.info(
+                            "Progress update: Processed: %d / In progress: %d / Total: %d",
+                            self.completed_batches, in_progress, self.total_batches
+                        )
+                        self._last_log_time = now
+
+                await asyncio.sleep(60)
 
     def _process_batch_results(self, batch: Dict, batch_requests: List[Dict], elapsed: float) -> None:
         if batch.status != "completed":
@@ -353,6 +361,28 @@ class Extractor:
 
         custom_id_map = {req["request"]["custom_id"]: req for req in batch_requests}
         processed_ids = set()
+
+        def _get_paper_id(req: Dict) -> str:
+            if not req:
+                return "unknown"
+            if "paper_id" in req:
+                return req["paper_id"]
+            file_path = req.get("file_path")
+            if isinstance(file_path, Path):
+                return file_path.stem
+            return str(file_path or "unknown")
+
+        def _handle_failure(req: Dict, err: Exception, diag: Optional[str] = None):
+            paper_id = _get_paper_id(req)
+            err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+            err_dir.mkdir(parents=True, exist_ok=True)
+
+            if diag:
+                (err_dir / "error.txt").write_text(diag, encoding="utf-8")
+            else:
+                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, err)
+
+            self._papers_status.append({"status": "failed"})
 
         if getattr(batch, "output_file_id", None):
             file_response = self.client.files.content(batch.output_file_id)
@@ -364,26 +394,25 @@ class Extractor:
                     cid = result.get("custom_id")
                     processed_ids.add(cid)
 
+                    req = custom_id_map.get(cid)
+                    paper_id = _get_paper_id(req)
+
                     if result.get("error"):
                         error_obj = result["error"]
-                        err_msg = f"{error_obj.get('code')}: {error_obj.get('message')}" if isinstance(error_obj, dict) else str(error_obj or "Unknown error")
+                        err_msg = (
+                            f"{error_obj.get('code')}: {error_obj.get('message')}"
+                            if isinstance(error_obj, dict)
+                            else str(error_obj or "Unknown error")
+                        )
                         error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
-                        req = custom_id_map.get(cid)
-                        file_path = req.get("file_path") if req else None
-                        paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
-                        diag = f"❌ Processing failed for {paper_id}\n{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
-                        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
-                        err_dir.mkdir(parents=True, exist_ok=True)
-                        (err_dir / "error.txt").write_text(diag, encoding="utf-8")
-                        self._papers_status.append({"status": "failed"})
+                        diag = (
+                            f"❌ Processing failed for {paper_id}\n"
+                            f"{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
+                        )
+                        _handle_failure(req, Exception(err_msg), diag)
                         continue
 
                     resp_body = result["response"]["body"]
-                    req = custom_id_map.get(cid)
-                    if not req:
-                        continue
-                    file_path = req.get("file_path")
-                    paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
                     out_dir = SETTINGS.paths.output_dir / paper_id
                     out_dir.mkdir(parents=True, exist_ok=True)
                     self.write_batch_outputs(out_dir, paper_id, resp_body, req.get("meta"))
@@ -391,12 +420,8 @@ class Extractor:
                     self._papers_status.append({"status": "success", "elapsed": elapsed, "tokens": tokens})
 
                 except Exception as e:
-                    cid = result.get("custom_id")
-                    req = custom_id_map.get(cid)
-                    file_path = req.get("file_path") if req else None
-                    paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
-                    write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, e)
-                    self._papers_status.append({"status": "failed"})
+                    req = custom_id_map.get(result.get("custom_id"))
+                    _handle_failure(req, e)
 
         if getattr(batch, "error_file_id", None):
             file_response = self.client.files.content(batch.error_file_id)
@@ -407,27 +432,30 @@ class Extractor:
                     result = json.loads(line)
                     cid = result.get("custom_id")
                     processed_ids.add(cid)
-                    error_obj = result.get("error")
-                    err_msg = f"{error_obj.get('code')}: {error_obj.get('message')}" if isinstance(error_obj, dict) else str(error_obj or "Unknown error")
-                    error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
+
                     req = custom_id_map.get(cid)
-                    file_path = req.get("file_path") if req else None
-                    paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
-                    diag = f"❌ Processing failed for {paper_id}\n{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
-                    err_dir = SETTINGS.paths.extraction_error_dir / paper_id
-                    err_dir.mkdir(parents=True, exist_ok=True)
-                    (err_dir / "error.txt").write_text(diag, encoding="utf-8")
-                    self._papers_status.append({"status": "failed"})
+                    paper_id = _get_paper_id(req)
+
+                    error_obj = result.get("error")
+                    err_msg = (
+                        f"{error_obj.get('code')}: {error_obj.get('message')}"
+                        if isinstance(error_obj, dict)
+                        else str(error_obj or "Unknown error")
+                    )
+                    error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
+                    diag = (
+                        f"❌ Processing failed for {paper_id}\n"
+                        f"{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
+                    )
+                    _handle_failure(req, Exception(err_msg), diag)
+
                 except Exception as e:
-                    write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, "unknown", e)
-                    self._papers_status.append({"status": "failed"})
+                    _handle_failure(None, e)
 
         for cid, req in custom_id_map.items():
             if cid not in processed_ids:
-                file_path = req.get("file_path") if req else None
-                paper_id = file_path.stem if isinstance(file_path, Path) else str(file_path or "unknown")
-                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, Exception("No response in batch output"))
-                self._papers_status.append({"status": "failed"})
+                _handle_failure(req, Exception("No response in batch output"))
+
 
     async def _run_in_thread(self, func, *args, **kwargs):
         loop = asyncio.get_event_loop()
