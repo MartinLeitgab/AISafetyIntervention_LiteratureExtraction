@@ -173,15 +173,39 @@ class AISafetyGraph:
         g.query(cypher, params)
 
     def ingest_rationale(self, rationale_path: Path, url: str) -> None:
-        """Ingest rationale record as :Rationale node linked to :Source node."""
-        if not rationale_path.exists():
+        """Ingest rationale record as :Rationale node linked to :Source node.
+        """
+        # Inputs are base path ending with *_summary.txt; associated JSON is stem without suffix
+        summary_path = rationale_path
+        json_path = rationale_path.with_name(rationale_path.name.replace("_summary.txt", ".json"))
+
+        if not summary_path.exists() and not json_path.exists():
             return
 
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        # Read the rationale content
-        with open(rationale_path, 'r', encoding='utf-8') as f:
-            rationale_content = f.read()
+        # Read summary and JSON content if present
+        summary_content = ""
+        if summary_path.exists():
+            with open(summary_path, 'r', encoding='utf-8') as f:
+                summary_content = f.read().strip()
+
+        json_content = ""
+        if json_path.exists():
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    json_dict = json.load(f)
+                json_content = json.dumps(json_dict, ensure_ascii=False, indent=2)
+            except Exception:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    json_content = f.read().strip()
+
+        combined_parts = []
+        if summary_content:
+            combined_parts.append("# Summary\n\n" + summary_content)
+        if json_content:
+            combined_parts.append("# JSON Output\n\n" + json_content)
+        combined_content = "\n\n---\n\n".join(combined_parts) if combined_parts else ""
 
         cypher = """
         MERGE (p:Source {url: $url})
@@ -193,7 +217,7 @@ class AISafetyGraph:
 
         params = {
             "url": url,
-            "content": rationale_content
+            "content": combined_content,
         }
 
         g.query(cypher, params)
@@ -285,7 +309,7 @@ class AISafetyGraph:
 
         # Ingest rationale if available
         rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
-        if rationale_path.exists():
+        if rationale_path.exists() or json_path.exists():
             self.ingest_rationale(rationale_path, url)
 
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
