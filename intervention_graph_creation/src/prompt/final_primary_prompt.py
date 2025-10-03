@@ -145,7 +145,7 @@ Take your time, be thorough, remember you can zoom in on details.
 - Key limitations
 
 **JSON Structure Required**:
-Report all nodes and edges in the following format with all required data attributes- double-check to make sure no nodes or edges are missing!
+Report all nodes and edges in the following format with all required data attributes- double-check to make sure no nodes or edges are missing! When choices are seperated by the | character (for example something|someOtherthing), you should choose the most appropriate choice.
 
 ```json
 {
