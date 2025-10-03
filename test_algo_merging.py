@@ -59,8 +59,8 @@ def test_1(shared_graph: GraphFixture):
     Assuming then entire graph is a cluster.
     """
     graph = shared_graph.graph
-
-    threshold = float(environ.get("MAX_THRESHOLD", 0.5))
+    min_threshold = float(environ.get("MIN_THRESHOLD", 0.0))
+    max_threshold = float(environ.get("MAX_THRESHOLD", 0.7))
     result = graph.query(
         f"""
         MATCH (seed:NODE)
@@ -71,7 +71,7 @@ def test_1(shared_graph: GraphFixture):
         // note that queryNodes produces cosine distance = 1 - cosine similarity
         // so smaller distance means more similar
         // we filter to only very similar nodes
-        WHERE score < {threshold} AND seed <> node
+        WHERE score > {min_threshold} AND score < {max_threshold} AND seed <> node AND seed.type = node.type
         RETURN seed, node, score
         // order by ascending so the most similar nodes are processed first
         ORDER BY score ASC
@@ -95,7 +95,7 @@ def test_1(shared_graph: GraphFixture):
     
 
     assert len(unique_clusters) > 0, "no unique clusters"
-    all_clusters_path = f"./test_output_data_{threshold}/all_clusters.json"
+    all_clusters_path = f"./test_output_data_{max_threshold}/all_clusters.json" if (min_threshold <= 0) else f"./test_output_data_{min_threshold}_{max_threshold}/all_clusters.json"
     PathLibPath(all_clusters_path).parent.mkdir(exist_ok=True, parents=True)
     with open(all_clusters_path, "w") as f:
         json.dump(unique_clusters, f, cls=GraphJSONEncoder, indent=4)
