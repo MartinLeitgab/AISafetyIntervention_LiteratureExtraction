@@ -51,7 +51,8 @@ class AISafetyGraph:
             n.concept_category = $concept_category,
             n.intervention_lifecycle = $intervention_lifecycle,
             n.intervention_maturity = $intervention_maturity,
-            n.url = $url
+            n.url = $url,
+            n.is_tombstone = false
         WITH n, $embedding AS emb, $url AS source_url
         SET n.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         WITH n, source_url
@@ -64,7 +65,7 @@ class AISafetyGraph:
 
     # ---------- edges ----------
     # Multiple edges between same nodes are allowed,
-    # but for the same etype we update the existing edge (MERGE by etype).
+    # but for the same type we update the existing edge (MERGE by type).
 
     def upsert_edge(self, edge: GraphEdge, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
@@ -73,24 +74,25 @@ class AISafetyGraph:
         params = {
             "s": edge.source_node,
             "t": edge.target_node,
-            "etype": edge.type,
+            "type": edge.type,
             "description": edge.description,
-            "edge_confidence": edge.edge_confidence,
+            "edge_confidence": edge.edge_confidence,    
             "url": url,
             "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
 
         # Assume nodes already exist with correct labels; do not create them here.
-        # One :EDGE per (a,b,etype). If exists → update props; else → create.
+        # One :EDGE per (a,b,type). If exists → update props; else → create.
         # Keep url as property AND create [:FROM] relationship to :Source node
 
         # First, create/update the edge
         edge_cypher = f"""
         MATCH (a {{name: $s}}), (b {{name: $t}})
-        MERGE (a)-[r:EDGE {{etype: $etype}}]->(b)
+        MERGE (a)-[r:EDGE {{type: $type}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
-            r.url = $url
+            r.url = $url,
+            r.is_tombstone = false
         WITH r, $embedding AS emb
         SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN ID(r) AS edge_id
@@ -154,30 +156,62 @@ class AISafetyGraph:
         g.query(cypher, params)
 
     def ingest_rationale(self, rationale_path: Path, url: str) -> None:
-        """Ingest rationale record as :Rationale node linked to :Source node."""
-        if not rationale_path.exists():
-            return
+       """Ingest rationale record as :Rationale node linked to :Source node.
+       """
+       # Inputs are base path ending with *_summary.txt; associated JSON is stem without suffix
+       summary_path = rationale_path
+       json_path = rationale_path.with_name(rationale_path.name.replace("_summary.txt", ".json"))
 
-        g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        # Read the rationale content
-        with open(rationale_path, 'r', encoding='utf-8') as f:
-            rationale_content = f.read()
+       if not summary_path.exists() and not json_path.exists():
+           return
 
-        cypher = """
-        MERGE (p:Source {url: $url})
-        MERGE (r:Rationale {url: $url})
-        SET r.content = $content
-        MERGE (p)-[:HAS_RATIONALE]->(r)
-        RETURN r
-        """
 
-        params = {
-            "url": url,
-            "content": rationale_content
-        }
+       g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        g.query(cypher, params)
+
+       # Read summary and JSON content if present
+       summary_content = ""
+       if summary_path.exists():
+           with open(summary_path, 'r', encoding='utf-8') as f:
+               summary_content = f.read().strip()
+
+
+       json_content = ""
+       if json_path.exists():
+           try:
+               with open(json_path, 'r', encoding='utf-8') as f:
+                   json_dict = json.load(f)
+               json_content = json.dumps(json_dict, ensure_ascii=False, indent=2)
+           except Exception:
+               with open(json_path, 'r', encoding='utf-8') as f:
+                   json_content = f.read().strip()
+
+
+       combined_parts = []
+       if summary_content:
+           combined_parts.append("# Summary\n\n" + summary_content)
+       if json_content:
+           combined_parts.append("# JSON Output\n\n" + json_content)
+       combined_content = "\n\n---\n\n".join(combined_parts) if combined_parts else ""
+
+
+       cypher = """
+       MERGE (p:Source {url: $url})
+       MERGE (r:Rationale {url: $url})
+       SET r.content = $content
+       MERGE (p)-[:HAS_RATIONALE]->(r)
+       RETURN r
+       """
+
+
+       params = {
+           "url": url,
+           "content": combined_content,
+       }
+
+
+       g.query(cypher, params)
 
     # ---------- indexes ----------
 
@@ -204,7 +238,7 @@ class AISafetyGraph:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
                 
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (n:NODE).embedding.")
 
         # Check for existing vector index on [r:EDGE].embedding
@@ -226,7 +260,7 @@ class AISafetyGraph:
             except Exception as e:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
         print("Creating new vector index on [r:EDGE].embedding...")
-        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
@@ -265,8 +299,9 @@ class AISafetyGraph:
         self.ingest_metadata(doc.meta)
 
         # Ingest rationale if available
+        # Ingest rationale if available
         rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
-        if rationale_path.exists():
+        if rationale_path.exists() or json_path.exists():
             self.ingest_rationale(rationale_path, url)
 
         local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
@@ -275,9 +310,9 @@ class AISafetyGraph:
             errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
             return True
         for node in local_graph.nodes:
-            local_graph.add_embeddings_to_nodes(node)
+            local_graph.add_embeddings_to_nodes(node, json_path)
         for edge in local_graph.edges:
-            local_graph.add_embeddings_to_edges(edge)
+            local_graph.add_embeddings_to_edges(edge, json_path)
         self.ingest_local_graph(local_graph, url)
 
         return False
@@ -285,13 +320,11 @@ class AISafetyGraph:
     def ingest_dir(self, input_dir: Path = SETTINGS.paths.output_dir) -> None:
         errors = {}
         base = Path(input_dir)
-        issues_dir = base / "issues"
+        issues_dir = SETTINGS.paths.graph_error_dir
         issues_dir.mkdir(exist_ok=True)
         subdirs = [d for d in base.iterdir() if d.is_dir()]
 
         for d in tqdm(sorted(subdirs)):
-            if d.name == "issues":
-                continue  # Skip the issues directory itself
             json_path = d / f"{d.name}.json"
             if not json_path.exists():
                 print(f"⚠️ Skipping {d.name}: {json_path} not found")
