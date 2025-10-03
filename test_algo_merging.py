@@ -96,11 +96,10 @@ def test_1(shared_graph: GraphFixture):
     """
     graph = shared_graph.graph
 
-    threshold = 0.6
+    threshold = 0.425
     result = graph.query(
         f"""
         MATCH (seed:NODE)
-        // jeff's graph does not have tombstone nodes
         WHERE seed.is_tombstone = false AND seed.embedding IS NOT NULL
         WITH seed
         CALL db.idx.vector.queryNodes('NODE', 'embedding', 10, seed.embedding)
@@ -127,54 +126,17 @@ def test_1(shared_graph: GraphFixture):
     assert len(clusters_by_size[0]) > 0
     assert len(clusters_by_size[0]) >= len(clusters_by_size[-1])
 
+    unique_clusters = {}
+    for cluster_by_size in clusters_by_size:
+        node_ids = [n.id for n in cluster_by_size if n.id is not None]
+        node_ids.sort()
+        node_ids = tuple(node_ids)
+        if node_ids not in unique_clusters:
+            unique_clusters[node_ids] = cluster_by_size
 
-
-    # # target_cluster = clusters_by_size[5]
-    # # for target_cluster_i in [15,25,35,45]:
-    # for target_cluster_i in [0]:
-    #     target_cluster = clusters_by_size[target_cluster_i]
-    #     out_folder = f"./test_output_data_0.98/cluster_{target_cluster_i}"
-    #     if use_jeff_graph():
-    #         selected_cluster = target_cluster
-    #         selected_node_ids = [node.id for node in selected_cluster if node.id is not None]
-    #         assert len(selected_node_ids) > 0
-    #         if should_save_debug_data():
-    #             debug_path = PathLibPath(f"{out_folder}/cluster_being_tested.json")
-    #             debug_path.parent.mkdir(exist_ok=True, parents=True)
-    #             with open(debug_path, "w", encoding="utf-8") as f:
-    #                 json.dump(selected_cluster, f, cls=GraphJSONEncoder, indent=4)
-    #     else:
-    #         all_nodes: List[List[Node]] = graph.query(
-    #             """
-    #         MATCH (n:NODE)
-    #         RETURN n
-    #         """
-    #         ).result_set
-    #         all_node_ids = {n[0].id for n in all_nodes if n[0].id is not None}
-    #         all_node_ids = list(all_node_ids)
-
-    #         # only test 100 nodes at a time
-    #         selected_node_ids = all_node_ids[:100]
-
-    #     list_of_list_of_paths = get_cluster_paths(graph, selected_node_ids)
-    #     assert len(list_of_list_of_paths) > 0
-
-    #     # Get cluster paths returns a list of list of paths
-    #     # but they should only have one path in each list
-    #     # TODO adjust get_cluster_paths to return a list of paths
-    #     for paths in list_of_list_of_paths:
-    #         assert len(paths) > 0
-
-    #     paths = [paths[0] for paths in list_of_list_of_paths]
-    #     if should_save_debug_data():
-    #         paths_path = PathLibPath(f"{out_folder}/paths.txt")
-    #         paths_path.parent.mkdir(exist_ok=True, parents=True)
-    #         dump_paths(paths, paths_path)
-
-    #     merge_prompt = get_prompt_for_merge_llm(paths, primary_node_ids=selected_node_ids)
-    #     if should_save_debug_data():
-    #         merge_prompt_path = PathLibPath(f"{out_folder}/merge_prompt.txt")
-    #         merge_prompt_path.parent.mkdir(exist_ok=True, parents=True)
-    #         with open(merge_prompt_path, "w") as f:
-    #             f.write(merge_prompt)
-    #     merge_set = merge_llm(merge_prompt)
+    unique_clusters_list = list(unique_clusters.values())
+    assert len(unique_clusters_list) > 0, "no unique clusters"
+    all_clusters_path = f"./test_output_data_{threshold}/all_clusters.json"
+    PathLibPath(all_clusters_path).parent.mkdir(exist_ok=True, parents=True)
+    with open(all_clusters_path, "w") as f:
+        json.dump(unique_clusters_list, f, cls=GraphJSONEncoder, indent=4)
