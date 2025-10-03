@@ -13,6 +13,7 @@ import json
 from typing import Any, Dict, List, Tuple, TypedDict
 from falkordb.path import Path
 from falkordb.node import Node
+from os import environ
 
 
 @dataclass
@@ -110,7 +111,7 @@ def test_1(shared_graph: GraphFixture):
     """
     graph = shared_graph.graph
 
-    threshold = 0.5
+    threshold = float(environ.get("MAX_THRESHOLD", 0.5))
     result = graph.query(
         f"""
         MATCH (seed:NODE)
@@ -142,6 +143,7 @@ def test_1(shared_graph: GraphFixture):
     assert len(clusters_by_size[0]) >= len(clusters_by_size[-1])
 
     unique_clusters = remove_exact_duplicate_clusters(clusters_by_size)
+    
 
     assert len(unique_clusters) > 0, "no unique clusters"
     all_clusters_path = f"./test_output_data_{threshold}/all_clusters.json"
