@@ -238,7 +238,7 @@ class AISafetyGraph:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
                 
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (n:NODE).embedding.")
 
         # Check for existing vector index on [r:EDGE].embedding
@@ -260,7 +260,7 @@ class AISafetyGraph:
             except Exception as e:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
         print("Creating new vector index on [r:EDGE].embedding...")
-        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1024, similarityFunction:'cosine'}")
+        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
@@ -310,9 +310,9 @@ class AISafetyGraph:
             errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
             return True
         for node in local_graph.nodes:
-            local_graph.add_embeddings_to_nodes(node)
+            local_graph.add_embeddings_to_nodes(node, json_path)
         for edge in local_graph.edges:
-            local_graph.add_embeddings_to_edges(edge)
+            local_graph.add_embeddings_to_edges(edge, json_path)
         self.ingest_local_graph(local_graph, url)
 
         return False
@@ -320,13 +320,11 @@ class AISafetyGraph:
     def ingest_dir(self, input_dir: Path = SETTINGS.paths.output_dir) -> None:
         errors = {}
         base = Path(input_dir)
-        issues_dir = base / "issues"
+        issues_dir = SETTINGS.paths.graph_error_dir
         issues_dir.mkdir(exist_ok=True)
         subdirs = [d for d in base.iterdir() if d.is_dir()]
 
         for d in tqdm(sorted(subdirs)):
-            if d.name == "issues":
-                continue  # Skip the issues directory itself
             json_path = d / f"{d.name}.json"
             if not json_path.exists():
                 print(f"⚠️ Skipping {d.name}: {json_path} not found")
