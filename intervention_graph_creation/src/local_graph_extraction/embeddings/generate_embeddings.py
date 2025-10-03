@@ -7,10 +7,12 @@ Features:
 - Saves embeddings in paper_dir/embeddings/<10-char-id>.json
 - Deterministic IDs: sha1 hash of key fields (first 10 hex chars).
 - Resumable: skips already processed files.
-- Logs errors to SETTINGS.paths.output_dir / "embedding_errors".
+- Errors:
+  - Writes per-object error JSONs to SETTINGS.paths.embeddings_error.
+  - On fatal error for a paper, moves the entire article folder to SETTINGS.paths.embeddings_error and writes error.txt inside.
 - Async processing with configurable concurrency.
 - Automatic retries (max_retries=3) with exponential backoff (2–5s).
-- Logging to ./logs/run_YYYYMMDD_HHMM.log
+- Logging to ./logs/embeddings_MM-DD_HH-MM.log
 """
 
 import os
@@ -24,6 +26,8 @@ from pathlib import Path
 from typing import List, Optional
 import logging
 from datetime import datetime
+import shutil
+from shutil import Error as ShutilError
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -40,14 +44,15 @@ from intervention_graph_creation.src.local_graph_extraction.core.edge import Edg
 SETTINGS = load_settings()
 MODEL = SETTINGS.embeddings.model
 BATCH_SIZE = SETTINGS.embeddings.batch_size
-OUTPUT_DIR = SETTINGS.paths.output_dir
+OUTPUT_DIR: Path = SETTINGS.paths.output_dir
 
-ERRORS_DIR = OUTPUT_DIR / "embedding_errors"
-ERRORS_DIR.mkdir(parents=True, exist_ok=True)
+# Single errors folder for both per-object error JSONs and moved article folders
+EMB_ERRORS_DIR: Path = SETTINGS.paths.embeddings_error_dir
+EMB_ERRORS_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_CONCURRENT_BATCHES = SETTINGS.embeddings.max_cuncurrent_batches
 
-LOGS_DIR = SETTINGS.paths.logs_dir
+LOGS_DIR: Path = SETTINGS.paths.logs_dir
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 log_file = LOGS_DIR / f"embeddings_{datetime.now().strftime('%m-%d_%H-%M')}.log"
 
@@ -69,7 +74,6 @@ client = OpenAI(api_key=api_key)
 # -----------------------------------------------------------------------------
 
 def atomic_write_json(path: Path, data: dict) -> None:
-    """Safe atomic write to JSON file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + f".tmp-{random.randint(0, 1_000_000)}")
     with tmp.open("w", encoding="utf-8") as f:
@@ -77,8 +81,7 @@ def atomic_write_json(path: Path, data: dict) -> None:
     tmp.replace(path)
 
 def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
-    """Save error info to embedding_errors/<id>.json"""
-    error_path = ERRORS_DIR / f"{obj_id}.json"
+    error_path = EMB_ERRORS_DIR / f"{obj_id}.json"
     payload = {
         "id": obj_id,
         "type": obj_type,
@@ -88,6 +91,31 @@ def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     atomic_write_json(error_path, payload)
+
+def move_article_to_error(paper_dir: Path, reason: str, tb: Optional[str] = None) -> Path:
+    """
+    Moves the whole article folder to EMB_ERRORS_DIR without suffixing.
+    Creates error.txt inside the moved folder explaining the reason.
+    Assumes there will be no name collisions in EMB_ERRORS_DIR.
+    """
+    dest = EMB_ERRORS_DIR / paper_dir.name
+    try:
+        logger.error("Moving article to error folder: %s -> %s (%s)", paper_dir, dest, reason)
+        moved_path = shutil.move(str(paper_dir), str(dest))
+        moved_dir = Path(moved_path)
+        error_txt = moved_dir / "error.txt"
+        content = [
+            f"time: {datetime.now().isoformat()}",
+            f"reason: {reason}",
+        ]
+        if tb:
+            content.append("traceback:")
+            content.append(tb)
+        error_txt.write_text("\n".join(content), encoding="utf-8")
+        return moved_dir
+    except ShutilError as e:
+        logger.exception("Failed to move article dir %s to %s: %s", paper_dir, dest, e)
+        return dest
 
 # -----------------------------------------------------------------------------
 # Text builders
@@ -122,29 +150,30 @@ def edge_text(edge: dict) -> str:
 # -----------------------------------------------------------------------------
 
 class EmbTask:
-    def __init__(self, embeddings_dir: Path, obj_type: str, obj_id: str, text: str):
+    def __init__(self, embeddings_dir: Path, obj_type: str, obj_id: str, text: str, paper_dir: Path):
         self.embeddings_dir = embeddings_dir
         self.obj_type = obj_type
         self.obj_id = obj_id
         self.text = text
+        self.paper_dir = paper_dir
 
     @property
     def out_path(self) -> Path:
         return self.embeddings_dir / f"{self.obj_id}.json"
 
 def enumerate_tasks(paper_json: Path) -> List[EmbTask]:
-    """Build embedding tasks for one paper.json"""
     data = json.loads(paper_json.read_text(encoding="utf-8"))
     embeddings_dir = paper_json.parent / "embeddings"
+    paper_dir = paper_json.parent
     tasks: List[EmbTask] = []
 
     for node in data.get("nodes", []):
         nid = short_id_node(Node(**node))
-        tasks.append(EmbTask(embeddings_dir, "node", nid, node_text(node)))
+        tasks.append(EmbTask(embeddings_dir, "node", nid, node_text(node), paper_dir))
 
     for edge in data.get("edges", []):
         eid = short_id_edge(Edge(**edge))
-        tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge)))
+        tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge), paper_dir))
 
     return tasks
 
@@ -158,12 +187,6 @@ async def embed_batch_async(
     stats: dict,
     max_retries: int = 3
 ):
-    """
-    Send one batch to OpenAI with retries:
-    - up to max_retries attempts
-    - exponential backoff: 2–5s with jitter
-    - update counters in stats
-    """
     async with sem:
         delay = 2.0
         for attempt in range(1, max_retries + 1):
@@ -205,8 +228,13 @@ async def embed_batch_async(
 
             except Exception as e:
                 if attempt >= max_retries:
+                    tb = traceback.format_exc()
                     for t in batch:
                         log_error(t.obj_id, t.obj_type, t.text, e)
+                    unique_dirs = {t.paper_dir for t in batch}
+                    for d in unique_dirs:
+                        if d.exists():
+                            move_article_to_error(d, reason=f"embeddings_failed: {e}", tb=tb)
                     stats["errors"] += len(batch)
                     logger.error(
                         "Batch failed after %d attempts (%d items): %s",
@@ -259,6 +287,10 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
                 "Failed to enumerate %s: %s\n%s",
                 jf, str(e), traceback.format_exc()
             )
+            tb = traceback.format_exc()
+            paper_dir = jf.parent
+            if paper_dir.exists():
+                move_article_to_error(paper_dir, reason=f"enumeration_failed: {e}", tb=tb)
 
     unique: dict[str, EmbTask] = {t.obj_id: t for t in all_tasks}
     tasks = list(unique.values())
@@ -269,7 +301,7 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
     )
 
     if not tasks:
-        logger.info("✅ All embeddings already computed. Nothing to do.")
+        logger.info("All embeddings already computed. Nothing to do.")
         return
 
     batches = [tasks[i:i + BATCH_SIZE] for i in range(0, len(tasks), BATCH_SIZE)]
@@ -289,7 +321,6 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
         "Done. Success: %d, Errors: %d, Duration: %.1fs",
         stats["done"], stats["errors"], duration
     )
-
 
 def main():
     asyncio.run(async_main(MAX_CONCURRENT_BATCHES))

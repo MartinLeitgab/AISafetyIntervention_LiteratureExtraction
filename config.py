@@ -14,6 +14,7 @@ class Paths:
     logs_dir: Path
     extraction_error_dir: Path
     graph_error_dir: Path
+    embeddings_error_dir: Path
 
 
 @dataclass(frozen=True)
@@ -59,6 +60,8 @@ def load_settings(config_path: Path | None = None) -> Settings:
     extraction_error_dir = (output_dir / extraction_error_sub).resolve()
     graph_error_sub = paths_cfg.get("graph_error_dir", "./graph_error")
     graph_error_dir = (output_dir / graph_error_sub).resolve()
+    embeddings_error_sub = paths_cfg.get("embeddings_error_dir", "./embeddings_error")
+    embeddings_error_dir = (output_dir / embeddings_error_sub).resolve()
 
     return Settings(
         project_root=project_root,
@@ -68,6 +71,7 @@ def load_settings(config_path: Path | None = None) -> Settings:
             logs_dir=rel(paths_cfg.get("logs_dir", "./logs")),
             extraction_error_dir=extraction_error_dir,
             graph_error_dir=graph_error_dir,
+            embeddings_error_dir=embeddings_error_dir,
         ),
         falkordb=FalkorDB(
             host=falkor_cfg.get("host", "localhost"),

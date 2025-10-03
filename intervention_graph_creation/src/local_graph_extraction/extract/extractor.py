@@ -495,7 +495,7 @@ if __name__ == "__main__":
     extractor = Extractor()
 
     input_dir = SETTINGS.paths.input_dir
-    total_articles = 100
+    total_articles = 30
     batch_size = 10
 
     async def main():
