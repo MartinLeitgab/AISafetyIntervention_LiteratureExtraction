@@ -50,6 +50,7 @@ class GraphEdge(Edge):
     updated_at: Optional[int] = None
 
     def __init__(self, **data):
+        embedding = data.pop('embedding', None)
         super().__init__(**data)
         self.embedding = embedding
         self.created_at = int(time.time() * 1000)

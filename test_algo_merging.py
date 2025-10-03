@@ -7,7 +7,6 @@ from semantic_compression_part_2 import (
     SETTINGS,
 )
 from typing import List
-from os import environ
 from pathlib import Path as PathLibPath
 import json
 import json
@@ -97,7 +96,7 @@ def test_1(shared_graph: GraphFixture):
     """
     graph = shared_graph.graph
 
-    threshold = 0.4
+    threshold = 0.6
     result = graph.query(
         f"""
         MATCH (seed:NODE)
@@ -127,6 +126,8 @@ def test_1(shared_graph: GraphFixture):
     assert len(clusters_by_size) > 0, "no clusters"
     assert len(clusters_by_size[0]) > 0
     assert len(clusters_by_size[0]) >= len(clusters_by_size[-1])
+
+
 
     # # target_cluster = clusters_by_size[5]
     # # for target_cluster_i in [15,25,35,45]:

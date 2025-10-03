@@ -82,6 +82,7 @@ class GraphNode(Node):
     updated_at: Optional[int] = None
 
     def __init__(self, **data):
+        embedding = data.pop('embedding', None)
         super().__init__(**data)
         self.created_at = int(time.time() * 1000)
         self.updated_at = int(time.time() * 1000)
