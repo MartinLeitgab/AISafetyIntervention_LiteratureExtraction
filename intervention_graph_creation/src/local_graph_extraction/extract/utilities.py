@@ -1,5 +1,7 @@
 import json
 import traceback
+import logging
+import shutil
 import re
 from pathlib import Path
 from typing import Any, Optional, Tuple
@@ -7,12 +9,7 @@ from urllib.parse import urlparse
 
 
 FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.S | re.I)
-
-
-def extract_output_text(resp: Any) -> str:
-    """Return assistant's textual output, tolerating various SDK shapes."""
-    value = getattr(resp, "output_text", resp["output_text"] if "output_text" in resp else "")
-    return value if isinstance(value, str) else str(value or "")
+logger = logging.getLogger("intervention.extractor")
 
 
 def filter_dict(d: dict, keys: set) -> list[dict]:
@@ -46,14 +43,6 @@ def split_text_and_json(s: str) -> Tuple[str, Optional[str]]:
     return s.strip(), None
 
 
-def stringify_response(resp: Any) -> str:
-    """Serialize raw SDK response to string for diagnostics."""
-    try:
-        return resp.model_dump_json() if hasattr(resp, "model_dump_json") else str(resp)
-    except Exception:
-        return str(resp)
-    
-
 def url_to_id(url: str) -> str:
     parsed = urlparse(url)
 
@@ -67,24 +56,43 @@ def url_to_id(url: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
 
 
-def write_failure(out_dir: Path, pdf_name: str, e: Exception) -> None:
-    """Uniformly persist failure diagnostics for a single PDF."""
-    stem = Path(pdf_name).stem
-    out_dir = out_dir / "error" / stem
-    out_dir.mkdir(parents=True, exist_ok=True)
-    raw_path = out_dir / f"{stem}_raw_response.txt"
-    json_path = out_dir / f"{stem}.json"
-    summary_path = out_dir / f"{stem}_summary.txt"
+def write_failure(base_dir: Path, output_dir: Path,  paper_id: str, err: Exception) -> None:
+    """
+    Save failure information for a paper into the extraction_error directory.
+    - Moves any already generated files (raw_response, summary, json) from output/.
+    - Always writes error.txt with exception type, message, and traceback.
+    - Removes empty paper folder from output/.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
 
+    orig_dir = base_dir / paper_id
+    candidate_files = [
+        orig_dir / f"{paper_id}_raw_response.txt",
+        orig_dir / f"{paper_id}_summary.txt",
+        orig_dir / f"{paper_id}.json",
+    ]
+
+    for src in candidate_files:
+        if src.exists():
+            dst = output_dir / src.name
+            try:
+                shutil.move(str(src), str(dst))
+            except Exception as move_err:
+                logger.warning("Could not move %s → %s: %s", src, dst, move_err)
+
+    error_file = output_dir / "error.txt"
     diag = (
-        f"Processing failed for {pdf_name}\n"
-        f"{type(e).__name__}: {e}\n\n"
+        f"❌ Processing failed for {paper_id}\n"
+        f"{type(err).__name__}: {err}\n\n"
+        f"Traceback:\n{traceback.format_exc()}"
     )
-    print(diag)
-    diag += f"Traceback:\n{traceback.format_exc()}"
-    safe_write(raw_path, diag)
-    safe_write(summary_path, "")
-    safe_write(json_path, json.dumps(
-        {"error": f"{type(e).__name__}: {str(e)}"},
-        ensure_ascii=False, indent=2
-    ))
+    error_file.write_text(diag, encoding="utf-8")
+
+    try:
+        if orig_dir.exists() and not any(orig_dir.iterdir()):
+            orig_dir.rmdir()
+            logger.info("🧹 Removed empty output dir: %s", orig_dir)
+    except Exception as cleanup_err:
+        logger.warning("Could not clean empty dir %s: %s", orig_dir, cleanup_err)
+
+    logger.error("❌ Failed to process %s | Traceback saved to %s", paper_id, error_file)
