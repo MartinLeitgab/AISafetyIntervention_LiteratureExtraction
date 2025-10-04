@@ -299,7 +299,6 @@ class AISafetyGraph:
         self.ingest_metadata(doc.meta)
 
         # Ingest rationale if available
-        # Ingest rationale if available
         rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
         if rationale_path.exists() or json_path.exists():
             self.ingest_rationale(rationale_path, url)
@@ -336,15 +335,6 @@ class AISafetyGraph:
                 if target_dir.exists():
                     shutil.rmtree(target_dir)
                 shutil.move(str(d), str(issues_dir))
-
-        # Write all errors to issues/issues.json
-        if errors:
-            issues_json_path = issues_dir / "issues.json"
-            with open(issues_json_path, "w", encoding="utf-8") as f:
-                json.dump(errors, f, ensure_ascii=False, indent=2)
-            print("\n=== Files with issues ===")
-            for k, v in errors.items():
-                print(f"- {k}.json: {', '.join(v)}")
 
         self.set_index()
 

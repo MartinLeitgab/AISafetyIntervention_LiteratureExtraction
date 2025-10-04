@@ -80,7 +80,7 @@ def write_failure(base_dir: Path, output_dir: Path,  paper_id: str, err: Excepti
             except Exception as move_err:
                 logger.warning("Could not move %s → %s: %s", src, dst, move_err)
 
-    error_file = output_dir / "error.txt"
+    error_file = orig_dir / "error.txt"
     diag = (
         f"❌ Processing failed for {paper_id}\n"
         f"{type(err).__name__}: {err}\n\n"

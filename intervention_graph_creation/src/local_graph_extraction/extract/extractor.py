@@ -5,10 +5,11 @@ import httpx
 import asyncio
 import logging
 import statistics
+import shutil
 from pathlib import Path
 from typing import Any, Optional, List, Dict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -18,14 +19,9 @@ from intervention_graph_creation.src.prompt.final_primary_prompt import PROMPT_E
 from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
     safe_write,
     split_text_and_json,
-    write_failure,
     url_to_id,
     filter_dict,
 )
-
-# =========================
-# CONFIG & CONSTANTS
-# =========================
 
 MODEL = "o3"
 REASONING_EFFORT = "medium"
@@ -33,10 +29,6 @@ SETTINGS = load_settings()
 META_KEYS = frozenset(
     ["authors", "date_published", "filename", "source", "source_filetype", "title", "url"]
 )
-
-# =========================
-# LOGGING SETUP
-# =========================
 
 LOGS_DIR = SETTINGS.paths.logs_dir
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -51,6 +43,10 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+
+def _now_utc_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 class Extractor:
@@ -83,6 +79,236 @@ class Extractor:
         self._last_log_time = 0.0
         self._log_lock = asyncio.Lock()
 
+    def _extract_error_info(self, result: Dict) -> Dict[str, Any]:
+        err_top = result.get("error")
+        resp = result.get("response") or {}
+        body = resp.get("body")
+        nested = {}
+        if isinstance(body, dict):
+            nested = body.get("error") or {}
+
+        message = None
+        code = None
+        etype = None
+        param = None
+
+        if isinstance(nested, dict) and nested:
+            message = nested.get("message") or nested.get("error") or nested.get("detail")
+            code = nested.get("code")
+            etype = nested.get("type")
+            param = nested.get("param")
+
+        if isinstance(err_top, dict) and err_top:
+            message = message or err_top.get("message")
+            code = code or err_top.get("code")
+            etype = etype or err_top.get("type")
+            param = param or err_top.get("param")
+
+        if not message:
+            if isinstance(body, str):
+                message = body[:2000]
+            elif not body and not err_top:
+                message = "Unknown error (no error object present)."
+
+        return {
+            "message": message,
+            "code": code,
+            "type": etype,
+            "param": param,
+            "status_code": resp.get("status_code"),
+            "request_id": resp.get("request_id"),
+            "raw_error": nested or err_top,
+            "raw_response": resp,
+        }
+
+    def _move_output_artifacts_to_error_dir(self, paper_id: str) -> None:
+        out_dir = SETTINGS.paths.output_dir / paper_id
+        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+        err_dir.mkdir(parents=True, exist_ok=True)
+
+        if out_dir.exists() and out_dir.is_dir():
+            for p in out_dir.iterdir():
+                try:
+                    shutil.move(str(p), str(err_dir / p.name))
+                except Exception as e:
+                    logger.warning("Failed to move %s to %s: %s", p, err_dir, e)
+            try:
+                shutil.rmtree(out_dir)
+            except Exception as e:
+                logger.warning("Failed to delete output dir %s: %s", out_dir, e)
+
+    def _compose_error_txt(
+        self,
+        *,
+        paper_id: str,
+        stage: Optional[str],
+        file_type: Optional[str],
+        python_exc: Optional[Exception],
+        result: Optional[Dict],
+        req: Optional[Dict],
+        raw_line: Optional[str],
+        raw_response_status_note: Optional[str],
+        meta: Optional[Dict],
+    ) -> str:
+        lines: List[str] = []
+        lines.append("=== extraction failure ===")
+        lines.append(f"timestamp: {_now_utc_iso()}")
+        lines.append(f"paper_id: {paper_id}")
+        if stage:
+            lines.append(f"stage: {stage}")
+        if file_type:
+            lines.append(f"file_type: {file_type}")
+
+        http_status = None
+        request_id = None
+        err_type = None
+        err_code = None
+        err_msg = None
+        err_param = None
+
+        if result:
+            info = self._extract_error_info(result)
+            http_status = info.get("status_code")
+            request_id = info.get("request_id")
+            err_type = info.get("type")
+            err_code = info.get("code")
+            err_msg = info.get("message")
+            err_param = info.get("param")
+
+        if not result and python_exc:
+            err_type = err_type or "python_exception"
+            err_msg = err_msg or repr(python_exc)
+
+        if http_status is not None or request_id:
+            lines.append("")
+            lines.append("http:")
+            if http_status is not None:
+                lines.append(f"  status_code: {http_status}")
+            if request_id:
+                lines.append(f"  request_id: {request_id}")
+
+        if any([err_type, err_code, err_msg, err_param is not None]):
+            lines.append("")
+            lines.append("error:")
+            if err_type:
+                lines.append(f"  type: {err_type}")
+            if err_code:
+                lines.append(f"  code: {err_code}")
+            if err_msg:
+                compact_msg = " ".join(str(err_msg).splitlines())
+                lines.append(f"  message: {compact_msg}")
+            if err_param is not None:
+                lines.append(f"  param: {err_param if err_param is not None else 'null'}")
+
+        if req and isinstance(req, dict):
+            request_obj = req.get("request") or {}
+            body = request_obj.get("body") or {}
+            endpoint = request_obj.get("url") or None
+            custom_id = request_obj.get("custom_id") or None
+            model = body.get("model") if isinstance(body, dict) else None
+            reasoning = body.get("reasoning") if isinstance(body, dict) else None
+            reasoning_effort = None
+            if isinstance(reasoning, dict):
+                reasoning_effort = reasoning.get("effort")
+            body_keys = None
+            if isinstance(body, dict):
+                body_keys = list(body.keys())
+
+            if any([endpoint, custom_id, model, reasoning_effort, body_keys]):
+                lines.append("")
+                lines.append("request:")
+                if endpoint:
+                    lines.append(f"  endpoint: {endpoint}")
+                if custom_id:
+                    lines.append(f"  custom_id: {custom_id}")
+                if model:
+                    lines.append(f"  model: {model}")
+                if reasoning_effort:
+                    lines.append(f"  reasoning_effort: {reasoning_effort}")
+                if body_keys:
+                    lines.append(f"  body_keys: {json.dumps(body_keys, ensure_ascii=False)}")
+
+        if meta and isinstance(meta, dict) and any(v is not None for v in meta.values()):
+            lines.append("")
+            lines.append("article_meta:")
+            for k in ["filename", "title", "url", "source", "source_filetype", "date_published", "authors"]:
+                if k in meta and meta[k] is not None:
+                    v = meta[k]
+                    if isinstance(v, (dict, list)):
+                        v = json.dumps(v, ensure_ascii=False)
+                    lines.append(f"  {k}: {v}")
+
+        if raw_line:
+            snippet = raw_line
+            max_len = 4096
+            if len(snippet) > max_len:
+                snippet = snippet[:max_len] + "...(truncated)"
+            lines.append("")
+            lines.append("raw_error_snippet (truncated):")
+            lines.append(snippet)
+
+        if raw_response_status_note:
+            lines.append("")
+            lines.append("raw_response_status_note:")
+            lines.append(raw_response_status_note)
+
+        return "\n".join(lines) + "\n"
+
+    def _handle_failure(
+        self,
+        req: Optional[Dict],
+        err: Optional[Exception],
+        stage: Optional[str] = None,
+        *,
+        raw_line: Optional[str] = None,
+        result: Optional[Dict] = None,
+        raw_response_status_note: Optional[str] = None,
+        meta: Optional[Dict] = None,
+        file_type: Optional[str] = None,
+    ):
+        paper_id = "unknown"
+        if req:
+            if "paper_id" in req and req["paper_id"]:
+                paper_id = req["paper_id"]
+            else:
+                fp = req.get("file_path")
+                paper_id = fp.stem if isinstance(fp, Path) else str(fp or "unknown")
+
+        if not file_type and req:
+            ft = req.get("file_type")
+            if not ft:
+                fp = req.get("file_path")
+                if isinstance(fp, Path):
+                    suffix = fp.suffix.lower().lstrip(".")
+                    ft = suffix if suffix else None
+            file_type = ft
+
+        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
+        err_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            error_txt = self._compose_error_txt(
+                paper_id=paper_id,
+                stage=stage,
+                file_type=file_type,
+                python_exc=err,
+                result=result,
+                req=req,
+                raw_line=raw_line,
+                raw_response_status_note=raw_response_status_note,
+                meta=meta,
+            )
+            (err_dir / "error.txt").write_text(error_txt, encoding="utf-8")
+        except Exception as e:
+            logger.warning("Failed to compose/write error.txt for %s: %s", paper_id, e)
+
+        try:
+            self._move_output_artifacts_to_error_dir(paper_id)
+        except Exception as e:
+            logger.warning("Failed to move artifacts for %s: %s", paper_id, e)
+
+        self._papers_status.append({"status": "failed"})
+
     def write_batch_outputs(
         self, out_dir: Path, stem: str, response_body: Dict, meta: Dict
     ) -> None:
@@ -103,15 +329,25 @@ class Extractor:
                     parsed["meta"] = meta
                 safe_write(json_path, json.dumps(parsed, ensure_ascii=False, indent=2))
         except Exception as e:
-            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, stem, e)
+            self._handle_failure(
+                req={"paper_id": stem, "request": {}, "file_type": None},
+                err=e,
+                stage="write_batch_outputs",
+                raw_line=None,
+                result=None,
+                meta=meta,
+                file_type=None,
+            )
 
     def get_output_text_from_response_body(self, response_body: Dict) -> str:
         if "output" not in response_body:
-            raise ValueError("Response body does not contain 'output' field")
+            raise ValueError("Response body does not contain 'output'")
         output = response_body["output"]
         message = next((item for item in output if item.get("type") == "message"), None)
-        if not message or message.get("status") != "completed":
-            raise ValueError("Message not completed")
+        if not message:
+            raise ValueError("No message object in output")
+        if message.get("status") != "completed":
+            raise ValueError(f"Message not completed (status={message.get('status')})")
         text_obj = next((item for item in message.get("content", []) if item.get("type") == "output_text"), None)
         if not text_obj:
             raise ValueError("No output_text found")
@@ -171,7 +407,13 @@ class Extractor:
                     }
                 )
             except Exception as e:
-                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, e)
+                self._handle_failure(
+                    req={"paper_id": paper_id, "file_path": pdf_path, "request": {}, "file_type": "pdf"},
+                    err=e,
+                    stage="create_batch_requests (pdf)",
+                    meta={"filename": pdf_path.name},
+                    file_type="pdf",
+                )
 
         json_items_cap = first_n if first_n else None
         for jsonl_path in jsonl_files:
@@ -190,7 +432,13 @@ class Extractor:
                             paper_json = json.loads(line)
                         except Exception as e:
                             pid = f"{jsonl_path.stem}__badjson_{idx}"
-                            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, pid, e)
+                            self._handle_failure(
+                                req={"paper_id": pid, "file_path": jsonl_path, "request": {}, "file_type": "jsonl"},
+                                err=e,
+                                stage="create_batch_requests (jsonl parse)",
+                                meta={"filename": jsonl_path.name},
+                                file_type="jsonl",
+                            )
                             continue
 
                         paper_id = jsonl_path.stem + "__" + url_to_id(
@@ -235,7 +483,13 @@ class Extractor:
                             }
                         )
             except Exception as e:
-                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, jsonl_path.stem, e)
+                self._handle_failure(
+                    req={"paper_id": jsonl_path.stem, "file_path": jsonl_path, "request": {}, "file_type": "jsonl"},
+                    err=e,
+                    stage="create_batch_requests (jsonl file read)",
+                    meta={"filename": jsonl_path.name},
+                    file_type="jsonl",
+                )
 
         return batch_requests
 
@@ -331,29 +585,29 @@ class Extractor:
         return completed_batch
 
     async def _wait_for_batch_completion_async(
-            self, batch_id: str, batch_num: int, check_interval: int = 60
-        ) -> Any:
-            while True:
-                batch = await self._run_in_thread(self.client.batches.retrieve, batch_id)
+        self, batch_id: str, batch_num: int, check_interval: int = 60
+    ) -> Any:
+        while True:
+            batch = await self._run_in_thread(self.client.batches.retrieve, batch_id)
 
-                if batch.status == "completed":
-                    return batch
+            if batch.status == "completed":
+                return batch
 
-                if batch.status in ["failed", "expired", "cancelled"]:
-                    raise RuntimeError(f"Batch {batch_num} ended with status {batch.status}")
+            if batch.status in ["failed", "expired", "cancelled"]:
+                raise RuntimeError(f"Batch {batch_num} ended with status {batch.status}")
 
-                now = time.time()
+            now = time.time()
 
-                async with self._log_lock:
-                    if now - self._last_log_time >= check_interval:
-                        in_progress = self.total_batches - self.completed_batches
-                        logger.info(
-                            "Progress update: Processed: %d / In progress: %d / Total: %d",
-                            self.completed_batches, in_progress, self.total_batches
-                        )
-                        self._last_log_time = now
+            async with self._log_lock:
+                if now - self._last_log_time >= check_interval:
+                    in_progress = self.total_batches - self.completed_batches
+                    logger.info(
+                        "Progress update: Processed: %d / In progress: %d / Total: %d",
+                        self.completed_batches, in_progress, self.total_batches
+                    )
+                    self._last_log_time = now
 
-                await asyncio.sleep(60)
+            await asyncio.sleep(60)
 
     def _process_batch_results(self, batch: Dict, batch_requests: List[Dict], elapsed: float) -> None:
         if batch.status != "completed":
@@ -372,25 +626,19 @@ class Extractor:
                 return file_path.stem
             return str(file_path or "unknown")
 
-        def _handle_failure(req: Dict, err: Exception, diag: Optional[str] = None):
-            paper_id = _get_paper_id(req)
-            err_dir = SETTINGS.paths.extraction_error_dir / paper_id
-            err_dir.mkdir(parents=True, exist_ok=True)
-
-            if diag:
-                (err_dir / "error.txt").write_text(diag, encoding="utf-8")
-            else:
-                write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.extraction_error_dir, paper_id, err)
-
-            self._papers_status.append({"status": "failed"})
-
         if getattr(batch, "output_file_id", None):
-            file_response = self.client.files.content(batch.output_file_id)
-            for line in file_response.text.strip().split("\n"):
-                if not line:
+            try:
+                file_response = self.client.files.content(batch.output_file_id)
+            except Exception as e:
+                logger.exception("Failed to read output_file_id: %s", e)
+                return
+
+            for raw_line in file_response.text.strip().split("\n"):
+                if not raw_line:
                     continue
+                result = None
                 try:
-                    result = json.loads(line)
+                    result = json.loads(raw_line)
                     cid = result.get("custom_id")
                     processed_ids.add(cid)
 
@@ -398,64 +646,121 @@ class Extractor:
                     paper_id = _get_paper_id(req)
 
                     if result.get("error"):
-                        error_obj = result["error"]
-                        err_msg = (
-                            f"{error_obj.get('code')}: {error_obj.get('message')}"
-                            if isinstance(error_obj, dict)
-                            else str(error_obj or "Unknown error")
+                        self._handle_failure(
+                            req=req,
+                            err=None,
+                            stage="batch_output_file (error object)",
+                            raw_line=raw_line,
+                            result=result,
+                            raw_response_status_note=None,
+                            meta=(req or {}).get("meta"),
+                            file_type=(req or {}).get("file_type"),
                         )
-                        error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
-                        diag = (
-                            f"❌ Processing failed for {paper_id}\n"
-                            f"{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
-                        )
-                        _handle_failure(req, Exception(err_msg), diag)
                         continue
 
-                    resp_body = result["response"]["body"]
+                    resp_body = result.get("response", {}).get("body")
+                    if not resp_body:
+                        self._handle_failure(
+                            req=req,
+                            err=Exception("No 'response.body' in output file"),
+                            stage="batch_output_file (no response.body)",
+                            raw_line=raw_line,
+                            result=result,
+                            meta=(req or {}).get("meta"),
+                            file_type=(req or {}).get("file_type"),
+                        )
+                        continue
+
+                    try:
+                        _ = self.get_output_text_from_response_body(resp_body)
+                    except Exception as e:
+                        status_note = ""
+                        try:
+                            out = resp_body.get("output", [])
+                            message_obj = next((it for it in out if it.get("type") == "message"), None)
+                            status_note = f"Message status: {message_obj.get('status') if message_obj else 'N/A'}"
+                        except Exception:
+                            pass
+                        self._handle_failure(
+                            req=req,
+                            err=e,
+                            stage="batch_output_parsing",
+                            raw_line=raw_line,
+                            result=result,
+                            raw_response_status_note=status_note or None,
+                            meta=(req or {}).get("meta"),
+                            file_type=(req or {}).get("file_type"),
+                        )
+                        continue
+
                     out_dir = SETTINGS.paths.output_dir / paper_id
                     out_dir.mkdir(parents=True, exist_ok=True)
-                    self.write_batch_outputs(out_dir, paper_id, resp_body, req.get("meta"))
+                    self.write_batch_outputs(out_dir, paper_id, resp_body, (req or {}).get("meta"))
                     tokens = resp_body.get("usage", {}).get("total_tokens", 0)
                     self._papers_status.append({"status": "success", "elapsed": elapsed, "tokens": tokens})
 
                 except Exception as e:
-                    req = custom_id_map.get(result.get("custom_id"))
-                    _handle_failure(req, e)
+                    req = custom_id_map.get(result.get("custom_id")) if isinstance(result, dict) else None
+                    self._handle_failure(
+                        req=req,
+                        err=e,
+                        stage="batch_output_file (json parse)",
+                        raw_line=raw_line,
+                        result=result if isinstance(result, dict) else None,
+                        meta=(req or {}).get("meta") if req else None,
+                        file_type=(req or {}).get("file_type") if req else None,
+                    )
 
         if getattr(batch, "error_file_id", None):
-            file_response = self.client.files.content(batch.error_file_id)
-            for line in file_response.text.strip().split("\n"):
-                if not line:
+            try:
+                file_response = self.client.files.content(batch.error_file_id)
+            except Exception as e:
+                logger.exception("Failed to read error_file_id: %s", e)
+                return
+
+            for raw_line in file_response.text.strip().split("\n"):
+                if not raw_line:
                     continue
+                result = None
                 try:
-                    result = json.loads(line)
+                    result = json.loads(raw_line)
                     cid = result.get("custom_id")
                     processed_ids.add(cid)
 
                     req = custom_id_map.get(cid)
-                    paper_id = _get_paper_id(req)
 
-                    error_obj = result.get("error")
-                    err_msg = (
-                        f"{error_obj.get('code')}: {error_obj.get('message')}"
-                        if isinstance(error_obj, dict)
-                        else str(error_obj or "Unknown error")
+                    self._handle_failure(
+                        req=req,
+                        err=None,
+                        stage="batch_error_file",
+                        raw_line=raw_line,
+                        result=result,
+                        meta=(req or {}).get("meta") if req else None,
+                        file_type=(req or {}).get("file_type") if req else None,
                     )
-                    error_json_str = json.dumps(error_obj, indent=2, ensure_ascii=False)
-                    diag = (
-                        f"❌ Processing failed for {paper_id}\n"
-                        f"{err_msg}\n\nFull error JSON:\n{error_json_str}\n"
-                    )
-                    _handle_failure(req, Exception(err_msg), diag)
 
                 except Exception as e:
-                    _handle_failure(None, e)
+                    self._handle_failure(
+                        req=None,
+                        err=e,
+                        stage="batch_error_file (json parse)",
+                        raw_line=raw_line,
+                        result=None,
+                        meta=None,
+                        file_type=None,
+                    )
 
         for cid, req in custom_id_map.items():
             if cid not in processed_ids:
-                _handle_failure(req, Exception("No response in batch output"))
-
+                self._handle_failure(
+                    req=req,
+                    err=Exception("No response in batch output"),
+                    stage="batch_missing_custom_id",
+                    raw_line=None,
+                    result=None,
+                    meta=(req or {}).get("meta"),
+                    file_type=(req or {}).get("file_type"),
+                )
 
     async def _run_in_thread(self, func, *args, **kwargs):
         loop = asyncio.get_event_loop()
@@ -480,7 +785,6 @@ class Extractor:
             logger.info("Median:  %.1fs", statistics.median(self._batch_times))
             logger.info("Min:     %.1fs", min(self._batch_times))
             logger.info("Max:     %.1fs", max(self._batch_times))
-            logger.info("Total:   %.1fs (~%.1f min)", sum(self._batch_times), sum(self._batch_times)/60)
 
         if tokens:
             logger.info("\n--- 🔤 Token usage per article ---")
@@ -495,7 +799,7 @@ if __name__ == "__main__":
     extractor = Extractor()
 
     input_dir = SETTINGS.paths.input_dir
-    total_articles = 30
+    total_articles = 100
     batch_size = 10
 
     async def main():
