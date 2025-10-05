@@ -5,11 +5,10 @@ import httpx
 import asyncio
 import logging
 import statistics
-import shutil
 from pathlib import Path
 from typing import Any, Optional, List, Dict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -21,6 +20,7 @@ from intervention_graph_creation.src.local_graph_extraction.extract.utilities im
     split_text_and_json,
     url_to_id,
     filter_dict,
+    write_failure,
 )
 
 MODEL = "o3"
@@ -43,10 +43,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-
-
-def _now_utc_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 class Extractor:
@@ -79,201 +75,32 @@ class Extractor:
         self._last_log_time = 0.0
         self._log_lock = asyncio.Lock()
 
-    def _extract_error_info(self, result: Dict) -> Dict[str, Any]:
-        err_top = result.get("error")
-        resp = result.get("response") or {}
-        body = resp.get("body")
-        nested = {}
-        if isinstance(body, dict):
-            nested = body.get("error") or {}
-
-        message = None
-        code = None
-        etype = None
-        param = None
-
-        if isinstance(nested, dict) and nested:
-            message = nested.get("message") or nested.get("error") or nested.get("detail")
-            code = nested.get("code")
-            etype = nested.get("type")
-            param = nested.get("param")
-
-        if isinstance(err_top, dict) and err_top:
-            message = message or err_top.get("message")
-            code = code or err_top.get("code")
-            etype = etype or err_top.get("type")
-            param = param or err_top.get("param")
-
-        if not message:
-            if isinstance(body, str):
-                message = body[:2000]
-            elif not body and not err_top:
-                message = "Unknown error (no error object present)."
-
-        return {
-            "message": message,
-            "code": code,
-            "type": etype,
-            "param": param,
-            "status_code": resp.get("status_code"),
-            "request_id": resp.get("request_id"),
-            "raw_error": nested or err_top,
-            "raw_response": resp,
-        }
-
-    def _move_output_artifacts_to_error_dir(self, paper_id: str) -> None:
-        out_dir = SETTINGS.paths.output_dir / paper_id
-        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
-        err_dir.mkdir(parents=True, exist_ok=True)
-
-        if out_dir.exists() and out_dir.is_dir():
-            for p in out_dir.iterdir():
-                try:
-                    shutil.move(str(p), str(err_dir / p.name))
-                except Exception as e:
-                    logger.warning("Failed to move %s to %s: %s", p, err_dir, e)
-            try:
-                shutil.rmtree(out_dir)
-            except Exception as e:
-                logger.warning("Failed to delete output dir %s: %s", out_dir, e)
-
-    def _compose_error_txt(
-        self,
-        *,
-        paper_id: str,
-        stage: Optional[str],
-        file_type: Optional[str],
-        python_exc: Optional[Exception],
-        result: Optional[Dict],
-        req: Optional[Dict],
-        raw_line: Optional[str],
-        raw_response_status_note: Optional[str],
-        meta: Optional[Dict],
-    ) -> str:
-        lines: List[str] = []
-        lines.append("=== extraction failure ===")
-        lines.append(f"timestamp: {_now_utc_iso()}")
-        lines.append(f"paper_id: {paper_id}")
-        if stage:
-            lines.append(f"stage: {stage}")
-        if file_type:
-            lines.append(f"file_type: {file_type}")
-
-        http_status = None
-        request_id = None
-        err_type = None
-        err_code = None
-        err_msg = None
-        err_param = None
-
-        if result:
-            info = self._extract_error_info(result)
-            http_status = info.get("status_code")
-            request_id = info.get("request_id")
-            err_type = info.get("type")
-            err_code = info.get("code")
-            err_msg = info.get("message")
-            err_param = info.get("param")
-
-        if not result and python_exc:
-            err_type = err_type or "python_exception"
-            err_msg = err_msg or repr(python_exc)
-
-        if http_status is not None or request_id:
-            lines.append("")
-            lines.append("http:")
-            if http_status is not None:
-                lines.append(f"  status_code: {http_status}")
-            if request_id:
-                lines.append(f"  request_id: {request_id}")
-
-        if any([err_type, err_code, err_msg, err_param is not None]):
-            lines.append("")
-            lines.append("error:")
-            if err_type:
-                lines.append(f"  type: {err_type}")
-            if err_code:
-                lines.append(f"  code: {err_code}")
-            if err_msg:
-                compact_msg = " ".join(str(err_msg).splitlines())
-                lines.append(f"  message: {compact_msg}")
-            if err_param is not None:
-                lines.append(f"  param: {err_param if err_param is not None else 'null'}")
-
-        if req and isinstance(req, dict):
-            request_obj = req.get("request") or {}
-            body = request_obj.get("body") or {}
-            endpoint = request_obj.get("url") or None
-            custom_id = request_obj.get("custom_id") or None
-            model = body.get("model") if isinstance(body, dict) else None
-            reasoning = body.get("reasoning") if isinstance(body, dict) else None
-            reasoning_effort = None
-            if isinstance(reasoning, dict):
-                reasoning_effort = reasoning.get("effort")
-            body_keys = None
-            if isinstance(body, dict):
-                body_keys = list(body.keys())
-
-            if any([endpoint, custom_id, model, reasoning_effort, body_keys]):
-                lines.append("")
-                lines.append("request:")
-                if endpoint:
-                    lines.append(f"  endpoint: {endpoint}")
-                if custom_id:
-                    lines.append(f"  custom_id: {custom_id}")
-                if model:
-                    lines.append(f"  model: {model}")
-                if reasoning_effort:
-                    lines.append(f"  reasoning_effort: {reasoning_effort}")
-                if body_keys:
-                    lines.append(f"  body_keys: {json.dumps(body_keys, ensure_ascii=False)}")
-
-        if meta and isinstance(meta, dict) and any(v is not None for v in meta.values()):
-            lines.append("")
-            lines.append("article_meta:")
-            for k in ["filename", "title", "url", "source", "source_filetype", "date_published", "authors"]:
-                if k in meta and meta[k] is not None:
-                    v = meta[k]
-                    if isinstance(v, (dict, list)):
-                        v = json.dumps(v, ensure_ascii=False)
-                    lines.append(f"  {k}: {v}")
-
-        if raw_line:
-            snippet = raw_line
-            max_len = 4096
-            if len(snippet) > max_len:
-                snippet = snippet[:max_len] + "...(truncated)"
-            lines.append("")
-            lines.append("raw_error_snippet (truncated):")
-            lines.append(snippet)
-
-        if raw_response_status_note:
-            lines.append("")
-            lines.append("raw_response_status_note:")
-            lines.append(raw_response_status_note)
-
-        return "\n".join(lines) + "\n"
-
+    # ---------------------------
+    # Failure handling (delegates to write_failure)
+    # ---------------------------
     def _handle_failure(
         self,
+        *,
         req: Optional[Dict],
         err: Optional[Exception],
         stage: Optional[str] = None,
-        *,
         raw_line: Optional[str] = None,
         result: Optional[Dict] = None,
         raw_response_status_note: Optional[str] = None,
         meta: Optional[Dict] = None,
         file_type: Optional[str] = None,
-    ):
+    ) -> None:
+        """Record a failure using write_failure and update in-memory stats."""
+        # Determine paper_id
         paper_id = "unknown"
         if req:
-            if "paper_id" in req and req["paper_id"]:
+            if req.get("paper_id"):
                 paper_id = req["paper_id"]
             else:
                 fp = req.get("file_path")
                 paper_id = fp.stem if isinstance(fp, Path) else str(fp or "unknown")
 
+        # Determine file_type if not provided
         if not file_type and req:
             ft = req.get("file_type")
             if not ft:
@@ -283,32 +110,52 @@ class Extractor:
                     ft = suffix if suffix else None
             file_type = ft
 
-        err_dir = SETTINGS.paths.extraction_error_dir / paper_id
-        err_dir.mkdir(parents=True, exist_ok=True)
+        # Build context payload (kept compact; no deep parsing of result)
+        context: Dict[str, Any] = {
+            "stage": stage,
+            "file_type": file_type,
+            "meta": meta,
+        }
 
-        try:
-            error_txt = self._compose_error_txt(
-                paper_id=paper_id,
-                stage=stage,
-                file_type=file_type,
-                python_exc=err,
-                result=result,
-                req=req,
-                raw_line=raw_line,
-                raw_response_status_note=raw_response_status_note,
-                meta=meta,
-            )
-            (err_dir / "error.txt").write_text(error_txt, encoding="utf-8")
-        except Exception as e:
-            logger.warning("Failed to compose/write error.txt for %s: %s", paper_id, e)
+        if req:
+            request_obj = req.get("request") or {}
+            body = request_obj.get("body") or {}
+            context.update({
+                "request": {
+                    "endpoint": request_obj.get("url"),
+                    "custom_id": request_obj.get("custom_id"),
+                    "body_keys": list(body.keys()) if isinstance(body, dict) else None,
+                },
+                "file_path": str(req.get("file_path")) if req.get("file_path") else None,
+            })
 
-        try:
-            self._move_output_artifacts_to_error_dir(paper_id)
-        except Exception as e:
-            logger.warning("Failed to move artifacts for %s: %s", paper_id, e)
+        if raw_line:
+            snippet = raw_line if len(raw_line) <= 4096 else raw_line[:4096] + "...(truncated)"
+            context["raw_error_snippet"] = snippet
+
+        if raw_response_status_note:
+            context["raw_response_status_note"] = raw_response_status_note
+
+        if result is not None:
+            # Keep only top-level fields to avoid huge dumps
+            context["result_keys"] = list(result.keys())
+
+        # Delegate to write_failure (moves output → error folder, writes error.txt)
+        write_failure(
+            output_root=SETTINGS.paths.output_dir,
+            error_root=SETTINGS.paths.extraction_error_dir,
+            paper_id=paper_id,
+            err=err,
+            error_type=stage,
+            context=context,
+            logger=logger,
+        )
 
         self._papers_status.append({"status": "failed"})
 
+    # ---------------------------
+    # Output writing
+    # ---------------------------
     def write_batch_outputs(
         self, out_dir: Path, stem: str, response_body: Dict, meta: Dict
     ) -> None:
@@ -353,6 +200,9 @@ class Extractor:
             raise ValueError("No output_text found")
         return text_obj["text"]
 
+    # ---------------------------
+    # Batch request creation
+    # ---------------------------
     def create_batch_requests(
         self, input_dir: Path, first_n: Optional[int] = None
     ) -> List[Dict]:
@@ -364,6 +214,7 @@ class Extractor:
         if first_n:
             pdf_files = pdf_files[:first_n]
 
+        # PDFs
         for idx, pdf_path in enumerate(pdf_files):
             paper_id = pdf_path.stem
             out_dir = SETTINGS.paths.output_dir / paper_id
@@ -415,6 +266,7 @@ class Extractor:
                     file_type="pdf",
                 )
 
+        # JSONL
         json_items_cap = first_n if first_n else None
         for jsonl_path in jsonl_files:
             if json_items_cap is not None and json_items_cap <= 0:
@@ -493,6 +345,9 @@ class Extractor:
 
         return batch_requests
 
+    # ---------------------------
+    # Batch job lifecycle
+    # ---------------------------
     def create_batch_input_file(self, batch_requests: List[Dict], batch_num: int = 1) -> str:
         batch_input_path = SETTINGS.paths.output_dir / f"batch_input_{batch_num}_{int(time.time())}.jsonl"
         with batch_input_path.open("w", encoding="utf-8") as f:
@@ -609,6 +464,9 @@ class Extractor:
 
             await asyncio.sleep(60)
 
+    # ---------------------------
+    # Batch result processing
+    # ---------------------------
     def _process_batch_results(self, batch: Dict, batch_requests: List[Dict], elapsed: float) -> None:
         if batch.status != "completed":
             return
@@ -762,11 +620,17 @@ class Extractor:
                     file_type=(req or {}).get("file_type"),
                 )
 
+    # ---------------------------
+    # Thread helper
+    # ---------------------------
     async def _run_in_thread(self, func, *args, **kwargs):
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as executor:
             return await loop.run_in_executor(executor, func, *args, **kwargs)
 
+    # ---------------------------
+    # Summary
+    # ---------------------------
     def print_summary(self) -> None:
         total = len(self._papers_status)
         success = sum(1 for p in self._papers_status if p.get("status") == "success")

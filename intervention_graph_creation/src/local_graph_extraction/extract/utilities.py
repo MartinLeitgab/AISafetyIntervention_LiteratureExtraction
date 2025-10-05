@@ -4,8 +4,9 @@ import logging
 import shutil
 import re
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Dict
 from urllib.parse import urlparse
+from datetime import datetime, timezone
 
 
 FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.S | re.I)
@@ -56,45 +57,125 @@ def url_to_id(url: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
 
 
-def write_failure(base_dir: Path, output_dir: Path,  paper_id: str, err: Exception) -> None:
-    """
-    Save failure information for a paper into the extraction_error directory.
-    - Moves any already generated files (raw_response, summary, json) from output/.
-    - Always writes error.txt with exception type, message, and traceback.
-    - Removes empty paper folder from output/.
-    """
-    output_dir.mkdir(parents=True, exist_ok=True)
+def _utc_now_iso() -> str:
+    # Matches your existing Z-suffixed UTC format
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
-    paper_id = paper_id.split('.')[0]
-    orig_dir = base_dir / paper_id
-    candidate_files = [
-        orig_dir / f"{paper_id}_raw_response.txt",
-        orig_dir / f"{paper_id}_summary.txt",
-        orig_dir / f"{paper_id}.json",
-    ]
 
-    for src in candidate_files:
-        print(src)
-        if src.exists():
-            dst = output_dir / paper_id / src.name
+def write_failure(
+    output_root: Path,
+    error_root: Path,
+    paper_id: str,
+    *,
+    err: Optional[BaseException] = None,
+    error_type: Optional[str] = None,
+    message: Optional[str] = None,
+    context: Optional[Dict[str, Any]] = None,
+    logger: Optional[logging.Logger] = None,
+) -> Path:
+    """
+    Move all artifacts for a paper from `output_root/<paper_id>` to
+    `error_root/<paper_id>`, delete the original folder, and add `error.txt`.
+
+    Parameters
+    ----------
+    output_root : Path
+        Root of successful artifacts (e.g., SETTINGS.paths.output_dir)
+    error_root : Path
+        Root of error artifacts (e.g., SETTINGS.paths.extraction_error_dir)
+    paper_id : str
+        Paper identifier used as the subfolder name under both roots.
+    err : Exception | None
+        An exception object (if you caught one).
+    error_type : str | None
+        High-level category/stage (e.g., "create_batch_requests", "parsing", "network").
+    message : str | None
+        Optional human-readable message if you don't have an exception or want to add detail.
+    context : dict | None
+        Extra diagnostic fields to dump (request IDs, HTTP status, meta, etc.).
+    logger : logging.Logger | None
+        Optional logger; if provided we log progress/warnings.
+
+    Returns
+    -------
+    Path
+        The path to the error directory for this paper: error_root / paper_id
+    """
+
+    log = logger or logging.getLogger(__name__)
+
+    # Normalize folder names and ensure destination exists
+    clean_id = paper_id.split(".")[0]
+    src_dir = output_root / clean_id
+    dst_dir = error_root / clean_id
+    dst_dir.mkdir(parents=True, exist_ok=True)
+
+    # Helper: move a file or directory into dst_dir, resolving name collisions
+    def _move_into_dst(p: Path) -> None:
+        target = dst_dir / p.name
+        if target.exists():
+            # Avoid collisions by suffixing with a timestamp
+            stamped = dst_dir / f"{p.stem}_{int(datetime.now().timestamp())}{p.suffix}"
             try:
-                shutil.move(str(src), str(dst))
+                shutil.move(str(p), str(stamped))
             except Exception as move_err:
-                logger.warning("Could not move %s → %s: %s", src, dst, move_err)
+                log.warning("Could not move %s → %s: %s", p, stamped, move_err)
+        else:
+            try:
+                shutil.move(str(p), str(target))
+            except Exception as move_err:
+                log.warning("Could not move %s → %s: %s", p, target, move_err)
 
-    error_file = output_dir / paper_id / "error.txt"
-    diag = (
-        f"❌ Processing failed for {paper_id}\n"
-        f"{type(err).__name__}: {err}\n\n"
-        f"Traceback:\n{traceback.format_exc()}"
-    )
-    error_file.write_text(diag, encoding="utf-8")
+    # 1) Move everything currently in output/<paper_id> to error/<paper_id>
+    if src_dir.exists() and src_dir.is_dir():
+        for p in src_dir.iterdir():
+            _move_into_dst(p)
+        # 2) Remove the now-empty source directory
+        try:
+            shutil.rmtree(src_dir, ignore_errors=True)
+        except Exception as rm_err:
+            log.warning("Could not delete source dir %s: %s", src_dir, rm_err)
+    else:
+        log.info("No source dir to move (skipping): %s", src_dir)
+
+    # 3) Write error.txt
+    error_file = dst_dir / "error.txt"
+
+    diag: Dict[str, Any] = {
+        "timestamp": _utc_now_iso(),
+        "paper_id": clean_id,
+        "error_type": error_type or (type(err).__name__ if err else None),
+        "message": message or (str(err) if err else None),
+    }
+
+    # Attach context (request IDs, HTTP status, meta, stage, etc.)
+    if context:
+        try:
+            # Make sure it's JSON-serializable; fall back to str() if not
+            json.dumps(context)
+            diag["context"] = context
+        except Exception:
+            diag["context"] = {"note": "context not JSON-serializable", "repr": repr(context)}
+
+    # Include traceback if an exception is provided
+    tb = traceback.format_exc() if err is not None else None
+    if tb and tb.strip() != "NoneType: None\n":
+        diag["traceback"] = tb
 
     try:
-        if orig_dir.exists() and not any(orig_dir.iterdir()):
-            orig_dir.rmdir()
-            logger.info("🧹 Removed empty output dir: %s", orig_dir)
-    except Exception as cleanup_err:
-        logger.warning("Could not clean empty dir %s: %s", orig_dir, cleanup_err)
+        error_file.write_text(json.dumps(diag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    except Exception as write_err:
+        # As a last resort, write a plaintext version
+        log.warning("Could not write JSON error.txt, falling back to plaintext: %s", write_err)
+        text = (
+            f"timestamp: {diag['timestamp']}\n"
+            f"paper_id: {clean_id}\n"
+            f"error_type: {diag.get('error_type')}\n"
+            f"message: {diag.get('message')}\n"
+            f"context: {repr(diag.get('context'))}\n\n"
+            f"traceback:\n{diag.get('traceback') or ''}\n"
+        )
+        error_file.write_text(text, encoding="utf-8")
 
-    logger.error("❌ Failed to process %s | Traceback saved to %s", paper_id, error_file)
+    log.error("❌ Failure recorded for %s | Details: %s", clean_id, error_file)
+    return dst_dir

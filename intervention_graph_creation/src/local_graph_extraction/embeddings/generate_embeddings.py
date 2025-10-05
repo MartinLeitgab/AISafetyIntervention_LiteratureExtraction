@@ -8,8 +8,8 @@ Features:
 - Deterministic IDs: sha1 hash of key fields (first 10 hex chars).
 - Resumable: skips already processed files.
 - Errors:
-  - Writes per-object error JSONs to SETTINGS.paths.embeddings_error.
-  - On fatal error for a paper, moves the entire article folder to SETTINGS.paths.embeddings_error and writes error.txt inside.
+  - Writes per-object error JSONs to SETTINGS.paths.embeddings_error_dir.
+  - On fatal error for a paper, moves the entire article folder to SETTINGS.paths.embeddings_error_dir and writes error.txt inside (via write_failure).
 - Async processing with configurable concurrency.
 - Automatic retries (max_retries=3) with exponential backoff (2–5s).
 - Logging to ./logs/embeddings_MM-DD_HH-MM.log
@@ -23,11 +23,9 @@ import traceback
 import asyncio
 from asyncio import Semaphore
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 import logging
 from datetime import datetime
-import shutil
-from shutil import Error as ShutilError
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -36,6 +34,7 @@ from config import load_settings
 from intervention_graph_creation.src.utils import short_id_node, short_id_edge
 from intervention_graph_creation.src.local_graph_extraction.core.node import Node
 from intervention_graph_creation.src.local_graph_extraction.core.edge import Edge
+from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
 
 # -----------------------------------------------------------------------------
 # Settings
@@ -81,6 +80,7 @@ def atomic_write_json(path: Path, data: dict) -> None:
     tmp.replace(path)
 
 def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
+    """Per-object error json (node/edge) stays in embeddings_error_dir."""
     error_path = EMB_ERRORS_DIR / f"{obj_id}.json"
     payload = {
         "id": obj_id,
@@ -91,31 +91,6 @@ def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     atomic_write_json(error_path, payload)
-
-def move_article_to_error(paper_dir: Path, reason: str, tb: Optional[str] = None) -> Path:
-    """
-    Moves the whole article folder to EMB_ERRORS_DIR without suffixing.
-    Creates error.txt inside the moved folder explaining the reason.
-    Assumes there will be no name collisions in EMB_ERRORS_DIR.
-    """
-    dest = EMB_ERRORS_DIR / paper_dir.name
-    try:
-        logger.error("Moving article to error folder: %s -> %s (%s)", paper_dir, dest, reason)
-        moved_path = shutil.move(str(paper_dir), str(dest))
-        moved_dir = Path(moved_path)
-        error_txt = moved_dir / "error.txt"
-        content = [
-            f"time: {datetime.now().isoformat()}",
-            f"reason: {reason}",
-        ]
-        if tb:
-            content.append("traceback:")
-            content.append(tb)
-        error_txt.write_text("\n".join(content), encoding="utf-8")
-        return moved_dir
-    except ShutilError as e:
-        logger.exception("Failed to move article dir %s to %s: %s", paper_dir, dest, e)
-        return dest
 
 # -----------------------------------------------------------------------------
 # Text builders
@@ -229,12 +204,22 @@ async def embed_batch_async(
             except Exception as e:
                 if attempt >= max_retries:
                     tb = traceback.format_exc()
+                    # Per-object error files
                     for t in batch:
                         log_error(t.obj_id, t.obj_type, t.text, e)
+                    # Paper-level fatal: move whole folder using shared write_failure
                     unique_dirs = {t.paper_dir for t in batch}
                     for d in unique_dirs:
                         if d.exists():
-                            move_article_to_error(d, reason=f"embeddings_failed: {e}", tb=tb)
+                            write_failure(
+                                output_root=OUTPUT_DIR,
+                                error_root=EMB_ERRORS_DIR,
+                                paper_id=d.name,
+                                err=e,
+                                error_type="embeddings_failed",
+                                context={"traceback": tb, "batch_size": len(batch)},
+                                logger=logger,
+                            )
                     stats["errors"] += len(batch)
                     logger.error(
                         "Batch failed after %d attempts (%d items): %s",
@@ -287,10 +272,18 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
                 "Failed to enumerate %s: %s\n%s",
                 jf, str(e), traceback.format_exc()
             )
-            tb = traceback.format_exc()
+            # Fatal for this paper: move folder using shared write_failure
             paper_dir = jf.parent
             if paper_dir.exists():
-                move_article_to_error(paper_dir, reason=f"enumeration_failed: {e}", tb=tb)
+                write_failure(
+                    output_root=OUTPUT_DIR,
+                    error_root=EMB_ERRORS_DIR,
+                    paper_id=paper_dir.name,
+                    err=e,
+                    error_type="enumeration_failed",
+                    context={"json_file": str(jf), "traceback": traceback.format_exc()},
+                    logger=logger,
+                )
 
     unique: dict[str, EmbTask] = {t.obj_id: t for t in all_tasks}
     tasks = list(unique.values())
