@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Tuple, Dict
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 from pathlib import Path
@@ -8,9 +8,6 @@ from intervention_graph_creation.src.local_graph_extraction.core.edge import Gra
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
 from intervention_graph_creation.src.utils import short_id_edge, short_id_node
-from config import load_settings
-
-SETTINGS = load_settings()
 
 
 class LocalGraph(BaseModel):
@@ -25,31 +22,46 @@ class LocalGraph(BaseModel):
         return len(self.nodes) + len(self.edges)
 
     @classmethod
-    def from_paper_schema(cls, paper_schema: PaperSchema, json_path: Path) -> "tuple[LocalGraph | None, str | None]":
-        """Create a LocalGraph from a PaperSchema. Logs errors and returns (None, error_msg) if invalid."""
-        from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
+    def from_paper_schema(
+        cls,
+        paper_schema: PaperSchema,
+        json_path: Path
+    ) -> Tuple[Optional["LocalGraph"], Optional[str], Optional[str], Optional[Dict]]:
+        """
+        Create a LocalGraph from a PaperSchema.
+
+        Returns:
+            (local_graph, error_code, error_msg, context)
+            - On success: (LocalGraph(...), None, None, None)
+            - On validation failure: (None, <error_code>, <message>, <context>)
+        """
         names = [n.name for n in paper_schema.nodes]
         if len(names) != len(set(names)):
             dupes = sorted({x for x in names if names.count(x) > 1})
-            msg = f"Duplicate node names in {json_path.name}: {dupes}"
-            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.graph_error_dir, json_path.name, Exception(msg))
-            return None, msg
+            msg = f"Duplicate node names in {json_path.name}: {dupes[:5]}..." if len(dupes) > 5 else f"Duplicate node names in {json_path.name}: {dupes}"
+            return None, "graph_validation_duplicate_nodes", msg, {
+                "json_path": str(json_path),
+                "duplicates": dupes,
+                "duplicate_count": len(dupes),
+            }
 
         known = set(names)
-
-
-        missing = [
+        missing_pairs = [
             (e.source_node, e.target_node)
             for e in paper_schema.edges
             if e.source_node not in known or e.target_node not in known
         ]
-        if missing:
-            msg = f"Edges reference unknown nodes in {json_path.name}: {missing[:5]}..."
-            write_failure(SETTINGS.paths.output_dir, SETTINGS.paths.graph_error_dir, json_path.name, Exception(msg))
-            return None, msg
+        if missing_pairs:
+            preview = missing_pairs[:5]
+            msg = f"Edges reference unknown nodes in {json_path.name}: {preview}..."
+            return None, "graph_validation_unknown_edge_nodes", msg, {
+                "json_path": str(json_path),
+                "missing_pairs": missing_pairs,
+                "missing_count": len(missing_pairs),
+            }
 
         local_graph = LocalGraph(nodes=paper_schema.nodes, edges=paper_schema.edges, paper_id=json_path.stem)
-        return local_graph, None
+        return local_graph, None, None, None
 
     def add_embeddings_to_nodes(self, node: GraphNode, json_path: Path) -> None:
         """Load embeddings for a node from embeddings folder."""

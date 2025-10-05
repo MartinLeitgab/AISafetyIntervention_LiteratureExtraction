@@ -1,9 +1,10 @@
 from pathlib import Path
 import json
-import shutil
+import logging
+from typing import List, Dict, Any, Optional
+
 from falkordb import FalkorDB
 from tqdm import tqdm
-from typing import List, Dict, Any
 
 from config import load_settings
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
@@ -11,8 +12,10 @@ from intervention_graph_creation.src.local_graph_extraction.core.local_graph imp
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.db.helpers import label_for
+from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
 
 SETTINGS = load_settings()
+logger = logging.getLogger(__name__)
 
 
 class AISafetyGraph:
@@ -26,7 +29,6 @@ class AISafetyGraph:
         base_label = label_for(node.type)            # "Concept" or "Intervention"
         generic_label = "NODE"
 
-        # Prepare params
         params = {
             "name": node.name,
             "type": node.type,
@@ -39,10 +41,6 @@ class AISafetyGraph:
             "embedding": (node.embedding.tolist() if node.embedding is not None else None),
         }
 
-        # - MERGE uses ONLY the base label so existing nodes (without :NODE) still match.
-        # - We add :NODE after MERGE via SET n:NODE.
-        # - For embedding, we conditionally set vecf32(...) only when provided; otherwise set NULL.
-        # - Keep url as property AND create [:FROM] relationship to :Source node
         cypher = f"""
         MERGE (n:{base_label} {{name: $name, type: $type}})
         SET n:{generic_label},
@@ -64,28 +62,19 @@ class AISafetyGraph:
         g.query(cypher, params)
 
     # ---------- edges ----------
-    # Multiple edges between same nodes are allowed,
-    # but for the same type we update the existing edge (MERGE by type).
 
     def upsert_edge(self, edge: GraphEdge, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
-
-        # Prepare params
         params = {
             "s": edge.source_node,
             "t": edge.target_node,
             "type": edge.type,
             "description": edge.description,
-            "edge_confidence": edge.edge_confidence,    
+            "edge_confidence": edge.edge_confidence,
             "url": url,
             "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
 
-        # Assume nodes already exist with correct labels; do not create them here.
-        # One :EDGE per (a,b,type). If exists → update props; else → create.
-        # Keep url as property AND create [:FROM] relationship to :Source node
-
-        # First, create/update the edge
         edge_cypher = f"""
         MATCH (a {{name: $s}}), (b {{name: $t}})
         MERGE (a)-[r:EDGE {{type: $type}}]->(b)
@@ -101,7 +90,6 @@ class AISafetyGraph:
         result = g.query(edge_cypher, params)
         edge_id = result.result_set[0][0] if result.result_set else None
 
-        # Then create the relationship from edge to source node
         if edge_id is not None:
             rel_cypher = f"""
             MATCH (r) WHERE ID(r) = {edge_id}
@@ -110,15 +98,12 @@ class AISafetyGraph:
             """
             g.query(rel_cypher, {"url": params["url"]})
 
+    # ---------- metadata & rationale ----------
 
     def ingest_metadata(self, metadata: List[Dict[str, Any]]) -> None:
-        """Ingest metadata as :Source nodes in the graph."""
         g = self.db.select_graph(SETTINGS.falkordb.graph)
-
-        # Convert metadata list to dictionary for easier processing
         meta_dict = {item.key: item.value for item in metadata}
 
-        # Extract all metadata fields from META_KEYS
         url = meta_dict.get("url", "")
         title = meta_dict.get("title", "")
         authors = meta_dict.get("authors", [])
@@ -127,10 +112,8 @@ class AISafetyGraph:
         filename = meta_dict.get("filename", "")
         source_filetype = meta_dict.get("source_filetype", "")
 
-        # Ensure authors is a list
         if isinstance(authors, str):
             authors = [authors]
-
 
         cypher = """
         MERGE (p:Source {url: $url})
@@ -156,69 +139,58 @@ class AISafetyGraph:
         g.query(cypher, params)
 
     def ingest_rationale(self, rationale_path: Path, url: str) -> None:
-       """Ingest rationale record as :Rationale node linked to :Source node.
-       """
-       # Inputs are base path ending with *_summary.txt; associated JSON is stem without suffix
-       summary_path = rationale_path
-       json_path = rationale_path.with_name(rationale_path.name.replace("_summary.txt", ".json"))
+        """Ingest rationale record as :Rationale node linked to :Source node."""
+        summary_path = rationale_path
+        json_path = rationale_path.with_name(rationale_path.name.replace("_summary.txt", ".json"))
 
+        if not summary_path.exists() and not json_path.exists():
+            return
 
-       if not summary_path.exists() and not json_path.exists():
-           return
+        g = self.db.select_graph(SETTINGS.falkordb.graph)
 
+        summary_content = ""
+        if summary_path.exists():
+            with open(summary_path, 'r', encoding='utf-8') as f:
+                summary_content = f.read().strip()
 
-       g = self.db.select_graph(SETTINGS.falkordb.graph)
+        json_content = ""
+        if json_path.exists():
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    json_dict = json.load(f)
+                json_content = json.dumps(json_dict, ensure_ascii=False, indent=2)
+            except Exception:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    json_content = f.read().strip()
 
+        combined_parts = []
+        if summary_content:
+            combined_parts.append("# Summary\n\n" + summary_content)
+        if json_content:
+            combined_parts.append("# JSON Output\n\n" + json_content)
+        combined_content = "\n\n---\n\n".join(combined_parts) if combined_parts else ""
 
-       # Read summary and JSON content if present
-       summary_content = ""
-       if summary_path.exists():
-           with open(summary_path, 'r', encoding='utf-8') as f:
-               summary_content = f.read().strip()
+        cypher = """
+        MERGE (p:Source {url: $url})
+        MERGE (r:Rationale {url: $url})
+        SET r.content = $content
+        MERGE (p)-[:HAS_RATIONALE]->(r)
+        RETURN r
+        """
 
+        params = {
+            "url": url,
+            "content": combined_content,
+        }
 
-       json_content = ""
-       if json_path.exists():
-           try:
-               with open(json_path, 'r', encoding='utf-8') as f:
-                   json_dict = json.load(f)
-               json_content = json.dumps(json_dict, ensure_ascii=False, indent=2)
-           except Exception:
-               with open(json_path, 'r', encoding='utf-8') as f:
-                   json_content = f.read().strip()
-
-
-       combined_parts = []
-       if summary_content:
-           combined_parts.append("# Summary\n\n" + summary_content)
-       if json_content:
-           combined_parts.append("# JSON Output\n\n" + json_content)
-       combined_content = "\n\n---\n\n".join(combined_parts) if combined_parts else ""
-
-
-       cypher = """
-       MERGE (p:Source {url: $url})
-       MERGE (r:Rationale {url: $url})
-       SET r.content = $content
-       MERGE (p)-[:HAS_RATIONALE]->(r)
-       RETURN r
-       """
-
-
-       params = {
-           "url": url,
-           "content": combined_content,
-       }
-
-
-       g.query(cypher, params)
+        g.query(cypher, params)
 
     # ---------- indexes ----------
 
     def set_index(self) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        # Check for existing vector index on (n:NODE).embedding
+        # Drop and recreate NODE vector index
         result = g.ro_query("CALL db.indexes()")
         index_exists = False
         for row in result.result_set:
@@ -236,12 +208,12 @@ class AISafetyGraph:
                 g.query("DROP VECTOR INDEX FOR (n:NODE) ON (n.embedding)")
             except Exception as e:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
-                
+
         print("Creating new vector index on (n:NODE).embedding...")
         g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
         print("Created vector index on (n:NODE).embedding.")
 
-        # Check for existing vector index on [r:EDGE].embedding
+        # Drop and recreate EDGE vector index
         result = g.ro_query("CALL db.indexes()")
         edge_index_exists = False
         for row in result.result_set:
@@ -267,14 +239,10 @@ class AISafetyGraph:
 
     def clear_graph(self) -> None:
         """Delete all nodes and edges from the graph"""
-        g = self.db.select_graph(SETTINGS.falkordb.graph)  # ← Use the settings
-
+        g = self.db.select_graph(SETTINGS.falkordb.graph)
         print(f"Clearing all data from graph '{SETTINGS.falkordb.graph}'...")
-
-        # Delete all relationships first, then nodes
         g.query("MATCH ()-[r]-() DELETE r")
         g.query("MATCH (n) DELETE n")
-
         print("Graph cleared successfully")
 
     def clear_and_ingest(self, input_dir: Path) -> None:
@@ -283,45 +251,130 @@ class AISafetyGraph:
         self.ingest_dir(input_dir)
 
     def ingest_file(self, json_path: Path, errors: dict) -> bool:
-        data = json.loads(Path(json_path).read_text(encoding="utf-8"))
+        """
+        Returns:
+            True  -> paper has issues (already moved by write_failure)
+            False -> ingested successfully
+        """
+        paper_id = json_path.stem
+        try:
+            data = json.loads(Path(json_path).read_text(encoding="utf-8"))
+        except Exception as e:
+            write_failure(
+                output_root=SETTINGS.paths.output_dir,
+                error_root=SETTINGS.paths.graph_error_dir,
+                paper_id=paper_id,
+                err=e,
+                error_type="json_load_failed",
+                context={"json_path": str(json_path)},
+                logger=logger,
+            )
+            errors[paper_id] = [f"Failed to read JSON: {e}"]
+            return True
 
-        # Filter out metadata entries with None values to avoid validation errors
+        # Filter out meta entries with None (avoid validation errors)
         if 'meta' in data and data['meta']:
             data['meta'] = [meta for meta in data['meta'] if meta.get('value') is not None]
 
-        doc = PaperSchema(**data)
+        try:
+            doc = PaperSchema(**data)
+        except Exception as e:
+            write_failure(
+                output_root=SETTINGS.paths.output_dir,
+                error_root=SETTINGS.paths.graph_error_dir,
+                paper_id=paper_id,
+                err=e,
+                error_type="paper_schema_validation_failed",
+                context={"json_path": str(json_path)},
+                logger=logger,
+            )
+            errors[paper_id] = [f"PaperSchema validation failed: {e}"]
+            return True
 
-        # Extract URL from metadata for use in rationale ingestion
+        # Extract URL for rationale & node/edge :FROM links
         meta_dict = {item.key: item.value for item in doc.meta}
         url = meta_dict.get("url", "")
 
-        # Ingest metadata before the local graph
-        self.ingest_metadata(doc.meta)
-
-        # Ingest rationale if available
-        # Ingest rationale if available
-        rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
-        if rationale_path.exists() or json_path.exists():
-            self.ingest_rationale(rationale_path, url)
-
-        local_graph, error_msg = LocalGraph.from_paper_schema(doc, json_path)
-        if local_graph is None:
-            # Error already logged by from_paper_schema
-            errors[json_path.stem] = [error_msg] if error_msg else ["Invalid paper: see error log for details."]
+        # Metadata & rationale are not fatal to the whole run, but are fatal to this paper.
+        try:
+            self.ingest_metadata(doc.meta)
+        except Exception as e:
+            write_failure(
+                output_root=SETTINGS.paths.output_dir,
+                error_root=SETTINGS.paths.graph_error_dir,
+                paper_id=paper_id,
+                err=e,
+                error_type="ingest_metadata_failed",
+                context={"json_path": str(json_path), "url": url},
+                logger=logger,
+            )
+            errors[paper_id] = [f"Metadata ingest failed: {e}"]
             return True
+
+        try:
+            rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
+            if rationale_path.exists() or json_path.exists():
+                self.ingest_rationale(rationale_path, url)
+        except Exception as e:
+            write_failure(
+                output_root=SETTINGS.paths.output_dir,
+                error_root=SETTINGS.paths.graph_error_dir,
+                paper_id=paper_id,
+                err=e,
+                error_type="ingest_rationale_failed",
+                context={"json_path": str(json_path), "rationale_path": str(rationale_path), "url": url},
+                logger=logger,
+            )
+            errors[paper_id] = [f"Rationale ingest failed: {e}"]
+            return True
+
+        # Graph validation (pure) → decide here if fatal and move with write_failure
+        local_graph, error_code, error_msg, ctx = LocalGraph.from_paper_schema(doc, json_path)
+        if local_graph is None:
+            write_failure(
+                output_root=SETTINGS.paths.output_dir,
+                error_root=SETTINGS.paths.graph_error_dir,
+                paper_id=paper_id,
+                err=None,
+                error_type=error_code or "graph_validation_failed",
+                message=error_msg or "Invalid graph",
+                context=ctx or {"json_path": str(json_path)},
+                logger=logger,
+            )
+            errors[paper_id] = [error_msg or "Invalid paper: see error log for details."]
+            return True
+
+        # Load embeddings (non-fatal if missing; zero vectors used)
         for node in local_graph.nodes:
             local_graph.add_embeddings_to_nodes(node, json_path)
         for edge in local_graph.edges:
             local_graph.add_embeddings_to_edges(edge, json_path)
-        self.ingest_local_graph(local_graph, url)
+
+        # Ingest graph (paper-scoped fatal on exception)
+        try:
+            self.ingest_local_graph(local_graph, url)
+        except Exception as e:
+            write_failure(
+                output_root=SETTINGS.paths.output_dir,
+                error_root=SETTINGS.paths.graph_error_dir,
+                paper_id=paper_id,
+                err=e,
+                error_type="ingest_local_graph_failed",
+                context={"json_path": str(json_path), "url": url, "node_count": len(local_graph.nodes), "edge_count": len(local_graph.edges)},
+                logger=logger,
+            )
+            errors[paper_id] = [f"Local graph ingest failed: {e}"]
+            return True
 
         return False
 
     def ingest_dir(self, input_dir: Path = SETTINGS.paths.output_dir) -> None:
+        """
+        Iterate subdirectories and ingest each paper.
+        If a paper has issues, the folder is moved by write_failure; we simply skip it here.
+        """
         errors = {}
         base = Path(input_dir)
-        issues_dir = SETTINGS.paths.graph_error_dir
-        issues_dir.mkdir(exist_ok=True)
         subdirs = [d for d in base.iterdir() if d.is_dir()]
 
         for d in tqdm(sorted(subdirs)):
@@ -330,22 +383,14 @@ class AISafetyGraph:
                 print(f"⚠️ Skipping {d.name}: {json_path} not found")
                 continue
 
-            has_issue = self.ingest_file(json_path, errors)
-            if has_issue:
-                target_dir = issues_dir / d.name
-                if target_dir.exists():
-                    shutil.rmtree(target_dir)
-                shutil.move(str(d), str(issues_dir))
+            _has_issue = self.ingest_file(json_path, errors)
+            # No manual moves here; write_failure already handled folder relocation.
 
-        # Write all errors to issues/issues.json
+        # Optional: handle/print aggregated errors
         if errors:
-            issues_json_path = issues_dir / "issues.json"
-            with open(issues_json_path, "w", encoding="utf-8") as f:
-                json.dump(errors, f, ensure_ascii=False, indent=2)
-            print("\n=== Files with issues ===")
-            for k, v in errors.items():
-                print(f"- {k}.json: {', '.join(v)}")
+            logger.warning("Completed with %d paper(s) having issues.", len(errors))
 
+        # Index management applies to the whole DB, not a single paper.
         self.set_index()
 
     def ingest_local_graph(self, local_graph: LocalGraph, url: str) -> None:
@@ -416,7 +461,6 @@ class AISafetyGraph:
         """
         graph = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        # 1) Discover all relationship types touching the node to be removed (parameterized)
         rel_types_q = """
         MATCH (n {name: $remove})
         OPTIONAL MATCH (n)-[r]->() RETURN DISTINCT type(r) AS t
@@ -427,16 +471,12 @@ class AISafetyGraph:
         res = graph.query(rel_types_q, {"remove": remove_name})
         rel_types = [row[0] for row in res.result_set if row[0]]
 
-        # If no relationships, just delete the node (parameterized)
         if not rel_types:
             return graph.query("MATCH (a {name: $remove}) DELETE a", {"remove": remove_name})
 
-        # 2) Build the merge query dynamically with the discovered relationship types.
-        #    NOTE: relationship *types* cannot be parameterized in Cypher.
         parts = []
         for rtype in rel_types:
             parts.append(f"""
-            // Move outgoing :{rtype}
             OPTIONAL MATCH (a {{name: $remove}})-[r:{rtype}]->(m)
             MATCH (b {{name: $keep}})
             FOREACH (_ IN CASE WHEN m IS NULL THEN [] ELSE [1] END |
@@ -445,7 +485,6 @@ class AISafetyGraph:
             )
             WITH a, b
 
-            // Move incoming :{rtype}
             OPTIONAL MATCH (m2)-[s:{rtype}]->(a {{name: $remove}})
             FOREACH (_ IN CASE WHEN m2 IS NULL THEN [] ELSE [1] END |
                 MERGE (m2)-[s2:{rtype}]->(b)
@@ -464,6 +503,7 @@ class AISafetyGraph:
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     print("starting script")
     graph = AISafetyGraph()
     print(
