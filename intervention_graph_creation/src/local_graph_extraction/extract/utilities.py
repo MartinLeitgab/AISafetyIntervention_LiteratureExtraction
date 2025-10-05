@@ -65,6 +65,7 @@ def write_failure(base_dir: Path, output_dir: Path,  paper_id: str, err: Excepti
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    paper_id = paper_id.split('.')[0]
     orig_dir = base_dir / paper_id
     candidate_files = [
         orig_dir / f"{paper_id}_raw_response.txt",
@@ -73,14 +74,15 @@ def write_failure(base_dir: Path, output_dir: Path,  paper_id: str, err: Excepti
     ]
 
     for src in candidate_files:
+        print(src)
         if src.exists():
-            dst = output_dir / src.name
+            dst = output_dir / paper_id / src.name
             try:
                 shutil.move(str(src), str(dst))
             except Exception as move_err:
                 logger.warning("Could not move %s → %s: %s", src, dst, move_err)
 
-    error_file = orig_dir / "error.txt"
+    error_file = output_dir / paper_id / "error.txt"
     diag = (
         f"❌ Processing failed for {paper_id}\n"
         f"{type(err).__name__}: {err}\n\n"
