@@ -1,0 +1,645 @@
+{
+  "nodes": [
+    {
+      "name": "High expert supervision burden in robot task learning",
+      "aliases": [
+        "tedious expert demonstrations",
+        "human-intensive LfD data collection"
+      ],
+      "type": "concept",
+      "description": "Classical learning-from-demonstration requires humans to tele-operate or kinesthetically program robots for every new task, creating a major scalability bottleneck.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identified in 1 Introduction as a fundamental limitation motivating the work."
+    },
+    {
+      "name": "Requirement for expert action-state demonstrations in LfD",
+      "aliases": [
+        "need for labelled observation-action pairs",
+        "action supervision requirement"
+      ],
+      "type": "concept",
+      "description": "Traditional LfD frameworks rely on dense observation-action pairs provided by experts, leading directly to the supervision burden.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed under 1 Introduction as the concrete cause of supervision burden."
+    },
+    {
+      "name": "Self-supervised exploration with goal relabeling provides supervision",
+      "aliases": [
+        "unsupervised exploration relabeling",
+        "experience replay goal relabeling"
+      ],
+      "type": "concept",
+      "description": "The agent can treat states visited during unsupervised exploration as goals and corresponding executed actions as supervision, eliminating the need for human labels.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2 motivates replacing expert labels with relabelled exploration data."
+    },
+    {
+      "name": "Goal-conditioned skill policy learning framework",
+      "aliases": [
+        "GSP learning framework",
+        "goal-conditioned inverse model"
+      ],
+      "type": "concept",
+      "description": "A policy maps a current observation and a goal observation to an action sequence, enabling zero-shot imitation of visual demonstrations.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 2.1 Learning the Goal-conditioned Skill Policy."
+    },
+    {
+      "name": "Recurrent multi-step GSP with previous action input",
+      "aliases": [
+        "multi-step GSP architecture",
+        "auto-regressive skill policy"
+      ],
+      "type": "concept",
+      "description": "An implementation that maintains recurrent hidden state and explicitly ingests the previous action to predict variable-length action sequences toward a goal.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details given in 2.2 and 2.4 ablations."
+    },
+    {
+      "name": "Baxter rope manipulation and TurtleBot navigation success improvements with forward-consistent GSP",
+      "aliases": [
+        "robotic rope and navigation empirical results",
+        "real-robot validation evidence"
+      ],
+      "type": "concept",
+      "description": "Experiments show knot-tying success rises from 36 % to 60 %, and TurtleBot navigation succeeds in 6/8 trials, demonstrating the effectiveness of the proposed method.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Results presented in 3.1 and 3.2 serve as empirical validation."
+    },
+    {
+      "name": "Poor imitation accuracy from multi-modal action distributions",
+      "aliases": [
+        "imitation errors due to action multimodality",
+        "multimodal trajectory ambiguity risk"
+      ],
+      "type": "concept",
+      "description": "When multiple distinct actions lead to the same next state, standard action-matching losses mis-guide learning, reducing imitation fidelity.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted at start of 2.1 as a key challenge."
+    },
+    {
+      "name": "Cross-entropy action matching with delta target causes high gradient variance",
+      "aliases": [
+        "delta-target cross-entropy issue",
+        "high-variance gradients from multimodality"
+      ],
+      "type": "concept",
+      "description": "Assuming a single correct action (delta target) contradicts the inherent multimodality, leading to conflicting gradients during training.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Analysed in 2.1 Learning the GSP."
+    },
+    {
+      "name": "Reaching goal more important than exact trajectory in imitation",
+      "aliases": [
+        "state-centric imitation insight",
+        "goal-centric learning assumption"
+      ],
+      "type": "concept",
+      "description": "For most tasks, any action sequence that attains the target state is acceptable, implying losses should focus on state outcomes, not action labels.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Key insight stated in 2.2 Forward Consistency Loss."
+    },
+    {
+      "name": "Forward consistency loss to penalize state prediction error in GSP training",
+      "aliases": [
+        "state-level consistency loss",
+        "forward-consistency objective"
+      ],
+      "type": "concept",
+      "description": "A loss function compares the next-state prediction from the policy-selected action with that of the ground-truth action, avoiding penalties when states match.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formulated formally in Eq. 3 of 2.2."
+    },
+    {
+      "name": "Forward model predicting next observation enables differentiable consistency",
+      "aliases": [
+        "learned visual forward dynamics",
+        "differentiable state predictor"
+      ],
+      "type": "concept",
+      "description": "A neural network forward dynamics model produces next-state features, allowing gradients from the consistency loss to update the GSP.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation described in 2.2 and Eq. 3."
+    },
+    {
+      "name": "Poor skill generalization to unseen environments",
+      "aliases": [
+        "limited transfer of learned skills",
+        "environment-specific overfitting risk"
+      ],
+      "type": "concept",
+      "description": "Policies trained on limited exploration data often fail when textures, layouts or tasks change, undermining reliability.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Observed empirically in 3.3 VizDoom experiments."
+    },
+    {
+      "name": "Limited state coverage from random exploration during self-supervised data collection",
+      "aliases": [
+        "narrow exploration coverage",
+        "random exploration limitation"
+      ],
+      "type": "concept",
+      "description": "Randomly generated trajectories do not traverse important parts of the state space such as inter-room transitions, restricting what the GSP can learn.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 5 Discussion and evidenced in 3.3."
+    },
+    {
+      "name": "Intrinsic motivation can drive diverse exploration in self-supervised data collection",
+      "aliases": [
+        "intrinsic curiosity insight",
+        "self-driven exploration diversity"
+      ],
+      "type": "concept",
+      "description": "Curiosity-based intrinsic rewards encourage the agent to visit novel states, increasing data diversity.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Theoretical basis cited from Pathak et al. 2017 in 3.3."
+    },
+    {
+      "name": "Use curiosity-driven exploration to collect training data",
+      "aliases": [
+        "curiosity-based data collection rationale",
+        "intrinsic-reward exploration design"
+      ],
+      "type": "concept",
+      "description": "Design decision to replace random exploration with a curiosity policy before training the GSP.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design choice evaluated in 3.3 VizDoom."
+    },
+    {
+      "name": "Intrinsic curiosity module controlling exploration policy",
+      "aliases": [
+        "ICM implementation",
+        "intrinsic-reward exploration mechanism"
+      ],
+      "type": "concept",
+      "description": "An implementation that uses prediction error of a forward model as intrinsic reward to drive exploratory actions.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Mechanism referenced in 3.3 and Pathak et al. 2017."
+    },
+    {
+      "name": "VizDoom imitation performance increases with curiosity-driven data",
+      "aliases": [
+        "curiosity exploration validation",
+        "simulation evidence for curiosity"
+      ],
+      "type": "concept",
+      "description": "Quantitative results (Table 3) show higher median demonstration completion and efficiency when the GSP is trained on curiosity-collected data versus random.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical validation in 3.3."
+    },
+    {
+      "name": "Divergence from demonstration due to fixed step counts between goals",
+      "aliases": [
+        "compounding error risk",
+        "fixed-length imitation failure"
+      ],
+      "type": "concept",
+      "description": "Without knowing how many actions are needed to reach a sub-goal, executing a fixed number of steps leads to drift away from the demonstration.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in 2.3 Goal Recognizer and illustrated in navigation failures."
+    },
+    {
+      "name": "Unknown variable number of actions needed to reach visual goal observations",
+      "aliases": [
+        "variable goal distance problem",
+        "action-length uncertainty"
+      ],
+      "type": "concept",
+      "description": "The agent cannot infer a priori how many steps are required to align its current view with a goal image.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Problem formalised in 2.3."
+    },
+    {
+      "name": "Goal attainment detection enables adaptive step control in imitation",
+      "aliases": [
+        "goal detection theoretical insight",
+        "adaptive stopping insight"
+      ],
+      "type": "concept",
+      "description": "If the agent can recognise when a sub-goal is achieved, it can take a variable number of steps, reducing drift.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Insight motivating goal recogniser in 2.3."
+    },
+    {
+      "name": "Goal recognizer network to detect goal completion during imitation",
+      "aliases": [
+        "goal recogniser design",
+        "variable-length control rationale"
+      ],
+      "type": "concept",
+      "description": "Design choice to train a binary classifier that decides whether the current observation is close enough to the goal.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design described in 2.3 Goal Recognizer."
+    },
+    {
+      "name": "Binary classifier conditioned on goal and current observation for goal recognition",
+      "aliases": [
+        "goal recogniser implementation",
+        "visual goal proximity classifier"
+      ],
+      "type": "concept",
+      "description": "Implementation that samples positive and negative pairs from exploration data and is trained with cross-entropy loss.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details in 2.3."
+    },
+    {
+      "name": "Improved navigation success with goal recognizer in TurtleBot experiments",
+      "aliases": [
+        "goal recogniser empirical validation",
+        "variable-step navigation evidence"
+      ],
+      "type": "concept",
+      "description": "Table 2 shows higher landmark completion rates when the goal recogniser is used, especially with sparse demonstrations.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical validation in 3.2."
+    },
+    {
+      "name": "Train goal-conditioned skill policy with forward consistency loss using self-supervised exploration data",
+      "aliases": [
+        "forward-consistent GSP training",
+        "zero-shot visual imitation training procedure"
+      ],
+      "type": "intervention",
+      "description": "During pre-training, collect self-supervised interaction data, relabel states as goals, and optimise a recurrent GSP with forward consistency loss and a learned forward model.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Training occurs before deployment, as described throughout Section 2.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated on physical robots (Sections 3.1, 3.2) indicating prototype-level maturity.",
+      "node_rationale": "Core actionable method proposed by the paper."
+    },
+    {
+      "name": "Collect exploration data with curiosity-driven policy before GSP training",
+      "aliases": [
+        "intrinsic-reward data collection intervention",
+        "curiosity exploration phase"
+      ],
+      "type": "intervention",
+      "description": "Replace random exploration with an intrinsic curiosity module that rewards prediction errors, generating richer trajectories for subsequent GSP training.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Executed prior to model training as part of data collection (Section 3.3).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evaluated in simulation only; considered experimental.",
+      "node_rationale": "Intervention explicitly assessed in VizDoom experiments."
+    },
+    {
+      "name": "Deploy goal recognizer to dynamically stop action sequence during imitation",
+      "aliases": [
+        "runtime goal detection intervention",
+        "adaptive landmark switching"
+      ],
+      "type": "intervention",
+      "description": "At deployment, continually query the goal recogniser; when it predicts the current observation is near the goal, switch to the next demonstration landmark, allowing variable-length execution.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Used during run-time execution on the robot (Section 2.3, Experiments).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated in limited robot trials; still experimental.",
+      "node_rationale": "Practically distinct deployment-phase action derived from the paper."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "High expert supervision burden in robot task learning",
+      "target_node": "Requirement for expert action-state demonstrations in LfD",
+      "description": "Expert supervision burden arises because classical LfD needs full action-state demonstrations.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in 1 Introduction.",
+      "edge_rationale": "Direct textual link between burden and required demonstrations."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Requirement for expert action-state demonstrations in LfD",
+      "target_node": "Self-supervised exploration with goal relabeling provides supervision",
+      "description": "Replacing expert labels with relabelled self-exploration data mitigates the need for demonstrations.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Conceptual solution proposed in Section 2; no formal proof but clear argument.",
+      "edge_rationale": "Self-supervision directly addresses demonstration requirement."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Self-supervised exploration with goal relabeling provides supervision",
+      "target_node": "Goal-conditioned skill policy learning framework",
+      "description": "The GSP framework operationalises the theory of goal-relabelled self-supervision.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design choice grounded in theoretical insight (Section 2.1).",
+      "edge_rationale": "Design embodies the theoretical proposal."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Goal-conditioned skill policy learning framework",
+      "target_node": "Recurrent multi-step GSP with previous action input",
+      "description": "The recurrent architecture realises the goal-conditioned policy capable of variable-length action sequences.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation details explicitly provided in 2.2/2.4.",
+      "edge_rationale": "Architecture is the concrete implementation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Recurrent multi-step GSP with previous action input",
+      "target_node": "Baxter rope manipulation and TurtleBot navigation success improvements with forward-consistent GSP",
+      "description": "Physical robot experiments show the implemented GSP achieves high success rates.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical results with clear metrics (Section 3.1, 3.2).",
+      "edge_rationale": "Evidence confirms the implementation works."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Baxter rope manipulation and TurtleBot navigation success improvements with forward-consistent GSP",
+      "target_node": "Train goal-conditioned skill policy with forward consistency loss using self-supervised exploration data",
+      "description": "Positive empirical results motivate adopting the proposed training procedure.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Results imply effectiveness but are limited in scale.",
+      "edge_rationale": "Evidence supports the intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Poor imitation accuracy from multi-modal action distributions",
+      "target_node": "Cross-entropy action matching with delta target causes high gradient variance",
+      "description": "Imitation accuracy suffers because delta-target cross-entropy mis-handles multimodal action distributions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Analysis in 2.1 directly links the two.",
+      "edge_rationale": "Problem analysis explains the risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Cross-entropy action matching with delta target causes high gradient variance",
+      "target_node": "Reaching goal more important than exact trajectory in imitation",
+      "description": "Focusing on state outcomes avoids the gradient variance issue.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical argument laid out in 2.2.",
+      "edge_rationale": "Insight addresses the problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Reaching goal more important than exact trajectory in imitation",
+      "target_node": "Forward consistency loss to penalize state prediction error in GSP training",
+      "description": "Forward consistency operationalises the state-centric insight.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit formulation in Eq. 3.",
+      "edge_rationale": "Design embodies the insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Forward consistency loss to penalize state prediction error in GSP training",
+      "target_node": "Forward model predicting next observation enables differentiable consistency",
+      "description": "A learned forward model makes the consistency loss differentiable with respect to policy parameters.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation described in 2.2.",
+      "edge_rationale": "Mechanism realises the design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Forward model predicting next observation enables differentiable consistency",
+      "target_node": "Baxter rope manipulation and TurtleBot navigation success improvements with forward-consistent GSP",
+      "description": "Empirical gains are specifically attributed to introducing the forward consistency mechanism.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Ablation results (Fig. 3, Table 1) isolate the benefit.",
+      "edge_rationale": "Evidence validates mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Baxter rope manipulation and TurtleBot navigation success improvements with forward-consistent GSP",
+      "target_node": "Train goal-conditioned skill policy with forward consistency loss using self-supervised exploration data",
+      "description": "Successful ablations motivate incorporating forward consistency into the training intervention.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical but limited scale.",
+      "edge_rationale": "Reinforces adoption of intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Poor skill generalization to unseen environments",
+      "target_node": "Limited state coverage from random exploration during self-supervised data collection",
+      "description": "Generalisation fails because random exploration does not expose the policy to diverse states.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in 5 Discussion with supporting data.",
+      "edge_rationale": "Problem analysis for the risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Limited state coverage from random exploration during self-supervised data collection",
+      "target_node": "Intrinsic motivation can drive diverse exploration in self-supervised data collection",
+      "description": "Intrinsic curiosity is proposed to enlarge state coverage.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical link made in 3.3.",
+      "edge_rationale": "Insight addresses coverage problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Intrinsic motivation can drive diverse exploration in self-supervised data collection",
+      "target_node": "Use curiosity-driven exploration to collect training data",
+      "description": "Design decision follows directly from the theoretical insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design specified in 3.3.",
+      "edge_rationale": "Design operationalises insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use curiosity-driven exploration to collect training data",
+      "target_node": "Intrinsic curiosity module controlling exploration policy",
+      "description": "ICM provides the technical means to enact curiosity-based exploration.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation based on prior work, referenced in 3.3.",
+      "edge_rationale": "Mechanism realises design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Intrinsic curiosity module controlling exploration policy",
+      "target_node": "VizDoom imitation performance increases with curiosity-driven data",
+      "description": "Simulation experiments confirm that curiosity-collected data improves imitation performance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 3 provides quantitative evidence.",
+      "edge_rationale": "Evidence validates mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "VizDoom imitation performance increases with curiosity-driven data",
+      "target_node": "Collect exploration data with curiosity-driven policy before GSP training",
+      "description": "Positive results motivate adopting curiosity-based data collection.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical but simulation-only.",
+      "edge_rationale": "Evidence supports intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Divergence from demonstration due to fixed step counts between goals",
+      "target_node": "Unknown variable number of actions needed to reach visual goal observations",
+      "description": "Fixed action counts fail because the true number of steps is unknown.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Problem outlined in 2.3.",
+      "edge_rationale": "Analysis links risk and cause."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Unknown variable number of actions needed to reach visual goal observations",
+      "target_node": "Goal attainment detection enables adaptive step control in imitation",
+      "description": "Detecting goal completion solves the uncertainty in required action count.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical argument in 2.3.",
+      "edge_rationale": "Insight mitigates problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Goal attainment detection enables adaptive step control in imitation",
+      "target_node": "Goal recognizer network to detect goal completion during imitation",
+      "description": "The goal recogniser is the design choice realising the insight.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Design explicitly described in 2.3.",
+      "edge_rationale": "Design embodies insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Goal recognizer network to detect goal completion during imitation",
+      "target_node": "Binary classifier conditioned on goal and current observation for goal recognition",
+      "description": "Binary classifier is the concrete mechanism implementing the goal recogniser.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation details in 2.3.",
+      "edge_rationale": "Mechanism realises design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Binary classifier conditioned on goal and current observation for goal recognition",
+      "target_node": "Improved navigation success with goal recognizer in TurtleBot experiments",
+      "description": "Robot experiments show higher success when using the classifier.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 2 provides quantitative evidence.",
+      "edge_rationale": "Evidence validates mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved navigation success with goal recognizer in TurtleBot experiments",
+      "target_node": "Deploy goal recognizer to dynamically stop action sequence during imitation",
+      "description": "Empirical gains motivate deploying the goal recogniser at run time.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Experimental but limited trials.",
+      "edge_rationale": "Evidence supports intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "authors",
+      "value": [
+        "Deepak Pathak",
+        "Parsa Mahmoudieh",
+        "Guanghao Luo",
+        "Pulkit Agrawal",
+        "Dian Chen",
+        "Yide Shentu",
+        "Evan Shelhamer",
+        "Jitendra Malik",
+        "Alexei A. Efros",
+        "Trevor Darrell"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2018-04-23T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Zero-Shot Visual Imitation"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1804.08606"
+    }
+  ]
+}

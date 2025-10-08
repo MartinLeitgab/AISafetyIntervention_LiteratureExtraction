@@ -1,0 +1,335 @@
+{
+  "nodes": [
+    {
+      "name": "Adversarial example-induced misclassification in image classifiers",
+      "aliases": [
+        "adversarial vulnerability in image classifiers",
+        "targeted and untargeted adversarial misclassification"
+      ],
+      "type": "concept",
+      "description": "Image-classification neural networks can be forced to output incorrect labels through small, human-imperceptible perturbations. This risk is documented for both targeted and untargeted attacks on ImageNet models.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction §2 as the overarching security/safety problem the defence attempts to solve."
+    },
+    {
+      "name": "Insufficient robustness of Adversarial Logit Pairing defense",
+      "aliases": [
+        "weak robustness of ALP",
+        "ALP vulnerability"
+      ],
+      "type": "concept",
+      "description": "Empirical evaluation shows ALP achieves only 0.6 % correct classification under targeted PGD attacks at ε=16/255, contradicting original robustness claims.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 Evaluation demonstrates ALP’s failure, establishing the immediate cause of the risk."
+    },
+    {
+      "name": "Deviation from robust optimization objective in ALP training objective",
+      "aliases": [
+        "ALP objective deviates from Madry robust optimisation",
+        "clean-data term in ALP loss"
+      ],
+      "type": "concept",
+      "description": "ALP minimises loss on clean images and uses targeted adversarial examples during training, diverging from the inner–outer max–min robust-optimisation objective that adversarial training relies on.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in §4.1 ‘Analyzing the defense objective’ as a theoretical reason for ALP’s weakness."
+    },
+    {
+      "name": "Training with untargeted adversarial inner maximization for robustness",
+      "aliases": [
+        "robust optimisation aligned adversarial training",
+        "min-max adversarial training on untargeted perturbations"
+      ],
+      "type": "concept",
+      "description": "A design principle recommending that the defender minimise the worst-case loss over untargeted perturbations, matching the Madry robust-optimisation formulation.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in §4.1 as the appropriate remedy to the identified theoretical deviation."
+    },
+    {
+      "name": "Untargeted adversarial training objective implementation",
+      "aliases": [
+        "implementation of min-max untargeted adversarial training",
+        "robust optimisation training procedure"
+      ],
+      "type": "concept",
+      "description": "Implementation detail: during each training step generate untargeted PGD adversarial examples that maximise the loss on the true label, then update model parameters to minimise this maximum loss.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived from contrast with ALP; precise mechanism needed to realise the design rationale."
+    },
+    {
+      "name": "Loss landscape visualization indicates objective deficiency in ALP",
+      "aliases": [
+        "bumpier depressed loss surface around inputs in ALP",
+        "loss landscape evidence against ALP"
+      ],
+      "type": "concept",
+      "description": "3-D plots show ALP induces a locally depressed yet bumpier loss surface, suggesting harder (but still successful) optimisation for attackers and misalignment with true robustness.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.2 Loss landscapes provides empirical evidence diagnosing ALP’s failure."
+    },
+    {
+      "name": "Adopt robust optimization-based adversarial training for ImageNet models",
+      "aliases": [
+        "apply untargeted robust adversarial training",
+        "replace ALP with Madry-style training"
+      ],
+      "type": "intervention",
+      "description": "During model training, generate untargeted worst-case perturbations (e.g., PGD with sufficient steps) and optimise parameters to minimise the resulting maximum loss, aligning with the robust optimisation framework.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Training-time modification; matches Fine-Tuning/Training phase — see §4.1 discussion.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Widely demonstrated on CIFAR/MNIST but not yet fully validated on ImageNet in this paper — categorised as experimental/PoC.",
+      "node_rationale": "Logical actionable step inferred from theoretical critique to mitigate the identified weakness."
+    },
+    {
+      "name": "Overestimation of model robustness due to weak evaluation attacks",
+      "aliases": [
+        "inflated robustness claims from weak attacks",
+        "evaluation weakness problem"
+      ],
+      "type": "concept",
+      "description": "Using few-step or targeted-only PGD attacks during evaluation understates true adversarial risk, leading to incorrect safety assessments.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in §4.2 Attack procedure and Threat model discussion as a separate failure mode."
+    },
+    {
+      "name": "Need for stronger attack evaluations to tightly bound robustness",
+      "aliases": [
+        "requirement for tight upper bounds on adversarial risk",
+        "theoretical need for strong evaluation"
+      ],
+      "type": "concept",
+      "description": "Theoretical understanding that robustness guarantees are only as tight as the strongest attack used during evaluation; weak attacks yield loose bounds.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived from discussion in §4.2 referencing Uesato et al. (2018)."
+    },
+    {
+      "name": "Comprehensive adversarial evaluation using strong attacks",
+      "aliases": [
+        "design of stringent robustness evaluation",
+        "tight-bound evaluation strategy"
+      ],
+      "type": "concept",
+      "description": "A design approach advocating exhaustive, high-step PGD and multiple threat models (targeted & untargeted) for defence evaluation.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined across §4 Evaluation as the principled solution to weak robustness measurement."
+    },
+    {
+      "name": "Extended-step PGD attack and loss landscape analysis",
+      "aliases": [
+        "1000-step PGD evaluation protocol",
+        "evaluation mechanism: high-step PGD + landscape plots"
+      ],
+      "type": "concept",
+      "description": "Implements up to 1000-step PGD attacks (targeted and untargeted) and visualises loss surfaces along gradient & random directions to expose vulnerabilities.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in §4.2 Attack procedure and Loss landscapes — the concrete mechanism realising the evaluation design."
+    },
+    {
+      "name": "98.6% attack success and 0.6% accuracy against ALP under targeted PGD (ϵ=16/255)",
+      "aliases": [
+        "empirical failure rate of ALP",
+        "validation metric for strong evaluation protocol"
+      ],
+      "type": "concept",
+      "description": "Using the extended PGD protocol, attacker success reached 98.6 % and correct classification fell to 0.6 % at ε = 16/255, refuting ALP robustness claims.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 1 and Figure 1 provide the quantitative evidence validating the strong-attack evaluation mechanism."
+    },
+    {
+      "name": "Conduct pre-deployment evaluation with high-step PGD attacks and loss landscape analysis",
+      "aliases": [
+        "apply stringent robustness testing before release",
+        "safety gate: strong adversarial evaluation"
+      ],
+      "type": "intervention",
+      "description": "Before deploying image-classification models, run up-to-1000-step PGD (targeted & untargeted) and inspect loss-surface visualisations to ensure no hidden vulnerabilities remain.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Aimed at Pre-Deployment Testing phase, ensuring robustness before release — see §4 Evaluation conclusion.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "The protocol is implemented and demonstrated in this paper but not yet industry-standard; classified as prototype/systematic validation.",
+      "node_rationale": "Direct actionable takeaway explicitly recommended in the paper as improved evaluation practice."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Adversarial example-induced misclassification in image classifiers",
+      "target_node": "Insufficient robustness of Adversarial Logit Pairing defense",
+      "description": "When the defence is weak, adversarial perturbations succeed, leading to misclassification.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical data in §4 shows near-total failure of ALP under attack.",
+      "edge_rationale": "Connects observed defence weakness to the overarching risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Insufficient robustness of Adversarial Logit Pairing defense",
+      "target_node": "Deviation from robust optimization objective in ALP training objective",
+      "description": "The theoretical mismatch in the loss formulation is identified as a key reason for ALP’s empirical weakness.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoned analysis in §4.1 without formal proof.",
+      "edge_rationale": "Links conceptual flaw to practical failure."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Deviation from robust optimization objective in ALP training objective",
+      "target_node": "Training with untargeted adversarial inner maximization for robustness",
+      "description": "Aligning with the robust optimisation principle addresses the deviation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical remedy proposed in §4.1.",
+      "edge_rationale": "Indicates how the design rationale counters the theoretical flaw."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Training with untargeted adversarial inner maximization for robustness",
+      "target_node": "Untargeted adversarial training objective implementation",
+      "description": "Concrete training procedure realises the design principle.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implementation inferred; not executed in this paper.",
+      "edge_rationale": "Specifies mechanism translating rationale to practice."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Deviation from robust optimization objective in ALP training objective",
+      "target_node": "Loss landscape visualization indicates objective deficiency in ALP",
+      "description": "Visualised loss surfaces empirically confirm the theoretical deficiency.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct empirical observation in §4.2.",
+      "edge_rationale": "Evidence supports the theoretical claim."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Loss landscape visualization indicates objective deficiency in ALP",
+      "target_node": "Adopt robust optimization-based adversarial training for ImageNet models",
+      "description": "Empirical evidence drives recommendation to switch to robust optimisation training.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Motivation inferred; not explicitly prescribed but strongly implied.",
+      "edge_rationale": "Shows reasoning from evidence to proposed intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Adversarial example-induced misclassification in image classifiers",
+      "target_node": "Overestimation of model robustness due to weak evaluation attacks",
+      "description": "Misclassification risk goes unnoticed when evaluation is weak, effectively causing hidden vulnerabilities.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussion in §3 & §4 indicates weak evaluation masks true risk.",
+      "edge_rationale": "Connects inadequate evaluation to persistence of risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Overestimation of model robustness due to weak evaluation attacks",
+      "target_node": "Need for stronger attack evaluations to tightly bound robustness",
+      "description": "Recognising the need for stronger evaluation directly counteracts overestimation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated reasoning in §4.2 citing Uesato et al.",
+      "edge_rationale": "Addresses the problem analysis with theoretical insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Need for stronger attack evaluations to tightly bound robustness",
+      "target_node": "Comprehensive adversarial evaluation using strong attacks",
+      "description": "Designing evaluations with exhaustive attacks realises the theoretical requirement.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Paper lays out design in §4 Evaluation.",
+      "edge_rationale": "Transitions from insight to design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Comprehensive adversarial evaluation using strong attacks",
+      "target_node": "Extended-step PGD attack and loss landscape analysis",
+      "description": "High-step PGD and landscape visualisation are the concrete tools implementing comprehensive evaluation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Fully specified and open-sourced in §4.2.",
+      "edge_rationale": "Details mechanism realising design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Extended-step PGD attack and loss landscape analysis",
+      "target_node": "98.6% attack success and 0.6% accuracy against ALP under targeted PGD (ϵ=16/255)",
+      "description": "Quantitative results confirm the efficacy of the strong evaluation protocol.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Direct measurement reported in Table 1 & Figure 1.",
+      "edge_rationale": "Evidence validates the mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "98.6% attack success and 0.6% accuracy against ALP under targeted PGD (ϵ=16/255)",
+      "target_node": "Conduct pre-deployment evaluation with high-step PGD attacks and loss landscape analysis",
+      "description": "Demonstrated failure under strong attacks motivates adopting the evaluation protocol before deployment.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit recommendation in Conclusion §5.",
+      "edge_rationale": "Links evidence to actionable intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Logan Engstrom",
+        "Andrew Ilyas",
+        "Anish Athalye"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Evaluating and Understanding the Robustness of Adversarial Logit Pairing"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.10272"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-07-26T00:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,760 @@
+{
+  "nodes": [
+    {
+      "name": "Suboptimal translation quality and scalability in neural machine translation production",
+      "aliases": [
+        "NMT performance gap vs human translators",
+        "Low quality and slow NMT deployments"
+      ],
+      "type": "concept",
+      "description": "Overall risk that deployed NMT systems translate less accurately than humans and suffer from high latency, limiting usability at Google-scale.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction: paper states NMT lagged phrase-based MT in accuracy and speed."
+    },
+    {
+      "name": "High computational cost during inference in NMT deployment",
+      "aliases": [
+        "Slow inference speed",
+        "Latency of deep LSTM NMT"
+      ],
+      "type": "concept",
+      "description": "Large deep LSTM models require many floating-point operations, making real-time translation expensive and slow.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identified in Introduction and §6 Quantizable Model and Quantized Inference."
+    },
+    {
+      "name": "Objective-function misalignment with BLEU metric in NMT training",
+      "aliases": [
+        "MLE metric mismatch",
+        "Training/test discrepancy for NMT"
+      ],
+      "type": "concept",
+      "description": "Maximum-likelihood training optimises next-token log-probability, which does not correspond directly to corpus-level BLEU used for evaluation and user quality.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in §5 Training Criteria as a key limitation of standard ML objective."
+    },
+    {
+      "name": "Out-of-vocabulary word handling deficiencies in NMT",
+      "aliases": [
+        "Rare word translation errors",
+        "OOV issues"
+      ],
+      "type": "concept",
+      "description": "Fixed word vocabularies cannot cover names, numbers or morphologically rich variants, leading to copy or UNK errors.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in Introduction and §4 Segmentation Approaches."
+    },
+    {
+      "name": "Length bias in beam search decoding",
+      "aliases": [
+        "Under-translation due to short hypothesis preference",
+        "Coverage omissions"
+      ],
+      "type": "concept",
+      "description": "Pure log-probability beam search favours shorter outputs, causing untranslated source segments and lower adequacy.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in §7 Decoder as motivation for length normalisation and coverage penalty."
+    },
+    {
+      "name": "Gradient vanishing in deep stacked LSTMs",
+      "aliases": [
+        "Training difficulty beyond 4 layers",
+        "Exploding/vanishing gradients in NMT"
+      ],
+      "type": "concept",
+      "description": "Without architectural changes, very deep encoder/decoder stacks train slowly and degrade, limiting model expressiveness and accuracy.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Problem motivating residual connections, §3.1 Residual Connections."
+    },
+    {
+      "name": "Quantization preserving accuracy while reducing computation in NMT",
+      "aliases": [
+        "Low-precision arithmetic insight",
+        "Accurate 8-bit NMT"
+      ],
+      "type": "concept",
+      "description": "Weights and activations can be clipped and quantised so that 8-bit matmuls and 16-bit accumulators yield near-float accuracy, enabling faster hardware execution.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Stated in §6 as core idea enabling TPU speed-ups."
+    },
+    {
+      "name": "Sentence-level expected reward optimisation aligns training with BLEU",
+      "aliases": [
+        "Policy-gradient BLEU optimisation",
+        "Expected GLEU training"
+      ],
+      "type": "concept",
+      "description": "Directly maximising expected BLEU-like scores (GLEU) over sampled sequences can teach the model to prefer outputs valued by evaluation metrics.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Presented in §5 as remedy for metric mismatch."
+    },
+    {
+      "name": "Subword wordpiece modelling for open-vocabulary translation",
+      "aliases": [
+        "Wordpiece vocabulary insight",
+        "Subword units balance"
+      ],
+      "type": "concept",
+      "description": "Representing text with a learned 8k-32k set of subword units combines character flexibility with word efficiency and guarantees deterministic segmentation.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in §4.1 Wordpiece Model."
+    },
+    {
+      "name": "Length-normalised coverage-aware beam search improves adequacy",
+      "aliases": [
+        "Beam search with lp and cp",
+        "Coverage penalty concept"
+      ],
+      "type": "concept",
+      "description": "Adjusting hypothesis scores by length penalty and coverage penalty counteracts the intrinsic short-sentence bias of beam search.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in §7 Decoder."
+    },
+    {
+      "name": "Residual connections to improve gradient flow in deep NMT stacks",
+      "aliases": [
+        "Residual LSTM idea",
+        "Shortcut connections in RNN"
+      ],
+      "type": "concept",
+      "description": "Adding element-wise identity shortcuts between LSTM layers allows successful training of 8-layer encoder/decoder by mitigating vanishing gradients.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived from §3.1 discussion."
+    },
+    {
+      "name": "Constrain accumulators and logits to enable post-training 8/16-bit quantisation",
+      "aliases": [
+        "Clipping design for quantisation",
+        "Range-restriction strategy"
+      ],
+      "type": "concept",
+      "description": "Clip LSTM cell/hidden states to [−δ,δ] and softmax logits to [−γ,γ] during training so that later integer quantisation incurs minimal error.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design step in §6 enabling hardware speed-ups."
+    },
+    {
+      "name": "Combine ML pre-training with small-weight RL fine-tuning",
+      "aliases": [
+        "Mixed objective approach",
+        "ML+RL training schedule"
+      ],
+      "type": "concept",
+      "description": "First train with maximum likelihood until convergence, then optimise a weighted sum (α≈0.017) of ML and expected reward to improve BLEU.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in §5: two-stage schedule."
+    },
+    {
+      "name": "Shared 32k wordpiece vocabulary for source and target",
+      "aliases": [
+        "Language-pair shared WPM-32K",
+        "Subword design choice"
+      ],
+      "type": "concept",
+      "description": "Using identical subword units on both sides lets the model simply copy rare tokens and keeps sequence lengths moderate.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design decision in §4.1 improving OOV handling."
+    },
+    {
+      "name": "Beam-search scoring with α=0.2 length penalty and β=0.2 coverage penalty",
+      "aliases": [
+        "lp/cp parameter choice",
+        "Empirically tuned penalties"
+      ],
+      "type": "concept",
+      "description": "Empirical tuning on dev-set showed α,β=0.2 yield +1.1 BLEU over pure probability search while remaining robust.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Parameter selection results in §7 Table 2."
+    },
+    {
+      "name": "Element-wise residual addition between stacked LSTM layers",
+      "aliases": [
+        "Residual implementation"
+      ],
+      "type": "concept",
+      "description": "Input to layer i is added to its output before feeding into layer i+1, as formalised in equation (6).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equation 6 in §3.1 shows concrete mechanism."
+    },
+    {
+      "name": "Integer-quantised GNMT inference on TPUs with 8-bit weights and 16-bit accumulators",
+      "aliases": [
+        "8-bit TPU inference",
+        "Quantised deployment pipeline"
+      ],
+      "type": "concept",
+      "description": "After training with clipping, weights are stored as 8-bit with per-row scales; matrix mults run on TPU integer units while embeddings/attention stay on CPU.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation specifics in §6 including Table 1."
+    },
+    {
+      "name": "Expected reward objective with GLEU and α=0.017 weight",
+      "aliases": [
+        "RL training mechanism",
+        "Policy gradient details"
+      ],
+      "type": "concept",
+      "description": "Finetuning samples 15 sequences, subtracts mean reward, and mixes with ML loss via weight α to stabilise optimisation.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equation (9) and surrounding text in §5."
+    },
+    {
+      "name": "Greedy likelihood-maximising wordpiece model training",
+      "aliases": [
+        "WPM training algorithm",
+        "Data-driven subword segmentation"
+      ],
+      "type": "concept",
+      "description": "Greedy search selects D subword tokens to minimise corpus length while retaining deterministic invertible segmentation.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in §4.1 referencing [35]."
+    },
+    {
+      "name": "Beam search decoder with pruning, batch decoding and lp/cp scoring",
+      "aliases": [
+        "Production GNMT decoder"
+      ],
+      "type": "concept",
+      "description": "Keeps 8–12 hypotheses, prunes tokens and finished hypotheses by beamsize thresholds, decodes 35 sentences in parallel.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details in §7 Decoder."
+    },
+    {
+      "name": "BLEU unchanged and 3.4× speedup on TPU with quantised model",
+      "aliases": [
+        "Quantisation validation result"
+      ],
+      "type": "concept",
+      "description": "Table 1 shows BLEU 31.20→31.21 and log-ppl increase 0.007 with CPU→TPU, inference time cut from 1322 s to 384 s.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantitative evidence in §6 Table 1."
+    },
+    {
+      "name": "BLEU improvement of ~1 on WMT En→Fr after RL refinement",
+      "aliases": [
+        "RL validation result"
+      ],
+      "type": "concept",
+      "description": "Table 6 shows single-model BLEU 38.95→39.92, confirming reward-optimised fine-tuning raises metric.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical evidence in §8.5."
+    },
+    {
+      "name": "WPM-32K model achieves highest BLEU and good speed",
+      "aliases": [
+        "Wordpiece validation result"
+      ],
+      "type": "concept",
+      "description": "Table 4 shows WPM-32K BLEU 38.95 beating word, char and mixed models while decoding in 0.21 s per sentence.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Results in §8.4."
+    },
+    {
+      "name": "Length/coverage penalties give +1.1 BLEU on dev set",
+      "aliases": [
+        "Beam search validation result"
+      ],
+      "type": "concept",
+      "description": "Table 2 shows BLEU 30.3→31.4 when α=β=0.2 for WMT En→Fr dev, confirming adequacy gains.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Validation for decoder tweaks in §7."
+    },
+    {
+      "name": "Deep residual LSTM enables 8-layer GNMT reaching 38.95 BLEU",
+      "aliases": [
+        "Residual validation result"
+      ],
+      "type": "concept",
+      "description": "§3 and §8 show stacked 8-layer residual model outperforms shallower baselines and achieves state-of-the-art scores.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Evidence scattered in Model Architecture and Experiments sections."
+    },
+    {
+      "name": "Deploy quantised GNMT models on TPUs with 8-bit weights",
+      "aliases": [
+        "Production TPU deployment",
+        "Low-latency quantised inference"
+      ],
+      "type": "intervention",
+      "description": "After training with clipping, convert weights to 8-bit integers and run inference on Google Tensor Processing Units with 16-bit accumulators to achieve 3–4× faster translation with no BLEU loss.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Deployment-time action; see §6 Quantizable Model and Quantized Inference.",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "Used in Google production, validated in Table 1.",
+      "node_rationale": "Actionable step that directly mitigates latency risk."
+    },
+    {
+      "name": "Fine-tune NMT models with RL using expected GLEU objective",
+      "aliases": [
+        "Policy-gradient BLEU fine-tuning"
+      ],
+      "type": "intervention",
+      "description": "After ML convergence, continue training with objective O = α*ML + (1-α)*Expected GLEU, sampling 15 sequences per sentence and subtracting mean reward.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applied during fine-tuning/RL stage (§5, §8.5).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated on benchmarks but not yet universally deployed; Table 6 shows pilot-level validation.",
+      "node_rationale": "Action mitigating metric mismatch risk."
+    },
+    {
+      "name": "Use wordpiece segmentation (32k shared vocab) during NMT training and inference",
+      "aliases": [
+        "Adopt WPM-32K"
+      ],
+      "type": "intervention",
+      "description": "Train a shared 32 000 token wordpiece model on combined corpora, segment both source and target, and feed subword sequences to GNMT.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Applied as preprocessing before model training (§4.1).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "In production across many language pairs; Table 4 shows large-scale validation.",
+      "node_rationale": "Directly addresses OOV rare-word problems."
+    },
+    {
+      "name": "Apply length-normalised, coverage-penalised beam search decoding",
+      "aliases": [
+        "Beam search with lp/cp"
+      ],
+      "type": "intervention",
+      "description": "During decoding, score hypotheses with s(Y,X)=logP(Y|X)/lp(Y)+cp(X;Y) using α=β=0.2, keep 8–12 hypotheses, prune by beamsize.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Decoding-time policy executed in deployment (§7).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "Adopted in production decoder; Table 2 validates effect.",
+      "node_rationale": "Mitigates under-translation and length bias."
+    },
+    {
+      "name": "Incorporate residual connections in deep stacked LSTM encoder-decoder architecture",
+      "aliases": [
+        "Use residual LSTMs"
+      ],
+      "type": "intervention",
+      "description": "Design encoder and decoder with 8 LSTM layers where each layer’s input is added to its output before passing upward, enabling deeper networks without gradient issues.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Model-design decision before any training (§3.1).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "Deployed as core GNMT architecture; see Experiments section.",
+      "node_rationale": "Addresses gradient-vanishing training difficulty, boosting accuracy."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal translation quality and scalability in neural machine translation production",
+      "target_node": "High computational cost during inference in NMT deployment",
+      "description": "Slow inference contributes to poor user experience and scalability, part of overall suboptimal production performance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly stated in Introduction describing latency weakness.",
+      "edge_rationale": "Latency framed as a weakness leading to overall risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal translation quality and scalability in neural machine translation production",
+      "target_node": "Objective-function misalignment with BLEU metric in NMT training",
+      "description": "Metric mismatch lowers final translation quality, contributing to risk.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "§5 identifies mismatch as reason for errors.",
+      "edge_rationale": "Poor objective choice degrades quality."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal translation quality and scalability in neural machine translation production",
+      "target_node": "Out-of-vocabulary word handling deficiencies in NMT",
+      "description": "OOV errors lower adequacy, reinforcing translation quality risk.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Rare-word issue emphasised in Introduction.",
+      "edge_rationale": "Direct causal link."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal translation quality and scalability in neural machine translation production",
+      "target_node": "Length bias in beam search decoding",
+      "description": "Under-translation leads to missing content, worsening output quality.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "§7 states default beam search omits parts of sentence.",
+      "edge_rationale": "Problem contributes to overall risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal translation quality and scalability in neural machine translation production",
+      "target_node": "Gradient vanishing in deep stacked LSTMs",
+      "description": "Training difficulties limit model expressiveness and hence quality.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "§3.1 discusses training issues beyond 4 layers.",
+      "edge_rationale": "Technical training problem impacts risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High computational cost during inference in NMT deployment",
+      "target_node": "Quantization preserving accuracy while reducing computation in NMT",
+      "description": "Low-precision arithmetic offers path to faster inference.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§6 provides empirical evidence.",
+      "edge_rationale": "Theoretical insight addresses cost problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Objective-function misalignment with BLEU metric in NMT training",
+      "target_node": "Sentence-level expected reward optimisation aligns training with BLEU",
+      "description": "Optimising expected BLEU directly tackles mismatch.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§5 explains reasoning.",
+      "edge_rationale": "Theoretical solution for mismatch."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Out-of-vocabulary word handling deficiencies in NMT",
+      "target_node": "Subword wordpiece modelling for open-vocabulary translation",
+      "description": "Using subword units eliminates unknown token problem.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Strong empirical and conceptual support §4.",
+      "edge_rationale": "Subword theory directly solves OOV issue."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Length bias in beam search decoding",
+      "target_node": "Length-normalised coverage-aware beam search improves adequacy",
+      "description": "Penalties counteract short sequence preference.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§7 shows BLEU gains.",
+      "edge_rationale": "Theory addresses decoding bias."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Gradient vanishing in deep stacked LSTMs",
+      "target_node": "Residual connections to improve gradient flow in deep NMT stacks",
+      "description": "Residual connections improve gradient propagation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§3.1 empirical observations.",
+      "edge_rationale": "Theoretical insight addresses training difficulty."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Quantization preserving accuracy while reducing computation in NMT",
+      "target_node": "Constrain accumulators and logits to enable post-training 8/16-bit quantisation",
+      "description": "Design adds necessary constraints to realise quantisation idea.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Detailed design in §6.",
+      "edge_rationale": "Design operationalises insight."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Sentence-level expected reward optimisation aligns training with BLEU",
+      "target_node": "Combine ML pre-training with small-weight RL fine-tuning",
+      "description": "Two-stage schedule is practical embodiment of reward optimisation insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "§5 describes schedule.",
+      "edge_rationale": "Design realises insight."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Subword wordpiece modelling for open-vocabulary translation",
+      "target_node": "Shared 32k wordpiece vocabulary for source and target",
+      "description": "Shared vocab implements subword idea efficiently.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§4.1 emphasises shared vocab importance.",
+      "edge_rationale": "Design step resulting from insight."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Length-normalised coverage-aware beam search improves adequacy",
+      "target_node": "Beam-search scoring with α=0.2 length penalty and β=0.2 coverage penalty",
+      "description": "Specific parameterisation realises theoretical concept.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Parameters tuned in §7 Table 2.",
+      "edge_rationale": "Concrete design choice."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Residual connections to improve gradient flow in deep NMT stacks",
+      "target_node": "Element-wise residual addition between stacked LSTM layers",
+      "description": "Addition operation is concrete realisation of residual idea.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation 6 gives formula.",
+      "edge_rationale": "Implementation follows design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Constrain accumulators and logits to enable post-training 8/16-bit quantisation",
+      "target_node": "Integer-quantised GNMT inference on TPUs with 8-bit weights and 16-bit accumulators",
+      "description": "Quantised inference mechanism embodies the constrained design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation section §6.",
+      "edge_rationale": "Mechanism executes design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Combine ML pre-training with small-weight RL fine-tuning",
+      "target_node": "Expected reward objective with GLEU and α=0.017 weight",
+      "description": "Objective function and sampling procedure implement mixed ML+RL design.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Equation (9) details.",
+      "edge_rationale": "Mechanism instantiates design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Shared 32k wordpiece vocabulary for source and target",
+      "target_node": "Greedy likelihood-maximising wordpiece model training",
+      "description": "Training algorithm produces the shared vocabulary.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§4.1 algorithm description.",
+      "edge_rationale": "Implementation of design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Beam-search scoring with α=0.2 length penalty and β=0.2 coverage penalty",
+      "target_node": "Beam search decoder with pruning, batch decoding and lp/cp scoring",
+      "description": "Production decoder realises scoring and search strategy.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "§7 implementation details.",
+      "edge_rationale": "Mechanism carries out design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Element-wise residual addition between stacked LSTM layers",
+      "target_node": "Deep residual LSTM enables 8-layer GNMT reaching 38.95 BLEU",
+      "description": "Validation demonstrates that mechanism achieves intended effect.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical results in §8.",
+      "edge_rationale": "Evidence validates mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Integer-quantised GNMT inference on TPUs with 8-bit weights and 16-bit accumulators",
+      "target_node": "BLEU unchanged and 3.4× speedup on TPU with quantised model",
+      "description": "Benchmark confirms speed and quality retained.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1 provides quantitative data.",
+      "edge_rationale": "Evidence supports mechanism efficacy."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Expected reward objective with GLEU and α=0.017 weight",
+      "target_node": "BLEU improvement of ~1 on WMT En→Fr after RL refinement",
+      "description": "Experimental results show metric gains.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 6.",
+      "edge_rationale": "Evidence supports mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Greedy likelihood-maximising wordpiece model training",
+      "target_node": "WPM-32K model achieves highest BLEU and good speed",
+      "description": "Test scores confirm benefit.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 4.",
+      "edge_rationale": "Validation evidence."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Beam search decoder with pruning, batch decoding and lp/cp scoring",
+      "target_node": "Length/coverage penalties give +1.1 BLEU on dev set",
+      "description": "Dev-set results validate decoder change.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 2.",
+      "edge_rationale": "Evidence confirms mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "BLEU unchanged and 3.4× speedup on TPU with quantised model",
+      "target_node": "Deploy quantised GNMT models on TPUs with 8-bit weights",
+      "description": "Positive evidence motivates operational deployment.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Production deployment described in §6.",
+      "edge_rationale": "Validation drives intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "BLEU improvement of ~1 on WMT En→Fr after RL refinement",
+      "target_node": "Fine-tune NMT models with RL using expected GLEU objective",
+      "description": "Observed BLEU gains justify adopting RL fine-tuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical support but modest effect; Table 6.",
+      "edge_rationale": "Evidence encourages intervention adoption."
+    },
+    {
+      "type": "motivates",
+      "source_node": "WPM-32K model achieves highest BLEU and good speed",
+      "target_node": "Use wordpiece segmentation (32k shared vocab) during NMT training and inference",
+      "description": "Superior BLEU and speed motivate subword adoption.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Strong, repeated empirical wins.",
+      "edge_rationale": "Evidence leads to intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Length/coverage penalties give +1.1 BLEU on dev set",
+      "target_node": "Apply length-normalised, coverage-penalised beam search decoding",
+      "description": "Improved metrics justify using penalties in production.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantified benefit §7.",
+      "edge_rationale": "Evidence underpins intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Deep residual LSTM enables 8-layer GNMT reaching 38.95 BLEU",
+      "target_node": "Incorporate residual connections in deep stacked LSTM encoder-decoder architecture",
+      "description": "Demonstrated accuracy benefit motivates architectural choice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Comparison with baselines in §8.",
+      "edge_rationale": "Evidence supports intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2016-09-26T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Google's Neural Machine Translation System: Bridging the Gap between Human and Machine Translation"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Yonghui Wu",
+        "Mike Schuster",
+        "Zhifeng Chen",
+        "Quoc V. Le",
+        "Mohammad Norouzi",
+        "Wolfgang Macherey",
+        "Maxim Krikun",
+        "Yuan Cao",
+        "Qin Gao",
+        "Klaus Macherey",
+        "Jeff Klingner",
+        "Apurva Shah",
+        "Melvin Johnson",
+        "Xiaobing Liu",
+        "Łukasz Kaiser",
+        "Stephan Gouws",
+        "Yoshikiyo Kato",
+        "Taku Kudo",
+        "Hideto Kazawa",
+        "Keith Stevens",
+        "George Kurian",
+        "Nishant Patil",
+        "Wei Wang",
+        "Cliff Young",
+        "Jason Smith",
+        "Jason Riesa",
+        "Alex Rudnick",
+        "Oriol Vinyals",
+        "Greg Corrado",
+        "Macduff Hughes",
+        "Jeffrey Dean"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1609.08144"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

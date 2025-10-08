@@ -1,0 +1,353 @@
+{
+  "nodes": [
+    {
+      "name": "Inefficient learning convergence in deep RL for complex planning tasks",
+      "aliases": [
+        "slow convergence of deep reinforcement learning",
+        "poor RL performance on complex board games"
+      ],
+      "type": "concept",
+      "description": "Deep reinforcement-learning algorithms such as vanilla policy gradients and DQN often require huge samples and still plateau at sub-optimal policies on domains that demand look-ahead planning (e.g., Hex, Go).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Section 1 as the motivation for proposing a new algorithm that learns faster than standard RL."
+    },
+    {
+      "name": "Absence of iterative synergy between planning search and policy generalization in RL agents",
+      "aliases": [
+        "lack of planning-intuition interplay",
+        "single-pass policy optimisation without search"
+      ],
+      "type": "concept",
+      "description": "Current deep RL methods either rely on reactive network inference (System 1 analog) or expensive search, but do not integrate them iteratively; this gap slows learning.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Introduction (§1) where authors note neural networks act without look-ahead unlike humans who combine intuition and analysis."
+    },
+    {
+      "name": "Bootstrapped interplay of neural intuition and tree search planning accelerates learning",
+      "aliases": [
+        "dual-process synergy hypothesis",
+        "iterative intuition-search bootstrapping"
+      ],
+      "type": "concept",
+      "description": "Dual-process theory suggests that fast heuristics can guide slow search, while search discovers improvements that refine the heuristics, forming a positive feedback loop.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections 1 & 3 propose this hypothesis as the core reason Expert Iteration should work."
+    },
+    {
+      "name": "Expert Iteration separates planning and generalization with iterative improvement",
+      "aliases": [
+        "ExIt algorithm rationale",
+        "system2-system1 bootstrapping approach"
+      ],
+      "type": "concept",
+      "description": "The algorithm alternates (i) a search ‘expert’ that plans from specific positions and (ii) an imitation-learned ‘apprentice’ network that generalises across the state space, iteratively raising performance.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Section 3 as the chief design principle derived from the theoretical insight."
+    },
+    {
+      "name": "Neural-MCTS tree search guided by Tree Policy Target-trained network",
+      "aliases": [
+        "NN-assisted UCT with advantage prior",
+        "neural-guided tree search expert"
+      ],
+      "type": "concept",
+      "description": "During search, a neural policy trained with Tree Policy Targets supplies an advantage prior that is added to UCT statistics, dramatically focussing simulations (parameter w_a≈100).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5 describes how the apprentice network is embedded into MCTS to implement Expert Improvement."
+    },
+    {
+      "name": "Tree Policy Target cost-sensitive supervised loss for apprentice policy training",
+      "aliases": [
+        "TPT training objective",
+        "action-visit-count loss"
+      ],
+      "type": "concept",
+      "description": "Instead of imitating only the single chosen move, the network predicts the full distribution of MCTS visit counts, making the learning signal cost-sensitive to critical actions.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.2 introduces TPT and argues its advantages over chosen-action targets."
+    },
+    {
+      "name": "Online dataset aggregation across iterations in Expert Iteration",
+      "aliases": [
+        "DAgger-style dataset accumulation",
+        "online ExIt data reuse"
+      ],
+      "type": "concept",
+      "description": "Aggregating all past expert-move datasets lets later iterations request far fewer new expert calls, speeding learning and allowing more frequent updates.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3.3 presents online ExIt as a remedy for the cost of regenerating data from scratch."
+    },
+    {
+      "name": "600 Elo gain and 97% win rate of Expert Iteration over baseline MCTS in 9x9 Hex",
+      "aliases": [
+        "Neural-MCTS performance improvement",
+        "ExIt vs MCTS result"
+      ],
+      "type": "concept",
+      "description": "With 10 k simulations per move, Neural-MCTS using the trained apprentice wins 97 % of games versus plain MCTS, corresponding to ≈600 Elo improvement.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in Section 5 (Expert Improvement results)."
+    },
+    {
+      "name": "93% win rate of Tree Policy Target network over chosen-action target network",
+      "aliases": [
+        "TPT vs CAT performance",
+        "cost-sensitive target validation"
+      ],
+      "type": "concept",
+      "description": "Although top-k move prediction accuracy is similar, the TPT-trained network beats the CAT-trained network in 93 % of head-to-head games, proving effectiveness of cost-sensitive targets.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.3 presents this quantitative comparison."
+    },
+    {
+      "name": "84.4% win rate of Online Expert Iteration over strongest policy gradient network",
+      "aliases": [
+        "online ExIt vs REINFORCE result",
+        "dataset aggregation validation"
+      ],
+      "type": "concept",
+      "description": "Across matched openings, online ExIt wins 84.4 % of games against the best network obtained through REINFORCE fine-tuning, showing superior learning efficiency.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.3 provides these benchmark results."
+    },
+    {
+      "name": "Fine-tune RL agents with Expert Iteration using Neural-MCTS and Tree Policy Targets",
+      "aliases": [
+        "apply ExIt for RL training",
+        "Neural-MCTS ExIt fine-tuning"
+      ],
+      "type": "intervention",
+      "description": "During the fine-tuning/RL phase, alternate (i) Neural-MCTS planning biased by a TPT-trained network and (ii) supervised imitation updates, gradually bootstrapping stronger policies.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applies during active RL optimisation as described in Sections 3–6 (training iterations).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated experimentally on Hex; proof-of-concept but not yet widely deployed beyond research domain.",
+      "node_rationale": "Primary actionable recommendation implicit throughout paper; integrates all implementation mechanisms."
+    },
+    {
+      "name": "Train apprentice policies with Tree Policy Target cost-sensitive loss during imitation learning",
+      "aliases": [
+        "use TPT loss",
+        "cost-sensitive imitation training"
+      ],
+      "type": "intervention",
+      "description": "Replace single-move cross-entropy with a cross-entropy to the MCTS visit-count distribution when training the neural apprentice, yielding cost-sensitive gradients.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Part of the RL fine-tuning phase where the apprentice is updated (Section 4.2).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated on a single domain with no large-scale deployment yet.",
+      "node_rationale": "Directly derived from 4.2/4.3 results and can be applied independently."
+    },
+    {
+      "name": "Implement online dataset aggregation in Expert Iteration to reuse expert data and reduce computational cost",
+      "aliases": [
+        "online ExIt with DAgger-style data",
+        "dataset aggregation in ExIt"
+      ],
+      "type": "intervention",
+      "description": "Maintain a growing replay buffer of all past expert-labelled positions and train the apprentice on the union each iteration, cutting required new expert searches.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Executed repeatedly during RL iterations (Section 3.3, online mode).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evaluated in research prototype; operational feasibility in broader settings untested.",
+      "node_rationale": "Shown in Section 6 to improve sample efficiency and performance."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Inefficient learning convergence in deep RL for complex planning tasks",
+      "target_node": "Absence of iterative synergy between planning search and policy generalization in RL agents",
+      "description": "When neural policies act without search assistance, they lack the look-ahead needed for difficult planning domains, leading to slow or stalled learning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly argued in Introduction that standard policy-gradient and DQN approaches fall short due to this gap.",
+      "edge_rationale": "Section 1 describes how missing System 2 capabilities hinder RL efficiency."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Absence of iterative synergy between planning search and policy generalization in RL agents",
+      "target_node": "Bootstrapped interplay of neural intuition and tree search planning accelerates learning",
+      "description": "Introducing a feedback loop between search and neural intuition directly addresses the lack of synergy.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Reasoning presented conceptually without quantitative proof.",
+      "edge_rationale": "Section 1 links dual-process theory to the proposed remedy."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Bootstrapped interplay of neural intuition and tree search planning accelerates learning",
+      "target_node": "Expert Iteration separates planning and generalization with iterative improvement",
+      "description": "Expert Iteration operationalises the theoretical synergy by alternating planning and learning phases.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Algorithm design in Section 3 directly follows from the insight.",
+      "edge_rationale": "Section 3 lays out ExIt as implementation of the dual-process idea."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Expert Iteration separates planning and generalization with iterative improvement",
+      "target_node": "Neural-MCTS tree search guided by Tree Policy Target-trained network",
+      "description": "Neural-MCTS is the concrete expert module used within ExIt to perform planning improvements.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed algorithmic equations and experimental use in Section 5.",
+      "edge_rationale": "Section 5 defines Neural-MCTS as the expert in the ExIt loop."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Expert Iteration separates planning and generalization with iterative improvement",
+      "target_node": "Tree Policy Target cost-sensitive supervised loss for apprentice policy training",
+      "description": "TPT provides the apprenticeship training protocol within ExIt.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4.2 specifies TPT as the chosen learning target for the apprentice.",
+      "edge_rationale": "Implementation detail needed for ExIt’s Imitation Learning step."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Expert Iteration separates planning and generalization with iterative improvement",
+      "target_node": "Online dataset aggregation across iterations in Expert Iteration",
+      "description": "Online ExIt variant aggregates data to accelerate the iteration cycle.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 3.3 identifies dataset aggregation as an optional but recommended mode.",
+      "edge_rationale": "Forms part of the algorithmic blueprint of ExIt."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Neural-MCTS tree search guided by Tree Policy Target-trained network",
+      "target_node": "600 Elo gain and 97% win rate of Expert Iteration over baseline MCTS in 9x9 Hex",
+      "description": "Performance metrics directly quantify the benefit of Neural-MCTS.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical result with large number of evaluation games (Section 5).",
+      "edge_rationale": "Shows the mechanism delivers the expected improvement."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Tree Policy Target cost-sensitive supervised loss for apprentice policy training",
+      "target_node": "93% win rate of Tree Policy Target network over chosen-action target network",
+      "description": "Head-to-head games demonstrate TPT’s superiority over CAT.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative experiment in Section 4.3.",
+      "edge_rationale": "Confirms cost-sensitive targets improve apprentice quality."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Online dataset aggregation across iterations in Expert Iteration",
+      "target_node": "84.4% win rate of Online Expert Iteration over strongest policy gradient network",
+      "description": "Benchmark comparison indicates dataset aggregation yields higher win rates than policy gradients.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Reported in Section 6.3 with extensive match data.",
+      "edge_rationale": "Supports the efficacy of online ExIt."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Neural-MCTS tree search guided by Tree Policy Target-trained network",
+      "target_node": "Tree Policy Target cost-sensitive supervised loss for apprentice policy training",
+      "description": "Neural-MCTS depends on having a TPT-trained network to supply advantage priors.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 5 notes Neural-MCTS uses the apprentice trained with TPT.",
+      "edge_rationale": "Shows internal dependency between ExIt components."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Tree Policy Target cost-sensitive supervised loss for apprentice policy training",
+      "target_node": "Online dataset aggregation across iterations in Expert Iteration",
+      "description": "Aggregated datasets provide diverse positions that improve TPT training quality in later iterations.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 3.3 argues that aggregation lets the apprentice generalise sooner.",
+      "edge_rationale": "Illustrates how mechanisms reinforce each other."
+    },
+    {
+      "type": "motivates",
+      "source_node": "600 Elo gain and 97% win rate of Expert Iteration over baseline MCTS in 9x9 Hex",
+      "target_node": "Fine-tune RL agents with Expert Iteration using Neural-MCTS and Tree Policy Targets",
+      "description": "Strong empirical gains encourage adoption of full ExIt training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Evidence is directly tied to the proposed intervention.",
+      "edge_rationale": "Performance benefit is primary justification for the intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "93% win rate of Tree Policy Target network over chosen-action target network",
+      "target_node": "Train apprentice policies with Tree Policy Target cost-sensitive loss during imitation learning",
+      "description": "Experimental superiority of TPT motivates its use in imitation learning pipelines.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Statistically significant win-rate difference reported.",
+      "edge_rationale": "Validates the specific training choice."
+    },
+    {
+      "type": "motivates",
+      "source_node": "84.4% win rate of Online Expert Iteration over strongest policy gradient network",
+      "target_node": "Implement online dataset aggregation in Expert Iteration to reuse expert data and reduce computational cost",
+      "description": "Higher win rate and efficiency make online dataset aggregation a compelling addition.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Demonstrated improvement over established baseline.",
+      "edge_rationale": "Provides evidence for real-world benefit of the intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1705.08439"
+    },
+    {
+      "key": "title",
+      "value": "Thinking Fast and Slow with Deep Learning and Tree Search"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Thomas Anthony",
+        "Zheng Tian",
+        "David Barber"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2017-05-23T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

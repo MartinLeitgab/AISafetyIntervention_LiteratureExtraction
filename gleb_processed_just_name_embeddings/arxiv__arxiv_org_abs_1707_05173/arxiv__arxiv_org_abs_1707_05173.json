@@ -1,0 +1,705 @@
+{
+  "nodes": [
+    {
+      "name": "Catastrophic actions during RL training in real-world environments",
+      "aliases": [
+        "training catastrophes",
+        "unsafe RL actions"
+      ],
+      "type": "concept",
+      "description": "RL agents can cause irreversible harm to humans, property or environment while exploring before they learn safe behaviour.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in 1.1 Motivation as the top-level danger HIRL seeks to avoid."
+    },
+    {
+      "name": "Trial-and-error learning requirement in model-free RL",
+      "aliases": [
+        "exploration by error",
+        "model-free RL trial-and-error"
+      ],
+      "type": "concept",
+      "description": "Model-free reinforcement learners only learn that an action is bad after performing it and receiving negative reward, inherently risking catastrophes.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.1 explains why pure RL cannot guarantee zero catastrophes."
+    },
+    {
+      "name": "Catastrophic forgetting in deep RL policies",
+      "aliases": [
+        "forgetting negative outcomes",
+        "instability of value estimates"
+      ],
+      "type": "concept",
+      "description": "Deep RL agents may relearn or forget the cost of catastrophes, causing them to repeat unsafe actions even after initial avoidance.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Demonstrated in 3.3.2 where Pong agents resumed unsafe moves."
+    },
+    {
+      "name": "Adversarial distribution shift for blocker classifiers",
+      "aliases": [
+        "adversarial examples for Blocker",
+        "shifted state-action distribution"
+      ],
+      "type": "concept",
+      "description": "As the RL agent learns, it may enter novel states that the Blocker has not seen, creating adversarial examples that bypass safety checks.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3.4 details a failure case where the agent found a new score exploit."
+    },
+    {
+      "name": "High human oversight time-cost in HIRL",
+      "aliases": [
+        "human labour bottleneck",
+        "oversight scalability problem"
+      ],
+      "type": "concept",
+      "description": "Training a reliable Blocker may require many labelled catastrophes, so humans must watch millions of frames, which is often infeasible.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantified in 4.1 Extrapolating the Human Time-Cost."
+    },
+    {
+      "name": "Scaling infeasibility of human oversight in safe RL",
+      "aliases": [
+        "oversight scalability risk",
+        "unsustainable human supervision"
+      ],
+      "type": "concept",
+      "description": "If human time requirements grow faster than task complexity, safe RL may become impractical in real-world deployments.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Raised in 1.2 Contributions and elaborated in Section 4."
+    },
+    {
+      "name": "Human oversight can prevent catastrophes by blocking unsafe actions in RL",
+      "aliases": [
+        "human intervention safeguard",
+        "online blocking by supervisors"
+      ],
+      "type": "concept",
+      "description": "Real-time human monitoring allows replacing an impending unsafe action with a safe one and penalising the agent, guaranteeing zero accidents during learning.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Foundational claim motivating HIRL in 2.1 Motivation."
+    },
+    {
+      "name": "Supervised blockers can imitate human intervention with sufficient labeled catastrophes",
+      "aliases": [
+        "blocker imitation",
+        "classifier mimicking oversight"
+      ],
+      "type": "concept",
+      "description": "A classifier trained on human-labelled state-action pairs can autonomously block catastrophes, reducing long-term human load.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in 2.2 Formal Specification of HIRL."
+    },
+    {
+      "name": "Reducing ratio of safe to catastrophic observations lowers human labeling time",
+      "aliases": [
+        "lower ρ for efficiency",
+        "seek catastrophes to cut labels"
+      ],
+      "type": "concept",
+      "description": "Because oversight cost scales with ρ = #observations / #catastrophes, engineering agents or curricula that encounter catastrophes early cuts total labeling effort.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived mathematically in 4.1 (Formula 2)."
+    },
+    {
+      "name": "Model-based world models can predict catastrophic outcomes without unsafe actions",
+      "aliases": [
+        "model-based catastrophe prediction",
+        "planning to avoid harm"
+      ],
+      "type": "concept",
+      "description": "Agents that learn transition dynamics may infer which actions lead to catastrophic states and avoid them without executing the actions in reality.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Proposed in Section 5 Discussion as a route to zero-trial learning."
+    },
+    {
+      "name": "HIRL scheme integrating human blocking and blocker training for safe exploration",
+      "aliases": [
+        "human-in-the-loop RL",
+        "HIRL method"
+      ],
+      "type": "concept",
+      "description": "A training protocol where humans first oversee and label catastrophes, then a trained Blocker takes over so the agent can continue learning safely.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 2.2 and Figure 1."
+    },
+    {
+      "name": "Blocker modularity enables reuse across different agents",
+      "aliases": [
+        "cross-agent blocker",
+        "architecture-agnostic safety harness"
+      ],
+      "type": "concept",
+      "description": "Because blocking is formulated as a supervised task on state-action pairs, a trained Blocker can protect new agents without further human labeling.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.2 and experiments in 3.3.1 emphasise reuse."
+    },
+    {
+      "name": "Selective human querying via active learning to reduce oversight burden",
+      "aliases": [
+        "active learning oversight",
+        "on-demand supervision"
+      ],
+      "type": "concept",
+      "description": "An agent or Blocker only asks for human input when nearing novel or dangerous states, allowing supervisors to focus on critical moments.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Proposed in Discussion Section 5 under ‘Selectively query the human’."
+    },
+    {
+      "name": "CNN-based blocker classifier with threshold tuning to detect catastrophic actions",
+      "aliases": [
+        "blocker CNN",
+        "safety classifier"
+      ],
+      "type": "concept",
+      "description": "A convolutional network trained on raw frames predicts whether a proposed action is catastrophic; a low threshold minimises false negatives.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation specifics in 3.1 and Appendix 6.1.2."
+    },
+    {
+      "name": "Action replacement or pruning to enforce safe actions during blocking",
+      "aliases": [
+        "fixed action substitution",
+        "action pruning safety"
+      ],
+      "type": "concept",
+      "description": "When an unsafe action is blocked, either substitute a predefined safe action or ask the agent to choose again from pruned options.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Mechanism described in Appendix 6.2."
+    },
+    {
+      "name": "Time-cost formula C = t_human × ρ × N_cat estimating oversight effort",
+      "aliases": [
+        "oversight cost equation",
+        "labeling time model"
+      ],
+      "type": "concept",
+      "description": "Analytical model relating human label time, observation ratio and number of catastrophes to total supervision cost.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formulated in Section 4.1."
+    },
+    {
+      "name": "Zero catastrophes in Pong and Space Invaders experiments",
+      "aliases": [
+        "HIRL success cases",
+        "Pong/SpaceInvaders results"
+      ],
+      "type": "concept",
+      "description": "HIRL achieved perfect safety while agents reached competitive performance in two Atari games.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical results plotted in Figure 4 (3.2 Summary)."
+    },
+    {
+      "name": "50× reduction of catastrophes in Road Runner with improved blocker",
+      "aliases": [
+        "partial success Road Runner",
+        "death rate 0.005→0.0001"
+      ],
+      "type": "concept",
+      "description": "Revised Blocker cut deaths per frame from 0.005 to 0.0001, showing progress but highlighting adversarial limitations.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in 3.4.2 and Figure 5."
+    },
+    {
+      "name": "Baseline reward shaping fails due to catastrophic forgetting",
+      "aliases": [
+        "reward-shaping baseline failure",
+        "RL-only unsafe"
+      ],
+      "type": "concept",
+      "description": "Agents given huge negative rewards for catastrophes still continued unsafe behaviour, illustrating limits of pure RL safety.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Shown in Figure 4 and analysed in 3.3.2."
+    },
+    {
+      "name": "Blocker successfully transfers to varied agents without failures",
+      "aliases": [
+        "cross-agent blocker success",
+        "transfer robustness evidence"
+      ],
+      "type": "concept",
+      "description": "A Blocker trained on A3C protected Double DQN and adversarially inclined agents with zero catastrophes.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Evidence in 3.3.1."
+    },
+    {
+      "name": "Human time-cost estimation shows 4 h for Pong and >1 year hypothetical",
+      "aliases": [
+        "time-cost evidence",
+        "oversight labour numbers"
+      ],
+      "type": "concept",
+      "description": "Quantitative examples demonstrate both current feasibility (Pong) and future infeasibility (Montezuma’s Revenge).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Calculated in 4.1.1 Time-Cost examples."
+    },
+    {
+      "name": "Discussion support for model-based RL for safe learning",
+      "aliases": [
+        "model-based safety argument",
+        "world-model discussion"
+      ],
+      "type": "concept",
+      "description": "Authors argue qualitatively that model-based agents could avoid catastrophic trial actions by internal simulation.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5 Discussion."
+    },
+    {
+      "name": "Implement HIRL with human oversight and CNN blocker during RL training",
+      "aliases": [
+        "apply HIRL",
+        "deploy human-in-the-loop RL"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning/RL, insert a human blocking phase, collect labelled catastrophes, train a CNN Blocker and hand over control to it for the remainder of training.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Occurs during active RL training phase (Section 2.2 Formal Specification).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated on Atari games but not yet validated in real-world domains (Sections 3.2–3.4).",
+      "node_rationale": "Central safety intervention evaluated in the paper."
+    },
+    {
+      "name": "Research and apply data-efficient blocker learning methods",
+      "aliases": [
+        "data-efficient Blocker",
+        "few-shot safety classifier"
+      ],
+      "type": "intervention",
+      "description": "Develop architectures, loss functions or richer labels that achieve near-zero false negatives with far fewer human-labelled catastrophes.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Improves the Blocker component within RL training (Section 5 bullets).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Proposed future work without empirical validation (Section 5).",
+      "node_rationale": "Addresses oversight labour bottleneck."
+    },
+    {
+      "name": "Design RL algorithms with higher data efficiency to shorten oversight phase",
+      "aliases": [
+        "sample-efficient RL for safety",
+        "better exploration algorithms"
+      ],
+      "type": "intervention",
+      "description": "Create or adopt RL methods that reach competent behaviour with orders-of-magnitude fewer environment steps, so supervisors need label for a shorter period.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Involves changing model design and algorithm choice (Section 5).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Idea stage; no experimental results in this paper.",
+      "node_rationale": "Mitigates human time-cost risk by reducing total frames overseen."
+    },
+    {
+      "name": "Incorporate exploration strategies that proactively seek catastrophes early",
+      "aliases": [
+        "seek catastrophes early",
+        "aggressive exploration for safety"
+      ],
+      "type": "intervention",
+      "description": "During pre-training or early training, bias exploration to quickly visit potential catastrophe states, producing many labelled positives with minimal safe frames.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Implemented while collecting initial data before main training (Discussion Section 5).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Only suggested conceptually; requires future empirical work.",
+      "node_rationale": "Operationalises theoretical reduction of ρ."
+    },
+    {
+      "name": "Use active learning/anomaly detection to query human only near novel dangerous states",
+      "aliases": [
+        "selective querying",
+        "on-demand human oversight"
+      ],
+      "type": "intervention",
+      "description": "Employ active learning or novelty detection to pause training and ask for human labels only when an action falls outside the Blocker’s trusted region.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Modifies oversight during RL training (Section 5 Selectively query…).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Speculative; not yet tested in this work.",
+      "node_rationale": "Targets oversight scalability by dropping redundant labels."
+    },
+    {
+      "name": "Develop model-based RL agents to predict and avoid catastrophes without executing unsafe actions",
+      "aliases": [
+        "model-based safe RL",
+        "world-model planning for safety"
+      ],
+      "type": "intervention",
+      "description": "Integrate learned environment models and planning so the agent foresees catastrophic outcomes and avoids them, eliminating the need for human blocking of novel catastrophes.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Requires algorithm redesign before training (Section 5 Model-based RL).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Only argued conceptually; no empirical support in this paper.",
+      "node_rationale": "Directly tackles risk from trial-and-error requirement."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Catastrophic actions during RL training in real-world environments",
+      "target_node": "Trial-and-error learning requirement in model-free RL",
+      "description": "Unsafe exploration arises because model-free RL must try actions before learning they are catastrophic.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit reasoning in Section 2.1.",
+      "edge_rationale": "Links fundamental learning mechanism to observed risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Catastrophic actions during RL training in real-world environments",
+      "target_node": "Catastrophic forgetting in deep RL policies",
+      "description": "Even after initial avoidance, forgetting value estimates re-introduces catastrophic actions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical evidence Table 1 (3.3.2).",
+      "edge_rationale": "Shows ongoing mechanism of risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Catastrophic actions during RL training in real-world environments",
+      "target_node": "Adversarial distribution shift for blocker classifiers",
+      "description": "If the Blocker is circumvented by unseen states, catastrophes re-emerge.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Observed qualitatively in 3.4.",
+      "edge_rationale": "Mechanistic contributor to residual risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Scaling infeasibility of human oversight in safe RL",
+      "target_node": "High human oversight time-cost in HIRL",
+      "description": "Excessive labeling hours make human-in-the-loop approaches impractical at scale.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantified in Section 4.1.",
+      "edge_rationale": "Time-cost identified as root cause."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Trial-and-error learning requirement in model-free RL",
+      "target_node": "Human oversight can prevent catastrophes by blocking unsafe actions in RL",
+      "description": "Real-time human blocking breaks the need to learn by dangerous trial.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Stated in 2.1 and tested experimentally.",
+      "edge_rationale": "Shows conceptual fix."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Catastrophic forgetting in deep RL policies",
+      "target_node": "Human oversight can prevent catastrophes by blocking unsafe actions in RL",
+      "description": "Continuous blocking stops forgotten catastrophes from being executed.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Argument in 3.3.2.",
+      "edge_rationale": "Connects oversight to forgetting issue."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Adversarial distribution shift for blocker classifiers",
+      "target_node": "Supervised blockers can imitate human intervention with sufficient labeled catastrophes",
+      "description": "Improved, well-trained Blockers aim to handle shifting distributions.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Partial success reported; inference used.",
+      "edge_rationale": "Classifier quality counters shift."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High human oversight time-cost in HIRL",
+      "target_node": "Reducing ratio of safe to catastrophic observations lowers human labeling time",
+      "description": "Fewer overall frames per catastrophe directly lowers human hours.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Derived formula in 4.1.",
+      "edge_rationale": "Mathematical relation supports mitigation."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Human oversight can prevent catastrophes by blocking unsafe actions in RL",
+      "target_node": "HIRL scheme integrating human blocking and blocker training for safe exploration",
+      "description": "HIRL operationalises human blocking into a repeatable protocol.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Scheme directly built on oversight insight (2.2).",
+      "edge_rationale": "Design flows from theory."
+    },
+    {
+      "type": "required_by",
+      "source_node": "Supervised blockers can imitate human intervention with sufficient labeled catastrophes",
+      "target_node": "HIRL scheme integrating human blocking and blocker training for safe exploration",
+      "description": "HIRL depends on a Blocker taking over from humans.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit in Figure 1.",
+      "edge_rationale": "Necessity relationship."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "HIRL scheme integrating human blocking and blocker training for safe exploration",
+      "target_node": "CNN-based blocker classifier with threshold tuning to detect catastrophic actions",
+      "description": "CNN Blocker realises the automated oversight component of HIRL.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation details in 3.1.",
+      "edge_rationale": "Mechanistic instantiation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "HIRL scheme integrating human blocking and blocker training for safe exploration",
+      "target_node": "Action replacement or pruning to enforce safe actions during blocking",
+      "description": "Specific method for substituting or pruning unsafe actions within HIRL.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Described in Appendix 6.2.",
+      "edge_rationale": "Concrete mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "CNN-based blocker classifier with threshold tuning to detect catastrophic actions",
+      "target_node": "Zero catastrophes in Pong and Space Invaders experiments",
+      "description": "Perfect safety in two games confirms Blocker effectiveness.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical data in 3.2.",
+      "edge_rationale": "Experimental validation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "CNN-based blocker classifier with threshold tuning to detect catastrophic actions",
+      "target_node": "50× reduction of catastrophes in Road Runner with improved blocker",
+      "description": "Shows partial success and remaining gaps against adversarial agents.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Quantitative result 3.4.2.",
+      "edge_rationale": "Further evidence."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Blocker modularity enables reuse across different agents",
+      "target_node": "Blocker successfully transfers to varied agents without failures",
+      "description": "Transfer experiments confirm modularity claim.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Results in 3.3.1.",
+      "edge_rationale": "Empirical support."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Human oversight can prevent catastrophes by blocking unsafe actions in RL",
+      "target_node": "Baseline reward shaping fails due to catastrophic forgetting",
+      "description": "Failure of RL-only baseline underscores necessity of human blocking.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Comparative evidence in 3.2.",
+      "edge_rationale": "Negative control evidence."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Selective human querying via active learning to reduce oversight burden",
+      "target_node": "Time-cost formula C = t_human × ρ × N_cat estimating oversight effort",
+      "description": "Formula guides when querying should occur to minimise total cost.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Conceptual linkage, moderate inference.",
+      "edge_rationale": "Quantitative tool for design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Reducing ratio of safe to catastrophic observations lowers human labeling time",
+      "target_node": "Human time-cost estimation shows 4 h for Pong and >1 year hypothetical",
+      "description": "Concrete numbers illustrate impact of different ρ values on labour.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct calculation examples in 4.1.",
+      "edge_rationale": "Numerical evidence."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Model-based world models can predict catastrophic outcomes without unsafe actions",
+      "target_node": "Discussion support for model-based RL for safe learning",
+      "description": "Authors’ qualitative argument supports feasibility of model-based avoidance.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Speculative discussion; no experiments.",
+      "edge_rationale": "Conceptual support."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Zero catastrophes in Pong and Space Invaders experiments",
+      "target_node": "Implement HIRL with human oversight and CNN blocker during RL training",
+      "description": "Demonstrated success encourages wider adoption of HIRL.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear empirical win.",
+      "edge_rationale": "Evidence → intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "50× reduction of catastrophes in Road Runner with improved blocker",
+      "target_node": "Implement HIRL with human oversight and CNN blocker during RL training",
+      "description": "Shows HIRL remains beneficial even in adversarial settings.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Positive but partial result.",
+      "edge_rationale": "Evidence supports intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Blocker successfully transfers to varied agents without failures",
+      "target_node": "Implement HIRL with human oversight and CNN blocker during RL training",
+      "description": "Transferability lowers cost of deploying HIRL across systems.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical evidence.",
+      "edge_rationale": "Scalability encouragement."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Human time-cost estimation shows 4 h for Pong and >1 year hypothetical",
+      "target_node": "Research and apply data-efficient blocker learning methods",
+      "description": "High projected labour cost drives need for data-efficient Blockers.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Quantitative justification.",
+      "edge_rationale": "Problem motivates R&D."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Human time-cost estimation shows 4 h for Pong and >1 year hypothetical",
+      "target_node": "Design RL algorithms with higher data efficiency to shorten oversight phase",
+      "description": "Long oversight phases imply benefit from sample-efficient RL.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical extrapolation in 4.1.",
+      "edge_rationale": "Cost drives algorithm work."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Human time-cost estimation shows 4 h for Pong and >1 year hypothetical",
+      "target_node": "Incorporate exploration strategies that proactively seek catastrophes early",
+      "description": "Lowering ρ by earlier catastrophes directly reduces labeling time.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Based on formula C.",
+      "edge_rationale": "Efficiency motivation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Human time-cost estimation shows 4 h for Pong and >1 year hypothetical",
+      "target_node": "Use active learning/anomaly detection to query human only near novel dangerous states",
+      "description": "Selective querying promises to shrink unnecessary labeling workload.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in Section 5.",
+      "edge_rationale": "Cost evidence drives intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Discussion support for model-based RL for safe learning",
+      "target_node": "Develop model-based RL agents to predict and avoid catastrophes without executing unsafe actions",
+      "description": "Conceptual analysis encourages developing model-based safe RL.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Based on theoretical argument only.",
+      "edge_rationale": "Insight leads to design action."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Trial-and-error learning requirement in model-free RL",
+      "target_node": "Model-based world models can predict catastrophic outcomes without unsafe actions",
+      "description": "Planning with a learned model eliminates need for dangerous exploration.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Speculative link in Discussion.",
+      "edge_rationale": "Alternate theoretical remedy."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1707.05173"
+    },
+    {
+      "key": "title",
+      "value": "Trial without Error: Towards Safe Reinforcement Learning via Human Intervention"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "William Saunders",
+        "Girish Sastry",
+        "Andreas Stuhlmueller",
+        "Owain Evans"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2017-07-17T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

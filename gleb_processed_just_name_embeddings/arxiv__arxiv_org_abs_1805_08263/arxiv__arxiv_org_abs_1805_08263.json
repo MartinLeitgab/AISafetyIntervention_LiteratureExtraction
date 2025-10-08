@@ -1,0 +1,248 @@
+{
+  "nodes": [
+    {
+      "name": "Reduced human situational awareness from irrelevant agent information in partially observed human-robot missions",
+      "aliases": [
+        "human awareness loss due to poor agent reporting",
+        "mission failures from irrelevant autonomous agent information"
+      ],
+      "type": "concept",
+      "description": "When autonomous agents relay information that is untimely or unimportant, humans who cannot directly observe the environment lose situational awareness, risking poor decisions and mission failure.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction: highlights the core safety risk motivating the study."
+    },
+    {
+      "name": "Agent ignorance of human-weighted information preferences in partially observed domains",
+      "aliases": [
+        "lack of agent model of human information importance",
+        "no weighting of environment states in agent reporting"
+      ],
+      "type": "concept",
+      "description": "Agents do not know which entities or states the human values, leading to either information overload or omission of critical details.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Introduction and Section 4 as the central challenge the paper addresses."
+    },
+    {
+      "name": "Weighted entropy reduction as proxy for human information preference in partially observed domains",
+      "aliases": [
+        "weighted information gain model of human preferences",
+        "entropy weighting captures human interest"
+      ],
+      "type": "concept",
+      "description": "The human’s score for a piece of transmitted information can be modelled as an arbitrary function of the weighted information gain in their belief, where weights encode state importance.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formulated in Section 5.1 as the key theoretical contribution enabling preference modelling."
+    },
+    {
+      "name": "Agent objective of maximizing weighted information gain conditioned on task-optimal action planning",
+      "aliases": [
+        "two-tier optimisation of action and information",
+        "sequential decision objective with human score"
+      ],
+      "type": "concept",
+      "description": "The agent first plans actions to maximise environmental reward and, conditioned on that plan, chooses information to maximise cumulative weighted-entropy score from the human.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 formalises this two-level objective and justifies separating action and information planning."
+    },
+    {
+      "name": "Determinize-and-replan algorithm with DAG longest-path for information selection",
+      "aliases": [
+        "Algorithm 1 determinize and replan",
+        "DAG longest path info planning"
+      ],
+      "type": "concept",
+      "description": "A practical method: determinise the POMDP, generate a branch-free action plan, then construct a DAG over belief updates and solve for the longest weighted path to obtain the best information-giving plan.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Algorithm 1, Section 4 as the concrete implementation of the design rationale."
+    },
+    {
+      "name": "Replay-buffer-based online learning of weighted entropy parameters via ϵ-greedy exploration",
+      "aliases": [
+        "Algorithm 2 preference learning",
+        "online learning of w and f with replay buffer"
+      ],
+      "type": "concept",
+      "description": "The agent stores interactions in a replay buffer and performs minibatch gradient descent to learn the human’s weight vector and scoring function, exploring with an ϵ-greedy policy that decays over time.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Presented in Algorithm 2, Section 5.2 as the mechanism for adapting to unknown or time-varying preferences."
+    },
+    {
+      "name": "Empirical performance improvements in 2D mining and 3D fetching tasks under weighted entropy model",
+      "aliases": [
+        "experimental results in mining and fetching",
+        "task scores demonstrating model effectiveness"
+      ],
+      "type": "concept",
+      "description": "Experiments demonstrate higher human scores, reduced unnecessary messaging when f is super-linear, and rapid adaptation to changing preferences, confirming feasibility of the approach.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6 presents quantitative results validating the implementation mechanisms."
+    },
+    {
+      "name": "Implement determinize-and-replan information planning algorithm in autonomous agents prior to deployment",
+      "aliases": [
+        "apply DAG information planning",
+        "deploy Algorithm 1 based info selection"
+      ],
+      "type": "intervention",
+      "description": "Integrate the determinize-and-replan algorithm into the decision stack of autonomous agents so that, during deployment, they optimise transmitted information for weighted entropy reduction without compromising task performance.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Section 4 Practical algorithm is intended for use while the agent operates in the real environment (deployment phase).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated only in simulated mining and fetching prototypes (Section 6), indicating prototype-level maturity.",
+      "node_rationale": "Constitutes a direct, actionable change suggested by the successful experimental evaluation."
+    },
+    {
+      "name": "Deploy online learning of human weighted entropy preferences with replay buffer during mission execution",
+      "aliases": [
+        "use online preference learning during deployment",
+        "apply Algorithm 2 for human preference adaptation"
+      ],
+      "type": "intervention",
+      "description": "Run the replay-buffer online learning procedure concurrently with mission execution so the agent continuously adapts its information strategy to the operator’s evolving preferences.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Algorithm 2 is executed while the agent is operating and receiving human feedback, fitting the deployment lifecycle stage.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Only preliminary experimental evidence (Section 6) supports feasibility; no systematic field validation yet.",
+      "node_rationale": "Provides an adaptive safeguard against preference drift, making it a key intervention derived from the findings."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Reduced human situational awareness from irrelevant agent information in partially observed human-robot missions",
+      "target_node": "Agent ignorance of human-weighted information preferences in partially observed domains",
+      "description": "When the agent lacks a model of what the human cares about, it tends to transmit irrelevant or insufficient information, directly causing the situational-awareness risk.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "The causal link is discussed qualitatively in the Introduction but not formally quantified.",
+      "edge_rationale": "Introduction outlines that preference-blind reporting leads to poor awareness."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Agent ignorance of human-weighted information preferences in partially observed domains",
+      "target_node": "Weighted entropy reduction as proxy for human information preference in partially observed domains",
+      "description": "Modelling human preference as weighted entropy gain directly addresses the ignorance problem by providing a formal preference representation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly stated in Section 5.1 as the proposed remedy but without comparative ablations.",
+      "edge_rationale": "Section 5.1 introduces the model to overcome the identified deficiency."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Weighted entropy reduction as proxy for human information preference in partially observed domains",
+      "target_node": "Agent objective of maximizing weighted information gain conditioned on task-optimal action planning",
+      "description": "The insight is operationalised by embedding the weighted entropy term as a secondary objective in the agent’s decision problem.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Formal derivation in Section 4 establishes the objective from the theoretical model.",
+      "edge_rationale": "Section 4 converts the theory into a concrete optimisation criterion."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Agent objective of maximizing weighted information gain conditioned on task-optimal action planning",
+      "target_node": "Determinize-and-replan algorithm with DAG longest-path for information selection",
+      "description": "The determinize-and-replan algorithm realises the two-tier objective in practice by first fixing an action plan and then computing the best information plan.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 is presented as the main practical realisation.",
+      "edge_rationale": "Implementation mechanism is directly derived from the design rationale."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Agent objective of maximizing weighted information gain conditioned on task-optimal action planning",
+      "target_node": "Replay-buffer-based online learning of weighted entropy parameters via ϵ-greedy exploration",
+      "description": "Online learning augments the objective by enabling the agent to update its parameter estimates so that the information-gain metric aligns with actual human preferences.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 2 explicitly links the objective with an adaptive learning mechanism.",
+      "edge_rationale": "Section 5.2 ties the learning algorithm to the overarching optimisation goal."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Determinize-and-replan algorithm with DAG longest-path for information selection",
+      "target_node": "Empirical performance improvements in 2D mining and 3D fetching tasks under weighted entropy model",
+      "description": "Experimental results demonstrate that the determinize-and-replan algorithm yields higher human scores and appropriate information frequency.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6 includes quantitative tables comparing multiple configurations.",
+      "edge_rationale": "Validation evidence directly evaluates Algorithm 1’s effectiveness."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Replay-buffer-based online learning of weighted entropy parameters via ϵ-greedy exploration",
+      "target_node": "Empirical performance improvements in 2D mining and 3D fetching tasks under weighted entropy model",
+      "description": "Results show rapid adaptation to true and time-varying preferences, confirming the learning mechanism’s value.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Learning curves in Figures 3 & 4 depict faster convergence and adaptability.",
+      "edge_rationale": "Section 6 directly measures the learning algorithm’s performance."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical performance improvements in 2D mining and 3D fetching tasks under weighted entropy model",
+      "target_node": "Implement determinize-and-replan information planning algorithm in autonomous agents prior to deployment",
+      "description": "The positive experimental outcomes motivate incorporating the algorithm into real systems.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Inference from experimental success to deployment suggestion is standard but not explicitly commanded by authors.",
+      "edge_rationale": "Section 6 Discussion mentions practical feasibility, implying deployment potential."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical performance improvements in 2D mining and 3D fetching tasks under weighted entropy model",
+      "target_node": "Deploy online learning of human weighted entropy preferences with replay buffer during mission execution",
+      "description": "Demonstrated rapid convergence and adaptability encourage using the online learning module in live missions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Same rationale as above; deployment is a logical next step suggested but not yet executed.",
+      "edge_rationale": "Section 6 shows learning works in simulation, motivating real-world trials."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Learning What Information to Give in Partially Observed Domains"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.08263"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-21T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Rohan Chitnis",
+        "Leslie Pack Kaelbling",
+        "Tomás Lozano-Pérez"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

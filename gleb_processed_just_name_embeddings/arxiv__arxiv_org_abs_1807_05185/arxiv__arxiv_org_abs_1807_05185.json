@@ -1,0 +1,345 @@
+{
+  "nodes": [
+    {
+      "name": "Proprietary model leakage via explanation APIs in commercial ML services",
+      "aliases": [
+        "model stealing through explanation interfaces",
+        "model reconstruction from explanations"
+      ],
+      "type": "concept",
+      "description": "Commercial ML providers risk losing competitive intellectual property when gradients or saliency maps exposed by explanation APIs allow outsiders to duplicate the underlying model.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in 1 Introduction as the central threat motivating the study."
+    },
+    {
+      "name": "Input gradient exposure through saliency maps in explanation APIs",
+      "aliases": [
+        "gradient-based explanation disclosure",
+        "saliency map gradient release"
+      ],
+      "type": "concept",
+      "description": "Popular explanation methods return ∇xf(x) or close derivatives (e.g. SmoothGrad) for arbitrary inputs, inadvertently giving users direct access to gradient information.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 1 discusses how saliency-map APIs necessarily expose gradients."
+    },
+    {
+      "name": "Gradients reveal sufficient parameter information for two-layer ReLU networks",
+      "aliases": [
+        "input gradient identifiability of parameters",
+        "gradient-informed model reconstruction"
+      ],
+      "type": "concept",
+      "description": "Because ∇xf(x) encodes the active linear region, one gradient query can determine w for linear models and O(h log h) queries identify two-layer ReLU parameters.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 1.1 Our contributions and formalised in Section 2."
+    },
+    {
+      "name": "Gradient queries reduce sample complexity of model reconstruction by factor of input dimension",
+      "aliases": [
+        "query complexity reduction with gradients",
+        "efficient reconstruction using gradients"
+      ],
+      "type": "concept",
+      "description": "Compared with Ω(dh) membership queries, only O(h log h) gradient queries are needed, a ~d-fold improvement.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived in Theorem 1 and surrounding discussion."
+    },
+    {
+      "name": "Limiting fidelity and quantity of gradient information can mitigate model leakage risk",
+      "aliases": [
+        "gradient exposure minimization for privacy",
+        "restricting explanation outputs"
+      ],
+      "type": "concept",
+      "description": "Given the identifiability results, a natural defence is to release less precise or fewer gradients, or to perturb them, to raise reconstruction difficulty.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Conclusion as an open challenge to balance explanation utility with leakage risk."
+    },
+    {
+      "name": "Add differential privacy Gaussian noise to gradients in explanation APIs",
+      "aliases": [
+        "DP-noised gradient explanations",
+        "private gradient release"
+      ],
+      "type": "concept",
+      "description": "Perturb each released gradient with calibrated Gaussian noise (ε,δ-DP) before returning it so that reconstruction accuracy is provably bounded.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Inferred from discussion in Section 6 that DP is a candidate defence against model stealing."
+    },
+    {
+      "name": "Enforce strict query rate limits and gradient precision clipping in explanation APIs",
+      "aliases": [
+        "gradient query rate limiting",
+        "precision truncation of gradients"
+      ],
+      "type": "concept",
+      "description": "Restrict users to a small number of explanation calls and round or clip gradient values, increasing sample complexity for reconstruction attacks.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated by O(h log h) query bound shown in Section 3; fewer/high-noise queries impede attack."
+    },
+    {
+      "name": "Theoretical algorithm reconstructs two-layer ReLU network in O(h log h) gradient queries",
+      "aliases": [
+        "O(h log h) gradient query reconstruction",
+        "theoretical sample complexity result"
+      ],
+      "type": "concept",
+      "description": "Algorithm 1–3 provably recover all parameters up to permutation and sign with high probability using few gradient queries.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formalised in Theorem 2 (Section 3.1) and Theorem 1."
+    },
+    {
+      "name": "Experiments show 100x–1000x fewer queries required to reconstruct models on MNIST and CIFAR10 with gradients",
+      "aliases": [
+        "empirical gradient reconstruction efficiency",
+        "MNIST/CIFAR model stealing results"
+      ],
+      "type": "concept",
+      "description": "Section 5 reports that only 10–100 gradient queries achieve near-original accuracy, versus thousands of label-only queries.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Figure 2 and related text quantify the practical threat."
+    },
+    {
+      "name": "SmoothGrad processed gradients do not reduce reconstruction efficiency",
+      "aliases": [
+        "SmoothGrad failure to protect models",
+        "postprocessed gradients still leak"
+      ],
+      "type": "concept",
+      "description": "Empirical results (Section 5.1) show virtually identical query efficiency when SmoothGrad, a popular saliency smoothing technique, is returned instead of raw gradients.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Demonstrates that naive gradient post-processing is insufficient, strengthening motivation for stronger defences."
+    },
+    {
+      "name": "Inject calibrated differential privacy noise into gradient-based explanations before deployment",
+      "aliases": [
+        "deploy DP noise on gradients",
+        "noise-based explanation privacy"
+      ],
+      "type": "intervention",
+      "description": "At deployment time, add Gaussian or Laplace noise scaled to privacy parameters (ε,δ) to every gradient or saliency map returned by the explanation API.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Applies when the model is served (Deployment phase) – aligns with practical API policy choices (Conclusion).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Defence is suggested but not yet systematically validated in the paper; thus Experimental/Proof-of-Concept.",
+      "node_rationale": "Directly addresses leakage by reducing gradient fidelity."
+    },
+    {
+      "name": "Limit external explanation API to low query rates and truncated gradient precision during deployment",
+      "aliases": [
+        "deploy rate limit on explanation API",
+        "gradient precision restriction"
+      ],
+      "type": "intervention",
+      "description": "Impose per-user rate caps and return gradients with reduced numerical precision (e.g. 8-bit) to force attackers to collect many low-quality samples.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Implemented in the service interface immediately before and during deployment.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Common engineering control but not evaluated against this specific attack in the paper.",
+      "node_rationale": "Raises the practical sample complexity, leveraging the O(h log h) theoretical bound."
+    },
+    {
+      "name": "Design reconstruction-resistant explanation techniques with formal privacy guarantees during model design phase",
+      "aliases": [
+        "develop private explanation methods",
+        "privacy-preserving saliency design"
+      ],
+      "type": "intervention",
+      "description": "During model-design choose or invent explanation algorithms that remain useful to end-users while providing provable bounds on information leakage.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Conceptual work integrated into initial model-design choices.",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Currently a foundational research direction suggested in the Conclusion; no prototypes yet.",
+      "node_rationale": "Long-term solution aiming to avoid the privacy–explanation trade-off entirely."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Proprietary model leakage via explanation APIs in commercial ML services",
+      "target_node": "Input gradient exposure through saliency maps in explanation APIs",
+      "description": "Model leakage occurs because explanation interfaces expose detailed gradients.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in 1 Introduction.",
+      "edge_rationale": "The introduction links the leakage threat directly to the release of explanation gradients."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Input gradient exposure through saliency maps in explanation APIs",
+      "target_node": "Gradients reveal sufficient parameter information for two-layer ReLU networks",
+      "description": "Exposed gradients provide the information needed for exact parameter recovery.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 2 formally proves parameter identifiability from gradients.",
+      "edge_rationale": "The problem analysis is driven by this theoretical insight."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Gradients reveal sufficient parameter information for two-layer ReLU networks",
+      "target_node": "Gradient queries reduce sample complexity of model reconstruction by factor of input dimension",
+      "description": "Sample-complexity analysis quantifies the identifiability insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Derived directly from Theorem 1; strength moderate because it is a corollary.",
+      "edge_rationale": "Adds quantitative depth to the previous theoretical claim."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Gradients reveal sufficient parameter information for two-layer ReLU networks",
+      "target_node": "Limiting fidelity and quantity of gradient information can mitigate model leakage risk",
+      "description": "If gradients are less precise or fewer, identifiability becomes harder.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical consequence discussed in Conclusion; not experimentally verified.",
+      "edge_rationale": "Establishes the high-level defensive direction."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Limiting fidelity and quantity of gradient information can mitigate model leakage risk",
+      "target_node": "Add differential privacy Gaussian noise to gradients in explanation APIs",
+      "description": "Differential privacy concretely realises gradient-fidelity limitation.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Moderate inference – DP mentioned as related work but not elaborated.",
+      "edge_rationale": "Maps abstract rationale to a concrete technical mechanism."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Limiting fidelity and quantity of gradient information can mitigate model leakage risk",
+      "target_node": "Enforce strict query rate limits and gradient precision clipping in explanation APIs",
+      "description": "Operational controls also instantiate the fidelity-limitation principle.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implementation idea inferred from sample-complexity numbers.",
+      "edge_rationale": "Practical service-level mechanism that stems from the same design rationale."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Add differential privacy Gaussian noise to gradients in explanation APIs",
+      "target_node": "SmoothGrad processed gradients do not reduce reconstruction efficiency",
+      "description": "Failure of lightweight post-processing motivates stronger noise-based defences like DP.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Indirect validation; SmoothGrad’s failure suggests need for more principled noise.",
+      "edge_rationale": "Evidence of insufficiency for weak mechanisms supports DP noise importance."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Enforce strict query rate limits and gradient precision clipping in explanation APIs",
+      "target_node": "Theoretical algorithm reconstructs two-layer ReLU network in O(h log h) gradient queries",
+      "description": "Theory shows few high-precision queries suffice; therefore reducing query count/precision is impactful.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct logical connection to the proven query bound.",
+      "edge_rationale": "Supports the efficacy of rate-limiting and clipping mechanisms."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Enforce strict query rate limits and gradient precision clipping in explanation APIs",
+      "target_node": "Experiments show 100x–1000x fewer queries required to reconstruct models on MNIST and CIFAR10 with gradients",
+      "description": "Empirical evidence confirms that few high-quality queries are enough, reinforcing need for tight limits.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Experimental data in Section 5 quantitatively supports this.",
+      "edge_rationale": "Provides real-world backing for the mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "SmoothGrad processed gradients do not reduce reconstruction efficiency",
+      "target_node": "Inject calibrated differential privacy noise into gradient-based explanations before deployment",
+      "description": "Failure of SmoothGrad motivates adopting stronger DP-based noise.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Based on experimental observation; intervention yet to be tested.",
+      "edge_rationale": "Evidence spurs the specific intervention choice."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical algorithm reconstructs two-layer ReLU network in O(h log h) gradient queries",
+      "target_node": "Limit external explanation API to low query rates and truncated gradient precision during deployment",
+      "description": "Small theoretical query budget motivates strict rate and precision limits.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong theoretical justification.",
+      "edge_rationale": "Directly informs how stringent limits must be."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Experiments show 100x–1000x fewer queries required to reconstruct models on MNIST and CIFAR10 with gradients",
+      "target_node": "Limit external explanation API to low query rates and truncated gradient precision during deployment",
+      "description": "Empirical query reductions underline the practical necessity of the limits.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Robust experimental evidence.",
+      "edge_rationale": "Gives operational urgency to the intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Experiments show 100x–1000x fewer queries required to reconstruct models on MNIST and CIFAR10 with gradients",
+      "target_node": "Design reconstruction-resistant explanation techniques with formal privacy guarantees during model design phase",
+      "description": "Significant leakage demonstrated motivates the search for fundamentally safer explanation algorithms.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical but forward-looking inference from empirical risk.",
+      "edge_rationale": "Experimental threat level drives research intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2018-07-13T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.05185"
+    },
+    {
+      "key": "title",
+      "value": "Model Reconstruction from Model Explanations"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Smitha Milli",
+        "Ludwig Schmidt",
+        "Anca D. Dragan",
+        "Moritz Hardt"
+      ]
+    }
+  ]
+}

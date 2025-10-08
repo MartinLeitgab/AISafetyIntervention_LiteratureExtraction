@@ -1,0 +1,571 @@
+{
+  "nodes": [
+    {
+      "name": "catastrophic policy degradation in reinforcement learning",
+      "aliases": [
+        "catastrophic performance drop",
+        "unsafe policy updates"
+      ],
+      "type": "concept",
+      "description": "Episodes in which an RL agent’s performance suddenly collapses after an apparently improving update, unacceptable in safety-critical domains (Introduction).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Top-level safety risk motivating the work (Introduction)."
+    },
+    {
+      "name": "excessive sample complexity in deep reinforcement learning",
+      "aliases": [
+        "poor data efficiency",
+        "billions of frames requirement"
+      ],
+      "type": "concept",
+      "description": "Deep RL often needs millions-to-billions of environment interactions or weeks of wall-clock time to reach expert level, limiting real-world deployment (Introduction).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Second headline risk addressed by RBI (Introduction)."
+    },
+    {
+      "name": "high improvement penalty from inaccurate Q-value estimation",
+      "aliases": [
+        "improvement penalty",
+        "negative policy update effect"
+      ],
+      "type": "concept",
+      "description": "When a new policy is evaluated with inaccurate Q estimates, the difference between estimated and true values can lower actual performance (Section 2.3 Lemma 2.2).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Central mechanism causing risk of degradation (2.3)."
+    },
+    {
+      "name": "large variance in Q-value estimates for low-frequency actions",
+      "aliases": [
+        "high standard error for rare actions"
+      ],
+      "type": "concept",
+      "description": "The standard error of Q̂(s,a) scales with 1/√β(a|s); rarely taken actions therefore have large uncertainty (Section 2.2 Eq. 1).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Root cause of inaccurate Q estimates (2.2)."
+    },
+    {
+      "name": "unbounded action probability shifts in existing constrained policy updates",
+      "aliases": [
+        "TV/KL/PPO unconstrained ratio",
+        "lack of ratio bound"
+      ],
+      "type": "concept",
+      "description": "Typical constraints (TV, KL, PPO) do not directly bound |β−π|²/β, allowing extreme probability changes that amplify estimation errors (Section 2.4).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains why prior methods fail to guarantee safety (2.4)."
+    },
+    {
+      "name": "variance of improvement penalty proportional to |beta-pi|^2/beta",
+      "aliases": [
+        "improvement penalty variance formula"
+      ],
+      "type": "concept",
+      "description": "Mathematical derivation shows penalty variance term σ² ∝ (β−π)²/β making ratio control critical (Section 2.3 Eq. 2).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Key quantitative insight guiding constraint design (2.3)."
+    },
+    {
+      "name": "bounding action probability ratio limits improvement penalty",
+      "aliases": [
+        "ratio bounding hypothesis"
+      ],
+      "type": "concept",
+      "description": "If π(a|s)/β(a|s) is bounded within constants, the variance of the improvement penalty is provably controlled (Sections 2.3–2.4).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides theoretical basis for reroute constraint (2.4)."
+    },
+    {
+      "name": "multiplicative reroute constraint on policy update",
+      "aliases": [
+        "reroute(cmin,cmax) constraint"
+      ],
+      "type": "concept",
+      "description": "Policy π is restricted to π(a|s)=c(s,a)β(a|s) with cmin≤c≤cmax, directly bounding the critical ratio (Definition 2.1).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Core design choice translating insight to algorithm (2.4)."
+    },
+    {
+      "name": "statewise linear program for optimal policy under reroute constraint",
+      "aliases": [
+        "Max-Reroute objective"
+      ],
+      "type": "concept",
+      "description": "Maximising ∑a π(a)Aβ subject to reroute bounds reduces to a simple linear programme per state (Eq. 4, Algorithm 1).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains efficient computation of constrained optimum (2.5)."
+    },
+    {
+      "name": "actor computes non-parametric optimal policy and learner imitates via KL",
+      "aliases": [
+        "actor–learner separation for RBI"
+      ],
+      "type": "concept",
+      "description": "Actors solve Max-Reroute online for each state, execute the policy, store it; learner trains a network to minimise KL to those policies (Section 5 Algorithms 2–3).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Shows how to integrate reroute into scalable RL systems (5)."
+    },
+    {
+      "name": "Max-Reroute algorithm with parameters cmin,cmax",
+      "aliases": [
+        "Max-Reroute solver"
+      ],
+      "type": "concept",
+      "description": "An implementation solving the linear-program step to compute reroute-constrained π*, guaranteeing monotonic advantage improvement (Algorithm 1).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Concrete mechanism realising design rationale (2.5)."
+    },
+    {
+      "name": "RBI distributed actor-learner architecture",
+      "aliases": [
+        "distributed RBI training loop"
+      ],
+      "type": "concept",
+      "description": "Multiple actors run Max-Reroute and exploration, a central learner updates policy and Q-networks; improves throughput and stability (Section 5).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "System-level mechanism enabling large-scale validation (5)."
+    },
+    {
+      "name": "advantage variance weighted prioritization in learner loss",
+      "aliases": [
+        "priority weighting by advantage variance"
+      ],
+      "type": "concept",
+      "description": "Learner weights KL loss by variance of advantages to focus on states where small errors cause large value drops (Eq. 5).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Additional mechanism improving sample efficiency (5)."
+    },
+    {
+      "name": "theoretical guarantee of positive improvement step",
+      "aliases": [
+        "soft policy improvement theorem application"
+      ],
+      "type": "concept",
+      "description": "Corollary 2.1.1 and Lemma 2.1 show Max-Reroute always yields a non-negative advantage step given exact Q (Section 2.5).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formal validation of safety claim (2.5)."
+    },
+    {
+      "name": "reduced regret in two-armed Gaussian bandit experiments",
+      "aliases": [
+        "bandit RBI empirical evidence"
+      ],
+      "type": "concept",
+      "description": "RBI achieves lower regret than greedy, TV, PPO across variance settings, demonstrating safety and sample efficiency (Section 3, Fig 1-2).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "First empirical validation of theoretical claims (3)."
+    },
+    {
+      "name": "improved Atari performance from human observation data",
+      "aliases": [
+        "Atari imitation RBI evidence"
+      ],
+      "type": "concept",
+      "description": "Applying Max-Reroute to policies cloned from 1000 human episodes increased scores beyond behaviour cloning, TV and PPO (Section 4, Table 1).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Demonstrates practicality on high-dimensional tasks (4)."
+    },
+    {
+      "name": "superior performance over Ape-X in distributed Atari experiments",
+      "aliases": [
+        "distributed RBI empirical evidence"
+      ],
+      "type": "concept",
+      "description": "With parameters (0.1,2) RBI beat Ape-X in 7/11 games and Rainbow in 9/11, showing data efficiency gains (Section 5, Fig 4).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Large-scale validation combining all mechanisms (5)."
+    },
+    {
+      "name": "Apply reroute constrained policy improvement (RBI) during off-policy batch RL fine-tuning",
+      "aliases": [
+        "use RBI in batch RL",
+        "batch RBI fine-tuning"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning on static datasets, restrict updates with reroute(cmin,cmax) to guarantee monotonic improvement.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applies while adjusting policy parameters on fixed data (Section 2.5).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated in bandit and Atari prototype studies (Sections 3–4).",
+      "node_rationale": "Direct actionable step flowing from validated reroute constraint."
+    },
+    {
+      "name": "Integrate Max-Reroute per-state optimization in actor policy during RL training",
+      "aliases": [
+        "actor-side Max-Reroute",
+        "online reroute solving"
+      ],
+      "type": "intervention",
+      "description": "Modify actors to solve the linear program for each encountered state and execute the resulting action distribution.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Executed during continuous policy improvement (Algorithms 2–3).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated in distributed Atari prototype (Section 5).",
+      "node_rationale": "Implements design where actor, not learner, solves policy (5)."
+    },
+    {
+      "name": "Set reroute parameters cmin=0.1,cmax=2 and mix 10% greedy policy in distributed RL",
+      "aliases": [
+        "RBI hyper-parameter recommendation"
+      ],
+      "type": "intervention",
+      "description": "Configure reroute bounds (0.1,2) and combine 10 % greedy action probability to accelerate recovery of near-zero actions.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Chosen during training phase to balance safety and speed (Section 5).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Empirically effective but only explored in initial prototypes (Section 5).",
+      "node_rationale": "Parameter tuning derived from distributed experiments."
+    },
+    {
+      "name": "Weight policy loss by advantage variance prioritization during learner updates",
+      "aliases": [
+        "advantage variance weighting"
+      ],
+      "type": "intervention",
+      "description": "Scale KL imitation loss with priority wπ∝(Σaπmix(a)(Aϕ)²+0.1)/( |Vϕ|+0.1 )^α to focus training on risky states.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applied inside learner update loop (Algorithm 2).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Exploratory mechanism validated only in distributed Atari study (Section 5).",
+      "node_rationale": "Actionable refinement improving sample efficiency under RBI."
+    },
+    {
+      "name": "low data efficiency of greedy policy improvement in deep RL",
+      "aliases": [
+        "greedy step sample inefficiency"
+      ],
+      "type": "concept",
+      "description": "Greedy policy updates yield higher regret and slower learning when Q is uncertain, especially with good behaviour policies (Section 3 Fig 1-2).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Connects sample-efficiency risk to need for new design (3)."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "catastrophic policy degradation in reinforcement learning",
+      "target_node": "high improvement penalty from inaccurate Q-value estimation",
+      "description": "Performance collapse arises when the improvement penalty is negative.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit inequality in Lemma 2.2 (Section 2.3).",
+      "edge_rationale": "Links safety risk to underlying penalty mechanism (2.3)."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "high improvement penalty from inaccurate Q-value estimation",
+      "target_node": "large variance in Q-value estimates for low-frequency actions",
+      "description": "High variance estimates magnify error term ε, increasing penalty.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Derived in Eq. 1 showing σ ∝ 1/√β (Section 2.2).",
+      "edge_rationale": "Variance directly feeds into penalty variance (2.3)."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "high improvement penalty from inaccurate Q-value estimation",
+      "target_node": "unbounded action probability shifts in existing constrained policy updates",
+      "description": "Large, unregulated shifts make (β−π)²/β term large, worsening penalty.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Analytical argument but no separate experiment (Section 2.4).",
+      "edge_rationale": "Explains how other methods contribute to penalty (2.4)."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "high improvement penalty from inaccurate Q-value estimation",
+      "target_node": "variance of improvement penalty proportional to |beta-pi|^2/beta",
+      "description": "Identifying exact variance dependency enables targeted mitigation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical derivation; link is conceptual (Section 2.3).",
+      "edge_rationale": "Insight provides path to mitigation design."
+    },
+    {
+      "type": "enables",
+      "source_node": "variance of improvement penalty proportional to |beta-pi|^2/beta",
+      "target_node": "multiplicative reroute constraint on policy update",
+      "description": "Knowing penalty scales with ratio motivates constraint that bounds it.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Directly stated in Section 2.4 introducing reroute.",
+      "edge_rationale": "Design explicitly addresses theoretical finding."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "multiplicative reroute constraint on policy update",
+      "target_node": "statewise linear program for optimal policy under reroute constraint",
+      "description": "Linear program specifies how to compute optimal constrained policy.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Eq. 4 follows immediately from constraint definition (2.5).",
+      "edge_rationale": "Operational refinement of constraint."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "statewise linear program for optimal policy under reroute constraint",
+      "target_node": "Max-Reroute algorithm with parameters cmin,cmax",
+      "description": "Algorithm 1 solves the linear program efficiently.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm details given in Section 2.5.",
+      "edge_rationale": "Algorithm realises linear-program solution."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "multiplicative reroute constraint on policy update",
+      "target_node": "Max-Reroute algorithm with parameters cmin,cmax",
+      "description": "Max-Reroute operationalises the constraint.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm derived directly from constraint (2.5).",
+      "edge_rationale": "Shows mechanism for applying design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Max-Reroute algorithm with parameters cmin,cmax",
+      "target_node": "theoretical guarantee of positive improvement step",
+      "description": "Lemma 2.1/Corollary 2.1.1 prove Max-Reroute guarantees monotonic improvement.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Formal mathematical proof provided (2.5).",
+      "edge_rationale": "First validation layer for algorithm."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Max-Reroute algorithm with parameters cmin,cmax",
+      "target_node": "reduced regret in two-armed Gaussian bandit experiments",
+      "description": "Bandit results show lower regret compared to baselines.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Controlled simulation results (Section 3 Fig 1-2).",
+      "edge_rationale": "Empirical validation in simple environment."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Max-Reroute algorithm with parameters cmin,cmax",
+      "target_node": "improved Atari performance from human observation data",
+      "description": "Atari imitation study confirms safety and performance gains.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Multiple game scores reported (Section 4 Table 1).",
+      "edge_rationale": "High-dimensional validation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "actor computes non-parametric optimal policy and learner imitates via KL",
+      "target_node": "RBI distributed actor-learner architecture",
+      "description": "Algorithms 2–3 show system integrating actor solution and learner imitation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit algorithm listings (Section 5).",
+      "edge_rationale": "System mechanism realises design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RBI distributed actor-learner architecture",
+      "target_node": "superior performance over Ape-X in distributed Atari experiments",
+      "description": "Distributed experiments demonstrate performance advantage.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Statistical curves across 12 games (Section 5 Fig 4).",
+      "edge_rationale": "Large-scale empirical validation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "advantage variance weighted prioritization in learner loss",
+      "target_node": "superior performance over Ape-X in distributed Atari experiments",
+      "description": "Priority weighting contributed to improved results reported.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Ablation not isolated but mechanism described (Section 5).",
+      "edge_rationale": "Learner mechanism part of validated system."
+    },
+    {
+      "type": "motivates",
+      "source_node": "theoretical guarantee of positive improvement step",
+      "target_node": "Apply reroute constrained policy improvement (RBI) during off-policy batch RL fine-tuning",
+      "description": "Proof of monotonic improvement justifies adopting RBI in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct logical motivation (Section 2.5 Conclusion).",
+      "edge_rationale": "Connects formal guarantee to intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "reduced regret in two-armed Gaussian bandit experiments",
+      "target_node": "Apply reroute constrained policy improvement (RBI) during off-policy batch RL fine-tuning",
+      "description": "Empirical safety/efficiency evidence supports intervention adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative comparison (Section 3).",
+      "edge_rationale": "Experimental motivation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "improved Atari performance from human observation data",
+      "target_node": "Apply reroute constrained policy improvement (RBI) during off-policy batch RL fine-tuning",
+      "description": "Success on high-dimensional tasks encourages practitioners to use RBI.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1 shows consistent gains (Section 4).",
+      "edge_rationale": "Reinforces practical relevance."
+    },
+    {
+      "type": "motivates",
+      "source_node": "superior performance over Ape-X in distributed Atari experiments",
+      "target_node": "Integrate Max-Reroute per-state optimization in actor policy during RL training",
+      "description": "Distributed results indicate that actor-side Max-Reroute improves overall training.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Performance curves compare architectures (Section 5).",
+      "edge_rationale": "Evidence drives intervention choice."
+    },
+    {
+      "type": "motivates",
+      "source_node": "superior performance over Ape-X in distributed Atari experiments",
+      "target_node": "Set reroute parameters cmin=0.1,cmax=2 and mix 10% greedy policy in distributed RL",
+      "description": "Empirical tuning (0.1,2)+10 % greedy found most effective in study.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Parameter search reported qualitatively (Section 5).",
+      "edge_rationale": "Justifies recommended hyper-parameters."
+    },
+    {
+      "type": "motivates",
+      "source_node": "superior performance over Ape-X in distributed Atari experiments",
+      "target_node": "Weight policy loss by advantage variance prioritization during learner updates",
+      "description": "Priority weighting contributed to gains, suggesting adoption.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Mechanism discussed alongside results (Section 5).",
+      "edge_rationale": "Empirical motivation."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "actor computes non-parametric optimal policy and learner imitates via KL",
+      "target_node": "multiplicative reroute constraint on policy update",
+      "description": "Actor-learner design is feasible because reroute yields per-state solvable optimisation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Narrative link in Section 5.",
+      "edge_rationale": "Design dependency."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "actor computes non-parametric optimal policy and learner imitates via KL",
+      "target_node": "advantage variance weighted prioritization in learner loss",
+      "description": "Loss weighting refines learner’s imitation of actor policy.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Mechanism introduced without separate proof (Section 5).",
+      "edge_rationale": "Implementation detail of design."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "excessive sample complexity in deep reinforcement learning",
+      "target_node": "low data efficiency of greedy policy improvement in deep RL",
+      "description": "Greedy updates contribute to large data requirements.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Bandit study demonstrates higher regret with greedy (Section 3).",
+      "edge_rationale": "Connects risk to specific problem."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "low data efficiency of greedy policy improvement in deep RL",
+      "target_node": "unbounded action probability shifts in existing constrained policy updates",
+      "description": "Greedy step is extreme case with shift to probability 1 for max-Q action.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Analytical explanation in Section 3 and 2.4.",
+      "edge_rationale": "Mechanistic link."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "low data efficiency of greedy policy improvement in deep RL",
+      "target_node": "bounding action probability ratio limits improvement penalty",
+      "description": "Ratio bounding allows smoother updates improving data efficiency.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Shown in bandit learning curves (Section 3 Fig 2).",
+      "edge_rationale": "Theoretical and empirical mitigation path."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2018-05-20T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Constrained Policy Improvement for Safe and Efficient Reinforcement Learning"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.07805"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Elad Sarafian",
+        "Aviv Tamar",
+        "Sarit Kraus"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

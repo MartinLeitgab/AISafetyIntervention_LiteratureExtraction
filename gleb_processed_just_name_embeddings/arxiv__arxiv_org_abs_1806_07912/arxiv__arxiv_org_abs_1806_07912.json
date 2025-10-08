@@ -1,0 +1,434 @@
+{
+  "nodes": [
+    {
+      "name": "Resource overconsumption of neural networks on constrained hardware platforms",
+      "aliases": [
+        "excessive resource usage in NN deployment",
+        "large models exceed device budgets"
+      ],
+      "type": "concept",
+      "description": "Large, high-capacity neural networks often require more memory, computation and power than smartphones, drones or embedded devices can provide, risking deployment failure or unsafe performance trade-offs.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduction – paper motivates need to respect model size, complexity and power when deploying neural networks."
+    },
+    {
+      "name": "Mismatch between model complexity and hardware resource budgets",
+      "aliases": [
+        "model-hardware mismatch",
+        "architecture not sized for device"
+      ],
+      "type": "concept",
+      "description": "When model parameter counts and FLOPs exceed the available memory, compute or power envelope of a target platform, performance and latency deteriorate or deployment becomes impossible.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduction & Modeling Resource Use – highlights challenge that standard NAS ignores resource limits, creating mismatched architectures."
+    },
+    {
+      "name": "Hardware-aware metrics guiding architecture search under constraints",
+      "aliases": [
+        "resource metrics guide NAS",
+        "metric-driven search"
+      ],
+      "type": "concept",
+      "description": "Selecting interpretable metrics—model size, computational complexity and compute intensity—enables search algorithms to explicitly reason about hardware efficiency while maintaining accuracy.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Modeling Resource Use – proposes three metrics as theory for aligning architectures with hardware."
+    },
+    {
+      "name": "Integration of resource constraints into NAS reward function",
+      "aliases": [
+        "constraint-aware reward",
+        "multi-objective NAS reward"
+      ],
+      "type": "concept",
+      "description": "By embedding resource metrics into the reinforcement-learning reward, search is steered toward architectures that meet or trade-off constraints and accuracy.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.3 Policy Gradient with Multi-Objective Reward – explains modifying rewards to include penalties."
+    },
+    {
+      "name": "Multi-objective RL NAS with model size, FLOPs, compute intensity metrics",
+      "aliases": [
+        "RENA search mechanism",
+        "policy network with resource objectives"
+      ],
+      "type": "concept",
+      "description": "RENA’s LSTM policy network performs insert/scale/remove actions on an embedded baseline network and evaluates child models using a reward that jointly considers accuracy and three resource metrics.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections 4.1–4.3 – details architecture of policy network and multi-objective optimisation."
+    },
+    {
+      "name": "Empirical accuracy-resource tradeoff results on CIFAR10 with RENA",
+      "aliases": [
+        "CIFAR-10 RENA validation",
+        "95% accuracy under 10M params"
+      ],
+      "type": "concept",
+      "description": "Experiments show RENA achieving 3.48% error with under 10 M parameters and 92 FLOPs/Byte compute intensity, outperforming larger handcrafted models.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5.1.2 Results – provides quantitative validation of implementation."
+    },
+    {
+      "name": "Employ RENA resource-constrained NAS to design efficient architectures",
+      "aliases": [
+        "apply RENA in model design",
+        "resource-aware NAS deployment"
+      ],
+      "type": "intervention",
+      "description": "During model-design phase, use the RENA framework (policy network with network embedding and resource-aware reward) to automatically generate architectures that satisfy specified hardware constraints.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Conclusions – RENA is applied when designing architectures before any training commences.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evidence limited to experimental benchmarks (CIFAR-10, KWS); no large-scale production deployment reported.",
+      "node_rationale": "Conclusions & Experiments – authors present RENA as actionable method for practitioners."
+    },
+    {
+      "name": "High inference latency in neural network applications",
+      "aliases": [
+        "slow model response time",
+        "latency risk in deployment"
+      ],
+      "type": "concept",
+      "description": "Excessive processing time per input undermines real-time requirements of applications like keyword spotting, leading to poor user experience and safety hazards.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduction & KWS motivation – stresses importance of low latency for user-facing systems."
+    },
+    {
+      "name": "Low compute intensity limiting data reuse on accelerators",
+      "aliases": [
+        "memory-bound layers",
+        "poor data locality"
+      ],
+      "type": "concept",
+      "description": "Layers with few FLOPs per byte waste bandwidth and throttle throughput, causing higher latency and energy consumption on GPUs/TPUs.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Modeling Resource Use – discusses compute intensity as proxy for speed on modern hardware."
+    },
+    {
+      "name": "Compute intensity metric to favor data reuse",
+      "aliases": [
+        "FLOPs/byte objective",
+        "intensity-oriented search"
+      ],
+      "type": "concept",
+      "description": "Including FLOPs per byte in the objective steers NAS toward architectures with higher data reuse and better parallel efficiency, reducing latency.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Modeling Resource Use – explains how higher intensity improves performance."
+    },
+    {
+      "name": "KWS high compute intensity architecture results under constraints",
+      "aliases": [
+        "KWS validation high intensity",
+        "95.64% accuracy at 21.8 F/B"
+      ],
+      "type": "concept",
+      "description": "RENA discovered keyword-spotting models achieving 95.64 % accuracy with compute intensity 21.8 FLOPs/Byte, satisfying stringent device limits.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5.2.2 Results – empirical evidence for compute-intensive architectures."
+    },
+    {
+      "name": "Incorporate compute intensity thresholds into NAS objectives during model design",
+      "aliases": [
+        "set intensity constraint in search",
+        "target FLOPs/byte in NAS"
+      ],
+      "type": "intervention",
+      "description": "Specify minimum compute-intensity targets (e.g., >10 FLOPs/byte) in the reward or constraint set when invoking NAS to ensure architectures exploit data reuse and achieve low latency.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Applied at model-design time when defining search constraints.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated on benchmark datasets; broader deployment evidence absent.",
+      "node_rationale": "Experiments demonstrate intensity thresholds driving efficient models."
+    },
+    {
+      "name": "Soft continuous resource-violation penalty enables learning under tight constraints",
+      "aliases": [
+        "smooth constraint penalty insight",
+        "continuous penalty theory"
+      ],
+      "type": "concept",
+      "description": "Using a smoothly decaying penalty instead of hard constraint allows the RL controller to obtain informative rewards even when few architectures satisfy strict limits.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.3 – authors justify soft penalties to avoid sparse rewards."
+    },
+    {
+      "name": "Soft penalty reward shaping for continuous signals in NAS",
+      "aliases": [
+        "design of soft penalty",
+        "reward shaping rationale"
+      ],
+      "type": "concept",
+      "description": "Design decision to replace hard constraint violations with a multiplicative penalty term that scales with the degree of violation, providing gradient-like signals to the policy network.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.3 equation discussion of V(U,C) and base penalty p."
+    },
+    {
+      "name": "Reward function with exponential penalty parameter p=0.9",
+      "aliases": [
+        "implementation of soft penalty",
+        "p=0.9 penalty term"
+      ],
+      "type": "concept",
+      "description": "RENA implements the soft penalty by multiplying accuracy reward by p^(violation) with p=0.9, operationalising continuous constraint enforcement.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equation 3 – concrete implementation detail of penalty."
+    },
+    {
+      "name": "RENA surpasses random search in meeting resource constraints",
+      "aliases": [
+        "validation vs random search",
+        "constraint satisfaction evidence"
+      ],
+      "type": "concept",
+      "description": "Experiments show RENA finding compliant architectures after ~120 models whereas random search finds none after 400, validating efficacy of soft penalties and resource-aware search.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5.2.2 Figure 4b – quantitative comparison with random search."
+    },
+    {
+      "name": "Embed soft continuous resource violation penalty in NAS reward to balance performance and constraints",
+      "aliases": [
+        "apply soft penalty in NAS",
+        "continuous penalty intervention"
+      ],
+      "type": "intervention",
+      "description": "When configuring a NAS framework or custom controller, include an exponential soft penalty (e.g., base 0.9) proportional to each constraint violation to guide search toward feasible high-performance architectures.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Implemented during reward-function design before search begins.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated effective in benchmark studies; production validation not yet reported.",
+      "node_rationale": "Section 4.3 & Figure 4b – shows practical effectiveness of penalty."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Resource overconsumption of neural networks on constrained hardware platforms",
+      "target_node": "Mismatch between model complexity and hardware resource budgets",
+      "description": "Excessive resource use manifests because models are built without regard to device limits, generating a mismatch.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly discussed in Introduction but without quantitative study.",
+      "edge_rationale": "Introduction – large and deep models developed irrespective of hardware constraints."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Mismatch between model complexity and hardware resource budgets",
+      "target_node": "Hardware-aware metrics guiding architecture search under constraints",
+      "description": "Defining hardware-aware metrics offers a path to alleviate the mismatch by making complexity visible during search.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Paper states that using model size/FLOPs/intensity helps align architectures with hardware.",
+      "edge_rationale": "Modeling Resource Use section."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Hardware-aware metrics guiding architecture search under constraints",
+      "target_node": "Integration of resource constraints into NAS reward function",
+      "description": "Once metrics exist, they can be embedded into the reward to drive the search.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical step described in Section 4.3.",
+      "edge_rationale": "Policy Gradient with Multi-Objective Reward."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integration of resource constraints into NAS reward function",
+      "target_node": "Multi-objective RL NAS with model size, FLOPs, compute intensity metrics",
+      "description": "The RENA controller operationalises the design by combining accuracy and penalised resource terms in its RL loop.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed algorithm description and equations provided.",
+      "edge_rationale": "Sections 4.1–4.3."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Multi-objective RL NAS with model size, FLOPs, compute intensity metrics",
+      "target_node": "Empirical accuracy-resource tradeoff results on CIFAR10 with RENA",
+      "description": "CIFAR-10 experiments confirm the implementation achieves intended resource-efficient performance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Controlled benchmark results reported.",
+      "edge_rationale": "Section 5.1.2."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical accuracy-resource tradeoff results on CIFAR10 with RENA",
+      "target_node": "Employ RENA resource-constrained NAS to design efficient architectures",
+      "description": "Positive validation encourages practitioners to adopt RENA.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical superiority directly cited in Conclusions.",
+      "edge_rationale": "Conclusions section."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "High inference latency in neural network applications",
+      "target_node": "Low compute intensity limiting data reuse on accelerators",
+      "description": "Latency arises when models are memory-bound due to low compute intensity.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Compute-intensity discussion links memory transfers with speed.",
+      "edge_rationale": "Modeling Resource Use."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Low compute intensity limiting data reuse on accelerators",
+      "target_node": "Compute intensity metric to favor data reuse",
+      "description": "Explicit optimisation of compute intensity alleviates the bandwidth bottleneck.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Metric definition directly targets the problem.",
+      "edge_rationale": "Modeling Resource Use."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Compute intensity metric to favor data reuse",
+      "target_node": "Integration of resource constraints into NAS reward function",
+      "description": "Including the metric in the reward allows NAS to act on it.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4.3 integrates all three metrics.",
+      "edge_rationale": "Policy Gradient with Multi-Objective Reward."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Multi-objective RL NAS with model size, FLOPs, compute intensity metrics",
+      "target_node": "KWS high compute intensity architecture results under constraints",
+      "description": "Keyword-spotting results verify that the metric leads to high-intensity, low-latency models.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative benchmark results.",
+      "edge_rationale": "Section 5.2.2."
+    },
+    {
+      "type": "motivates",
+      "source_node": "KWS high compute intensity architecture results under constraints",
+      "target_node": "Incorporate compute intensity thresholds into NAS objectives during model design",
+      "description": "Demonstrated benefits motivate setting explicit intensity thresholds in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct empirical evidence.",
+      "edge_rationale": "Section 5.2.2 discussion."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Mismatch between model complexity and hardware resource budgets",
+      "target_node": "Soft continuous resource-violation penalty enables learning under tight constraints",
+      "description": "Soft penalties address difficulty of finding feasible models when mismatch is large.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Inference that smoother rewards help controller cope with mismatch.",
+      "edge_rationale": "Section 4.3 explanation of reward sparsity."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Soft continuous resource-violation penalty enables learning under tight constraints",
+      "target_node": "Soft penalty reward shaping for continuous signals in NAS",
+      "description": "The insight leads to designing reward shaping with continuous penalties.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design choice follows directly from theoretical statement.",
+      "edge_rationale": "Section 4.3."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Soft penalty reward shaping for continuous signals in NAS",
+      "target_node": "Reward function with exponential penalty parameter p=0.9",
+      "description": "Concrete implementation realises the design using p=0.9 exponential decay.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Exact formula provided in equation 3.",
+      "edge_rationale": "Equation 3."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Reward function with exponential penalty parameter p=0.9",
+      "target_node": "RENA surpasses random search in meeting resource constraints",
+      "description": "Empirical comparison shows the implementation outperforms random search under constraints.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figure 4b shows clear quantitative benefit.",
+      "edge_rationale": "Section 5.2.2."
+    },
+    {
+      "type": "motivates",
+      "source_node": "RENA surpasses random search in meeting resource constraints",
+      "target_node": "Embed soft continuous resource violation penalty in NAS reward to balance performance and constraints",
+      "description": "Successful validation motivates adopting the soft penalty technique.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Evidence directly supports intervention.",
+      "edge_rationale": "Discussion following Figure 4b."
+    }
+  ],
+  "meta": [
+    {
+      "key": "authors",
+      "value": [
+        "Yanqi Zhou",
+        "Siavash Ebrahimi",
+        "Sercan Ö. Arık",
+        "Haonan Yu",
+        "Hairong Liu",
+        "Greg Diamos"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.07912"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Resource-Efficient Neural Architect"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-06-12T00:00:00Z"
+    }
+  ]
+}

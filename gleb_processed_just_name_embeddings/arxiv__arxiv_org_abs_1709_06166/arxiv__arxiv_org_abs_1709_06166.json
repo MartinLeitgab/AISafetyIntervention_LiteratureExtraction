@@ -1,0 +1,299 @@
+{
+  "nodes": [
+    {
+      "name": "Unsafe exploration by novice policies in imitation learning for robotics",
+      "aliases": [
+        "unsafe exploration in imitation learning",
+        "novice policy unsafe actions"
+      ],
+      "type": "concept",
+      "description": "During training or deployment, a novice policy may take actions that drive the robot into unsafe parts of the state-space, potentially leading to costly failures.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Core safety risk identified in Introduction (Section I) motivating the DropoutDAgger work."
+    },
+    {
+      "name": "Data distribution shift causing compounding errors in novice policies",
+      "aliases": [
+        "dataset mismatch in imitation learning",
+        "compounding errors from state distribution shift"
+      ],
+      "type": "concept",
+      "description": "Because the novice encounters states that are under-represented in expert demonstrations, prediction errors compound over time, pushing the system into unfamiliar and potentially unsafe regions.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Abstract & Introduction as the central mechanism behind unsafe behaviour."
+    },
+    {
+      "name": "Lack of safety guarantees in standard DAgger decision rule",
+      "aliases": [
+        "DAgger safety limitation",
+        "no safety assurance in vanilla DAgger"
+      ],
+      "type": "concept",
+      "description": "In vanilla DAgger the novice is allowed to act with a fixed probability regardless of how risky its chosen action is, providing no explicit safety guarantee.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Background Section II-A details why the original decision rule can select unsafe actions."
+    },
+    {
+      "name": "Bayesian action uncertainty indicates familiarity with state-space",
+      "aliases": [
+        "uncertainty as familiarity signal",
+        "low entropy novice action distribution"
+      ],
+      "type": "concept",
+      "description": "If the novice policy is modelled as a Bayesian neural network, low-entropy action distributions arise in well-represented states, whereas high-entropy distributions signal unfamiliar states.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in Section II-B (Bayesian Approximation via Dropout) as the key theoretical observation enabling DropoutDAgger."
+    },
+    {
+      "name": "Probabilistic decision rule balancing exploration and safety via uncertainty threshold",
+      "aliases": [
+        "DropoutDAgger decision rationale",
+        "uncertainty-aware action selection"
+      ],
+      "type": "concept",
+      "description": "Allow the novice to act only when a chosen proportion of its action samples lie within a distance τ of the expert’s action, otherwise fall back to the expert.  Thresholds τ and p trade off exploration against safety.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section III presents this rule as the central design choice realising safety."
+    },
+    {
+      "name": "Bayesian neural network with dropout for novice policy",
+      "aliases": [
+        "dropout-trained novice policy",
+        "novice Bayesian network"
+      ],
+      "type": "concept",
+      "description": "The novice policy is trained with dropout at every weight layer, turning it into an approximate Bayesian neural network that can generate action distributions reflecting epistemic and aleatoric uncertainty.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation detail given in Section III (Algorithm 4) and Experimental setup."
+    },
+    {
+      "name": "Monte Carlo dropout sampling to estimate action distribution and probability mass within distance threshold",
+      "aliases": [
+        "MC-dropout action sampling",
+        "probability mass estimation around expert action"
+      ],
+      "type": "concept",
+      "description": "At each timestep the novice network is queried N times with different dropout masks; the proportion of samples within τ of the expert action yields an empirical probability \\hat{p} used by the decision rule.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Operational procedure detailed in Algorithm 4 (DropoutDAgger Decision Rule)."
+    },
+    {
+      "name": "HalfCheetah experiment showing maintained safety and expert-level learning",
+      "aliases": [
+        "HalfCheetah DropoutDAgger results",
+        "MuJoCo safety evidence"
+      ],
+      "type": "concept",
+      "description": "On the MuJoCo HalfCheetah-v1 task, DropoutDAgger matched Behavior Cloning in safety returns while the learned novice reached expert performance as quickly as other DAgger variants.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Figures 3 & 4 in Section IV-A provide quantitative validation."
+    },
+    {
+      "name": "Dubins Car Lidar experiment showing safety under high aleatoric uncertainty",
+      "aliases": [
+        "Dubins-car DropoutDAgger results",
+        "driving task safety evidence"
+      ],
+      "type": "concept",
+      "description": "In a noisy driving simulation with severe observation uncertainty, DropoutDAgger retained perfect safety while achieving superior learning performance to baselines, confirming robustness.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section IV-B and Figure 6 present these findings."
+    },
+    {
+      "name": "Fine-tune imitation policies with DropoutDAgger safety-aware decision rule using Bayesian action uncertainty",
+      "aliases": [
+        "apply DropoutDAgger during RL fine-tuning",
+        "safety-aware imitation learning via DropoutDAgger"
+      ],
+      "type": "intervention",
+      "description": "During the fine-tuning/RL stage of training an imitation policy, implement the DropoutDAgger algorithm: train the novice policy with dropout, sample N actions each step, and allow the novice to act only when the estimated probability \\hat{p} of being within τ of the expert action exceeds threshold p, otherwise defer to the expert.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Algorithm is applied while iteratively collecting new trajectories and updating the policy (Section III ‘DropoutDAgger’, fitting Fine-Tuning/RL stage).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evidence is limited to simulation studies on two tasks (Section IV Experiments), classifying it as Experimental/Proof-of-Concept.",
+      "node_rationale": "Represents the actionable safety intervention recommended by the paper."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Unsafe exploration by novice policies in imitation learning for robotics",
+      "target_node": "Data distribution shift causing compounding errors in novice policies",
+      "description": "Compounding errors from distribution shift push the novice into unseen states, triggering unsafe exploration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium – explicitly stated in Abstract & Introduction but without formal proof.",
+      "edge_rationale": "Introduction paragraphs describe how dataset mismatch leads to unsafe behaviour."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unsafe exploration by novice policies in imitation learning for robotics",
+      "target_node": "Lack of safety guarantees in standard DAgger decision rule",
+      "description": "The original DAgger decision rule allows unsafe actions with fixed probability, contributing directly to unsafe exploration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated in Section II-A with qualitative justification.",
+      "edge_rationale": "Background explains vanilla DAgger’s probabilistic choice can pick unsafe novice actions."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Data distribution shift causing compounding errors in novice policies",
+      "target_node": "Bayesian action uncertainty indicates familiarity with state-space",
+      "description": "Estimating Bayesian uncertainty allows the system to recognise unfamiliar states created by distribution shift, informing safer action selection.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Weak–medium; reasoning articulated in Section II-B and III but not formally evaluated alone.",
+      "edge_rationale": "Paper argues low entropy corresponds to familiar states, helping counter distribution shift."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of safety guarantees in standard DAgger decision rule",
+      "target_node": "Probabilistic decision rule balancing exploration and safety via uncertainty threshold",
+      "description": "The new decision rule introduces an explicit safety check based on uncertainty and distance, addressing the absence of guarantees in vanilla DAgger.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium; rationale detailed in Section III with algorithmic specification.",
+      "edge_rationale": "Section III shows how thresholds τ and p enforce safety choices."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Probabilistic decision rule balancing exploration and safety via uncertainty threshold",
+      "target_node": "Bayesian action uncertainty indicates familiarity with state-space",
+      "description": "The decision rule relies on reliable uncertainty estimates; thus it is enabled by the insight that Bayesian uncertainty reflects state familiarity.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium; logical dependency explained in Section III.",
+      "edge_rationale": "Algorithm requires uncertainty signal described in Section II-B."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Probabilistic decision rule balancing exploration and safety via uncertainty threshold",
+      "target_node": "Bayesian neural network with dropout for novice policy",
+      "description": "Training the novice as a dropout-based Bayesian neural network realises the uncertainty-aware decision rule in practice.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium; implementation details given in Section III Algorithm 4.",
+      "edge_rationale": "Algorithm 4 assumes a dropout-trained network."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Probabilistic decision rule balancing exploration and safety via uncertainty threshold",
+      "target_node": "Monte Carlo dropout sampling to estimate action distribution and probability mass within distance threshold",
+      "description": "Sampling multiple forward passes with different dropout masks operationalises the probability check used in the decision rule.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium; operational steps spelled out in Algorithm 4.",
+      "edge_rationale": "Section III lists step-by-step sampling procedure."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Monte Carlo dropout sampling to estimate action distribution and probability mass within distance threshold",
+      "target_node": "HalfCheetah experiment showing maintained safety and expert-level learning",
+      "description": "Empirical results on HalfCheetah confirm that the implemented sampling-based decision rule preserves safety while enabling learning.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong; controlled comparison across 50 episodes (Figures 3 & 4).",
+      "edge_rationale": "Section IV-A experimental results."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Monte Carlo dropout sampling to estimate action distribution and probability mass within distance threshold",
+      "target_node": "Dubins Car Lidar experiment showing safety under high aleatoric uncertainty",
+      "description": "Results on the Dubins car task validate robustness of the sampling approach under severe observation noise.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong; quantitative evidence in Figure 6 across 50 episodes.",
+      "edge_rationale": "Section IV-B experimental results."
+    },
+    {
+      "type": "motivates",
+      "source_node": "HalfCheetah experiment showing maintained safety and expert-level learning",
+      "target_node": "Fine-tune imitation policies with DropoutDAgger safety-aware decision rule using Bayesian action uncertainty",
+      "description": "Positive safety and performance outcomes motivate adopting the DropoutDAgger intervention in practice.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium; empirical support but limited to simulation tasks.",
+      "edge_rationale": "Discussion Section V emphasises applicability based on these results."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Dubins Car Lidar experiment showing safety under high aleatoric uncertainty",
+      "target_node": "Fine-tune imitation policies with DropoutDAgger safety-aware decision rule using Bayesian action uncertainty",
+      "description": "Demonstrated robustness under noisy sensing further encourages deploying the proposed intervention.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium; evidence from second domain strengthens generality claim.",
+      "edge_rationale": "Discussion Section V."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Bayesian neural network with dropout for novice policy",
+      "target_node": "HalfCheetah experiment showing maintained safety and expert-level learning",
+      "description": "Performance in HalfCheetah validates that the dropout-trained novice yields reliable uncertainty for safety decisions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong; direct empirical measurement of safety performance.",
+      "edge_rationale": "Section IV-A."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Bayesian neural network with dropout for novice policy",
+      "target_node": "Dubins Car Lidar experiment showing safety under high aleatoric uncertainty",
+      "description": "Robust safety under noisy observations confirms effectiveness of dropout-based uncertainty estimation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong; quantitative results in Figure 6.",
+      "edge_rationale": "Section IV-B."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1709.06166"
+    },
+    {
+      "key": "title",
+      "value": "DropoutDAgger: A Bayesian Approach to Safe Imitation Learning"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Kunal Menda",
+        "Katherine Driggs-Campbell",
+        "Mykel J. Kochenderfer"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2017-09-18T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

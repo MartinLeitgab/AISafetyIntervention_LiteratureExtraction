@@ -1,0 +1,484 @@
+{
+  "nodes": [
+    {
+      "name": "Intractable likelihood estimation in deep generative models",
+      "aliases": [
+        "likelihood intractability in deep generative models",
+        "computationally intractable log-likelihood in deep models"
+      ],
+      "type": "concept",
+      "description": "Maximum-likelihood training of deep generative models such as RBMs and DBMs requires evaluating or approximating partition functions, which is generally intractable.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in Introduction and Related Work as a key obstacle for generative modelling."
+    },
+    {
+      "name": "Slow Markov chain mixing in deep generative model training",
+      "aliases": [
+        "poor MCMC mixing in generative models",
+        "slow Markov-chain convergence in training"
+      ],
+      "type": "concept",
+      "description": "Undirected and Markov-chain-based generative frameworks require long-running MCMC whose slow mixing hampers learning efficiency.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2 cites mixing as a significant practical problem."
+    },
+    {
+      "name": "Vanishing generator gradients in adversarial training",
+      "aliases": [
+        "generator gradient saturation",
+        "weak gradient signal in GAN training"
+      ],
+      "type": "concept",
+      "description": "Early in GAN training the discriminator easily rejects generator samples, causing the log(1−D(G(z))) loss to saturate and gradients to vanish.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explicitly discussed in Section 3."
+    },
+    {
+      "name": "Dependence on MCMC-based partition function gradient estimation in undirected generative models",
+      "aliases": [
+        "partition-function gradient via MCMC",
+        "MCMC dependence for undirected models"
+      ],
+      "type": "concept",
+      "description": "Undirected models like RBMs/DBMs require MCMC to approximate the partition-function gradient during learning, leading to high computational cost.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Related Work when contrasting with GANs."
+    },
+    {
+      "name": "Requirement of Markov chain sampling during generation in autoencoder and undirected models",
+      "aliases": [
+        "Markov chain sampling requirement",
+        "generation via MCMC in prior models"
+      ],
+      "type": "concept",
+      "description": "Prior generative methods need Markov chains to draw samples, limiting scalability and expressiveness especially with piece-wise linear units.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Stated in Sections 2 and 3 when motivating GANs."
+    },
+    {
+      "name": "Saturation of log(1−D(G(z))) objective early in adversarial training",
+      "aliases": [
+        "loss saturation in GANs",
+        "early objective saturation"
+      ],
+      "type": "concept",
+      "description": "With a weak generator the discriminator outputs near-zero probabilities for fake samples, making the generator loss saturate and hindering learning.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained immediately after Algorithm 1 in Section 3."
+    },
+    {
+      "name": "Discriminative adversarial objective eliminates need for explicit likelihood computation and MCMC",
+      "aliases": [
+        "adversarial objective removes likelihood",
+        "GAN objective bypasses MCMC"
+      ],
+      "type": "concept",
+      "description": "Training a generator to fool a discriminator provides a gradient signal without computing likelihoods or running Markov chains, enabling backprop-only optimisation.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Section 3 and contrasted with previous work."
+    },
+    {
+      "name": "Minimax training aligns generator distribution with data via Jensen–Shannon divergence minimization",
+      "aliases": [
+        "GAN minimax reaches JSD optimum",
+        "Jensen–Shannon divergence in GAN theory"
+      ],
+      "type": "concept",
+      "description": "Theoretical analysis (Section 4) shows the minimax game minimises the Jensen–Shannon divergence and attains global optimum when pg equals pdata.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived formally in Theorem 1."
+    },
+    {
+      "name": "Alternative generator objective maximizing log D(G(z)) provides stronger gradients without altering fixed point",
+      "aliases": [
+        "non-saturating GAN objective",
+        "maximize log-D workaround"
+      ],
+      "type": "concept",
+      "description": "Replacing the generator’s loss with −log D(G(z)) retains the same equilibrium but yields larger gradients when the discriminator is strong.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in Section 3 to address gradient issues."
+    },
+    {
+      "name": "Generator training driven by discriminator feedback in minimax game",
+      "aliases": [
+        "generator learns through discriminator gradients",
+        "minimax feedback loop"
+      ],
+      "type": "concept",
+      "description": "The core design is to let discriminator gradients guide generator parameters toward data regions, operationalising the theoretical insight.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 embodies this rationale."
+    },
+    {
+      "name": "Alternating k-step discriminator and generator updates to balance training dynamics",
+      "aliases": [
+        "alternating GAN updates",
+        "k-step discriminator training"
+      ],
+      "type": "concept",
+      "description": "To keep D near optimum without excessive cost, k discriminator steps (k=1 in experiments) are alternated with one generator step.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Specified in Algorithm 1, Section 3."
+    },
+    {
+      "name": "Two multilayer perceptrons for generator and discriminator trained with backprop and dropout",
+      "aliases": [
+        "MLP GAN architecture",
+        "generator/discriminator MLP with dropout"
+      ],
+      "type": "concept",
+      "description": "Both G and D are implemented as multilayer perceptrons; dropout is applied to D, and training uses standard backprop with momentum.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details given in Section 3 and Experiments."
+    },
+    {
+      "name": "Modified generator update to maximize log D(G(z)) during training",
+      "aliases": [
+        "non-saturating update implementation",
+        "log-D generator step"
+      ],
+      "type": "concept",
+      "description": "Practically, generator gradients are taken with respect to −log D(G(z)) rather than log(1−D(G(z))) to avoid saturation.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation advice immediately after Algorithm 1."
+    },
+    {
+      "name": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "aliases": [
+        "better Parzen log-likelihood",
+        "GAN quantitative evaluation"
+      ],
+      "type": "concept",
+      "description": "GANs achieve 225 ± 2 nats on MNIST and 2057 ± 26 on TFD, outperforming or matching prior models (Table 1).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantitative evidence in Section 5."
+    },
+    {
+      "name": "Competitive sample quality without Markov chain mixing",
+      "aliases": [
+        "GAN visual sample evidence",
+        "non-MCMC sample quality"
+      ],
+      "type": "concept",
+      "description": "Figures 2–3 show diverse, realistic samples that are not memorised and require no Markov chain, demonstrating practical effectiveness.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Qualitative validation in Section 5."
+    },
+    {
+      "name": "Train generator–discriminator pair with adversarial nets during pre-training",
+      "aliases": [
+        "apply GAN training",
+        "pre-train models with GAN framework"
+      ],
+      "type": "intervention",
+      "description": "Implement full GAN minimax training using alternating updates of generator and discriminator to learn data distribution without explicit likelihoods.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Described as the core training algorithm in Section 3 (model fitting stage).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Only proof-of-concept experiments on standard datasets (Section 5).",
+      "node_rationale": "Primary actionable method emerging from the paper."
+    },
+    {
+      "name": "Optimize generator with log D(G(z)) objective during adversarial training",
+      "aliases": [
+        "use non-saturating GAN loss",
+        "apply log-D objective"
+      ],
+      "type": "intervention",
+      "description": "Replace the generator’s cost with –log D(G(z)) to prevent gradient saturation and stabilise early training.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Adjusts the loss function during model training (Section 3).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Proposed and tested within experimental section only.",
+      "node_rationale": "Directly addresses the vanishing-gradient risk."
+    },
+    {
+      "name": "Use one discriminator update per generator update in adversarial training",
+      "aliases": [
+        "set k=1 in GAN training",
+        "single-step discriminator schedule"
+      ],
+      "type": "intervention",
+      "description": "Configure k = 1 discriminator step for every generator step to balance training cost and convergence.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Hyper-parameter choice during training (Algorithm 1, Section 3).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Empirically chosen; not yet systematically validated.",
+      "node_rationale": "Operationalises the alternating-update mechanism."
+    },
+    {
+      "name": "Apply dropout to discriminator network during adversarial training",
+      "aliases": [
+        "discriminator dropout regularisation",
+        "use dropout in D"
+      ],
+      "type": "intervention",
+      "description": "Insert dropout layers in the discriminator to reduce overfitting and improve generalisation of the adversarial signal.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Regularisation technique applied during model training (Experiments, Section 5).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Explored in small-scale experiments only.",
+      "node_rationale": "Supports robustness of discriminator gradients used to train the generator."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Intractable likelihood estimation in deep generative models",
+      "target_node": "Dependence on MCMC-based partition function gradient estimation in undirected generative models",
+      "description": "Likelihood intractability stems from the need to approximate partition-function gradients via MCMC.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in Related Work.",
+      "edge_rationale": "Section 2 links partition-function computation to intractability."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Slow Markov chain mixing in deep generative model training",
+      "target_node": "Requirement of Markov chain sampling during generation in autoencoder and undirected models",
+      "description": "Poor mixing arises because these models depend on Markov chains for sampling.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct discussion in Section 2.",
+      "edge_rationale": "Paper states mixing ‘poses a significant problem’ due to this requirement."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Vanishing generator gradients in adversarial training",
+      "target_node": "Saturation of log(1−D(G(z))) objective early in adversarial training",
+      "description": "Gradient vanishing is a result of loss saturation when D confidently rejects G’s outputs.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly explained right after Algorithm 1.",
+      "edge_rationale": "Section 3 gives this precise causal account."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Dependence on MCMC-based partition function gradient estimation in undirected generative models",
+      "target_node": "Discriminative adversarial objective eliminates need for explicit likelihood computation and MCMC",
+      "description": "Adversarial objective supplies gradients without MCMC, removing the dependency.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated conceptually but not yet broadly validated.",
+      "edge_rationale": "Section 3 outlines how GANs bypass partition-function estimation."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Requirement of Markov chain sampling during generation in autoencoder and undirected models",
+      "target_node": "Discriminative adversarial objective eliminates need for explicit likelihood computation and MCMC",
+      "description": "GANs generate by forward propagation, avoiding Markov chains.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Claimed advantage; empirical evidence limited.",
+      "edge_rationale": "Discussed at end of Section 2 and in Section 3 comparison."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Saturation of log(1−D(G(z))) objective early in adversarial training",
+      "target_node": "Alternative generator objective maximizing log D(G(z)) provides stronger gradients without altering fixed point",
+      "description": "Switching objectives keeps gradients large, preventing saturation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explained explicitly in Section 3.",
+      "edge_rationale": "Authors justify the alternative objective for this reason."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Discriminative adversarial objective eliminates need for explicit likelihood computation and MCMC",
+      "target_node": "Generator training driven by discriminator feedback in minimax game",
+      "description": "Theoretical insight enables the design choice of training G via D's gradients.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical connection, explicitly implied.",
+      "edge_rationale": "Section 3 transitions from concept to algorithm."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Generator training driven by discriminator feedback in minimax game",
+      "target_node": "Alternating k-step discriminator and generator updates to balance training dynamics",
+      "description": "Alternating updates are the concrete procedure realising the feedback loop.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 defines this.",
+      "edge_rationale": "Section 3 presents k-step alternation as implementation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Alternating k-step discriminator and generator updates to balance training dynamics",
+      "target_node": "Two multilayer perceptrons for generator and discriminator trained with backprop and dropout",
+      "description": "The architectural choice (two MLPs) instantiates the alternating update mechanism.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct implementation detail but not theoretically required.",
+      "edge_rationale": "Section 3 under ‘special case’ explains MLP instantiation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Two multilayer perceptrons for generator and discriminator trained with backprop and dropout",
+      "target_node": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "description": "Quantitative results demonstrate the effectiveness of the MLP GAN implementation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical evidence in Table 1.",
+      "edge_rationale": "Section 5 reports log-likelihood numbers."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Two multilayer perceptrons for generator and discriminator trained with backprop and dropout",
+      "target_node": "Competitive sample quality without Markov chain mixing",
+      "description": "Visual samples verify the implementation’s capacity to model data distributions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative evidence.",
+      "edge_rationale": "Figures 2–3 in Section 5."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "target_node": "Train generator–discriminator pair with adversarial nets during pre-training",
+      "description": "Positive quantitative results encourage adopting full GAN training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Inference from empirical performance (moderate).",
+      "edge_rationale": "Section 5 discussion."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Competitive sample quality without Markov chain mixing",
+      "target_node": "Train generator–discriminator pair with adversarial nets during pre-training",
+      "description": "Good sample quality further supports using GAN training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative evidence supports intervention adoption.",
+      "edge_rationale": "Section 5 figures."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Alternative generator objective maximizing log D(G(z)) provides stronger gradients without altering fixed point",
+      "target_node": "Modified generator update to maximize log D(G(z)) during training",
+      "description": "Theoretical proposal is realised by changing the generator’s gradient step.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct implementation listed in Section 3.",
+      "edge_rationale": "Immediate description following theory."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Modified generator update to maximize log D(G(z)) during training",
+      "target_node": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "description": "Empirical results incorporate the non-saturating loss.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Loss variant is part of the tested implementation.",
+      "edge_rationale": "Experimental setup includes this modification."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "target_node": "Optimize generator with log D(G(z)) objective during adversarial training",
+      "description": "Observed performance gains encourage adopting the alternative loss.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical justification.",
+      "edge_rationale": "Section 5 results."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "target_node": "Use one discriminator update per generator update in adversarial training",
+      "description": "k = 1 schedule achieved reported results, motivating its adoption.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Configuration choice linked indirectly to outcomes.",
+      "edge_rationale": "Algorithm 1 parameters vs. results."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved Parzen window log-likelihood on MNIST and TFD benchmarks",
+      "target_node": "Apply dropout to discriminator network during adversarial training",
+      "description": "Dropout was part of the successful setup, motivating its continued use.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Dropout contribution not isolated experimentally.",
+      "edge_rationale": "Experiments mention dropout in discriminator."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2014-06-10T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Generative Adversarial Networks"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Ian J. Goodfellow",
+        "Jean Pouget-Abadie",
+        "Mehdi Mirza",
+        "Bing Xu",
+        "David Warde-Farley",
+        "Sherjil Ozair",
+        "Aaron Courville",
+        "Yoshua Bengio"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1406.2661"
+    }
+  ]
+}

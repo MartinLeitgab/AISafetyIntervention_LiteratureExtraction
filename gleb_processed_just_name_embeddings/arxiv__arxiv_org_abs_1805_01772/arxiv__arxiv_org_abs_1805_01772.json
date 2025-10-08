@@ -1,0 +1,491 @@
+{
+  "nodes": [
+    {
+      "name": "training performance bottlenecks in large-scale dynamic neural networks",
+      "aliases": [
+        "distributed training slowdowns",
+        "performance bottlenecks during dynamic NN training"
+      ],
+      "type": "concept",
+      "description": "Inefficient utilisation of CPUs, GPUs and TPUs causes elongated training times for models with dynamic behaviour when control flow is not handled inside the computation graph.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in Introduction §1 as a core motivation for adding efficient control flow."
+    },
+    {
+      "name": "host-driven out-of-graph control flow synchronization overhead in distributed ML execution",
+      "aliases": [
+        "client-side control flow overhead",
+        "Python-level loop latency"
+      ],
+      "type": "concept",
+      "description": "When conditionals/loops are executed in the host language (e.g. Python), every step requires round-trips between host and accelerators, creating high latency and poor parallelism across devices.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in §2.1 and §6.1 as the main source of slow iteration throughput."
+    },
+    {
+      "name": "in-graph dynamic control flow enabling whole-program optimization and asynchronous execution in ML frameworks",
+      "aliases": [
+        "in-graph control flow",
+        "dynamic control flow inside dataflow graph"
+      ],
+      "type": "concept",
+      "description": "Representing conditionals and loops directly as graph nodes allows the runtime to schedule operations non-strictly, cache needed tensors for back-propagation and remove host synchronization.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in §1 and detailed in §3–4 as the core architectural insight."
+    },
+    {
+      "name": "embedding dynamic control flow primitives within dataflow graphs for distributed execution",
+      "aliases": [
+        "compile cond/while into graph",
+        "graph-level control flow embedding"
+      ],
+      "type": "concept",
+      "description": "High-level constructs (cond, while_loop, map_fn) are compiled into a small set of data-flow primitives so that they can be partitioned arbitrarily across heterogeneous devices.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design goals outlined in §4.2 to enable flexibility and optimisation."
+    },
+    {
+      "name": "TensorFlow control-flow primitives (Switch, Merge, Enter, Exit, NextIteration) with executor tag frames",
+      "aliases": [
+        "TF control-flow ops",
+        "Switch/Merge primitives"
+      ],
+      "type": "concept",
+      "description": "Concrete operators and an executor redesign using per-iteration frame tags provide the implementation backbone for dynamic control flow, supporting parallel iterations and distributed rendezvous.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in §4.1–4.3 as the low-level mechanism realising the design."
+    },
+    {
+      "name": "microbenchmark 8-GPU iteration rate improvements showing 5× speedup over out-of-graph loops",
+      "aliases": [
+        "iteration throughput benchmark",
+        "§6.1 GPU microbenchmark"
+      ],
+      "type": "concept",
+      "description": "Evaluation §6.1 reports that in-graph loops attain 5× higher iterations/s compared with client-side loops on 8 GPUs, validating performance benefits.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides empirical evidence that the implementation removes performance bottlenecks."
+    },
+    {
+      "name": "Implement in-graph dynamic control flow primitives in ML frameworks",
+      "aliases": [
+        "add graph-level control flow",
+        "framework support for Switch/Merge"
+      ],
+      "type": "intervention",
+      "description": "Extend or update machine-learning frameworks so that conditionals and loops are represented as graph ops executed on devices without host involvement.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Targets model-design time where framework capabilities are chosen (Design & Implementation §4).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "TensorFlow’s primitives are already production-deployed and widely used, indicating operational maturity (Evaluation §6).",
+      "node_rationale": "Actionable recommendation enabling performance and expressiveness improvements."
+    },
+    {
+      "name": "memory exhaustion in GPU training of long sequence RNNs",
+      "aliases": [
+        "GPU OOM on long sequences",
+        "RNN memory limits"
+      ],
+      "type": "concept",
+      "description": "GPU DRAM limits restrict sequence length and batch size during RNN training because many intermediate activations must reside in memory for back-propagation.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivating problem stated in §2.2 and evaluated in §6.2."
+    },
+    {
+      "name": "retention of intermediate tensors during backpropagation across long sequences leading to large GPU memory footprint",
+      "aliases": [
+        "intermediate tensor retention",
+        "activation storage problem"
+      ],
+      "type": "concept",
+      "description": "Autodiff requires forward activations for gradient computation; as sequence length grows, storing these tensors linearly increases GPU memory usage.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in §5.1 and §5.3 as the direct mechanism generating the risk."
+    },
+    {
+      "name": "overlapping compute with asynchronous memory swapping between GPU and CPU mitigates memory usage",
+      "aliases": [
+        "compute-I/O overlap insight",
+        "asynchronous swapping insight"
+      ],
+      "type": "concept",
+      "description": "By moving tensors to host memory during forward pass and prefetching them back during backward pass using separate CUDA streams, one can avoid GPU OOM without slowing training.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained conceptually in §5.3 before implementation specifics."
+    },
+    {
+      "name": "stack-based state saving and multi-stream GPU I/O for overlapped swapping",
+      "aliases": [
+        "stack saving design",
+        "multi-stream swapping design"
+      ],
+      "type": "concept",
+      "description": "Forward pass pushes needed tensors onto per-tensor stacks; asynchronous GPU→CPU copies run on a dedicated stream while compute continues, and backward pass pops with prefetch.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design approach described in §5.3 to realise the theoretical insight."
+    },
+    {
+      "name": "GPU-to-CPU tensor swapping triggered by memory threshold using separate CUDA streams",
+      "aliases": [
+        "GPU memory swapping mechanism",
+        "tensor swap implementation"
+      ],
+      "type": "concept",
+      "description": "Runtime monitors allocator usage; when a threshold is exceeded, tensors are copied to host memory and later restored, executed via dedicated MemCpy streams to overlap with compute.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation specifics covered in §5.3 and evaluated in §6.2."
+    },
+    {
+      "name": "LSTM training sequence length doubled from 500 to 1000 with negligible overhead via swapping",
+      "aliases": [
+        "Table 1 swapping evidence",
+        "sequence length scalability result"
+      ],
+      "type": "concept",
+      "description": "Evaluation §6.2 shows training time per iteration remains ~5.7 ms while maximum sequence length doubles when swapping is enabled, demonstrating memory relief.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirically validates the effectiveness of memory-swapping mechanism."
+    },
+    {
+      "name": "Enable asynchronous GPU memory swapping for intermediate tensors during training loops",
+      "aliases": [
+        "activate tensor swapping",
+        "apply GPU↔CPU swapping"
+      ],
+      "type": "intervention",
+      "description": "Configure training pipelines to off-load selected activations from GPU to host memory using asynchronous copy streams and stack-based bookkeeping to handle long sequences.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applied during fine-tuning/training to manage runtime memory (§5.3, §6.2).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "Technique is built into production TensorFlow and demonstrated on real workloads (§6.2).",
+      "node_rationale": "Directly actionable setting to mitigate GPU OOM risk."
+    },
+    {
+      "name": "limited model expressiveness due to absence of dynamic control flow in ML frameworks",
+      "aliases": [
+        "expressiveness limitations",
+        "restricted architectures"
+      ],
+      "type": "concept",
+      "description": "Without native graph-level control flow, certain models (MoE, tree RNNs, RL agents) are hard to express or run efficiently, slowing research progress.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in §2.2 with real-world examples requiring dynamic control flow."
+    },
+    {
+      "name": "static unrolling and client-side conditionals limit conditional computation and parallelism",
+      "aliases": [
+        "static unrolling limitation",
+        "client conditional limitation"
+      ],
+      "type": "concept",
+      "description": "Models relying on sequence length or data-dependent branching must be unrolled ahead of time or controlled from Python, both of which hamper scalability and flexibility.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in §2.2 and compared against dynamic control flow in §6.3."
+    },
+    {
+      "name": "local executor parallel-iteration tagging enabling nested control flow and distributed loops",
+      "aliases": [
+        "executor frame tagging",
+        "parallel iteration executor"
+      ],
+      "type": "concept",
+      "description": "Redesigned executor tracks per-iteration tags and controls parallelism limits, allowing nested loops and conditionals to run concurrently across devices without extra coordination.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation detail from §4.3 critical for achieving expressiveness and speed."
+    },
+    {
+      "name": "Deep Q-Network implementation speedup of 21% using in-graph control flow compared to baseline",
+      "aliases": [
+        "DQN speedup evidence",
+        "§6.5 RL evaluation"
+      ],
+      "type": "concept",
+      "description": "Evaluation §6.5 shows that fusing the entire DQN algorithm into an in-graph execution with control flow results in a 21 % runtime reduction versus host-driven baselines.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Demonstrates expressiveness and performance gains in a real RL workload."
+    },
+    {
+      "name": "Adopt in-graph dynamic control flow for reinforcement learning model graphs to enable parallel conditional execution",
+      "aliases": [
+        "use graph control flow in RL",
+        "deploy in-graph loops for RL"
+      ],
+      "type": "intervention",
+      "description": "Structure RL algorithms (e.g., DQN, actor-critic) so that environment interaction, experience replay and conditional target updates all execute inside a single graph with dynamic control ops.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applied during training pipelines where RL graphs are built and executed (§6.5).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated in specific workloads but not yet ubiquitous across all frameworks (§6.5).",
+      "node_rationale": "Actionable step to unlock expressiveness benefits validated in the paper."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "training performance bottlenecks in large-scale dynamic neural networks",
+      "target_node": "host-driven out-of-graph control flow synchronization overhead in distributed ML execution",
+      "description": "Host-level loops force frequent synchronization, directly creating slow iteration throughput that manifests as performance bottlenecks.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit comparison in §6.1; causal wording inferred.",
+      "edge_rationale": "Paper links out-of-graph approach to 5× slower performance."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "host-driven out-of-graph control flow synchronization overhead in distributed ML execution",
+      "target_node": "in-graph dynamic control flow enabling whole-program optimization and asynchronous execution in ML frameworks",
+      "description": "Embedding control flow inside the graph removes the need for host synchronization and enables optimiser-driven scheduling.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Sections §2.1 & §3 describe advantages; moderate inference.",
+      "edge_rationale": "Authors argue in-graph control flow addresses overhead."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "in-graph dynamic control flow enabling whole-program optimization and asynchronous execution in ML frameworks",
+      "target_node": "embedding dynamic control flow primitives within dataflow graphs for distributed execution",
+      "description": "Compiling high-level constructs into primitives realises the theoretical benefits within the framework.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design rationale in §4.2 directly follows theoretical insight.",
+      "edge_rationale": "Design translates insight into concrete engineering choice."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "embedding dynamic control flow primitives within dataflow graphs for distributed execution",
+      "target_node": "TensorFlow control-flow primitives (Switch, Merge, Enter, Exit, NextIteration) with executor tag frames",
+      "description": "Specific TensorFlow operators and executor modifications instantiate the design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed implementation §4.1–4.3.",
+      "edge_rationale": "Mechanism directly realises design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "TensorFlow control-flow primitives (Switch, Merge, Enter, Exit, NextIteration) with executor tag frames",
+      "target_node": "microbenchmark 8-GPU iteration rate improvements showing 5× speedup over out-of-graph loops",
+      "description": "Benchmarks demonstrate that the primitives achieve expected performance gains.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative results in §6.1.",
+      "edge_rationale": "Benchmark measures success of mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "microbenchmark 8-GPU iteration rate improvements showing 5× speedup over out-of-graph loops",
+      "target_node": "Implement in-graph dynamic control flow primitives in ML frameworks",
+      "description": "Empirical speed-ups encourage framework developers to incorporate the primitives broadly.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Motivation stated implicitly; inference from evaluation.",
+      "edge_rationale": "Demonstrated benefits drive adoption."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "memory exhaustion in GPU training of long sequence RNNs",
+      "target_node": "retention of intermediate tensors during backpropagation across long sequences leading to large GPU memory footprint",
+      "description": "Storing all activations for back-prop directly leads to GPU OOM.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Mechanism explained in §5.1.",
+      "edge_rationale": "Causal link explicitly discussed."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "retention of intermediate tensors during backpropagation across long sequences leading to large GPU memory footprint",
+      "target_node": "overlapping compute with asynchronous memory swapping between GPU and CPU mitigates memory usage",
+      "description": "Swapping offloads activations, reducing on-device memory needs.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Proposed in §5.3.",
+      "edge_rationale": "Insight provides remedy."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "overlapping compute with asynchronous memory swapping between GPU and CPU mitigates memory usage",
+      "target_node": "stack-based state saving and multi-stream GPU I/O for overlapped swapping",
+      "description": "Design leverages stacks and multiple streams to realise overlapping.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design rationale §5.3 follows insight.",
+      "edge_rationale": "Design operationalises theory."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "stack-based state saving and multi-stream GPU I/O for overlapped swapping",
+      "target_node": "GPU-to-CPU tensor swapping triggered by memory threshold using separate CUDA streams",
+      "description": "Concrete runtime mechanism implements the design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation specifics §5.3.",
+      "edge_rationale": "Mechanism is direct implementation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "GPU-to-CPU tensor swapping triggered by memory threshold using separate CUDA streams",
+      "target_node": "LSTM training sequence length doubled from 500 to 1000 with negligible overhead via swapping",
+      "description": "Experiment confirms memory-swapping enables longer sequences without slowdown.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1 quantitative data.",
+      "edge_rationale": "Validation evidence corresponds to mechanism’s success."
+    },
+    {
+      "type": "motivates",
+      "source_node": "LSTM training sequence length doubled from 500 to 1000 with negligible overhead via swapping",
+      "target_node": "Enable asynchronous GPU memory swapping for intermediate tensors during training loops",
+      "description": "Positive results motivate practitioners to enable swapping in their training setups.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Inference from evaluation to practical recommendation.",
+      "edge_rationale": "Evidence supports adopting intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "limited model expressiveness due to absence of dynamic control flow in ML frameworks",
+      "target_node": "static unrolling and client-side conditionals limit conditional computation and parallelism",
+      "description": "Lack of native control flow forces these workaround strategies which restrict model forms.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in §2.2 and §6.3.",
+      "edge_rationale": "Workarounds are immediate cause of expressiveness risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "static unrolling and client-side conditionals limit conditional computation and parallelism",
+      "target_node": "in-graph dynamic control flow enabling whole-program optimization and asynchronous execution in ML frameworks",
+      "description": "Embedding control flow removes need for static unrolling or host-side execution.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Authors propose control flow to solve expressiveness issue (§2.2).",
+      "edge_rationale": "Insight counters problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "in-graph dynamic control flow enabling whole-program optimization and asynchronous execution in ML frameworks",
+      "target_node": "embedding dynamic control flow primitives within dataflow graphs for distributed execution",
+      "description": "Compilation strategy provides concrete way to harness insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Same as earlier; reused node.",
+      "edge_rationale": "Design realises insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "embedding dynamic control flow primitives within dataflow graphs for distributed execution",
+      "target_node": "local executor parallel-iteration tagging enabling nested control flow and distributed loops",
+      "description": "Executor redesign is key implementation enabling nested, parallel control flow in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation §4.3 clearly ties to design.",
+      "edge_rationale": "Mechanism implements design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "local executor parallel-iteration tagging enabling nested control flow and distributed loops",
+      "target_node": "Deep Q-Network implementation speedup of 21% using in-graph control flow compared to baseline",
+      "description": "RL case study shows executor handles complex control flow and yields performance gains.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical result §6.5 links mechanism to outcome.",
+      "edge_rationale": "Validation demonstrates mechanism efficacy."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Deep Q-Network implementation speedup of 21% using in-graph control flow compared to baseline",
+      "target_node": "Adopt in-graph dynamic control flow for reinforcement learning model graphs to enable parallel conditional execution",
+      "description": "Demonstrated RL benefits encourage practitioners to adopt in-graph control flow in similar settings.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Motivation inferred from evaluation discussion.",
+      "edge_rationale": "Evidence provides rationale for intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Dynamic Control Flow in Large-Scale Machine Learning"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.01772"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-04T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Yuan Yu",
+        "Martín Abadi",
+        "Paul Barham",
+        "Eugene Brevdo",
+        "Mike Burrows",
+        "Andy Davis",
+        "Jeff Dean",
+        "Sanjay Ghemawat",
+        "Tim Harley",
+        "Peter Hawkins",
+        "Michael Isard",
+        "Manjunath Kudlur",
+        "Rajat Monga",
+        "Derek Murray",
+        "Xiaoqiang Zheng"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

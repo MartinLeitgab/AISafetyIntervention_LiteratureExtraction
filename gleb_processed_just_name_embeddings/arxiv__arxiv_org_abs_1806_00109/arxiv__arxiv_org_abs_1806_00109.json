@@ -1,0 +1,372 @@
+{
+  "nodes": [
+    {
+      "name": "Human–robot collision in shared workspace",
+      "aliases": [
+        "robot-human collision risk",
+        "physical collision between robot and human"
+      ],
+      "type": "concept",
+      "description": "Potential physical contact between a robot and a nearby human that can cause harm when robots operate in the same environment.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in I Introduction as the primary safety concern motivating the work."
+    },
+    {
+      "name": "Inaccurate human motion prediction from fixed utility model",
+      "aliases": [
+        "prediction error from rigid human model",
+        "model mismatch in human motion forecasting"
+      ],
+      "type": "concept",
+      "description": "Errors arise when the robot assumes the human will continue to optimise a learned reward, yet the human pursues unseen goals or avoids unknown obstacles.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in I Introduction and III-C as the main cause of unsafe plans."
+    },
+    {
+      "name": "Unaccounted robot tracking error under uncertain human motion",
+      "aliases": [
+        "robot control deviation risk",
+        "tracking error not considered with moving people"
+      ],
+      "type": "concept",
+      "description": "Simplified planning models ignore inertia, actuator limits and disturbances, causing the real robot to deviate from the planned path while humans move unpredictably.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in III-B and V-A as a separate contributor to collision risk."
+    },
+    {
+      "name": "Rationality coefficient β as indicator of model confidence in utility-based human models",
+      "aliases": [
+        "β as model confidence",
+        "interpreting rationality as confidence"
+      ],
+      "type": "concept",
+      "description": "Instead of viewing β as inherent human rationality, it can be treated as a time-varying scalar measuring how well the robot’s model explains current behaviour.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in IV and motivated throughout as the key insight enabling adaptive prediction."
+    },
+    {
+      "name": "Combining probabilistic human predictions with worst-case robot tracking error to bound collision probability",
+      "aliases": [
+        "hybrid probabilistic-worst-case safety insight",
+        "joint human probability and robot error bound"
+      ],
+      "type": "concept",
+      "description": "Safety can be analysed by merging a probabilistic forecast of human motion with a deterministic bound E on robot tracking error, giving an overall collision probability.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formulated in V-B as the core idea behind the probabilistic safety certificate."
+    },
+    {
+      "name": "Real-time Bayesian inference of model confidence to adapt human motion predictions",
+      "aliases": [
+        "adaptive β estimation design",
+        "confidence-aware prediction design"
+      ],
+      "type": "concept",
+      "description": "Design principle: continuously update belief over β using observed human actions so that predictions automatically widen when the model performs poorly and narrow when accurate.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section IV-A proposes this approach to mitigate prediction inaccuracies."
+    },
+    {
+      "name": "Probabilistic safety certificate using max marginal collision probability and FaSTrack bound",
+      "aliases": [
+        "certificate with max-marginal approximation",
+        "FaSTrack-based probabilistic guarantee"
+      ],
+      "type": "concept",
+      "description": "Design principle: approximate trajectory-wide collision probability by the worst instantaneous marginal, combined with tracking error bound E, to enable real-time rejection of unsafe plans.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in V-B as the key planning strategy."
+    },
+    {
+      "name": "Hidden Markov model inference over discrete β values",
+      "aliases": [
+        "HMM for β",
+        "discrete log-scale β belief update"
+      ],
+      "type": "concept",
+      "description": "Implements the Bayesian confidence inference by maintaining a belief over ~10 log-spaced β hypotheses and smoothing it over time for tractability.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in IV-A; enables real-time confidence updating."
+    },
+    {
+      "name": "FaSTrack tracking error bound integration with Minkowski collision set",
+      "aliases": [
+        "FaSTrack bound E computation",
+        "pre-computed tracking envelope"
+      ],
+      "type": "concept",
+      "description": "Pre-computes a set E guaranteeing that the physical robot stays within E of the planned state, allowing collision checking via the Minkowski sum HE(xR).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section V-A and V-B provide the mechanism for worst-case tracking consideration."
+    },
+    {
+      "name": "Online planner with node rejection based on collision probability threshold",
+      "aliases": [
+        "probabilistic node rejection rule",
+        "search-tree pruning by Pth"
+      ],
+      "type": "concept",
+      "description": "During search, any candidate state whose marginal collision probability exceeds a designer-chosen threshold (e.g., 1%) is pruned, ensuring generated trajectories satisfy the certificate.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in V-C as the practical online planning procedure."
+    },
+    {
+      "name": "Simulation results: adaptive β improves safety distance and efficiency",
+      "aliases": [
+        "simulated evaluation with 48 trajectories",
+        "box-plot safety/efficiency evidence"
+      ],
+      "type": "concept",
+      "description": "Across 48 human trajectories, adaptive β inference kept larger minimum distances and reduced travel time compared with fixed-β baselines.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in VI Demonstration with Real Human Trajectories."
+    },
+    {
+      "name": "Hardware demonstration of quadcopter avoiding humans",
+      "aliases": [
+        "Crazyflie 2.0 demo",
+        "physical hardware validation"
+      ],
+      "type": "concept",
+      "description": "A Crazyflie 2.0 quadcopter navigated around a walking person indoors using the full pipeline, avoiding collisions in all recorded videos.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Mentioned in VI Demonstration and linked video."
+    },
+    {
+      "name": "Deploy real-time Bayesian β inference for human motion prediction during robot operation",
+      "aliases": [
+        "online adaptive confidence estimation deployment",
+        "adaptive β deployment"
+      ],
+      "type": "intervention",
+      "description": "Implement the HMM-based Bayesian update over discrete β values at runtime, widening or narrowing human-motion predictions in real time.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Algorithm runs continuously during operation (V-C Safe Online Planning) – deployment phase.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated in simulation and limited hardware demos (VI Demonstration) – prototype/pilot maturity.",
+      "node_rationale": "Directly addresses prediction inaccuracy by adapting confidence."
+    },
+    {
+      "name": "Integrate confidence-aware human predictions with FaSTrack-based probabilistic safety planning",
+      "aliases": [
+        "confidence-aware probabilistic planner deployment",
+        "FaSTrack + adaptive β planner"
+      ],
+      "type": "intervention",
+      "description": "Combine adaptive human prediction, FaSTrack tracking bound, max-marginal collision approximation and node-rejection rule to generate robot trajectories that satisfy a predefined collision-probability threshold.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Algorithm executes online as the robot plans and tracks (V-C) – deployment phase.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Shown to work in hardware demo but not yet at large-scale deployment (VI Demonstration).",
+      "node_rationale": "Implements the full safety certificate ensuring collisions remain below acceptable probability."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Human–robot collision in shared workspace",
+      "target_node": "Inaccurate human motion prediction from fixed utility model",
+      "description": "Collisions occur when the robot’s prediction of where the human will move is wrong.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated motivation in I Introduction but not statistically quantified.",
+      "edge_rationale": "Mis-predictions lead the robot to plan unsafe paths."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Human–robot collision in shared workspace",
+      "target_node": "Unaccounted robot tracking error under uncertain human motion",
+      "description": "Even with a good plan, deviation between planned and actual robot state can cause collisions with humans.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section III-B explains tracking errors compromising safety.",
+      "edge_rationale": "Physical dynamics mismatch contributes to the same collision risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Inaccurate human motion prediction from fixed utility model",
+      "target_node": "Rationality coefficient β as indicator of model confidence in utility-based human models",
+      "description": "Treating β as model confidence offers a handle to recognise when predictions may be wrong.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoning in IV; empirical backing arrives later.",
+      "edge_rationale": "This insight directly targets the identified prediction error."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Unaccounted robot tracking error under uncertain human motion",
+      "target_node": "Combining probabilistic human predictions with worst-case robot tracking error to bound collision probability",
+      "description": "By jointly reasoning about human uncertainty and robot deviation, safety margins can be computed.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Conceptual argument in V-B.",
+      "edge_rationale": "Addresses the dual-uncertainty problem causing collisions."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Rationality coefficient β as indicator of model confidence in utility-based human models",
+      "target_node": "Real-time Bayesian inference of model confidence to adapt human motion predictions",
+      "description": "Bayesian inference operationalises the confidence concept for online use.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed algorithm derivation in IV-A.",
+      "edge_rationale": "Design rationale turns the theoretical insight into a concrete approach."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Combining probabilistic human predictions with worst-case robot tracking error to bound collision probability",
+      "target_node": "Probabilistic safety certificate using max marginal collision probability and FaSTrack bound",
+      "description": "The certificate embodies the hybrid probabilistic-deterministic reasoning to enable planning.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Formal derivation in V-B.",
+      "edge_rationale": "Design rationale realises the theoretical safety concept."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Real-time Bayesian inference of model confidence to adapt human motion predictions",
+      "target_node": "Hidden Markov model inference over discrete β values",
+      "description": "HMM with ~10 discrete β values is used to compute the belief update fast enough for real-time operation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithmic details in IV-A and VI results.",
+      "edge_rationale": "Provides the concrete mechanism for the design rationale."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Probabilistic safety certificate using max marginal collision probability and FaSTrack bound",
+      "target_node": "FaSTrack tracking error bound integration with Minkowski collision set",
+      "description": "FaSTrack pre-computes E, a prerequisite for evaluating collision probability.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Methodology in V-A and V-B.",
+      "edge_rationale": "Implements part of the certificate concerning robot dynamics."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Probabilistic safety certificate using max marginal collision probability and FaSTrack bound",
+      "target_node": "Online planner with node rejection based on collision probability threshold",
+      "description": "The planner operationalises the certificate by pruning trajectory tree nodes exceeding Pth.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm description in V-C.",
+      "edge_rationale": "Implements the real-time planning aspect of the certificate."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Hidden Markov model inference over discrete β values",
+      "target_node": "Simulation results: adaptive β improves safety distance and efficiency",
+      "description": "Simulation shows that HMM-based β inference reduces collision proximity and travel time.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical box-plots in VI.",
+      "edge_rationale": "Evidence supports the implementation mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "FaSTrack tracking error bound integration with Minkowski collision set",
+      "target_node": "Hardware demonstration of quadcopter avoiding humans",
+      "description": "Hardware test confirms the tracking bound protects against collisions in real conditions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Crazyflie demo in VI.",
+      "edge_rationale": "Demonstrates the mechanism works on a physical platform."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Online planner with node rejection based on collision probability threshold",
+      "target_node": "Hardware demonstration of quadcopter avoiding humans",
+      "description": "Planner kept collision probability below threshold during live flight.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Observed zero collisions in demo videos.",
+      "edge_rationale": "Shows the planner mechanism functions as intended."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Simulation results: adaptive β improves safety distance and efficiency",
+      "target_node": "Deploy real-time Bayesian β inference for human motion prediction during robot operation",
+      "description": "Positive simulation outcomes justify deploying the adaptive β inference in real systems.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Quantitative improvement in VI simulations.",
+      "edge_rationale": "Evidence motivates adoption of the intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Hardware demonstration of quadcopter avoiding humans",
+      "target_node": "Integrate confidence-aware human predictions with FaSTrack-based probabilistic safety planning",
+      "description": "Successful hardware demonstration supports integrating the full pipeline in deployments.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Demonstration shows practical feasibility.",
+      "edge_rationale": "Practical validation encourages deploying the combined planner."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Probabilistically Safe Robot Planning with Confidence-Based Human Predictions"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.00109"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-31T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Jaime F. Fisac",
+        "Andrea Bajcsy",
+        "Sylvia L. Herbert",
+        "David Fridovich-Keil",
+        "Steven Wang",
+        "Claire J. Tomlin",
+        "Anca D. Dragan"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

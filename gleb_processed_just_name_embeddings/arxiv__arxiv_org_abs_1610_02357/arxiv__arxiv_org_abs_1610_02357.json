@@ -1,0 +1,510 @@
+{
+  "nodes": [
+    {
+      "name": "High computational and parameter inefficiency in CNN architectures for image classification",
+      "aliases": [
+        "Resource-intensive CNN models",
+        "High FLOPs and parameters in vision CNNs"
+      ],
+      "type": "concept",
+      "description": "Large-scale vision CNNs such as VGG and early Inception require tens of millions of parameters and extensive compute, limiting deployment on resource-constrained or real-time systems.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in ‘1 Introduction’; motivates search for more efficient architectures."
+    },
+    {
+      "name": "Joint spatial and cross-channel correlation mapping via standard convolutions",
+      "aliases": [
+        "Monolithic convolution correlation mapping",
+        "Undecomposed 3-D convolution"
+      ],
+      "type": "concept",
+      "description": "Standard 3-D convolution kernels simultaneously learn spatial and cross-channel features, which demands many parameters and compute.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in ‘1.1 The Inception hypothesis’ as the root cause of inefficiency."
+    },
+    {
+      "name": "Decoupling cross-channel and spatial correlations reduces parameter count without harming representation capacity",
+      "aliases": [
+        "Correlation decoupling hypothesis",
+        "Separable correlation mapping assumption"
+      ],
+      "type": "concept",
+      "description": "Assumes spatial correlations can be learned independently once cross-channel mixing is performed, enabling more efficient computation.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Central hypothesis stated in ‘1.2 Continuum between convolutions and separable convolutions’."
+    },
+    {
+      "name": "Replace standard convolutions with depthwise separable convolutions",
+      "aliases": [
+        "Separable convolution design strategy",
+        "Convolution factorisation approach"
+      ],
+      "type": "concept",
+      "description": "Design strategy that realises the decoupling hypothesis by splitting convolution into a channel-wise spatial part and a 1×1 point-wise part.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in ‘3 The Xception architecture’ as the high-level solution."
+    },
+    {
+      "name": "Depthwise separable convolution layer (channel-wise spatial convolution followed by 1×1 point-wise convolution)",
+      "aliases": [
+        "Depthwise + pointwise convolution",
+        "Separable conv layer"
+      ],
+      "type": "concept",
+      "description": "Implementation that performs a depthwise spatial convolution for each channel and then mixes channels with a pointwise convolution; implemented efficiently in TensorFlow.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described technically in ‘3 The Xception architecture’."
+    },
+    {
+      "name": "Parameter-equivalent Xception improves ImageNet top-1 accuracy to 0.79 and JFT MAP@100 by 4.3%",
+      "aliases": [
+        "Xception empirical performance",
+        "Separable conv performance evidence"
+      ],
+      "type": "concept",
+      "description": "Experimental results in Tables 1–2 show Xception surpasses Inception V3 with nearly identical parameter count, validating the efficiency claim.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in ‘4.5 Comparison with Inception V3’."
+    },
+    {
+      "name": "Adopt depthwise separable convolutions in CNN model design to reduce parameters and improve accuracy",
+      "aliases": [
+        "Use separable convolutions in CNNs",
+        "Implement Xception-style separable conv"
+      ],
+      "type": "intervention",
+      "description": "When architecting new vision models, replace conventional convolutions (or Inception modules) with depthwise separable convolutions throughout the network.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Model-architecture change defined in ‘3 The Xception architecture’.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated on large public (ImageNet) and proprietary (JFT) datasets; open-source implementation provided (§3, §4.5).",
+      "node_rationale": "Primary actionable outcome directly linked to validated gains."
+    },
+    {
+      "name": "Training instability and slow convergence in deep depthwise separable convolutional networks",
+      "aliases": [
+        "Optimisation difficulties in separable CNNs",
+        "Slow convergence without residuals"
+      ],
+      "type": "concept",
+      "description": "Deep stacks of separable convolutions may converge slowly or reach sub-optimal accuracy when residual pathways are absent.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identified via ablation in ‘4.6 Effect of the residual connections’."
+    },
+    {
+      "name": "Absence of residual connections impedes gradient flow in deep separable convolution stacks",
+      "aliases": [
+        "No skip connections harms training",
+        "Vanishing gradients in separable convs"
+      ],
+      "type": "concept",
+      "description": "Without skip connections, gradients diminish across many separable layers, slowing training and degrading final accuracy.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in ablation study Figure 9 (§4.6)."
+    },
+    {
+      "name": "Residual skip connections enable stable optimization of deep networks",
+      "aliases": [
+        "Residual connections facilitate training",
+        "Skip connections improve gradient flow"
+      ],
+      "type": "concept",
+      "description": "The residual learning principle stabilises gradient propagation and allows very deep models to converge efficiently.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Insight drawn from comparison of residual vs non-residual Xception (§4.6)."
+    },
+    {
+      "name": "Add linear residual connections around separable convolution modules",
+      "aliases": [
+        "Residual wrapping design",
+        "Residual block strategy for separable convs"
+      ],
+      "type": "concept",
+      "description": "Design decision to surround each separable-convolution module with identity skip connections that sum inputs to outputs.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Specified in network diagram Figure 5 and text (§3)."
+    },
+    {
+      "name": "Residual blocks in Xception stack",
+      "aliases": [
+        "Xception residual structure",
+        "Separable conv residual implementation"
+      ],
+      "type": "concept",
+      "description": "Concrete implementation in Xception where 14 separable-conv modules, except first/last, include identity shortcuts.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details in Figure 5 (§3)."
+    },
+    {
+      "name": "Removing residual connections lowers accuracy and slows convergence on ImageNet",
+      "aliases": [
+        "Non-residual Xception performance evidence",
+        "Residual ablation results"
+      ],
+      "type": "concept",
+      "description": "Experiment (Figure 9) shows significant drop in validation accuracy and slower training when residuals are omitted.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides empirical backing for residual design choice (§4.6)."
+    },
+    {
+      "name": "Integrate residual connections in depthwise separable convolution architectures during model design",
+      "aliases": [
+        "Add skip connections to separable CNNs",
+        "Residualised separable conv models"
+      ],
+      "type": "intervention",
+      "description": "At design time, wrap every or most separable-convolution modules with identity skip connections to ensure training stability and higher final accuracy.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Architecture design adjustment defined in §3 and evaluated in §4.6.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated via ablation on ImageNet; widely adopted in follow-up models.",
+      "node_rationale": "Directly supported improvement addressing the optimisation risk."
+    },
+    {
+      "name": "Performance degradation due to intermediate activation in depthwise separable convolutions",
+      "aliases": [
+        "Information loss from inter-operation non-linearity",
+        "Harmful activation in separable convs"
+      ],
+      "type": "concept",
+      "description": "Introducing ReLU or ELU between the depthwise and point-wise steps can hurt convergence and final accuracy for shallow intermediate feature spaces.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Observed experimentally in Figure 10 (§4.7)."
+    },
+    {
+      "name": "Absence of intermediate activation retains information and accelerates convergence in shallow feature spaces",
+      "aliases": [
+        "Skip-activation theoretical insight",
+        "Linear separable conv benefit"
+      ],
+      "type": "concept",
+      "description": "Theoretical reasoning that an activation in 1-channel spaces discards critical information, so leaving the transformation linear is advantageous.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in §4.7 when contrasting activation vs no-activation variants."
+    },
+    {
+      "name": "Exclude activation between depthwise and pointwise convolutions",
+      "aliases": [
+        "No-activation design choice",
+        "Linear separable conv layers"
+      ],
+      "type": "concept",
+      "description": "Design choice to keep separable convolution linear between its two constituent operations.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived from insight in §4.7."
+    },
+    {
+      "name": "Separable convolution layer without intermediate activation",
+      "aliases": [
+        "Linear separable conv implementation",
+        "Activation-free separable conv"
+      ],
+      "type": "concept",
+      "description": "Implementation detail where the framework’s separable conv op is used without inserting ReLU/ELU between depthwise and pointwise steps.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implemented in experimental variants benchmarked in Figure 10 (§4.7)."
+    },
+    {
+      "name": "ImageNet experiments show better accuracy without intermediate activation",
+      "aliases": [
+        "Activation ablation evidence",
+        "Activation impact results"
+      ],
+      "type": "concept",
+      "description": "Validation in Figure 10 demonstrates faster convergence and higher top-1 accuracy when no activation is used.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical confirmation located in §4.7."
+    },
+    {
+      "name": "Design separable convolutional layers without intermediate activation during model design",
+      "aliases": [
+        "Omit activation in separable convs",
+        "Linear separable conv design intervention"
+      ],
+      "type": "intervention",
+      "description": "When constructing depthwise separable layers, keep the transformation linear between the depthwise and point-wise convolutions to preserve information and speed training.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Applied at architecture specification phase; discussed in §4.7.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evidence limited to experimental ablation within one paper; wider validation pending.",
+      "node_rationale": "Actionable tweak that mitigates the activation-related performance risk."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "High computational and parameter inefficiency in CNN architectures for image classification",
+      "target_node": "Joint spatial and cross-channel correlation mapping via standard convolutions",
+      "description": "Inefficiency stems from monolithic convolutions that jointly learn both correlation types.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit argument in ‘1.1 The Inception hypothesis’.",
+      "edge_rationale": "Text states joint mapping inflates parameter count, hence inefficiency."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Joint spatial and cross-channel correlation mapping via standard convolutions",
+      "target_node": "Decoupling cross-channel and spatial correlations reduces parameter count without harming representation capacity",
+      "description": "Observation of the problem motivates the decoupling hypothesis.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical flow laid out in §1.1–§1.2.",
+      "edge_rationale": "Hypothesis is presented as a response to joint-mapping limitations."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Decoupling cross-channel and spatial correlations reduces parameter count without harming representation capacity",
+      "target_node": "Replace standard convolutions with depthwise separable convolutions",
+      "description": "Design decision operationalises the theoretical decoupling insight.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct proposal in §3 ‘We propose… based entirely on depthwise separable convolutions’.",
+      "edge_rationale": "Separable convolutions are the concrete mitigation measure."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Replace standard convolutions with depthwise separable convolutions",
+      "target_node": "Depthwise separable convolution layer (channel-wise spatial convolution followed by 1×1 point-wise convolution)",
+      "description": "Implementation mechanism realises the design rationale.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Exact layer definition provided in §3.",
+      "edge_rationale": "Layer is the code-level embodiment of the design choice."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Depthwise separable convolution layer (channel-wise spatial convolution followed by 1×1 point-wise convolution)",
+      "target_node": "Parameter-equivalent Xception improves ImageNet top-1 accuracy to 0.79 and JFT MAP@100 by 4.3%",
+      "description": "Empirical results confirm the effectiveness of the separable-conv implementation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Controlled comparison with equal parameter count (§4.5).",
+      "edge_rationale": "Performance gains validate implementation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Parameter-equivalent Xception improves ImageNet top-1 accuracy to 0.79 and JFT MAP@100 by 4.3%",
+      "target_node": "Adopt depthwise separable convolutions in CNN model design to reduce parameters and improve accuracy",
+      "description": "Demonstrated gains motivate adoption of separable convolutions in future models.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong quantitative evidence across two datasets.",
+      "edge_rationale": "Validation evidence provides direct rationale for the intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Training instability and slow convergence in deep depthwise separable convolutional networks",
+      "target_node": "Absence of residual connections impedes gradient flow in deep separable convolution stacks",
+      "description": "Optimisation difficulties arise when skip connections are omitted.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Observed in ablation study Figure 9 (§4.6).",
+      "edge_rationale": "Lack of residuals identified as the proximate cause."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Absence of residual connections impedes gradient flow in deep separable convolution stacks",
+      "target_node": "Residual skip connections enable stable optimization of deep networks",
+      "description": "Problem analysis leads to the insight that residuals resolve gradient issues.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical inference supported by residual literature and paper discussion.",
+      "edge_rationale": "Insight directly addresses the identified problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Residual skip connections enable stable optimization of deep networks",
+      "target_node": "Add linear residual connections around separable convolution modules",
+      "description": "Design rationale derives from the theoretical benefit of residuals.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Supported by precedent in ResNet and paper’s own results.",
+      "edge_rationale": "Design choice implements theory."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Add linear residual connections around separable convolution modules",
+      "target_node": "Residual blocks in Xception stack",
+      "description": "Specific block structure realises the residual design.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Architecture diagram Figure 5.",
+      "edge_rationale": "Blocks are code-level instantiation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Residual blocks in Xception stack",
+      "target_node": "Removing residual connections lowers accuracy and slows convergence on ImageNet",
+      "description": "Ablation shows residual blocks are necessary for performance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical comparison in Figure 9.",
+      "edge_rationale": "Evidence validates implementation efficacy."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Removing residual connections lowers accuracy and slows convergence on ImageNet",
+      "target_node": "Integrate residual connections in depthwise separable convolution architectures during model design",
+      "description": "Performance drop without residuals motivates including them in future designs.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear experimental contrast.",
+      "edge_rationale": "Findings drive the intervention choice."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Training instability and slow convergence in deep depthwise separable convolutional networks",
+      "target_node": "Performance degradation due to intermediate activation in depthwise separable convolutions",
+      "description": "Activation-related information loss is another contributor to optimisation difficulty.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Derived from §4.7; partial inference.",
+      "edge_rationale": "Paper links activation choice to convergence speed."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Performance degradation due to intermediate activation in depthwise separable convolutions",
+      "target_node": "Absence of intermediate activation retains information and accelerates convergence in shallow feature spaces",
+      "description": "Identified degradation leads to insight advocating no activation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Supported by experimental comparison Figure 10.",
+      "edge_rationale": "Insight directly responds to the problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Absence of intermediate activation retains information and accelerates convergence in shallow feature spaces",
+      "target_node": "Exclude activation between depthwise and pointwise convolutions",
+      "description": "Design choice follows from theoretical benefit of linearity.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Paper proposes linear variant (§4.7).",
+      "edge_rationale": "Design implements insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Exclude activation between depthwise and pointwise convolutions",
+      "target_node": "Separable convolution layer without intermediate activation",
+      "description": "Implementation realises activation-free design.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Concrete layer variant evaluated in experiments.",
+      "edge_rationale": "Implementation is code-level change."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Separable convolution layer without intermediate activation",
+      "target_node": "ImageNet experiments show better accuracy without intermediate activation",
+      "description": "Validation shows improved accuracy for activation-free variant.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative results in Figure 10.",
+      "edge_rationale": "Evidence confirms implementation benefit."
+    },
+    {
+      "type": "motivates",
+      "source_node": "ImageNet experiments show better accuracy without intermediate activation",
+      "target_node": "Design separable convolutional layers without intermediate activation during model design",
+      "description": "Empirical gains motivate adopting activation-free separable convs.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear experimental improvement.",
+      "edge_rationale": "Drives actionable intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Absence of residual connections impedes gradient flow in deep separable convolution stacks",
+      "target_node": "Depthwise separable convolution layer (channel-wise spatial convolution followed by 1×1 point-wise convolution)",
+      "description": "Gradient issues emerge specifically when many such separable-conv layers are stacked without skips, linking the problem back to the core mechanism.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Light inference tying optimisation issue to underlying layer type.",
+      "edge_rationale": "Connects the optimisation-related pathway to the main fabric."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Performance degradation due to intermediate activation in depthwise separable convolutions",
+      "target_node": "Depthwise separable convolution layer (channel-wise spatial convolution followed by 1×1 point-wise convolution)",
+      "description": "Activation placement issue is specific to the separable-conv implementation, linking the activation path to the main mechanism.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Light inference; supported by discussion in §4.7.",
+      "edge_rationale": "Ensures the activation-related path is connected to the overall fabric."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2016-10-07T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Xception: Deep Learning with Depthwise Separable Convolutions"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "François Chollet"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1610.02357"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

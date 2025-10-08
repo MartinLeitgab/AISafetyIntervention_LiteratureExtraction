@@ -1,0 +1,466 @@
+{
+  "nodes": [
+    {
+      "name": "adversarial misclassification in safety-critical deep neural network applications",
+      "aliases": [
+        "adversarial example risk in safety-critical AI",
+        "unsafe DNN decisions from small perturbations"
+      ],
+      "type": "concept",
+      "description": "Deep neural networks deployed in domains such as autonomous driving and malware detection can change their decision after imperceptible input changes, leading to potentially catastrophic outcomes.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Central risk stated in 1 Introduction where traffic-sign misclassification is discussed."
+    },
+    {
+      "name": "absence of provable robustness guarantees in modern deep neural networks",
+      "aliases": [
+        "lack of formal safety proofs for DNNs",
+        "unverified robustness of networks"
+      ],
+      "type": "concept",
+      "description": "Current networks achieve high accuracy but provide no certified guarantees that small input perturbations will not alter outputs.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Problem explicitly highlighted in Introduction as motivation for verification."
+    },
+    {
+      "name": "computational intractability of exact robustness verification for high-dimensional DNNs",
+      "aliases": [
+        "state-space explosion in DNN verification",
+        "verification scalability challenge"
+      ],
+      "type": "concept",
+      "description": "Exact optimisation or SAT/MILP formulations scale exponentially with input dimensions, making them impractical for realistic networks.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 3 Problem Statement and 4.3 Complexity sections."
+    },
+    {
+      "name": "Lipschitz continuity bounding DNN output variation with input perturbation",
+      "aliases": [
+        "Lipschitz property of neural networks",
+        "output change bounded by input distance"
+      ],
+      "type": "concept",
+      "description": "If each class score of a network is Lipschitz-continuous, global constants give worst-case output change for any input displacement.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formalised in Section 2.1 and used throughout for guarantees."
+    },
+    {
+      "name": "pointwise robustness reducible to finite optimisation over τ-grid inputs",
+      "aliases": [
+        "finite grid approximation of robustness",
+        "τ-grid discretisation for MSR/FR"
+      ],
+      "type": "concept",
+      "description": "Using Lipschitz bounds, robustness metrics can be approximated by examining a finite set of uniformly spaced grid points with provable error ½·d(k,τ).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Developed in Lemmas 3-6 and Theorems 1-2."
+    },
+    {
+      "name": "two-player game formulation approximating robustness metrics in DNNs",
+      "aliases": [
+        "game-based approximate verification",
+        "turn-based game for MSR and FR"
+      ],
+      "type": "concept",
+      "description": "Player I selects features; Player II perturbs within them. Cooperative play yields maximum safe radius; competitive play yields feature robustness.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 introduces the game framework reducing finite optimisation to strategy computation."
+    },
+    {
+      "name": "feature-based input partitioning to reduce search dimensionality",
+      "aliases": [
+        "saliency or SIFT feature segmentation",
+        "input dimension clustering into features"
+      ],
+      "type": "concept",
+      "description": "Input pixels are grouped into disjoint features via saliency maps or SIFT, allowing higher-level moves and interpretable robustness reasoning.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 2.3 and 5.1; improves scalability of the game."
+    },
+    {
+      "name": "Monte Carlo tree search generating upper bounds for robustness games",
+      "aliases": [
+        "MCTS for MSR upper bound",
+        "stochastic tree search in DeepGame"
+      ],
+      "type": "concept",
+      "description": "MCTS explores the game tree with UCB sampling, asymptotically converging to minimal adversarial distance (upper bound).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 in Section 5.1."
+    },
+    {
+      "name": "Admissible A* search computing lower bounds in cooperative robustness game",
+      "aliases": [
+        "A* lower bound for MSR",
+        "heuristic search with admissible heuristic"
+      ],
+      "type": "concept",
+      "description": "Uses an admissible Lipschitz-based heuristic to expand the game tree, delivering monotonic lower bounds on safe radius.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 2 in Section 5.2."
+    },
+    {
+      "name": "Alpha-Beta pruning computing lower bounds in competitive robustness game",
+      "aliases": [
+        "alpha-beta for feature robustness",
+        "min-max pruning for FR"
+      ],
+      "type": "concept",
+      "description": "Applies adversarial search to compute worst-case feature robustness while pruning unneeded branches.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 3 in Section 5.3."
+    },
+    {
+      "name": "DeepGame software tool integrating game-based approximate verification",
+      "aliases": [
+        "DeepGame framework",
+        "game-based DNN verifier"
+      ],
+      "type": "concept",
+      "description": "Open-source implementation combining feature extraction, MCTS, A*, and alpha-beta to verify DNN robustness with anytime guarantees.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation described in 5 Algorithms and GitHub link footnote."
+    },
+    {
+      "name": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "aliases": [
+        "experimental convergence evidence",
+        "empirical bound tightening results"
+      ],
+      "type": "concept",
+      "description": "Experiments show monotonic tightening of upper and lower bounds, e.g., MSR converging to 2.84 (L2) on MNIST image.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Figures 9-10 and related discussion in Section 6.3."
+    },
+    {
+      "name": "competitive adversarial example efficiency compared to CW, JSMA and others",
+      "aliases": [
+        "DeepGame outperforming baseline attacks",
+        "adversarial search benchmark results"
+      ],
+      "type": "concept",
+      "description": "DeepGame found adversarial examples with mean L0 of 6.11 on MNIST, better than CW, DLV and JSMA within 10-minute limit.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 1 in Section 6.4."
+    },
+    {
+      "name": "traffic light study revealing one-pixel adversarial vulnerability",
+      "aliases": [
+        "Nexar traffic-light case study",
+        "single-pixel attack on safety-critical model"
+      ],
+      "type": "concept",
+      "description": "On the Nexar dataset the winner model changes classification from red to green with a single pixel change, average L0=3.23.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.5 Evaluating Safety-Critical Networks."
+    },
+    {
+      "name": "perform DeepGame-based pre-deployment robustness testing of DNN models",
+      "aliases": [
+        "apply DeepGame before release",
+        "robustness certification via DeepGame"
+      ],
+      "type": "intervention",
+      "description": "Include DeepGame in the QA pipeline to compute maximum safe radius and feature robustness bounds, blocking release when safety thresholds are not met.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Section 6.5 discusses using the tool to support real-time decision making and testing before deployment.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "DeepGame is a functioning research prototype validated on multiple datasets.",
+      "node_rationale": "Direct actionable step implied by validation results showing practical runtime."
+    },
+    {
+      "name": "certify safety regions by estimating maximum safe radius via τ-grid Lipschitz verification",
+      "aliases": [
+        "use MSR certificates",
+        "τ-grid Lipschitz safety certification"
+      ],
+      "type": "intervention",
+      "description": "Compute provable minimum adversarial distance for given inputs and embed the certificate into model metadata or regulatory filings.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Certification activity happens during pre-deployment evaluation.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Technique demonstrated experimentally but not yet standardised.",
+      "node_rationale": "Inferred from Theorems 1-2 providing formal error bounds (edge confidence 2)."
+    },
+    {
+      "name": "use feature robustness metrics in runtime monitoring to restrict unsafe perturbations",
+      "aliases": [
+        "feature-level runtime guard",
+        "monitor robust feature set online"
+      ],
+      "type": "intervention",
+      "description": "At deployment, limit actuator decisions or trigger fallbacks when observed perturbations exceed certified robust feature budgets.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Executed during live operation based on robustness metrics.",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Conceptual extension; not implemented in paper (light inference).",
+      "node_rationale": "Motivated by traffic-light one-pixel vulnerability (Section 6.5)."
+    },
+    {
+      "name": "leverage game-based adversarial search to augment adversarial training datasets",
+      "aliases": [
+        "DeepGame-generated adversarial training",
+        "adversarial data augmentation via game search"
+      ],
+      "type": "intervention",
+      "description": "Feed adversarial examples discovered by MCTS/A* into further training rounds to harden the model against discovered weaknesses.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applied during fine-tuning or RLHF style training.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evidence of efficient generation exists; integration into training is plausible but not evaluated (edge confidence 2).",
+      "node_rationale": "Section 6.4 shows DeepGame finds stronger adversaries than baselines, indicating usefulness for training."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "adversarial misclassification in safety-critical deep neural network applications",
+      "target_node": "absence of provable robustness guarantees in modern deep neural networks",
+      "description": "Lack of formal guarantees means systems can be deployed with unknown vulnerability leading to misclassification risk.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit motivation in Introduction.",
+      "edge_rationale": "Failure to guarantee robustness exposes applications to adversarial errors."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "absence of provable robustness guarantees in modern deep neural networks",
+      "target_node": "computational intractability of exact robustness verification for high-dimensional DNNs",
+      "description": "Exact verification’s exponential complexity prevents routine certification, hence guarantees are absent.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in 4.3 Complexity.",
+      "edge_rationale": "Scalability barrier leads to missing guarantees."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "absence of provable robustness guarantees in modern deep neural networks",
+      "target_node": "Lipschitz continuity bounding DNN output variation with input perturbation",
+      "description": "Using Lipschitz bounds offers a systematic path to guarantees.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 2.1 positions Lipschitz as foundation for guarantees.",
+      "edge_rationale": "Theoretical property addresses guarantee gap."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "pointwise robustness reducible to finite optimisation over τ-grid inputs",
+      "target_node": "Lipschitz continuity bounding DNN output variation with input perturbation",
+      "description": "Finite τ-grid optimisation is derived using Lipschitz bounds.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Formal lemmas in Section 3.",
+      "edge_rationale": "Derivation depends directly on Lipschitz inequality."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "two-player game formulation approximating robustness metrics in DNNs",
+      "target_node": "Monte Carlo tree search generating upper bounds for robustness games",
+      "description": "MCTS operationalises the game to compute upper bounds.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 provides direct implementation.",
+      "edge_rationale": "MCTS is algorithmic realisation of the game."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "two-player game formulation approximating robustness metrics in DNNs",
+      "target_node": "Admissible A* search computing lower bounds in cooperative robustness game",
+      "description": "Admissible A* delivers lower bounds for cooperative play.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 2 mapping.",
+      "edge_rationale": "Search algorithm realises game strategies."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "two-player game formulation approximating robustness metrics in DNNs",
+      "target_node": "Alpha-Beta pruning computing lower bounds in competitive robustness game",
+      "description": "Alpha-beta supplies lower bounds for competitive play.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 3 mapping.",
+      "edge_rationale": "Pruning algorithm realises game strategies."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "two-player game formulation approximating robustness metrics in DNNs",
+      "target_node": "DeepGame software tool integrating game-based approximate verification",
+      "description": "DeepGame packages the game formulation and supporting algorithms into a usable system.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Tool announced and linked in Section 5.",
+      "edge_rationale": "Tool instantiates design."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "two-player game formulation approximating robustness metrics in DNNs",
+      "target_node": "feature-based input partitioning to reduce search dimensionality",
+      "description": "Feature partitioning specialises the game move space for efficiency and interpretability.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 2.3 & 5.1 describe integrating feature extraction.",
+      "edge_rationale": "Design refinement."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "feature-based input partitioning to reduce search dimensionality",
+      "target_node": "DeepGame software tool integrating game-based approximate verification",
+      "description": "DeepGame supports both saliency-guided and SIFT-based partitions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implementation notes in Section 5.1.",
+      "edge_rationale": "Partitioning is configurable component of tool."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Monte Carlo tree search generating upper bounds for robustness games",
+      "target_node": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "description": "Experiments show MCTS upper bounds monotonically decrease toward true MSR/FR.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figures 9-10.",
+      "edge_rationale": "Empirical data confirm effectiveness."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Admissible A* search computing lower bounds in cooperative robustness game",
+      "target_node": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "description": "Lower bound tightening demonstrated experimentally.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figures 9-10.",
+      "edge_rationale": "Empirical support."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Alpha-Beta pruning computing lower bounds in competitive robustness game",
+      "target_node": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "description": "Alpha-beta lower bounds converge for FR game.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figure 12-13.",
+      "edge_rationale": "Experimental confirmation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "DeepGame software tool integrating game-based approximate verification",
+      "target_node": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "description": "Tool successfully produces converging bounds across datasets.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.3 results.",
+      "edge_rationale": "End-to-end validation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "target_node": "perform DeepGame-based pre-deployment robustness testing of DNN models",
+      "description": "Demonstrated scalability suggests practical inclusion in QA pipelines.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implication discussed in 6.5.",
+      "edge_rationale": "Evidence informs intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "convergence of robustness bounds on MNIST, CIFAR10 and GTSRB datasets",
+      "target_node": "certify safety regions by estimating maximum safe radius via τ-grid Lipschitz verification",
+      "description": "Provable error bounds enable formal certification.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Inference from Theorems 1-2; certification not directly performed.",
+      "edge_rationale": "Logical next step given guarantees."
+    },
+    {
+      "type": "motivates",
+      "source_node": "competitive adversarial example efficiency compared to CW, JSMA and others",
+      "target_node": "leverage game-based adversarial search to augment adversarial training datasets",
+      "description": "Higher-quality adversaries can be fed back into training to improve robustness.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Paper shows strong attacks but does not train with them (light inference).",
+      "edge_rationale": "Empirical strength suggests usefulness for data augmentation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "traffic light study revealing one-pixel adversarial vulnerability",
+      "target_node": "use feature robustness metrics in runtime monitoring to restrict unsafe perturbations",
+      "description": "Critical vulnerability indicates need for runtime guards based on robust features.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Paper proposes possible decision-support; monitoring not yet built.",
+      "edge_rationale": "Case study highlights deployment-time need."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2018-07-10T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "A Game-Based Approximate Verification of Deep Neural Networks with Provable Guarantees"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.03571"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Min Wu",
+        "Matthew Wicker",
+        "Wenjie Ruan",
+        "Xiaowei Huang",
+        "Marta Kwiatkowska"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

@@ -1,0 +1,419 @@
+{
+  "nodes": [
+    {
+      "name": "Training instability and slow convergence in large-scale deep neural network optimization",
+      "aliases": [
+        "optimization instability in large DNNs",
+        "slow convergence of deep network training"
+      ],
+      "type": "concept",
+      "description": "Large deep networks often train unstably or converge slowly, especially when existing meta-learning optimizers are applied to practical, long-horizon training (Introduction, para 2).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Paper highlights unstable behaviour of current meta-optimizers on big nets as the motivating risk (Introduction)."
+    },
+    {
+      "name": "Excessive computation cost of second-order optimization in deep neural network training",
+      "aliases": [
+        "high wall-clock time of Hessian-free methods",
+        "computational cost of natural gradient"
+      ],
+      "type": "concept",
+      "description": "Standard Hessian-free natural-gradient methods require 10–100 PCG iterations per step, giving little wall-time advantage over first-order methods (Section 2.2).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "High compute cost is stated as a barrier to practical use (end of Section 2.2)."
+    },
+    {
+      "name": "First-order gradient methods lack curvature information in large-scale DNNs",
+      "aliases": [
+        "gradient descent curvature deficiency",
+        "limitations of SGD-like optimizers"
+      ],
+      "type": "concept",
+      "description": "SGD, Adam and related first-order optimizers rely on Euclidean metrics and ignore curvature, leading to sub-optimal descent directions (Section 2.1).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains mechanism behind instability/slow convergence risk."
+    },
+    {
+      "name": "Many PCG iterations required for Hessian-free natural gradient approximation",
+      "aliases": [
+        "large iteration count in Hessian-free PCG",
+        "inefficient PCG convergence"
+      ],
+      "type": "concept",
+      "description": "Hessian-free training normally needs tens of PCG steps per update; convergence speed depends strongly on damping and pre-conditioning choices (Section 2.2).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains computational-cost risk."
+    },
+    {
+      "name": "Approximating natural gradient with Hessian-free method improves convergence if computational burden is reduced",
+      "aliases": [
+        "natural gradient benefits with efficient approximation",
+        "advantage of curvature-aware updates"
+      ],
+      "type": "concept",
+      "description": "Natural-gradient directions can yield faster loss reduction but must be computed cheaply to matter in practice (Sections 2.1–2.2).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides theoretical motivation to move beyond first-order methods."
+    },
+    {
+      "name": "Adaptive damping and preconditioning can reduce required PCG iterations",
+      "aliases": [
+        "learned damping for Hessian-free",
+        "adaptive preconditioner improves PCG"
+      ],
+      "type": "concept",
+      "description": "Choosing a per-parameter damping vector and a suitable pre-conditioner lets PCG approximate H⁻¹g accurately in very few iterations (start of Section 3).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identifies opportunity for efficiency gains addressing Problem 4."
+    },
+    {
+      "name": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "aliases": [
+        "RNN-based meta-optimizer for damping and P",
+        "learning-to-learn natural gradient parameters"
+      ],
+      "type": "concept",
+      "description": "Two coordinate-wise LSTMs (RNN_s and RNN_p) are trained with BPTT to output damping vector s and diagonal pre-conditioner P at every training step (Section 3, Algorithm 2).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Key design insight linking theoretical ideas to concrete mechanisms."
+    },
+    {
+      "name": "RNNs output per-parameter damping vector s for modified Hessian",
+      "aliases": [
+        "RNN_s generates damping",
+        "learned diagonal damping"
+      ],
+      "type": "concept",
+      "description": "RNN_s produces a non-negative vector s such that H is replaced by H+diag(s), controlling step size and stability (Section 3, Algorithm 2).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implements part of the design rationale."
+    },
+    {
+      "name": "RNNp outputs diagonal preconditioner P for PCG in Hessian-free optimization",
+      "aliases": [
+        "RNN_p generates preconditioner",
+        "learned PCG preconditioning"
+      ],
+      "type": "concept",
+      "description": "RNN_p predicts a positive-definite diagonal matrix P used in Pre-conditioned CG to speed convergence (Section 3).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Second key mechanism realising the design rationale."
+    },
+    {
+      "name": "Limited PCG iterations with warm-start initialization reduce compute cost",
+      "aliases": [
+        "PCG n=4 with x0 reuse",
+        "truncated PCG with previous solution warm-start"
+      ],
+      "type": "concept",
+      "description": "PCG is truncated to n = 4 iterations per training step and initialized with the previous step’s solution, greatly lowering computation (Algorithm 2, Section 3.2).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Directly addresses compute-cost risk."
+    },
+    {
+      "name": "Coordinatewise LSTM framework shares meta-parameters across layer types",
+      "aliases": [
+        "parameter-sharing coordinatewise meta-optimizer",
+        "layer-type specific sharing"
+      ],
+      "type": "concept",
+      "description": "Six layer-parameter classes use shared weights inside each class, improving generality and memory efficiency (Section 3, paragraph on network structure).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Supports scalability and stability of the overall approach."
+    },
+    {
+      "name": "MLHF reduces loss faster than SGD, RMSprop and kfac on CIFAR10 Convnet",
+      "aliases": [
+        "CIFAR10 experimental results",
+        "CUDA-convnet MLHF evidence"
+      ],
+      "type": "concept",
+      "description": "Figure 1 shows that MLHF achieves the lowest cross-entropy over both sample count and wall-time on CUDA-convnet after 250 epochs (Section 4.1).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical validation of implementation mechanisms."
+    },
+    {
+      "name": "MLHF outperforms first-order optimizers on ResNet18 v2 ImageNet training",
+      "aliases": [
+        "ImageNet ResNet18 evidence",
+        "ILSVRC2012 MLHF results"
+      ],
+      "type": "concept",
+      "description": "Figure 2 demonstrates superior and sustained loss reduction of MLHF vs Adam, RMSprop and SGD(m) in sample-count space (Section 4.2).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Confirms generalisation of the approach to larger models/datasets."
+    },
+    {
+      "name": "Ablation shows learned preconditioner enables few PCG iterations without accuracy loss",
+      "aliases": [
+        "ablation study on RNNp",
+        "PCG iteration ablation evidence"
+      ],
+      "type": "concept",
+      "description": "Config 4 (with RNN_p, n=4) matches natural-gradient accuracy of 20-step PCG while configs without RNN_p degrade (Figure 3, Section 4.3).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Justifies the efficiency claims central to risk mitigation."
+    },
+    {
+      "name": "Apply MLHF meta-optimizer with learned damping and preconditioning during model training",
+      "aliases": [
+        "use MLHF optimizer in training",
+        "meta-learned Hessian-Free optimization"
+      ],
+      "type": "intervention",
+      "description": "During the training phase, replace conventional optimizers with MLHF: feed gradients to RNN_s and RNN_p, run PCG for n=4 iterations with warm-start, update weights with the obtained natural-gradient step (Algorithm 2).",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "MLHF is applied while the model is being trained from randomly-initialised weights (Algorithm 2 – inputs include mini-batches and current parameters).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated on CIFAR-10 and ImageNet experiments, representing prototype-level evidence (Section 4).",
+      "node_rationale": "Actionable step that implements all preceding mechanisms and addresses identified risks."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Training instability and slow convergence in large-scale deep neural network optimization",
+      "target_node": "First-order gradient methods lack curvature information in large-scale DNNs",
+      "description": "Lack of curvature awareness in first-order optimizers leads to unstable or slow training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit discussion in Section 2.1 linking Euclidean metric issues to poor performance.",
+      "edge_rationale": "Problem analysis directly explains the observed risk."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Excessive computation cost of second-order optimization in deep neural network training",
+      "target_node": "Many PCG iterations required for Hessian-free natural gradient approximation",
+      "description": "High iteration count in PCG dominates wall-time of Hessian-free methods.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative statement (10–100 iterations) in Section 2.2.",
+      "edge_rationale": "Problem analysis pinpoints computational bottleneck."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "First-order gradient methods lack curvature information in large-scale DNNs",
+      "target_node": "Approximating natural gradient with Hessian-free method improves convergence if computational burden is reduced",
+      "description": "Natural-gradient updates theoretically resolve curvature ignorance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 2.1 cites superior performance of natural gradient.",
+      "edge_rationale": "Theoretical insight proposes a remedy for the problem."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Many PCG iterations required for Hessian-free natural gradient approximation",
+      "target_node": "Adaptive damping and preconditioning can reduce required PCG iterations",
+      "description": "Proper damping and pre-conditioning are known to accelerate PCG convergence.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 3 opening paragraph motivates adaptive s and P.",
+      "edge_rationale": "Theoretical insight targets the iteration-count problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Approximating natural gradient with Hessian-free method improves convergence if computational burden is reduced",
+      "target_node": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "description": "Learning s and P makes natural-gradient approximation practical.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design rationale explicitly follows theoretical motivation (Section 3).",
+      "edge_rationale": "Design realises the theoretical opportunity."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Adaptive damping and preconditioning can reduce required PCG iterations",
+      "target_node": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "description": "RNNs deliver the needed adaptive damping and pre-conditioning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 3 explains RNN_s/RNN_p roles.",
+      "edge_rationale": "Same design rationale solves both theoretical needs."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "target_node": "RNNs output per-parameter damping vector s for modified Hessian",
+      "description": "RNN_s realises the adaptive damping component.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 2 details exact usage.",
+      "edge_rationale": "Mechanism realises design objective."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "target_node": "RNNp outputs diagonal preconditioner P for PCG in Hessian-free optimization",
+      "description": "RNN_p supplies the learned pre-conditioner.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 2 shows P = diag(RNN_p(...)).",
+      "edge_rationale": "Mechanism realises design objective."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "target_node": "Limited PCG iterations with warm-start initialization reduce compute cost",
+      "description": "Truncated, warm-started PCG embodies the efficiency goal enabled by learned s and P.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 3.2 sets n = 4 PCG iterations.",
+      "edge_rationale": "Key part of practical implementation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Meta-learning RNNs infer damping parameters and preconditioner to approximate natural gradient efficiently",
+      "target_node": "Coordinatewise LSTM framework shares meta-parameters across layer types",
+      "description": "Coordinate-wise setup ensures scalability and generality.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Paragraph on network structure in Section 3.",
+      "edge_rationale": "Implementation detail supporting main design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RNNs output per-parameter damping vector s for modified Hessian",
+      "target_node": "MLHF reduces loss faster than SGD, RMSprop and kfac on CIFAR10 Convnet",
+      "description": "Performance gains demonstrate effectiveness of learned damping.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear empirical results in Figure 1.",
+      "edge_rationale": "Evidence confirms mechanism’s benefit."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RNNp outputs diagonal preconditioner P for PCG in Hessian-free optimization",
+      "target_node": "Ablation shows learned preconditioner enables few PCG iterations without accuracy loss",
+      "description": "Removing RNN_p degrades natural-gradient accuracy; inclusion validates its role.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figure 3 contrasts configs with/without RNN_p.",
+      "edge_rationale": "Direct causal test."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Limited PCG iterations with warm-start initialization reduce compute cost",
+      "target_node": "Ablation shows learned preconditioner enables few PCG iterations without accuracy loss",
+      "description": "Study confirms 4-step PCG is sufficient when using learned pre-conditioner.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4.3 discusses configs 3 vs 4.",
+      "edge_rationale": "Evidence supports efficiency mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Coordinatewise LSTM framework shares meta-parameters across layer types",
+      "target_node": "MLHF outperforms first-order optimizers on ResNet18 v2 ImageNet training",
+      "description": "Cross-dataset generalisation implies effective parameter-sharing.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Good performance on unseen architecture/dataset (Section 4.2).",
+      "edge_rationale": "Framework choice validated via generalisation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RNNp outputs diagonal preconditioner P for PCG in Hessian-free optimization",
+      "target_node": "MLHF outperforms first-order optimizers on ResNet18 v2 ImageNet training",
+      "description": "Preconditioner contributes to superior large-scale performance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implicit in performance results; partial inference.",
+      "edge_rationale": "Performance suggests mechanism effectiveness at scale."
+    },
+    {
+      "type": "motivates",
+      "source_node": "MLHF reduces loss faster than SGD, RMSprop and kfac on CIFAR10 Convnet",
+      "target_node": "Apply MLHF meta-optimizer with learned damping and preconditioning during model training",
+      "description": "Observed gains encourage adopting MLHF in training pipelines.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical improvement in Figure 1.",
+      "edge_rationale": "Evidence-to-intervention link."
+    },
+    {
+      "type": "motivates",
+      "source_node": "MLHF outperforms first-order optimizers on ResNet18 v2 ImageNet training",
+      "target_node": "Apply MLHF meta-optimizer with learned damping and preconditioning during model training",
+      "description": "Generalisation results justify broader deployment.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Large-scale experiment (Section 4.2).",
+      "edge_rationale": "Evidence supports adoption."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Ablation shows learned preconditioner enables few PCG iterations without accuracy loss",
+      "target_node": "Apply MLHF meta-optimizer with learned damping and preconditioning during model training",
+      "description": "Efficiency without loss of accuracy makes MLHF attractive despite additional complexity.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Controlled ablation (Section 4.3).",
+      "edge_rationale": "Evidence strengthens case for intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Meta-Learning with Hessian-Free Approach in Deep Neural Nets Training"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.08462"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-22T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Boyu Chen",
+        "Wenlian Lu",
+        "Ernest Fokoue"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

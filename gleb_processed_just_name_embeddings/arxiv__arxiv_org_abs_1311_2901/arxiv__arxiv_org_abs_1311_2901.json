@@ -1,0 +1,310 @@
+{
+  "nodes": [
+    {
+      "name": "Opaque decision-making in deep convolutional networks for image classification",
+      "aliases": [
+        "black-box behaviour of CNNs",
+        "lack of interpretability in ConvNets"
+      ],
+      "type": "concept",
+      "description": "ConvNets achieve high accuracy but their internal decision process is difficult to interpret, posing scientific and safety concerns.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction as the motivating risk behind the work."
+    },
+    {
+      "name": "Limited visibility into internal feature representations obstructs debugging of ConvNet failure modes",
+      "aliases": [
+        "unknown internal representations",
+        "diagnostic opacity of features"
+      ],
+      "type": "concept",
+      "description": "Without insight into intermediate feature maps, developers cannot identify aliasing, dead filters or spurious correlations that degrade safety and performance.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explicitly stated in Introduction as the core technical obstacle."
+    },
+    {
+      "name": "Visualization of feature activations exposes hierarchical structure and invariances in ConvNets",
+      "aliases": [
+        "activation visualisation insight",
+        "feature map interpretability hypothesis"
+      ],
+      "type": "concept",
+      "description": "Projecting activations back to pixel space can reveal edges, textures and whole-object patterns, providing a window into what the network has learned.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in 2 Approach and 2.1 Visualization with a Deconvnet."
+    },
+    {
+      "name": "Use deconvolutional network-based top-down projection to interpret ConvNet activations",
+      "aliases": [
+        "deconvnet visualisation approach",
+        "top-down feature projection rationale"
+      ],
+      "type": "concept",
+      "description": "The design choice is to attach a deconvnet to each ConvNet layer to map activations back to input space, enabling non-parametric inspection of learned features.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in detail in 2.1 Visualization with a Deconvnet."
+    },
+    {
+      "name": "Layer-wise deconvnet with unpooling switches, rectification, and transposed filters for feature reconstruction",
+      "aliases": [
+        "switch-based unpooling mechanism",
+        "relu rectified deconvolution"
+      ],
+      "type": "concept",
+      "description": "Implementation uses max-pool switches for unpooling, relu for rectification, and flipped convolutional filters to reconstruct lower-layer activations iteratively.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Technical mechanism explained in 2.1 Visualization with a Deconvnet."
+    },
+    {
+      "name": "Feature reconstructions reveal intuitive patterns and hierarchical invariance across layers",
+      "aliases": [
+        "hierarchical feature visual evidence",
+        "interpretable reconstructions"
+      ],
+      "type": "concept",
+      "description": "Figures 2, 4 and 5 show edges, textures, object parts and full objects emerging across layers, confirming increasing invariance and compositionality.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Results presented in 4 Convnet Visualization and subsections."
+    },
+    {
+      "name": "Visualization-driven architecture change improves ImageNet error rates",
+      "aliases": [
+        "aliasing fix evidence",
+        "stride-filter adjustment result"
+      ],
+      "type": "concept",
+      "description": "Reducing first-layer filter size to 7×7 and stride to 2 eliminated aliasing seen in visualisations and reduced top-5 error by 1.7 %.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical findings reported in 4.1 Architecture Selection and 5.1 ImageNet 2012."
+    },
+    {
+      "name": "Occlusion sensitivity experiments confirm localized object sensitivity",
+      "aliases": [
+        "occlusion drop evidence",
+        "localisation validation"
+      ],
+      "type": "concept",
+      "description": "Systematically masking image patches lowered class probability only when object regions were occluded, validating that learned features align with objects.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 4.2 Occlusion Sensitivity."
+    },
+    {
+      "name": "Integrate deconvolutional visualization into ConvNet development workflow",
+      "aliases": [
+        "visualisation-guided debugging",
+        "regular interpretability checks"
+      ],
+      "type": "intervention",
+      "description": "During training and before deployment, routinely generate deconvnet visualisations to detect aliasing, dead filters or spurious features and adjust design accordingly.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Activity occurs after or during training but before deployment – aligns with Pre-Deployment Testing section titles 4 Convnet Visualization / 4.1 Architecture Selection.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Technique validated on large-scale ImageNet prototype but not yet a standard operational tool.",
+      "node_rationale": "Proposed implicitly across Sections 4 and 6 as a systematic use of the visualisation tool."
+    },
+    {
+      "name": "Design first ConvNet layer with 7×7 filters and stride 2 to reduce aliasing",
+      "aliases": [
+        "smaller receptive field first layer",
+        "stride-2 7×7 filters modification"
+      ],
+      "type": "intervention",
+      "description": "When constructing the architecture, replace 11×11 stride-4 filters with 7×7 stride-2 filters, preserving mid-frequency information and lowering validation error.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Made prior to training – Architecture Selection (4.1) and Training Details (3).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated on ImageNet with significant performance gains but not yet universally adopted.",
+      "node_rationale": "Direct design change recommended in 4.1 Architecture Selection."
+    },
+    {
+      "name": "Apply per-filter RMS renormalization during training to prevent dominant filters",
+      "aliases": [
+        "filter scale clipping",
+        "RMS radius normalisation"
+      ],
+      "type": "intervention",
+      "description": "Monitor filter RMS values and rescale any exceeding 1e-1 to that radius, particularly in early layers, avoiding single-filter dominance.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Executed automatically during gradient-based training – see 3 Training Details.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Presented as an experimental fix without extensive comparative studies.",
+      "node_rationale": "Outlined in 3 Training Details after observing dominant filters in visualisations."
+    },
+    {
+      "name": "Conduct occlusion sensitivity analysis before deployment to verify model localisation",
+      "aliases": [
+        "mask-based output sensitivity test",
+        "occlusion heat-map auditing"
+      ],
+      "type": "intervention",
+      "description": "Systematically occlude image patches and track class probability drops to ensure the model relies on object regions rather than background context.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Applied to trained models as a validation check – Section 4.2 Occlusion Sensitivity.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated on research models; requires tooling for routine deployment use.",
+      "node_rationale": "Suggested in 4.2 as a diagnostic confirming visualisation fidelity."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Opaque decision-making in deep convolutional networks for image classification",
+      "target_node": "Limited visibility into internal feature representations obstructs debugging of ConvNet failure modes",
+      "description": "Opacity of decisions stems from the inability to inspect internal features.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated motivation in Introduction without formal measurement.",
+      "edge_rationale": "Introduction links lack of feature insight directly to interpretability risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Limited visibility into internal feature representations obstructs debugging of ConvNet failure modes",
+      "target_node": "Visualization of feature activations exposes hierarchical structure and invariances in ConvNets",
+      "description": "Feature visualisation offers a path to understand and therefore mitigate opacity.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoned argument; no quantitative causal test.",
+      "edge_rationale": "Sections 2 & 6 argue visualisation addresses debugging difficulty."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Visualization of feature activations exposes hierarchical structure and invariances in ConvNets",
+      "target_node": "Use deconvolutional network-based top-down projection to interpret ConvNet activations",
+      "description": "Deconvnet approach realises the visualisation insight.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Method is explicitly proposed as implementation of the insight.",
+      "edge_rationale": "Section 2.1 introduces deconvnet as practical realisation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use deconvolutional network-based top-down projection to interpret ConvNet activations",
+      "target_node": "Layer-wise deconvnet with unpooling switches, rectification, and transposed filters for feature reconstruction",
+      "description": "Specific mechanics enable the deconvnet rationale.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed algorithmic description provided.",
+      "edge_rationale": "Unpooling, relu and filter flipping explained in 2.1."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Layer-wise deconvnet with unpooling switches, rectification, and transposed filters for feature reconstruction",
+      "target_node": "Feature reconstructions reveal intuitive patterns and hierarchical invariance across layers",
+      "description": "Reconstructions empirically confirm the mechanism produces meaningful visualisations.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong illustrative evidence in Figures 2 & 4.",
+      "edge_rationale": "Section 4 shows outputs of the mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Layer-wise deconvnet with unpooling switches, rectification, and transposed filters for feature reconstruction",
+      "target_node": "Visualization-driven architecture change improves ImageNet error rates",
+      "description": "Visualisations exposed aliasing which, once fixed, improved accuracy.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative 1.7 % error reduction reported.",
+      "edge_rationale": "Sections 4.1 & 5.1 connect visual finding to performance."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Layer-wise deconvnet with unpooling switches, rectification, and transposed filters for feature reconstruction",
+      "target_node": "Occlusion sensitivity experiments confirm localized object sensitivity",
+      "description": "Occlusion study confirms that reconstructed features correspond to important image regions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear probability drops when object area masked.",
+      "edge_rationale": "Section 4.2 demonstrates method consistency."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Feature reconstructions reveal intuitive patterns and hierarchical invariance across layers",
+      "target_node": "Integrate deconvolutional visualization into ConvNet development workflow",
+      "description": "Demonstrated interpretability benefits encourage routine integration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasonable extrapolation; not experimentally measured.",
+      "edge_rationale": "Section 6 recommends using visualisation to debug models."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Visualization-driven architecture change improves ImageNet error rates",
+      "target_node": "Design first ConvNet layer with 7×7 filters and stride 2 to reduce aliasing",
+      "description": "Evidence supports specific architectural intervention.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct causal improvement documented.",
+      "edge_rationale": "4.1 Architecture Selection links change to accuracy gain."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Visualization-driven architecture change improves ImageNet error rates",
+      "target_node": "Apply per-filter RMS renormalization during training to prevent dominant filters",
+      "description": "Dominant-filter issue observed via visualisation led to RMS renormalisation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Single-paper evidence; no ablation study.",
+      "edge_rationale": "Section 3 Training Details discusses fix following Fig. 6a."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Occlusion sensitivity experiments confirm localized object sensitivity",
+      "target_node": "Conduct occlusion sensitivity analysis before deployment to verify model localisation",
+      "description": "Successful occlusion test suggests adopting it as a standard audit.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical extension; limited formal validation.",
+      "edge_rationale": "4.2 Occlusion Sensitivity proposes technique for insight."
+    }
+  ],
+  "meta": [
+    {
+      "key": "authors",
+      "value": [
+        "Matthew D Zeiler",
+        "Rob Fergus"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2013-11-12T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Visualizing and Understanding Convolutional Networks"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1311.2901"
+    }
+  ]
+}

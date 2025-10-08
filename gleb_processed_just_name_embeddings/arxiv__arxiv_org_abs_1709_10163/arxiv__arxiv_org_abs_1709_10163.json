@@ -1,0 +1,339 @@
+{
+  "nodes": [
+    {
+      "name": "sample inefficiency of reinforcement learning in high-dimensional state spaces",
+      "aliases": [
+        "sample inefficiency of deep RL",
+        "slow learning in complex environments"
+      ],
+      "type": "concept",
+      "description": "Modern deep RL methods often need tens of millions of frames to learn in tasks such as Atari Bowling, making them impractical for time-critical or real-world use.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction as the motivating problem for proposing Deep TAMER."
+    },
+    {
+      "name": "sparse environmental rewards and large parameter counts in pixel-based tasks",
+      "aliases": [
+        "sparse rewards with large networks",
+        "high parameter burden in image states"
+      ],
+      "type": "concept",
+      "description": "Pixel-level inputs create state spaces with tens of thousands of dimensions and the task reward may only appear after long sequences, requiring many parameters to be learned from scarce signals.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Introduction as the technical reason RL needs huge data."
+    },
+    {
+      "name": "absence of real-time human feedback causing sparse reward signals in RL agents",
+      "aliases": [
+        "lack of human evaluative signals",
+        "no dense human feedback"
+      ],
+      "type": "concept",
+      "description": "When humans do not supply evaluative feedback during learning, the agent relies solely on environment rewards, which are infrequent and uninformative in many games.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implied in Related Work and Problem Formulation as the gap TAMER fills."
+    },
+    {
+      "name": "learning a predictive human reward model to guide agent behavior",
+      "aliases": [
+        "human reward modelling",
+        "predictive feedback model"
+      ],
+      "type": "concept",
+      "description": "By estimating a hidden function ^H that predicts a trainer’s scalar feedback, the agent can act myopically to maximise predicted human approval, effectively receiving dense reward.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in Problem Formulation as the core solution idea."
+    },
+    {
+      "name": "deep CNN reward model with pre-trained encoder",
+      "aliases": [
+        "deep TAMER reward network",
+        "CNN-based human feedback predictor"
+      ],
+      "type": "concept",
+      "description": "A convolutional encoder followed by fully-connected layers predicts human feedback for each action, allowing pixel inputs to be processed efficiently.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Method section describes architecture ^H(s,a)=z(f(s),a)."
+    },
+    {
+      "name": "feedback replay buffer for experience and human feedback",
+      "aliases": [
+        "feedback replay",
+        "human feedback memory"
+      ],
+      "type": "concept",
+      "description": "All feedback/experience pairs with non-zero temporal weights are stored and resampled, enabling many SGD updates between sparse human signals.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Feedback Replay Buffer subsection."
+    },
+    {
+      "name": "importance-weighted loss for temporal credit assignment of feedback",
+      "aliases": [
+        "importance weights w(ts,te,tf)",
+        "temporal credit weighting"
+      ],
+      "type": "concept",
+      "description": "Weights derived from an assumed feedback delay distribution assign human signals to recent state-action pairs, improving credit assignment during SGD.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Presented in Importance Weights subsection."
+    },
+    {
+      "name": "autoencoder pre-training of state encoder",
+      "aliases": [
+        "CNN encoder pre-training",
+        "unsupervised encoder training"
+      ],
+      "type": "concept",
+      "description": "Encoder parameters θf are learned off-line by reconstructing random-policy game frames, reducing the number of weights that must be fitted during human interaction.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in Deep Autoencoder subsection."
+    },
+    {
+      "name": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "aliases": [
+        "Deep TAMER experimental results",
+        "Bowling performance evidence"
+      ],
+      "type": "concept",
+      "description": "Across nine trainers, agents reached scores higher than their trainers and than Double-DQN, A3C and linear TAMER baselines after 15 minutes of interaction.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in Experiments and Evaluation sections (Figures 3 & 4)."
+    },
+    {
+      "name": "Conduct Deep TAMER fine-tuning with human scalar feedback and deep reward model",
+      "aliases": [
+        "apply Deep TAMER interactive training",
+        "run Deep TAMER"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning/RL, allow a non-expert trainer to provide real-time scalar critiques while the agent updates a deep CNN reward model and selects actions that maximise predicted feedback.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Occurs during Fine-Tuning/RL phase as per Method and Algorithm 1.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated only in a single-game experimental setting (Experiments).",
+      "node_rationale": "Primary actionable step enabling the Deep TAMER approach."
+    },
+    {
+      "name": "Pre-train convolutional state encoder via autoencoder on random-policy observations",
+      "aliases": [
+        "perform encoder autoencoder pre-training",
+        "offline CNN encoder training"
+      ],
+      "type": "intervention",
+      "description": "Before interacting with humans, collect state frames under a random policy and train an autoencoder; freeze the encoder weights as the front-end of the reward model.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Executed prior to any RL or human interaction (Deep Autoencoder section).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated experimentally but not yet general-purpose (Experiments).",
+      "node_rationale": "Reduces parameters the human-in-the-loop stage must learn."
+    },
+    {
+      "name": "Use feedback replay buffer with importance-weighted SGD during human-interactive training",
+      "aliases": [
+        "apply feedback replay updates",
+        "importance-weighted buffer updates"
+      ],
+      "type": "intervention",
+      "description": "Maintain a buffer of recent experience/feedback pairs with non-zero weights and perform mini-batch SGD updates at a fixed rate higher than human feedback frequency.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Employed during RL fine-tuning to accelerate convergence (Feedback Replay Buffer section).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Tested only in proof-of-concept Bowling study.",
+      "node_rationale": "Key optimisation step enabling rapid policy improvement."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "sample inefficiency of reinforcement learning in high-dimensional state spaces",
+      "target_node": "sparse environmental rewards and large parameter counts in pixel-based tasks",
+      "description": "High parameter counts and sparse rewards directly drive the need for massive data, leading to sample inefficiency.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in Introduction; strong empirical consensus.",
+      "edge_rationale": "Introduction links sparse rewards & parameter burden to slow learning."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "sparse environmental rewards and large parameter counts in pixel-based tasks",
+      "target_node": "absence of real-time human feedback causing sparse reward signals in RL agents",
+      "description": "Without external human evaluative signals, rewards remain sparse and parameter demands unmitigated.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implied across Related Work; medium evidence.",
+      "edge_rationale": "Paper argues human feedback supplies missing dense signal."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "absence of real-time human feedback causing sparse reward signals in RL agents",
+      "target_node": "learning a predictive human reward model to guide agent behavior",
+      "description": "Modelling human feedback transforms sparse signals into dense predicted rewards, addressing the lack of guidance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Problem Formulation explicitly proposes predictive model as fix.",
+      "edge_rationale": "Section formulates ^H as remedy."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "learning a predictive human reward model to guide agent behavior",
+      "target_node": "deep CNN reward model with pre-trained encoder",
+      "description": "The predictive model is realised as a CNN taking pixel inputs and outputting per-action reward estimates.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Method gives full network specification; direct implementation.",
+      "edge_rationale": "Method subsection Deep Reward Model."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "deep CNN reward model with pre-trained encoder",
+      "target_node": "feedback replay buffer for experience and human feedback",
+      "description": "Replay buffer supplies diverse, weighted samples allowing the CNN to update frequently despite sparse feedback.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Feedback Replay Buffer subsection provides mechanism details.",
+      "edge_rationale": "Algorithm 1 lines 15-18."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "deep CNN reward model with pre-trained encoder",
+      "target_node": "importance-weighted loss for temporal credit assignment of feedback",
+      "description": "Importance weights are applied inside the CNN’s SGD updates to assign feedback correctly, making the model viable.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Importance Weights subsection shows formula integrated into training.",
+      "edge_rationale": "Equation (4) directly used in SGD."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "deep CNN reward model with pre-trained encoder",
+      "target_node": "autoencoder pre-training of state encoder",
+      "description": "Pre-training supplies initial CNN parameters, shrinking the learning problem during human interaction.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Deep Autoencoder subsection makes explicit dependency.",
+      "edge_rationale": "Figure 2 and Equation (5)."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "deep CNN reward model with pre-trained encoder",
+      "target_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "description": "Performance gains indicate the CNN reward model successfully captures human intent.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Experiments show clear quantitative improvement.",
+      "edge_rationale": "Figures 3 & 4."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "feedback replay buffer for experience and human feedback",
+      "target_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "description": "Ablation (TAMER without replay) fails; replay buffer present in Deep TAMER yields high scores.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Indirect evidence via comparison to TAMER baseline.",
+      "edge_rationale": "Evaluation section contrasts TAMER vs Deep TAMER."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "importance-weighted loss for temporal credit assignment of feedback",
+      "target_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "description": "Correct credit assignment contributes to rapid learning reflected in empirical results.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Feature present only in successful method; medium evidence.",
+      "edge_rationale": "Method vs baseline discussion."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "autoencoder pre-training of state encoder",
+      "target_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "description": "Pre-training reduces parameters, enabling learning within 15 minutes as shown experimentally.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "No explicit ablation but cited as critical in Method.",
+      "edge_rationale": "Deep Autoencoder section and positive results."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "target_node": "Conduct Deep TAMER fine-tuning with human scalar feedback and deep reward model",
+      "description": "Demonstrated effectiveness encourages practitioners to adopt Deep TAMER fine-tuning in similar tasks.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Evidence directly supports actionable adoption.",
+      "edge_rationale": "Experiments → Summary."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "target_node": "Pre-train convolutional state encoder via autoencoder on random-policy observations",
+      "description": "Success contingent on encoder pre-training suggests adopting this offline step.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Evidence plus method rationale; medium strength.",
+      "edge_rationale": "Deep Autoencoder contribution discussed in Summary."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Deep TAMER surpasses human and RL baselines on Atari Bowling within 15 minutes",
+      "target_node": "Use feedback replay buffer with importance-weighted SGD during human-interactive training",
+      "description": "Observed rapid improvement demonstrates the benefit of replay and weighted SGD, motivating its use.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Indirect but credible link from results to mechanism.",
+      "edge_rationale": "Method elements cited as key to experimental success."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1709.10163"
+    },
+    {
+      "key": "title",
+      "value": "Deep TAMER: Interactive Agent Shaping in High-Dimensional State Spaces"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Garrett Warnell",
+        "Nicholas Waytowich",
+        "Vernon Lawhern",
+        "Peter Stone"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2017-09-28T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

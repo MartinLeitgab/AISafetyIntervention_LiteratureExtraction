@@ -1,0 +1,536 @@
+{
+  "nodes": [
+    {
+      "name": "Unintended negative consequences from misspecified reward functions in autonomous agents",
+      "aliases": [
+        "misaligned objective pursuit",
+        "value misalignment impacts"
+      ],
+      "type": "concept",
+      "description": "Highly capable AI systems that optimize an incorrectly specified objective can cause large, undesirable impacts for humans.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction section as the overarching AI-safety risk motivating value alignment."
+    },
+    {
+      "name": "Intractability of practical CIRL solutions using standard POMDP reduction",
+      "aliases": [
+        "exponential action space in CIRL POMDP",
+        "computational bottleneck of CIRL"
+      ],
+      "type": "concept",
+      "description": "Reducing a CIRL game to a POMDP yields an action space of size |AH||Θ||AR|, making exact or approximate solvers unable to handle realistic tasks.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Section 2.2 and Figure 2 as the key barrier to applying CIRL for alignment."
+    },
+    {
+      "name": "Assumption of perfect human rationality in CIRL models",
+      "aliases": [
+        "human optimality assumption",
+        "rational human requirement"
+      ],
+      "type": "concept",
+      "description": "Standard CIRL assumes the human always takes the reward-maximising action, which is empirically false and limits robustness.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.2 and 3.3 identify this as unrealistic and motivating further work."
+    },
+    {
+      "name": "Passive observation assumption in IRL reward inference",
+      "aliases": [
+        "IRL ignores interaction",
+        "IRL human-as-expert assumption"
+      ],
+      "type": "concept",
+      "description": "Inverse Reinforcement Learning treats the robot as a passive observer and fails to leverage interactive signals, slowing or misguiding reward inference.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Contrasted with CIRL in Sections 1 and 7.1."
+    },
+    {
+      "name": "Pruning human decision rules via information asymmetry in CIRL",
+      "aliases": [
+        "exploiting full-information human",
+        "information asymmetry pruning"
+      ],
+      "type": "concept",
+      "description": "Because the human knows the true reward, the planner can compute her Q-values and prune all but her optimal action, dramatically reducing search complexity.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Core idea of Section 3 enabling the modified Bellman update."
+    },
+    {
+      "name": "Human action distribution parameterized by Q-values enables suboptimal human modeling",
+      "aliases": [
+        "Q-value dependent human policy",
+        "Boltzmann-rational human assumption"
+      ],
+      "type": "concept",
+      "description": "If the human’s action probabilities are any function of her Q-values, the planner can still reason about outcomes without assuming perfect rationality.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3.3 generalises the modified Bellman update to this setting."
+    },
+    {
+      "name": "Pedagogic action signaling by humans accelerates reward inference",
+      "aliases": [
+        "implicit communication in CIRL",
+        "human pedagogic behavior"
+      ],
+      "type": "concept",
+      "description": "Humans can choose actions that teach the robot their preferences, and robots can interpret these pragmatically, improving alignment speed.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Analyzed in Section 7.1 comparing CIRL and IRL."
+    },
+    {
+      "name": "Use optimality-preserving modified Bellman update to scale CIRL solvers",
+      "aliases": [
+        "design choice: modified Bellman update",
+        "scaling CIRL via Bellman modification"
+      ],
+      "type": "concept",
+      "description": "Design decision to replace the standard Bellman backup with one that computes the human’s optimal action on the fly, shrinking the action space.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Justified in Section 3 with Theorem 1 and 2."
+    },
+    {
+      "name": "Integrate general human policy models into CIRL transition dynamics",
+      "aliases": [
+        "design choice: suboptimal human modeling",
+        "rationality relaxation design"
+      ],
+      "type": "concept",
+      "description": "Design decision to embed a parametric human policy π_H(a|Q) into the planner’s dynamics, allowing robustness to bounded rationality.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Section 3.3."
+    },
+    {
+      "name": "Leverage pedagogic signaling within CIRL for faster value alignment",
+      "aliases": [
+        "design choice: exploit pedagogic behavior",
+        "pedagogic-pragmatic design"
+      ],
+      "type": "concept",
+      "description": "Encourage human signaling and robot pragmatic interpretation within the CIRL framework to improve task success relative to IRL.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implied by analysis in Sections 7.1–7.2."
+    },
+    {
+      "name": "Modified Bellman update algorithm with reduced action space |AR|",
+      "aliases": [
+        "exact modified Bellman implementation",
+        "optimality-preserving backup"
+      ],
+      "type": "concept",
+      "description": "Algorithmic mechanism implementing the design, computing human Q-values each step and pruning alternative decision rules, yielding exponential savings.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed equations in Section 3.2 and Algorithm 1."
+    },
+    {
+      "name": "Modified Bellman update incorporating π_H over Q-values for suboptimal humans",
+      "aliases": [
+        "stochastic human Bellman update",
+        "Boltzmann-compatible backup"
+      ],
+      "type": "concept",
+      "description": "Implementation extending the modified Bellman update to sample from a parametric human policy, maintaining optimality for any Q-dependent π_H.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equation 4 in Section 3.3."
+    },
+    {
+      "name": "Adapted PBVI and POMCP algorithms using modified Bellman update",
+      "aliases": [
+        "approximate CIRL solvers",
+        "PBVI/POMCP adaptations"
+      ],
+      "type": "concept",
+      "description": "Point-based and Monte-Carlo tree-search solvers modified to call the new Bellman backup, scaling to ~10¹⁰ states with empirical guarantees.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 describes these adaptations and Theorem 3–4."
+    },
+    {
+      "name": "CIRL planning system utilizing pedagogic human signals and pragmatic robot interpretation",
+      "aliases": [
+        "pedagogic-pragmatic CIRL planner"
+      ],
+      "type": "concept",
+      "description": "System that expects informative human actions and adjusts robot behaviour accordingly, enabling correct recipe completion every run in experiments.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Emergent behaviour analysed in Section 7.1."
+    },
+    {
+      "name": "Exact value iteration experiments show exponential speedup using modified Bellman update",
+      "aliases": [
+        "VI speedup evidence",
+        "table 1 results"
+      ],
+      "type": "concept",
+      "description": "Experiments (Table 1) demonstrate up to 3500× faster solution and ability to handle 6-recipe problems unreachable by the baseline.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.2 Exact VI analysis."
+    },
+    {
+      "name": "Approximate algorithm experiments show higher value and scalability",
+      "aliases": [
+        "PBVI/POMCP empirical evidence",
+        "figure 3 results"
+      ],
+      "type": "concept",
+      "description": "Adapted PBVI and POMCP achieve higher cumulative reward with fewer samples and handle 7-ingredient domains where baselines fail.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.2 POMCP experiment."
+    },
+    {
+      "name": "CIRL vs IRL experiments show 100% task success versus 50%",
+      "aliases": [
+        "CIRL pedagogic advantage evidence"
+      ],
+      "type": "concept",
+      "description": "Figure 4 shows CIRL agents always prepare the correct recipe while IRL fails up to half the time, evidencing pedagogic signalling benefits.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 7.1 comparison experiment."
+    },
+    {
+      "name": "Simulations with Boltzmann-rational humans show >90% success in CIRL",
+      "aliases": [
+        "suboptimal human robustness evidence"
+      ],
+      "type": "concept",
+      "description": "Appendix D reports that even with noisy human actions, CIRL policies achieve over 90% correct recipe completion.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 7.2 robustness experiment."
+    },
+    {
+      "name": "Integrate modified Bellman update into POMDP solvers for CIRL-based planning algorithms",
+      "aliases": [
+        "apply modified Bellman update",
+        "update POMDP solver code"
+      ],
+      "type": "intervention",
+      "description": "During model-design, replace standard Bellman backups with the optimality-preserving modified Bellman update in exact and approximate solvers to enable tractable CIRL planning.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Implementation change at algorithm design stage (Sections 3 & 4).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated by multiple experiments but not yet deployed beyond research prototypes (Section 6).",
+      "node_rationale": "Directly operationalises design rationale and mechanisms to mitigate intractability."
+    },
+    {
+      "name": "Model human policies as Q-value-dependent distributions (e.g., Boltzmann) in CIRL planning",
+      "aliases": [
+        "embed Boltzmann human model",
+        "rationality relaxation implementation"
+      ],
+      "type": "intervention",
+      "description": "At algorithm design time, specify π_H(a|Q) (such as a Boltzmann soft-max) in the modified Bellman update to maintain performance when humans act sub-optimally.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Parameterisation choice while constructing the planning model (Section 3.3).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Supported by simulation evidence but limited real-world validation (Section 7.2).",
+      "node_rationale": "Addresses alignment risk arising from perfect-rationality assumption."
+    },
+    {
+      "name": "Train robots with CIRL-derived policies encouraging pedagogic human signaling instead of IRL approaches",
+      "aliases": [
+        "switch from IRL to CIRL policies",
+        "deploy pedagogic-aware training"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning/RL, optimise robot policies using the CIRL framework so that they interpret and elicit informative human actions, improving alignment robustness in deployment.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented during policy optimisation/fine-tuning (Sections 6 & 7).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Tested in simulation and small pilot human study; not yet large-scale deployment.",
+      "node_rationale": "Targets mis-specification risk linked to passive observation assumption."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Unintended negative consequences from misspecified reward functions in autonomous agents",
+      "target_node": "Intractability of practical CIRL solutions using standard POMDP reduction",
+      "description": "Difficulty solving CIRL prevents using it to learn correct rewards, leaving objectives misspecified.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit argument in Section 2.2 linking tractability to alignment.",
+      "edge_rationale": "Inability to compute CIRL policies causes persistence of misaligned objectives."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unintended negative consequences from misspecified reward functions in autonomous agents",
+      "target_node": "Assumption of perfect human rationality in CIRL models",
+      "description": "Incorrect rationality assumption can lead to policies that misinterpret real human actions, causing misalignment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in Section 3.3 as limiting real-world alignment.",
+      "edge_rationale": "When humans are not perfectly rational, value alignment can fail."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unintended negative consequences from misspecified reward functions in autonomous agents",
+      "target_node": "Passive observation assumption in IRL reward inference",
+      "description": "IRL’s restrictions slow or misguide reward inference, risking misaligned behaviour.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 7.1 shows IRL failing to align in half of trials.",
+      "edge_rationale": "Passive observation leaves reward misspecified longer."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Intractability of practical CIRL solutions using standard POMDP reduction",
+      "target_node": "Pruning human decision rules via information asymmetry in CIRL",
+      "description": "Recognising human full information suggests pruning unused decision rules, explaining the tractability problem’s root.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Derived from theoretical discussion; implicit causal logic.",
+      "edge_rationale": "Insight identifies why action space blew up and how to shrink it."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Pruning human decision rules via information asymmetry in CIRL",
+      "target_node": "Use optimality-preserving modified Bellman update to scale CIRL solvers",
+      "description": "Design rationale applies the pruning insight to create a practical solution.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Directly asserted in Section 3.",
+      "edge_rationale": "Bellman update operationalises pruning."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use optimality-preserving modified Bellman update to scale CIRL solvers",
+      "target_node": "Modified Bellman update algorithm with reduced action space |AR|",
+      "description": "Algorithm realises the design choice.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Formal algorithm provided (Eq. 3, Algorithm 1).",
+      "edge_rationale": "Concrete mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Modified Bellman update algorithm with reduced action space |AR|",
+      "target_node": "Exact value iteration experiments show exponential speedup using modified Bellman update",
+      "description": "Experiments confirm complexity reduction and correctness.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical data in Table 1.",
+      "edge_rationale": "Performance measurements validate implementation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Exact value iteration experiments show exponential speedup using modified Bellman update",
+      "target_node": "Integrate modified Bellman update into POMDP solvers for CIRL-based planning algorithms",
+      "description": "Evidence encourages adoption of the update in safety-critical planners.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical implication; not explicitly stated as prescription.",
+      "edge_rationale": "Demonstrated benefits lead to recommended intervention."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Modified Bellman update algorithm with reduced action space |AR|",
+      "target_node": "Adapted PBVI and POMCP algorithms using modified Bellman update",
+      "description": "Algorithm adapted to approximate solvers.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4 provides derivations.",
+      "edge_rationale": "Approximate methods build on exact mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adapted PBVI and POMCP algorithms using modified Bellman update",
+      "target_node": "Approximate algorithm experiments show higher value and scalability",
+      "description": "Experiments measure improved value and scalability.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figure 3 data.",
+      "edge_rationale": "Empirical support."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Approximate algorithm experiments show higher value and scalability",
+      "target_node": "Integrate modified Bellman update into POMDP solvers for CIRL-based planning algorithms",
+      "description": "Additional evidence strengthens recommendation to integrate update.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Inference from performance results.",
+      "edge_rationale": "Shows practicality beyond exact VI."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Assumption of perfect human rationality in CIRL models",
+      "target_node": "Human action distribution parameterized by Q-values enables suboptimal human modeling",
+      "description": "Need to handle non-rational humans motivates modelling actions via Q-dependent distributions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly stated in Section 3.3.",
+      "edge_rationale": "Insight directly addresses the assumption."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Human action distribution parameterized by Q-values enables suboptimal human modeling",
+      "target_node": "Integrate general human policy models into CIRL transition dynamics",
+      "description": "Design embeds the Q-dependent policy into planning.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3.3 equations.",
+      "edge_rationale": "Design step operationalises insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrate general human policy models into CIRL transition dynamics",
+      "target_node": "Modified Bellman update incorporating π_H over Q-values for suboptimal humans",
+      "description": "Implementation realises the design via updated Bellman backup.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Equation 4 given.",
+      "edge_rationale": "Concrete mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Modified Bellman update incorporating π_H over Q-values for suboptimal humans",
+      "target_node": "Simulations with Boltzmann-rational humans show >90% success in CIRL",
+      "description": "Simulation demonstrates robustness to sub-optimal humans.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Appendix D results.",
+      "edge_rationale": "Empirical support."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Simulations with Boltzmann-rational humans show >90% success in CIRL",
+      "target_node": "Model human policies as Q-value-dependent distributions (e.g., Boltzmann) in CIRL planning",
+      "description": "Evidence supports incorporating such models in practice.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical recommendation from results.",
+      "edge_rationale": "High success rates motivate intervention."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Passive observation assumption in IRL reward inference",
+      "target_node": "Pedagogic action signaling by humans accelerates reward inference",
+      "description": "Identifying lack of interactivity points to pedagogic signaling as an alternative.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Conceptual argument in Section 7.1.",
+      "edge_rationale": "Theoretical insight responds to problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Pedagogic action signaling by humans accelerates reward inference",
+      "target_node": "Leverage pedagogic signaling within CIRL for faster value alignment",
+      "description": "Design explicitly aims to exploit pedagogic signals.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Discussed in Section 7.1.",
+      "edge_rationale": "Design turns insight into approach."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Leverage pedagogic signaling within CIRL for faster value alignment",
+      "target_node": "CIRL planning system utilizing pedagogic human signals and pragmatic robot interpretation",
+      "description": "System realises the design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Behaviour analysed in experiments.",
+      "edge_rationale": "Implementation detail."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "CIRL planning system utilizing pedagogic human signals and pragmatic robot interpretation",
+      "target_node": "CIRL vs IRL experiments show 100% task success versus 50%",
+      "description": "Experiment confirms advantage of pedagogic design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figure 4 data.",
+      "edge_rationale": "Performance evidence."
+    },
+    {
+      "type": "motivates",
+      "source_node": "CIRL vs IRL experiments show 100% task success versus 50%",
+      "target_node": "Train robots with CIRL-derived policies encouraging pedagogic human signaling instead of IRL approaches",
+      "description": "Results argue for deploying CIRL-based training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Inference from empirical comparison.",
+      "edge_rationale": "Higher success suggests switching training paradigm."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "An Efficient, Generalized Bellman Update For Cooperative Inverse Reinforcement Learning"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.03820"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-06-11T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Dhruv Malik",
+        "Malayandi Palaniappan",
+        "Jaime F. Fisac",
+        "Dylan Hadfield-Menell",
+        "Stuart Russell",
+        "Anca D. Dragan"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

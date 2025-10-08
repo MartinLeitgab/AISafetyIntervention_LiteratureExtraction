@@ -1,0 +1,574 @@
+{
+  "nodes": [
+    {
+      "name": "Undesirable behaviors from reward mis-specification in multi-agent RL",
+      "aliases": [
+        "reward hacking behaviors in multi-agent reinforcement learning",
+        "unsafe multi-agent policies from incorrect rewards"
+      ],
+      "type": "concept",
+      "description": "When reward functions omit important task aspects in a Markov game, interacting learning agents converge to strategies that are undesirable or harmful (Introduction).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explicitly named in Introduction as a key limitation of RL."
+    },
+    {
+      "name": "Difficulty designing suitable reward functions for complex multi-agent tasks",
+      "aliases": [
+        "reward design challenge in multi-agent environments",
+        "misspecified reward functions for Markov games"
+      ],
+      "type": "concept",
+      "description": "Designing scalar rewards that fully capture complex cooperative or competitive objectives is hard, leading to specification gaps (Introduction).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced as the root cause of unsafe behaviours."
+    },
+    {
+      "name": "Non-stationary interactions causing multiple equilibria in multi-agent RL",
+      "aliases": [
+        "multiple Nash equilibria from interacting policies",
+        "environment non-stationarity under other agents"
+      ],
+      "type": "concept",
+      "description": "Because each agent’s optimal policy depends on others, learning occurs in a non-stationary environment with potentially many equilibria (Introduction §1, Preliminaries §2.2).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivates need for equilibrium-aware imitation."
+    },
+    {
+      "name": "Training instability due to high gradient variance in multi-agent RL",
+      "aliases": [
+        "unstable policy optimisation in multi-agent settings",
+        "sample inefficiency from gradient variance"
+      ],
+      "type": "concept",
+      "description": "High-variance gradient estimates hamper reliable learning and can lead to divergent or unsafe policies (Practical multi-agent imitation learning §4).",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Stated as a major obstacle for practical safety."
+    },
+    {
+      "name": "High gradient variance during policy optimization in multi-agent RL",
+      "aliases": [
+        "variance problem in policy gradients",
+        "sample inefficiency of multi-agent updates"
+      ],
+      "type": "concept",
+      "description": "Policy-gradient estimators suffer from high variance because rewards depend on joint actions, worsening with agent count (§4).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in §4 as the mechanism behind training instability."
+    },
+    {
+      "name": "Imitation learning via occupancy measure matching can bypass explicit reward design",
+      "aliases": [
+        "occupancy measure matching insight",
+        "reward-free imitation via state-action distributions"
+      ],
+      "type": "concept",
+      "description": "Matching the distribution over state-action pairs of expert trajectories removes the need for hand-crafted rewards (§2.4).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Forms theoretical basis for GAIL and its extension."
+    },
+    {
+      "name": "Multi-agent inverse reinforcement learning via Lagrangian dual enables equilibrium-aware reward inference",
+      "aliases": [
+        "MAIRL dual formulation",
+        "equilibrium-aware inverse RL for Markov games"
+      ],
+      "type": "concept",
+      "description": "Deriving a dual of the constrained Nash-equilibrium optimisation allows constructing a reward that separates expert policies from others (§3.2).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Extends single-agent IRL to multi-agent domains."
+    },
+    {
+      "name": "Generative adversarial imitation learning generalized to multi-agent settings",
+      "aliases": [
+        "MAGAIL design rationale",
+        "multi-agent GAIL concept"
+      ],
+      "type": "concept",
+      "description": "Viewing imitation as a game between a joint-policy generator and discriminators yields a scalable solution that sidesteps reward design (§4.1).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Central design idea bridging insight to implementation."
+    },
+    {
+      "name": "Per-agent discriminator design incorporating cooperation or competition priors",
+      "aliases": [
+        "reward-structure prior in MAGAIL",
+        "centralised/decentralised/zero-sum discriminator rationale"
+      ],
+      "type": "concept",
+      "description": "Encoding whether agents are cooperative, independent or adversarial directly in discriminators guides learning and improves imitation (§4.1).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains why three MAGAIL variants are useful."
+    },
+    {
+      "name": "Centralized training with natural policy gradients to reduce variance",
+      "aliases": [
+        "variance-reduction rationale for multi-agent RL",
+        "natural gradient training rationale"
+      ],
+      "type": "concept",
+      "description": "Using a shared critic, additional joint information and a natural-gradient trust-region update lowers gradient variance (§4.2).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivates MACK implementation for safety-relevant stability."
+    },
+    {
+      "name": "Supervised behavior cloning pretraining to bootstrap policy learning",
+      "aliases": [
+        "BC warm-start rationale",
+        "supervised pre-training for exploration"
+      ],
+      "type": "concept",
+      "description": "Initializing policies with supervised learning on demonstrations reduces exploration burden before adversarial imitation (§5.1).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Cited as practical step to mitigate variance and sample costs."
+    },
+    {
+      "name": "MAGAIL algorithm with generator policies and per-agent discriminators",
+      "aliases": [
+        "multi-agent GAIL implementation",
+        "MAGAIL procedure"
+      ],
+      "type": "concept",
+      "description": "Implements joint policy optimisation against learned rewards from per-agent discriminators, supporting centralised, decentralised and zero-sum modes (Algorithm §B).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Concrete mechanism realising MAGAIL design."
+    },
+    {
+      "name": "Prior-specific discriminator reward structures in MAGAIL",
+      "aliases": [
+        "centralised MAGAIL variant",
+        "decentralised MAGAIL variant",
+        "zero-sum MAGAIL variant"
+      ],
+      "type": "concept",
+      "description": "Imposes equality, independence or negation constraints on per-agent rewards to reflect cooperative, mixed or competitive tasks (Fig. 1).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Operationalises design rationale on priors."
+    },
+    {
+      "name": "MACK algorithm using Kronecker-factored natural gradients with centralized training",
+      "aliases": [
+        "multi-agent ACKTR",
+        "MACK optimiser"
+      ],
+      "type": "concept",
+      "description": "Extends ACKTR to multi-agent settings, using joint observations in the critic and Kronecker-factored natural gradients for stable updates (§4.2).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Key mechanism tackling variance-related risk."
+    },
+    {
+      "name": "Behavior cloning pretraining for exploration efficiency in MAGAIL",
+      "aliases": [
+        "BC initialisation step",
+        "offline supervised pretraining"
+      ],
+      "type": "concept",
+      "description": "Initial supervised learning phase on demonstrations before adversarial training to accelerate convergence (§5.1).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implements the BC warm-start design rationale."
+    },
+    {
+      "name": "Empirical success of MAGAIL on cooperative particle environments",
+      "aliases": [
+        "cooperative particle benchmark results"
+      ],
+      "type": "concept",
+      "description": "Centralised MAGAIL reached expert-level rewards with 200 demonstrations, outperforming BC (§5.1.1, Fig. 2).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Validates main MAGAIL mechanism."
+    },
+    {
+      "name": "Improved performance of MAGAIL variants on competitive tasks",
+      "aliases": [
+        "competitive particle benchmark results"
+      ],
+      "type": "concept",
+      "description": "Decentralised and zero-sum MAGAIL outperform BC and centralised variants in Keep-Away and Predator-Prey (§5.1.2, Table 1).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Supports usefulness of discriminator-prior mechanism."
+    },
+    {
+      "name": "MAGAIL agents adapt to changed dynamics in cooperative control plank task",
+      "aliases": [
+        "bipedal walker plank adaptation"
+      ],
+      "type": "concept",
+      "description": "With imperfect demonstrations, MAGAIL agents failed 26 % vs 40 % for BC, showing robustness to distribution shift (§5.2).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirically validates MACK and BC pretraining benefits."
+    },
+    {
+      "name": "Train multi-agent policies with MAGAIL using expert demonstrations to avoid reward mis-specification",
+      "aliases": [
+        "apply MAGAIL during policy learning",
+        "imitative training of multi-agent systems via MAGAIL"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning/RL, replace hand-crafted rewards with MAGAIL’s adversarially learned rewards to guide joint policy optimisation.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Described in Practical multi-agent imitation learning §4 as the training procedure.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evaluated only in controlled experiments (§5), indicating proof-of-concept maturity.",
+      "node_rationale": "Directly emerges from validated MAGAIL mechanism."
+    },
+    {
+      "name": "Configure MAGAIL discriminator reward structure to match task cooperation level",
+      "aliases": [
+        "select centralised/decentralised/zero-sum prior in MAGAIL"
+      ],
+      "type": "intervention",
+      "description": "Choose equality, independence or negation constraints on per-agent rewards before training, aligning learning signals with known task structure.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented during policy training in §4.1 Figure 1.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Supported by competitive task experiments (§5.1.2) but not yet systematically validated.",
+      "node_rationale": "Actionable configuration step influencing safety outcome."
+    },
+    {
+      "name": "Apply MACK optimizer for stable multi-agent policy updates within MAGAIL",
+      "aliases": [
+        "use MACK natural gradients"
+      ],
+      "type": "intervention",
+      "description": "During imitation training, employ MACK’s Kronecker-factored natural gradient updates with centralised critic to reduce variance.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Introduced as part of training loop in §4.2.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated in experiments but without large-scale validation (§5).",
+      "node_rationale": "Mitigates gradient-variance risk according to validation evidence."
+    },
+    {
+      "name": "Pretrain multi-agent policies with behavior cloning before MAGAIL fine-tuning",
+      "aliases": [
+        "BC pretraining prior to MAGAIL"
+      ],
+      "type": "intervention",
+      "description": "Perform supervised imitation on demonstrations to initialise policy parameters, then continue with MAGAIL adversarial training.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Executed as first phase of training in Experiments §5.1.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Used successfully in the study but lacks dedicated ablation evidence.",
+      "node_rationale": "Actionable training step inferred to lower sample complexity and instability."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Undesirable behaviors from reward mis-specification in multi-agent RL",
+      "target_node": "Difficulty designing suitable reward functions for complex multi-agent tasks",
+      "description": "Poorly specified rewards are identified as the root cause of undesirable behaviours.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit causal link in Introduction.",
+      "edge_rationale": "Introduction states that incorrect rewards lead directly to bad behaviour."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Undesirable behaviors from reward mis-specification in multi-agent RL",
+      "target_node": "Non-stationary interactions causing multiple equilibria in multi-agent RL",
+      "description": "Reward design is further complicated by non-stationarity, contributing to mis-specification effects.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implied connection in Introduction, not quantitatively analysed.",
+      "edge_rationale": "Multiple equilibria make specifying correct rewards harder, heightening risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Difficulty designing suitable reward functions for complex multi-agent tasks",
+      "target_node": "Imitation learning via occupancy measure matching can bypass explicit reward design",
+      "description": "Occupancy-measure matching removes the need for hand-crafted rewards.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical derivation in §2.4.",
+      "edge_rationale": "Theoretical insight addresses the reward-design difficulty."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Imitation learning via occupancy measure matching can bypass explicit reward design",
+      "target_node": "Generative adversarial imitation learning generalized to multi-agent settings",
+      "description": "MAGAIL extends the occupancy-matching idea to multi-agent GAN-style training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Method built directly on the theoretical insight (§4.1).",
+      "edge_rationale": "Insight provides conceptual basis for design rationale."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Generative adversarial imitation learning generalized to multi-agent settings",
+      "target_node": "MAGAIL algorithm with generator policies and per-agent discriminators",
+      "description": "Algorithm realises the design with concrete generator-discriminator architecture.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Algorithm listing in Appendix B.",
+      "edge_rationale": "Implementation follows directly from design rationale."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "MAGAIL algorithm with generator policies and per-agent discriminators",
+      "target_node": "Empirical success of MAGAIL on cooperative particle environments",
+      "description": "Experimental results confirm algorithm matches expert performance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative benchmarks in §5.1.1.",
+      "edge_rationale": "Empirical evidence supports correctness of implementation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical success of MAGAIL on cooperative particle environments",
+      "target_node": "Train multi-agent policies with MAGAIL using expert demonstrations to avoid reward mis-specification",
+      "description": "Successful results justify adopting MAGAIL as an intervention.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Motivation inferred from reported performance.",
+      "edge_rationale": "Effectiveness evidence encourages practical deployment."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Imitation learning via occupancy measure matching can bypass explicit reward design",
+      "target_node": "Per-agent discriminator design incorporating cooperation or competition priors",
+      "description": "Occupancy-matching framework allows separate discriminators per agent with task-specific priors.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in §4.1 and Fig. 1.",
+      "edge_rationale": "Insight underpins discriminator design choice."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Per-agent discriminator design incorporating cooperation or competition priors",
+      "target_node": "Prior-specific discriminator reward structures in MAGAIL",
+      "description": "Concrete discriminator configurations implement the design for different task types.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implementation details in §4.1.",
+      "edge_rationale": "Direct mapping from design rationale to code structure."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Prior-specific discriminator reward structures in MAGAIL",
+      "target_node": "Improved performance of MAGAIL variants on competitive tasks",
+      "description": "Experiments show tailored priors outperform generic setups in adversarial games.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1 quantitative improvements.",
+      "edge_rationale": "Empirical data validates the discriminator-prior mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved performance of MAGAIL variants on competitive tasks",
+      "target_node": "Configure MAGAIL discriminator reward structure to match task cooperation level",
+      "description": "Evidence encourages practitioners to set appropriate priors.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Recommendation inferred from performance gains.",
+      "edge_rationale": "Validation results directly inform intervention choice."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Training instability due to high gradient variance in multi-agent RL",
+      "target_node": "High gradient variance during policy optimization in multi-agent RL",
+      "description": "Instability arises specifically from high-variance gradient estimates.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit causal statement in §4.",
+      "edge_rationale": "Section links gradient variance to instability."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High gradient variance during policy optimization in multi-agent RL",
+      "target_node": "Centralized training with natural policy gradients to reduce variance",
+      "description": "Centralised critic and natural gradients lower variance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Justified theoretically in §4.2.",
+      "edge_rationale": "Design directly addresses variance problem."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Centralized training with natural policy gradients to reduce variance",
+      "target_node": "MACK algorithm using Kronecker-factored natural gradients with centralized training",
+      "description": "MACK realises the variance-reduction design.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Algorithm details in §4.2.",
+      "edge_rationale": "Implementation follows design decisions."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "MACK algorithm using Kronecker-factored natural gradients with centralized training",
+      "target_node": "MAGAIL agents adapt to changed dynamics in cooperative control plank task",
+      "description": "Stable learning enabled successful adaptation compared to BC.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative failure-rate reduction in §5.2.",
+      "edge_rationale": "Empirical results confirm efficacy of MACK."
+    },
+    {
+      "type": "motivates",
+      "source_node": "MAGAIL agents adapt to changed dynamics in cooperative control plank task",
+      "target_node": "Apply MACK optimizer for stable multi-agent policy updates within MAGAIL",
+      "description": "Adaptation evidence motivates adoption of MACK.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Motivation inferred from positive results.",
+      "edge_rationale": "Validation encourages use of the optimiser."
+    },
+    {
+      "type": "required_by",
+      "source_node": "MAGAIL algorithm with generator policies and per-agent discriminators",
+      "target_node": "MACK algorithm using Kronecker-factored natural gradients with centralized training",
+      "description": "MAGAIL training loop relies on MACK for low-variance updates.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated dependency in §4.2.",
+      "edge_rationale": "Implementation linkage between the two mechanisms."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High gradient variance during policy optimization in multi-agent RL",
+      "target_node": "Supervised behavior cloning pretraining to bootstrap policy learning",
+      "description": "Warm-start policies reduce initial exploration variance.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Stated as heuristic in §5.1 without formal analysis.",
+      "edge_rationale": "Design rationale partially addresses variance issue."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Supervised behavior cloning pretraining to bootstrap policy learning",
+      "target_node": "Behavior cloning pretraining for exploration efficiency in MAGAIL",
+      "description": "BC pretraining realises the warm-start idea.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implementation detail in §5.1.",
+      "edge_rationale": "Direct mapping from rationale to mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Behavior cloning pretraining for exploration efficiency in MAGAIL",
+      "target_node": "MAGAIL agents adapt to changed dynamics in cooperative control plank task",
+      "description": "Adaptation experiment used BC-pretrained policies, providing indirect validation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "BC pretraining explicitly mentioned as part of successful setup (§5.2).",
+      "edge_rationale": "Implementation present in experiment that showed benefits."
+    },
+    {
+      "type": "motivates",
+      "source_node": "MAGAIL agents adapt to changed dynamics in cooperative control plank task",
+      "target_node": "Pretrain multi-agent policies with behavior cloning before MAGAIL fine-tuning",
+      "description": "Positive results motivate the BC-pretrain intervention.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Motivation inferred; no dedicated ablation.",
+      "edge_rationale": "Evidence encourages practitioners to include pretraining step."
+    },
+    {
+      "type": "preceded_by",
+      "source_node": "MAGAIL algorithm with generator policies and per-agent discriminators",
+      "target_node": "Behavior cloning pretraining for exploration efficiency in MAGAIL",
+      "description": "BC pretraining phase occurs before the main MAGAIL optimisation.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Temporal ordering described in §5.1.",
+      "edge_rationale": "Clarifies sequential relationship of implementation steps."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Non-stationary interactions causing multiple equilibria in multi-agent RL",
+      "target_node": "Multi-agent inverse reinforcement learning via Lagrangian dual enables equilibrium-aware reward inference",
+      "description": "Equilibrium-aware inverse RL addresses multi-equilibria issue by constructing appropriate reward margins.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical treatment in §3.",
+      "edge_rationale": "Dual formulation directly targets problem of multiple equilibria."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Multi-agent inverse reinforcement learning via Lagrangian dual enables equilibrium-aware reward inference",
+      "target_node": "Generative adversarial imitation learning generalized to multi-agent settings",
+      "description": "Dual formulation forms theoretical backbone for MAGAIL design.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design rationale cites the dual formulation (§3→§4).",
+      "edge_rationale": "Shows conceptual progression from theory to design."
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Jiaming Song",
+        "Hongyu Ren",
+        "Dorsa Sadigh",
+        "Stefano Ermon"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Multi-Agent Generative Adversarial Imitation Learning"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.09936"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-07-26T00:00:00Z"
+    }
+  ]
+}

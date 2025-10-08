@@ -1,0 +1,586 @@
+{
+  "nodes": [
+    {
+      "name": "Unstable or inefficient model optimization in large-scale machine learning",
+      "aliases": [
+        "optimization instability in large ML models",
+        "slow or divergent training in high-dimensional objectives"
+      ],
+      "type": "concept",
+      "description": "Risk that gradient-based training fails to converge, diverges or is prohibitively slow when objectives are noisy, non-stationary and high-dimensional, leading to unsafe or ineffective AI systems.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced implicitly throughout Introduction as the motivating danger of poor optimisers."
+    },
+    {
+      "name": "Sparse and non-stationary gradients in SGD training",
+      "aliases": [
+        "gradient sparsity and drift",
+        "non-stationary objective gradients"
+      ],
+      "type": "concept",
+      "description": "Gradients that are zero for many parameters and whose statistics change over time hinder fixed-learning-rate SGD, causing slow or unstable convergence.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 1 and 5 state that sparse/non-stationary gradients motivate adaptive methods."
+    },
+    {
+      "name": "Initialization bias in moment estimates of adaptive optimizers",
+      "aliases": [
+        "zero-initialisation bias in EMA",
+        "early-step bias in Adam"
+      ],
+      "type": "concept",
+      "description": "Exponential moving averages start at zero, under-estimating true first/second moments and leading to overly large updates, risking divergence especially with small decay rates.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3 details the bias and its hazards."
+    },
+    {
+      "name": "Per-parameter adaptive learning rates improve convergence with sparse gradients",
+      "aliases": [
+        "adaptive per-coordinate step sizes",
+        "gradient-scaled learning rates"
+      ],
+      "type": "concept",
+      "description": "Scaling updates inversely to parameter-specific gradient variance lets rare but informative gradients have larger effective steps, mitigating sparsity issues.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Introduction and Section 2.1 as the core idea behind AdaGrad/RMSProp/Adam."
+    },
+    {
+      "name": "Bias correction of exponential moving averages prevents large early step sizes",
+      "aliases": [
+        "moment bias correction necessity",
+        "corrected EMA for stability"
+      ],
+      "type": "concept",
+      "description": "Dividing EMA estimates by (1−β^t) removes zero-initialisation bias, keeping early update magnitudes bounded and stabilising training.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections 2 & 3 derive and justify bias-correction."
+    },
+    {
+      "name": "Parameter averaging reduces variance of final estimate in stochastic optimization",
+      "aliases": [
+        "Polyak-Ruppert averaging benefit",
+        "temporal averaging for generalisation"
+      ],
+      "type": "concept",
+      "description": "Averaging successive parameter vectors lowers estimator variance, often yielding better generalisation than the final noisy iterate.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 7.2 cites classical results motivating temporal averaging."
+    },
+    {
+      "name": "Combine AdaGrad and RMSProp through adaptive moment estimation",
+      "aliases": [
+        "Adam design synthesis",
+        "AdaGrad+RMSProp hybrid rationale"
+      ],
+      "type": "concept",
+      "description": "Design goal to inherit AdaGrad’s handling of sparsity and RMSProp’s responsiveness to non-stationarity by tracking first and second gradient moments.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 1 explains this combined rationale."
+    },
+    {
+      "name": "Introduce bias correction terms in Adam",
+      "aliases": [
+        "bias-corrected Adam design choice",
+        "EMA correction in optimiser"
+      ],
+      "type": "concept",
+      "description": "Design decision to divide moment estimates by (1−β^t) to eliminate initialisation bias.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections 2 & 3 explicitly present this design step."
+    },
+    {
+      "name": "Adam update rule with first and second moment exponential moving averages",
+      "aliases": [
+        "standard Adam algorithm",
+        "adaptive moment update"
+      ],
+      "type": "concept",
+      "description": "Implementation involving per-parameter EMAs (m_t, v_t), bias correction (m̂_t, v̂_t) and update Δθ=−α·m̂_t/(sqrt(v̂_t)+ε).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2 provides the pseudo-code."
+    },
+    {
+      "name": "Bias-corrected moment estimation in Adam",
+      "aliases": [
+        "corrected m̂ and v̂ computation",
+        "bias-free moment estimates"
+      ],
+      "type": "concept",
+      "description": "Compute m̂_t=m_t/(1−β1^t) and v̂_t=v_t/(1−β2^t) before parameter updates to counteract zero-init bias.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 lines 7–9 show the mechanism."
+    },
+    {
+      "name": "AdaMax variant using infinity norm for gradient scaling",
+      "aliases": [
+        "AdaMax optimiser",
+        "Adam p→∞ generalisation"
+      ],
+      "type": "concept",
+      "description": "Generalises Adam to an L∞ norm, replacing v_t with an exponentially weighted max of |g_t|, yielding updates with simpler bound |Δθ|≤α.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 7.1 derives and presents Algorithm 2."
+    },
+    {
+      "name": "Temporal exponential averaging of parameters trained with Adam",
+      "aliases": [
+        "EMA of weights",
+        "Adam parameter averaging"
+      ],
+      "type": "concept",
+      "description": "Maintain ̄θ_t = β_2·̄θ_{t−1} + (1−β_2)θ_t and use bias-corrected estimate for evaluation to improve generalisation.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 7.2 adds one-line modification to Algorithm 1."
+    },
+    {
+      "name": "O(sqrt(T)) regret bound theoretical proof for Adam",
+      "aliases": [
+        "Adam convergence theorem",
+        "regret analysis"
+      ],
+      "type": "concept",
+      "description": "Section 4 and Appendix prove Adam achieves O(√T) regret under bounded gradients, matching best known bounds.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides rigorous validation of optimisation effectiveness."
+    },
+    {
+      "name": "Logistic regression experiments demonstrate faster convergence of Adam",
+      "aliases": [
+        "Adam vs Adagrad on MNIST/IMDB",
+        "convex objective results"
+      ],
+      "type": "concept",
+      "description": "Section 6.1 shows Adam matches or exceeds SGD momentum and Adagrad on MNIST and sparse IMDB BoW tasks.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical support on convex, sparse settings."
+    },
+    {
+      "name": "Multilayer neural network experiments show Adam outperforms SFO",
+      "aliases": [
+        "Adam on MLP MNIST",
+        "deep net deterministic & dropout"
+      ],
+      "type": "concept",
+      "description": "Section 6.2 reports faster progress per iteration and wall-clock time than quasi-Newton SFO under deterministic and dropout training.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Validates Adam on non-convex deep nets."
+    },
+    {
+      "name": "CNN experiments show Adam matches SGD and beats Adagrad",
+      "aliases": [
+        "Adam on CIFAR-10 CNN",
+        "convolutional network results"
+      ],
+      "type": "concept",
+      "description": "Section 6.3 demonstrates Adam converges rapidly and ultimately faster than Adagrad, while auto-scaling learning rates per layer.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Shows robustness on complex vision models."
+    },
+    {
+      "name": "Bias correction ablation study shows improved stability with bias correction",
+      "aliases": [
+        "Adam vs RMSProp without correction",
+        "VAE instability study"
+      ],
+      "type": "concept",
+      "description": "Section 6.4 varies β_1, β_2 and α on VAE; bias-corrected Adam avoids divergence, especially with β_2→1.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Direct evidence for necessity of bias correction."
+    },
+    {
+      "name": "Train ML models with Adam optimizer using default hyperparameters",
+      "aliases": [
+        "apply Adam during pre-training",
+        "standard Adam training"
+      ],
+      "type": "intervention",
+      "description": "During initial training, set α=0.001, β1=0.9, β2=0.999, ε=1e-8 and update parameters per Adam Algorithm 1.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Applies during initial model parameter optimisation (Section 2 Algorithm).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "Adam is operational and widely deployed; extensive empirical validation (Sections 6).",
+      "node_rationale": "Principal actionable recommendation derived from the paper."
+    },
+    {
+      "name": "Fine-tune or RLHF large language models with Adam optimizer for adaptive gradient scaling",
+      "aliases": [
+        "use Adam in fine-tuning",
+        "Adam in RLHF phase"
+      ],
+      "type": "intervention",
+      "description": "Employ Adam during supervised fine-tuning or reinforcement-learning-from-human-feedback phases to handle non-stationary, sparse reward gradients.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Optimiser choice during fine-tuning/RL stage (implied by generality claims in Conclusion).",
+      "intervention_maturity": "4",
+      "intervention_maturity_rationale": "Adam is industry standard for fine-tuning large models; supported by extensive practice though outside paper scope.",
+      "node_rationale": "Extends validated mechanism to later training phases relevant for AI safety."
+    },
+    {
+      "name": "Use AdaMax optimizer in place of Adam when numerical stability or infinity norm adaptation needed",
+      "aliases": [
+        "apply AdaMax",
+        "Adam L-inf variant deployment"
+      ],
+      "type": "intervention",
+      "description": "Replace v_t with exponentially-weighted infinity norm u_t and update θ_t with bias-corrected m_t/u_t using α≈0.002 for better numerical stability.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Alternative optimiser selected during model design/pre-training (Section 7.1 AdaMax).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Introduced as extension with limited empirical evidence; proof-of-concept stage.",
+      "node_rationale": "Provides option for cases where L2-based scaling is unstable."
+    },
+    {
+      "name": "Integrate bias-corrected moving averages in custom adaptive optimizers to mitigate initialization bias",
+      "aliases": [
+        "add bias correction to new optimisers",
+        "correct EMA in custom methods"
+      ],
+      "type": "intervention",
+      "description": "For any EMA-based adaptive optimiser, divide moment estimates by (1−β^t) before use to avoid early overly large updates.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Architectural design decision when developing new optimisation algorithms (Section 3 bias correction).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Widely accepted theoretically but varies in adoption outside Adam; experimental backing moderate.",
+      "node_rationale": "Generalises bias-correction insight to broader optimiser design."
+    },
+    {
+      "name": "Apply exponential moving average of parameters during fine-tuning to improve generalization",
+      "aliases": [
+        "EMA of weights post-training",
+        "Polyak averaging deployment"
+      ],
+      "type": "intervention",
+      "description": "Maintain moving average ̄θ_t of model weights with decay β_2 and use the bias-corrected average at evaluation to lower variance and enhance robustness.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Executed during final fine-tuning / training epochs (Section 7.2 Temporal averaging).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Proposed extension without extensive empirical data in the paper; proof-of-concept.",
+      "node_rationale": "Targets generalisation risk through variance reduction."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Unstable or inefficient model optimization in large-scale machine learning",
+      "target_node": "Sparse and non-stationary gradients in SGD training",
+      "description": "Sparse and drifting gradients lead conventional SGD to diverge or progress slowly, creating the optimisation risk.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in Introduction and Section 5.",
+      "edge_rationale": "Gradient properties are cited as primary difficulty."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unstable or inefficient model optimization in large-scale machine learning",
+      "target_node": "Initialization bias in moment estimates of adaptive optimizers",
+      "description": "Early large updates from biased EMAs can destabilise optimisation, contributing to the overall risk.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3 explains divergence when bias not corrected.",
+      "edge_rationale": "Links bias to instability risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Sparse and non-stationary gradients in SGD training",
+      "target_node": "Per-parameter adaptive learning rates improve convergence with sparse gradients",
+      "description": "Adaptive per-coordinate scaling directly addresses sparsity and drift by adjusting steps to gradient statistics.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Discussed throughout Section 1 & 2.",
+      "edge_rationale": "Shows how theoretical insight tackles the problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Initialization bias in moment estimates of adaptive optimizers",
+      "target_node": "Bias correction of exponential moving averages prevents large early step sizes",
+      "description": "Correcting EMA bias eliminates initial large updates, resolving this instability source.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3 derivation and empirical section 6.4.",
+      "edge_rationale": "Bias correction proposed as fix."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Per-parameter adaptive learning rates improve convergence with sparse gradients",
+      "target_node": "Combine AdaGrad and RMSProp through adaptive moment estimation",
+      "description": "Design rationale articulates how to realise adaptive per-parameter rates by merging AdaGrad and RMSProp ideas.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implicit but clearly reasoned in Section 1.",
+      "edge_rationale": "Maps abstract insight to concrete design."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Bias correction of exponential moving averages prevents large early step sizes",
+      "target_node": "Introduce bias correction terms in Adam",
+      "description": "Design explicitly adds correction factors to implement the theoretical insight.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Direct derivation in Section 3.",
+      "edge_rationale": "Design choice derives from insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Combine AdaGrad and RMSProp through adaptive moment estimation",
+      "target_node": "Adam update rule with first and second moment exponential moving averages",
+      "description": "Adam algorithm realises the combined adaptive-moment design rationale.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Algorithm 1 explicitly embodies this design.",
+      "edge_rationale": "Implementation of design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Introduce bias correction terms in Adam",
+      "target_node": "Bias-corrected moment estimation in Adam",
+      "description": "Specific computation of m̂_t and v̂_t realises the bias correction design.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Algorithm 1 lines 7–9.",
+      "edge_rationale": "Concrete mechanism for design."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Adam update rule with first and second moment exponential moving averages",
+      "target_node": "AdaMax variant using infinity norm for gradient scaling",
+      "description": "AdaMax is a direct refinement/generalisation of Adam to L∞ norm.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 7.1 derives variant but with limited experiments.",
+      "edge_rationale": "Variant offers alternative implementation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Parameter averaging reduces variance of final estimate in stochastic optimization",
+      "target_node": "Temporal exponential averaging of parameters trained with Adam",
+      "description": "EMA of parameters operationalises the averaging insight within Adam.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Section 7.2 suggests; no quantitative results.",
+      "edge_rationale": "Light inference to link concept to mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adam update rule with first and second moment exponential moving averages",
+      "target_node": "O(sqrt(T)) regret bound theoretical proof for Adam",
+      "description": "Formal analysis confirms Adam’s convergence under stated assumptions.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Section 4 and Appendix provide rigorous proof.",
+      "edge_rationale": "Theorem validates mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adam update rule with first and second moment exponential moving averages",
+      "target_node": "Logistic regression experiments demonstrate faster convergence of Adam",
+      "description": "Empirical convex-objective results support effectiveness of Adam implementation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.1 controlled comparisons.",
+      "edge_rationale": "Experiment confirms performance gain."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adam update rule with first and second moment exponential moving averages",
+      "target_node": "Multilayer neural network experiments show Adam outperforms SFO",
+      "description": "Non-convex deep-net experiments substantiate implementation benefits.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.2 results.",
+      "edge_rationale": "Empirical validation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adam update rule with first and second moment exponential moving averages",
+      "target_node": "CNN experiments show Adam matches SGD and beats Adagrad",
+      "description": "Complex vision task results provide further empirical validation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.3 plots and discussion.",
+      "edge_rationale": "Shows robustness across architectures."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Bias-corrected moment estimation in Adam",
+      "target_node": "Bias correction ablation study shows improved stability with bias correction",
+      "description": "Ablation directly tests bias-corrected vs uncorrected versions, validating mechanism.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.4 experimental evidence.",
+      "edge_rationale": "Specific empirical support."
+    },
+    {
+      "type": "motivates",
+      "source_node": "O(sqrt(T)) regret bound theoretical proof for Adam",
+      "target_node": "Train ML models with Adam optimizer using default hyperparameters",
+      "description": "Strong theoretical guarantee motivates adopting Adam in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Theory widely used to justify deployment.",
+      "edge_rationale": "Rationale for intervention adoption."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Logistic regression experiments demonstrate faster convergence of Adam",
+      "target_node": "Train ML models with Adam optimizer using default hyperparameters",
+      "description": "Empirical superiority encourages use of Adam during initial training.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.1 experimental results.",
+      "edge_rationale": "Practice driven by evidence."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Multilayer neural network experiments show Adam outperforms SFO",
+      "target_node": "Train ML models with Adam optimizer using default hyperparameters",
+      "description": "Deep-net evidence supports choosing Adam for large models.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.2.",
+      "edge_rationale": "Reinforces intervention choice."
+    },
+    {
+      "type": "motivates",
+      "source_node": "CNN experiments show Adam matches SGD and beats Adagrad",
+      "target_node": "Train ML models with Adam optimizer using default hyperparameters",
+      "description": "Vision-task results further motivate default adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.3.",
+      "edge_rationale": "Comprehensive empirical backing."
+    },
+    {
+      "type": "motivates",
+      "source_node": "O(sqrt(T)) regret bound theoretical proof for Adam",
+      "target_node": "Fine-tune or RLHF large language models with Adam optimizer for adaptive gradient scaling",
+      "description": "Convergence guarantee remains applicable during later fine-tuning phases, motivating continued use.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical result general; fine-tuning context inferred.",
+      "edge_rationale": "Moderate inference to extend guarantee."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Multilayer neural network experiments show Adam outperforms SFO",
+      "target_node": "Fine-tune or RLHF large language models with Adam optimizer for adaptive gradient scaling",
+      "description": "Non-convex task evidence analogous to fine-tuning scenarios supports intervention.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Analogy drawn; not directly tested.",
+      "edge_rationale": "Moderate inference."
+    },
+    {
+      "type": "motivates",
+      "source_node": "CNN experiments show Adam matches SGD and beats Adagrad",
+      "target_node": "Fine-tune or RLHF large language models with Adam optimizer for adaptive gradient scaling",
+      "description": "Robustness across architectures encourages its use in RLHF fine-tuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Indirect evidence.",
+      "edge_rationale": "Moderate inference."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Bias correction ablation study shows improved stability with bias correction",
+      "target_node": "Integrate bias-corrected moving averages in custom adaptive optimizers to mitigate initialization bias",
+      "description": "Empirical instability without correction motivates adding bias correction to new optimisers.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6.4 results directly applicable.",
+      "edge_rationale": "Clear causal motivation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "AdaMax variant using infinity norm for gradient scaling",
+      "target_node": "Use AdaMax optimizer in place of Adam when numerical stability or infinity norm adaptation needed",
+      "description": "Derived variant offers simpler update bounds, motivating its deployment where numerical issues arise.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Based on theoretical derivation; limited empirical support.",
+      "edge_rationale": "Light inference from extension section."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Temporal exponential averaging of parameters trained with Adam",
+      "target_node": "Apply exponential moving average of parameters during fine-tuning to improve generalization",
+      "description": "Variance-reduction mechanism suggests averaging parameters during late training.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Proposed but not quantified in the paper.",
+      "edge_rationale": "Moderate inference connecting mechanism to action."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2014-12-22T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Adam: A Method for Stochastic Optimization"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Diederik P. Kingma",
+        "Jimmy Ba"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1412.6980"
+    }
+  ]
+}

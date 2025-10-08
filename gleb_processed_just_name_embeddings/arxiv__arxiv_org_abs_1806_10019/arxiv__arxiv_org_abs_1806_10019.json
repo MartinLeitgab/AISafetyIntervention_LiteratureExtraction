@@ -1,0 +1,397 @@
+{
+  "nodes": [
+    {
+      "name": "Suboptimal inverse dynamics models in self-supervised imitation learning for robotic control",
+      "aliases": [
+        "poor performance of IL inverse models",
+        "low accuracy inverse dynamics in self-supervised IL"
+      ],
+      "type": "concept",
+      "description": "Learned inverse dynamics models often overfit to limited demonstrations, leading to low success and unsafe behaviour in downstream robotic tasks.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivating risk highlighted in §1 Introduction as consequence of over-fitting and poor generalisation."
+    },
+    {
+      "name": "High human demonstration requirement in imitation learning for robotics",
+      "aliases": [
+        "extensive expert supervision need",
+        "large demonstration datasets requirement"
+      ],
+      "type": "concept",
+      "description": "State-of-the-art IL methods (DAgger, GAIL) need many high-quality human demonstrations, incurring cost and limiting scalability.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Stated bottleneck in §1 Introduction motivating self-supervision."
+    },
+    {
+      "name": "Inefficient exploratory data collection in self-supervised IL for continuous control domains",
+      "aliases": [
+        "poor exploration in self-supervised IL",
+        "data inefficiency of random exploration"
+      ],
+      "type": "concept",
+      "description": "Random, curiosity or noise-based strategies gather many irrelevant or trivial samples, hindering learning efficiency and robustness.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Problem detailed in §1 and §3.1—traditional data collection is slow and uninformative."
+    },
+    {
+      "name": "Sampling bias toward easy or human-preselected states in self-supervised IL",
+      "aliases": [
+        "over-collection of trivial samples",
+        "lack of hard examples"
+      ],
+      "type": "concept",
+      "description": "Exploration often stays in comfortable regions or configurations chosen by humans, yielding training sets that miss challenging transitions.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in §1 and §3.1 as cause of poor generalisation."
+    },
+    {
+      "name": "Adversarial agent-model competition can generate hard training samples in self-supervised IL",
+      "aliases": [
+        "adversarial exploration insight",
+        "agent seeks model weaknesses"
+      ],
+      "type": "concept",
+      "description": "If a data-collecting RL agent is rewarded when the inverse model fails, it will deliberately search for states that are hard for the model, improving data quality.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Core hypothesis in §3.1 Adversarial Exploration Strategy."
+    },
+    {
+      "name": "Bounded difficulty curriculum improves stability of adversarial training in self-supervised IL",
+      "aliases": [
+        "moderately hard sample insight",
+        "need for reward shaping"
+      ],
+      "type": "concept",
+      "description": "Overly difficult samples cause gradient variance; limiting reward to samples near a threshold δ yields a natural curriculum and stable learning.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Justified in §3.3 Stabilization Technique and analysed in §4.5."
+    },
+    {
+      "name": "Use DRL agent to maximise inverse model prediction error during exploration",
+      "aliases": [
+        "adversarial data collection rationale",
+        "error-maximising exploration"
+      ],
+      "type": "concept",
+      "description": "Design goal: train a policy π_adv that intentionally collects samples where the inverse dynamics model performs poorly.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design decision explained in §3.1."
+    },
+    {
+      "name": "Shape reward around threshold to focus on moderately hard samples",
+      "aliases": [
+        "reward shaping with δ",
+        "stabilisation rationale"
+      ],
+      "type": "concept",
+      "description": "Introduce rt = -|L_I − δ| so the agent prefers samples giving loss near δ, preventing divergence on impossibly hard data.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design choice in §3.3."
+    },
+    {
+      "name": "PPO-based DRL agent rewarded by inverse dynamics loss",
+      "aliases": [
+        "PPO explorer using model error reward",
+        "policy gradient implementation of adversarial exploration"
+      ],
+      "type": "concept",
+      "description": "Implements the exploration policy with PPO, updating every T_P steps using batches where reward = model prediction error.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithmic mechanism in Algorithm 1 (§3.2) and Appendix §8."
+    },
+    {
+      "name": "Reward reshaping function rt = -|L_I−δ| with threshold δ",
+      "aliases": [
+        "δ-threshold reward implementation",
+        "bounded loss reward"
+      ],
+      "type": "concept",
+      "description": "Practical implementation of stabilisation: clip reward to encourage losses close to δ, limiting gradient variance.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Details in Eq.(7) §3.3."
+    },
+    {
+      "name": "Higher success rates than baselines on Fetch and Hand manipulation tasks",
+      "aliases": [
+        "performance gains in experiments",
+        "success rate improvements"
+      ],
+      "type": "concept",
+      "description": "Across five MuJoCo tasks, adversarial exploration matches or exceeds Demo and beats Random, Curiosity, Noise baselines in both low- and high-dimensional observations.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical results in §4.2–§4.3, Figures 1 & 2."
+    },
+    {
+      "name": "Lower performance drop under injected action noise across tasks",
+      "aliases": [
+        "robustness to noisy actions",
+        "noise robustness evidence"
+      ],
+      "type": "concept",
+      "description": "Table 1 (§4.4) shows the proposed method suffers the smallest or negative performance drops when Gaussian noise added, indicating robustness.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Validation of stability and practical value."
+    },
+    {
+      "name": "Jointly train PPO explorer and inverse dynamics model using adversarial exploration during self-supervised IL",
+      "aliases": [
+        "apply adversarial exploration in IL training",
+        "adversarial exploration intervention"
+      ],
+      "type": "intervention",
+      "description": "During IL fine-tuning, instantiate a PPO agent rewarded by inverse model error, update both networks alternately to gather informative data and learn robust inverse dynamics.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Occurs during the core training loop (§3.2 Algorithm 1).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated in controlled simulations only (§4 Experiments).",
+      "node_rationale": "Primary actionable method proposed by paper."
+    },
+    {
+      "name": "Apply reward shaping threshold δ for stabilising adversarial exploration during self-supervised IL training",
+      "aliases": [
+        "use δ-based reward shaping",
+        "stabilisation via bounded reward"
+      ],
+      "type": "intervention",
+      "description": "Set rt = -|L_I−δ| with task-tuned δ to keep exploration difficulty moderate, reducing training variance and catastrophic failures.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented within training reward function (§3.3).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evaluated experimentally but not yet widely adopted (§4.5).",
+      "node_rationale": "Secondary actionable technique directly derived from stabilisation insight."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal inverse dynamics models in self-supervised imitation learning for robotic control",
+      "target_node": "Inefficient exploratory data collection in self-supervised IL for continuous control domains",
+      "description": "Poor exploration leads to training sets that do not capture full dynamics, resulting in inaccurate inverse models.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated causal link in §1 Introduction without quantitative proof.",
+      "edge_rationale": "Author motivation sentences linking over-fitting to limited exploration."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal inverse dynamics models in self-supervised imitation learning for robotic control",
+      "target_node": "Sampling bias toward easy or human-preselected states in self-supervised IL",
+      "description": "Bias to easy states prevents model from seeing challenging transitions, harming accuracy.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explained qualitatively in §1.",
+      "edge_rationale": "Described issue of human-tailored sampling range."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "High human demonstration requirement in imitation learning for robotics",
+      "target_node": "Inefficient exploratory data collection in self-supervised IL for continuous control domains",
+      "description": "Because self-supervised strategies are inefficient, practitioners fall back on expert demos.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Moderate inference combining statements in §1.",
+      "edge_rationale": "Link implied by comparison of methods."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "High human demonstration requirement in imitation learning for robotics",
+      "target_node": "Sampling bias toward easy or human-preselected states in self-supervised IL",
+      "description": "Manual data collection often favours interesting but limited configurations, necessitating more demos.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Moderate inference from §1 remarks on human bias.",
+      "edge_rationale": "Implicit causal connection."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Inefficient exploratory data collection in self-supervised IL for continuous control domains",
+      "target_node": "Adversarial agent-model competition can generate hard training samples in self-supervised IL",
+      "description": "Adversarial competition incentivises informative exploration, addressing inefficiency.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear methodological proposal in §3.1.",
+      "edge_rationale": "Directly positioned as solution."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Sampling bias toward easy or human-preselected states in self-supervised IL",
+      "target_node": "Adversarial agent-model competition can generate hard training samples in self-supervised IL",
+      "description": "Competition targets the model’s weak points instead of easy samples, reducing bias.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit claim in §3.1.",
+      "edge_rationale": "Authors state agent focuses on hard examples."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Adversarial agent-model competition can generate hard training samples in self-supervised IL",
+      "target_node": "Use DRL agent to maximise inverse model prediction error during exploration",
+      "description": "Theoretical insight leads to design of an error-maximising exploration policy.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design directly follows insight; not mathematically proven.",
+      "edge_rationale": "Transition from concept to design in §3.1."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Bounded difficulty curriculum improves stability of adversarial training in self-supervised IL",
+      "target_node": "Shape reward around threshold to focus on moderately hard samples",
+      "description": "Insight motivates reward shaping design to implement curriculum.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly argued in §3.3 and validated later.",
+      "edge_rationale": "Design proposed to realise insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use DRL agent to maximise inverse model prediction error during exploration",
+      "target_node": "PPO-based DRL agent rewarded by inverse dynamics loss",
+      "description": "PPO algorithm instantiates the error-maximising exploration policy.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed in Algorithm 1 (§3.2) and Appendix §8.",
+      "edge_rationale": "Implementation mechanism selection."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Shape reward around threshold to focus on moderately hard samples",
+      "target_node": "Reward reshaping function rt = -|L_I−δ| with threshold δ",
+      "description": "Mathematical reward definition realises the shaping rationale.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Equation (7) provides exact implementation.",
+      "edge_rationale": "Direct formula."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "PPO-based DRL agent rewarded by inverse dynamics loss",
+      "target_node": "Higher success rates than baselines on Fetch and Hand manipulation tasks",
+      "description": "Implementation achieves superior performance over baselines.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Consistent experimental results in §4.2–4.3.",
+      "edge_rationale": "Empirical validation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Reward reshaping function rt = -|L_I−δ| with threshold δ",
+      "target_node": "Higher success rates than baselines on Fetch and Hand manipulation tasks",
+      "description": "Stabilisation contributes to overall performance gains.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Ablation in §4.5 shows drop without stabilisation.",
+      "edge_rationale": "Evidence from w/ vs w/o stabilisation curves."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Reward reshaping function rt = -|L_I−δ| with threshold δ",
+      "target_node": "Lower performance drop under injected action noise across tasks",
+      "description": "Stabilised training improves robustness to noise.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Table 1 shows resilience attributed to method; attribution partly inferential.",
+      "edge_rationale": "Authors discuss robustness in §4.4."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Higher success rates than baselines on Fetch and Hand manipulation tasks",
+      "target_node": "Jointly train PPO explorer and inverse dynamics model using adversarial exploration during self-supervised IL",
+      "description": "Performance evidence supports adopting the adversarial exploration training procedure.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong experimental results across tasks.",
+      "edge_rationale": "Standard motivation link from evidence to intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Higher success rates than baselines on Fetch and Hand manipulation tasks",
+      "target_node": "Apply reward shaping threshold δ for stabilising adversarial exploration during self-supervised IL training",
+      "description": "Ablation shows reward shaping improves success, motivating its adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4.5.",
+      "edge_rationale": "Evidence motivates stabilisation step."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Lower performance drop under injected action noise across tasks",
+      "target_node": "Jointly train PPO explorer and inverse dynamics model using adversarial exploration during self-supervised IL",
+      "description": "Robustness evidence suggests the adversarial exploration method is suitable for noisy real-world deployment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Quantitative but limited to simulation.",
+      "edge_rationale": "Robustness is a key deployment criterion."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Lower performance drop under injected action noise across tasks",
+      "target_node": "Apply reward shaping threshold δ for stabilising adversarial exploration during self-supervised IL training",
+      "description": "Robustness benefits traced to stabilisation encourage use of δ-based reward shaping.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Table 1 plus discussion in §4.4.",
+      "edge_rationale": "Link made in discussion."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2018-06-26T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Adversarial Active Exploration for Inverse Dynamics Model Learning"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.10019"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Zhang-Wei Hong",
+        "Tsu-Jui Fu",
+        "Tzu-Yun Shann",
+        "Yi-Hsiang Chang",
+        "Chun-Yi Lee"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}
