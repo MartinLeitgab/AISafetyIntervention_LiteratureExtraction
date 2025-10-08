@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any, Optional, List, Dict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import hashlib
+
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -18,7 +20,6 @@ from intervention_graph_creation.src.prompt.final_primary_prompt import PROMPT_E
 from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
     safe_write,
     split_text_and_json,
-    url_to_id,
     filter_dict,
     write_failure,
 )
@@ -293,9 +294,10 @@ class Extractor:
                             )
                             continue
 
-                        paper_id = jsonl_path.stem + "__" + url_to_id(
-                            paper_json.get("url", f"line_{idx}")
-                        )
+                        url = paper_json.get("url", f"line_{idx}")
+                        md5_hash = hashlib.md5(url.encode("utf-8")).hexdigest()
+                        paper_id = f"{jsonl_path.stem}__{md5_hash}"
+
                         out_dir = SETTINGS.paths.output_dir / paper_id
                         err_dir = SETTINGS.paths.extraction_error_dir / paper_id
 
@@ -663,7 +665,7 @@ if __name__ == "__main__":
     extractor = Extractor()
 
     input_dir = SETTINGS.paths.input_dir
-    total_articles = 100
+    total_articles = 1000
     batch_size = 10
 
     async def main():
