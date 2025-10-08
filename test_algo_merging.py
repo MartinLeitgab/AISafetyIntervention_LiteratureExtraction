@@ -59,8 +59,13 @@ def test_1(shared_graph: GraphFixture):
     Assuming then entire graph is a cluster.
     """
     graph = shared_graph.graph
+
+
+   
+
     min_threshold = float(environ.get("MIN_THRESHOLD", 0.0))
     max_threshold = float(environ.get("MAX_THRESHOLD", 0.7))
+
     result = graph.query(
         f"""
         MATCH (seed:NODE)
@@ -95,7 +100,8 @@ def test_1(shared_graph: GraphFixture):
     
 
     assert len(unique_clusters) > 0, "no unique clusters"
-    all_clusters_path = f"./test_output_data_{max_threshold}/all_clusters.json" if (min_threshold <= 0) else f"./test_output_data_{min_threshold}_{max_threshold}/all_clusters.json"
+
+    all_clusters_path = f"./{PathLibPath(SETTINGS.paths.output_dir).name}_{max_threshold}/all_clusters.json" if (min_threshold <= 0) else f"./{PathLibPath(SETTINGS.paths.output_dir).name}_{min_threshold}_{max_threshold}/all_clusters.json"
     PathLibPath(all_clusters_path).parent.mkdir(exist_ok=True, parents=True)
     with open(all_clusters_path, "w") as f:
         json.dump(unique_clusters, f, cls=GraphJSONEncoder, indent=4)
