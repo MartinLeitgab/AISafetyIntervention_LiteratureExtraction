@@ -1,0 +1,452 @@
+{
+  "nodes": [
+    {
+      "name": "Hard exploration failure in deep RL agents on sparse-reward Atari games",
+      "aliases": [
+        "RL exploration failure on Montezuma’s Revenge",
+        "sparse-reward exploration failure"
+      ],
+      "type": "concept",
+      "description": "Deep reinforcement-learning agents typically cannot reach human-level play on Atari games such as Montezuma’s Revenge, Pitfall! and Private Eye because they fail to obtain the first sparse rewards, stalling learning entirely.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction as the motivating challenge."
+    },
+    {
+      "name": "Sparse environmental reward signals in hard exploration Atari games",
+      "aliases": [
+        "sparse rewards",
+        "long-horizon credit assignment"
+      ],
+      "type": "concept",
+      "description": "Rewards may be hundreds of steps apart (e.g. ~100 steps to first reward in Montezuma), exploding the number of possible action sequences and breaking temporal-difference back-ups.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Introduction paragraph on sparse rewards."
+    },
+    {
+      "name": "Domain gap between demonstration videos and agent observations in third-person imitation",
+      "aliases": [
+        "visual domain gap",
+        "YouTube vs ALE frames"
+      ],
+      "type": "concept",
+      "description": "YouTube footage differs from emulator frames in resolution, color, added overlays, etc., preventing naïve transfer of demonstrations.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained with Fig. 1 in Introduction and Related Work."
+    },
+    {
+      "name": "Absence of demonstrator action sequences in YouTube-based imitation learning",
+      "aliases": [
+        "no expert action labels",
+        "unknown demonstrator rewards"
+      ],
+      "type": "concept",
+      "description": "Public videos only provide pixels and audio; classic imitation and inverse-RL methods rely on aligned state-action-reward logs that are unavailable.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in Introduction and Related Work limitations of DQfD."
+    },
+    {
+      "name": "Self-supervised domain-invariant embedding learning via temporal and cross-modal distance classification in Atari gameplay",
+      "aliases": [
+        "TDC+CMC embedding insight",
+        "self-supervised alignment hypothesis"
+      ],
+      "type": "concept",
+      "description": "Predicting temporal distances within and across audio-visual modalities can force a network to learn a representation shared across different video domains without any labels.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Developed in Section 3 (Closing the domain gap)."
+    },
+    {
+      "name": "Embedding-based checkpoint reward as substitute for action labels in imitation learning",
+      "aliases": [
+        "checkpoint imitation insight",
+        "embedding-driven auxiliary reward"
+      ],
+      "type": "concept",
+      "description": "By sampling checkpoints along a demonstration’s trajectory in the learnt embedding space, similarity to those checkpoints can be used as an imitation reward that guides exploration without knowing demonstrator actions.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Section 4 One-shot imitation."
+    },
+    {
+      "name": "Combine TDC and CMC losses to learn common representation across domains",
+      "aliases": [
+        "TDC+CMC design choice",
+        "dual self-supervised losses"
+      ],
+      "type": "concept",
+      "description": "Merging temporal-distance and cross-modal objectives balances long-range temporal structure with salient event alignment, hypothesised to produce the strongest domain-invariant features.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design decision stated in Section 3.2 and validated later."
+    },
+    {
+      "name": "Sequential checkpoint generation along demonstration embedding for auxiliary imitation reward",
+      "aliases": [
+        "checkpoint schedule design",
+        "soft-order target sequence"
+      ],
+      "type": "concept",
+      "description": "Every 16 frames a checkpoint is stored; the agent receives reward only if it reaches the next one (within Δt) in embedding space, enforcing ordered imitation.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 details this design."
+    },
+    {
+      "name": "Neural networks ϕ, ψ, τtd, τcm trained with temporal and cross-modal classification losses",
+      "aliases": [
+        "embedding network implementation",
+        "TDC/CMC architecture"
+      ],
+      "type": "concept",
+      "description": "ϕ (vision) and ψ (audio) use conv-resnet stacks; τtd and τcm are MLP classifiers; trained with Adam 1e-4 for 200k steps on 3 YouTube videos.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation Details Section 5."
+    },
+    {
+      "name": "Similarity-based imitation reward function with threshold γ",
+      "aliases": [
+        "r_imitation equation",
+        "cosine-similarity checkpoint reward"
+      ],
+      "type": "concept",
+      "description": "Reward r_imitation = 0.5 if the l2-normalised embedding of current observation has cosine similarity >γ (0.5) with next checkpoint; otherwise 0; requires soft sequential order.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equation 2 in Section 4."
+    },
+    {
+      "name": "Cycle-consistency metric (Pϕ=44.2) showing cross-domain alignment improvement",
+      "aliases": [
+        "cycle-consistency evidence",
+        "Pϕ/P3ϕ scores"
+      ],
+      "type": "concept",
+      "description": "TDC+CMC embedding achieves 44.2 % 2-cycle and 27.5 % 3-cycle consistency vs ≤32 %/16 % for baselines, indicating better one-to-one alignment.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Figure 4 in Section 3.3."
+    },
+    {
+      "name": "t-SNE visualization demonstrates aligned trajectories across domains",
+      "aliases": [
+        "embedding t-SNE evidence",
+        "trajectory alignment figure"
+      ],
+      "type": "concept",
+      "description": "Figure 5 shows four trajectories from different video domains overlapping cleanly in the learned embedding, unlike raw pixels or single-objective embeddings.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.1 Embedding space evaluation."
+    },
+    {
+      "name": "Human-level performance on Montezuma’s Revenge, Pitfall!, and Private Eye via imitation-only reward",
+      "aliases": [
+        "score table evidence",
+        "one-shot imitation success"
+      ],
+      "type": "concept",
+      "description": "Agent trained with only r_imitation scores 35.9k, 53.4k, 98.2k respectively, surpassing average human and prior state-of-the-art that used true game rewards.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 1 and Section 6.2."
+    },
+    {
+      "name": "Pre-train embeddings with combined TDC and CMC on unlabeled demonstration videos",
+      "aliases": [
+        "self-supervised pre-training with TDC+CMC",
+        "domain-invariant embedding pre-training"
+      ],
+      "type": "intervention",
+      "description": "Before task-specific RL, run the TDC+CMC self-supervised training procedure on publicly available videos to obtain the vision/audio encoder ϕ/ψ.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Occurs prior to any RL fine-tuning – aligns with Pre-Training phase (Section 3 & 5).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated across three Atari domains with systematic metrics (Section 6.1), qualifying as prototype/pilot validation.",
+      "node_rationale": "Direct operational recommendation emerging from validated embedding method."
+    },
+    {
+      "name": "Train RL agents with similarity-based checkpoint imitation reward derived from pre-trained embedding",
+      "aliases": [
+        "checkpoint imitation training",
+        "r_imitation-guided IMPALA fine-tuning"
+      ],
+      "type": "intervention",
+      "description": "During RL fine-tuning, compute cosine-similarity to the next two checkpoints along a held-out demonstration in embedding space and add 0.5 reward when threshold exceeded.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented during Fine-Tuning/RL phase within IMPALA training loop (Section 4).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated on three games achieving human-level scores (Table 1, Figure 7).",
+      "node_rationale": "Key training intervention leading to performance jump."
+    },
+    {
+      "name": "Use cycle-consistency metric to select embedding models before RL training",
+      "aliases": [
+        "embedding model selection via Pϕ",
+        "cycle-consistency based validation"
+      ],
+      "type": "intervention",
+      "description": "Compute 2-cycle and 3-cycle consistency on validation videos; deploy only encoders exceeding a threshold, ensuring reliable cross-domain alignment.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Executed after pre-training but before deployment in RL loop – Pre-Deployment Testing (Section 3.3).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Proposed and used by authors for model selection but not yet benchmarked across tasks (Section 3.3) – experimental stage.",
+      "node_rationale": "Safety-relevant gate that filters poor embeddings."
+    },
+    {
+      "name": "Combine imitation reward with environment reward during IMPALA training for additional performance",
+      "aliases": [
+        "mixed reward training",
+        "r_imitation plus r_env"
+      ],
+      "type": "intervention",
+      "description": "Sum the imitation reward and the native game reward so that dense checkpoints accelerate exploration while true reward fine-tunes policy optimisation.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented during RL fine-tuning stage (learning curves with and without env reward, Section 6.2).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Empirically shown to further increase scores (Fig. 7, Table 1).",
+      "node_rationale": "Intervention variation validated by authors."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Hard exploration failure in deep RL agents on sparse-reward Atari games",
+      "target_node": "Sparse environmental reward signals in hard exploration Atari games",
+      "description": "Sparse rewards make exploration combinatorially hard, leading to agent failure.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit quantitative example (100^18 trajectories) in Introduction.",
+      "edge_rationale": "Introduction – hard exploration challenge discussion."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Hard exploration failure in deep RL agents on sparse-reward Atari games",
+      "target_node": "Domain gap between demonstration videos and agent observations in third-person imitation",
+      "description": "Unable to leverage abundant online videos because domain mismatch blocks transfer, perpetuating failure.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Directly stated limitation of previous imitation methods.",
+      "edge_rationale": "Introduction & Related Work."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Hard exploration failure in deep RL agents on sparse-reward Atari games",
+      "target_node": "Absence of demonstrator action sequences in YouTube-based imitation learning",
+      "description": "Without action labels, existing imitation algorithms cannot guide exploration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly listed as second limitation of DQfD in Introduction.",
+      "edge_rationale": "Introduction."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Domain gap between demonstration videos and agent observations in third-person imitation",
+      "target_node": "Self-supervised domain-invariant embedding learning via temporal and cross-modal distance classification in Atari gameplay",
+      "description": "Learning shared embeddings aligns disparate video domains, reducing the impact of the gap.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Paper proposes this as main solution; empirical evidence supports.",
+      "edge_rationale": "Section 3."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Absence of demonstrator action sequences in YouTube-based imitation learning",
+      "target_node": "Embedding-based checkpoint reward as substitute for action labels in imitation learning",
+      "description": "Checkpoint similarity supplies a supervision signal that replaces missing action logs.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical motivation in Section 4.",
+      "edge_rationale": "Section 4."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Sparse environmental reward signals in hard exploration Atari games",
+      "target_node": "Embedding-based checkpoint reward as substitute for action labels in imitation learning",
+      "description": "Auxiliary imitation reward provides dense guidance, overcoming sparse native rewards.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Learning curves show dramatic improvement with imitation reward alone.",
+      "edge_rationale": "Figure 7."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Self-supervised domain-invariant embedding learning via temporal and cross-modal distance classification in Atari gameplay",
+      "target_node": "Combine TDC and CMC losses to learn common representation across domains",
+      "description": "Dual-objective design realises the theoretical idea of self-supervised alignment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design directly follows from insight; stated in Section 3.2.",
+      "edge_rationale": "Section 3.2."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Embedding-based checkpoint reward as substitute for action labels in imitation learning",
+      "target_node": "Sequential checkpoint generation along demonstration embedding for auxiliary imitation reward",
+      "description": "Design defines how checkpoints are spaced and ordered to produce reward signal.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Concrete procedure and hyper-parameters specified in Section 4.",
+      "edge_rationale": "Section 4."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Combine TDC and CMC losses to learn common representation across domains",
+      "target_node": "Neural networks ϕ, ψ, τtd, τcm trained with temporal and cross-modal classification losses",
+      "description": "Specific convolutional and MLP architectures plus training regimen realise the design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed in Implementation Details Section 5.",
+      "edge_rationale": "Section 5."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Sequential checkpoint generation along demonstration embedding for auxiliary imitation reward",
+      "target_node": "Similarity-based imitation reward function with threshold γ",
+      "description": "Defines mathematical reward calculation enforcing soft sequential order.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation 2 precisely operationalises the design.",
+      "edge_rationale": "Section 4."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Neural networks ϕ, ψ, τtd, τcm trained with temporal and cross-modal classification losses",
+      "target_node": "Cycle-consistency metric (Pϕ=44.2) showing cross-domain alignment improvement",
+      "description": "High cycle-consistency scores demonstrate successful alignment of embeddings.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative table Figure 4.",
+      "edge_rationale": "Section 3.3."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Neural networks ϕ, ψ, τtd, τcm trained with temporal and cross-modal classification losses",
+      "target_node": "t-SNE visualization demonstrates aligned trajectories across domains",
+      "description": "Qualitative plot confirms embeddings map different domains to same manifold.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Figure 5 visual evidence.",
+      "edge_rationale": "Section 6.1."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Similarity-based imitation reward function with threshold γ",
+      "target_node": "Human-level performance on Montezuma’s Revenge, Pitfall!, and Private Eye via imitation-only reward",
+      "description": "Scores exceeding humans show that reward formulation effectively guides learning.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1 quantitative results.",
+      "edge_rationale": "Section 6.2."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Cycle-consistency metric (Pϕ=44.2) showing cross-domain alignment improvement",
+      "target_node": "Pre-train embeddings with combined TDC and CMC on unlabeled demonstration videos",
+      "description": "Superior alignment performance justifies adopting TDC+CMC pre-training.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct cause-effect between metric and pre-training decision.",
+      "edge_rationale": "Section 3.3."
+    },
+    {
+      "type": "motivates",
+      "source_node": "t-SNE visualization demonstrates aligned trajectories across domains",
+      "target_node": "Pre-train embeddings with combined TDC and CMC on unlabeled demonstration videos",
+      "description": "Visual alignment gives further support for deploying this pre-training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative evidence strengthens case.",
+      "edge_rationale": "Section 6.1."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Cycle-consistency metric (Pϕ=44.2) showing cross-domain alignment improvement",
+      "target_node": "Use cycle-consistency metric to select embedding models before RL training",
+      "description": "High metric values are adopted as the selection criterion for safe deployment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Authors explicitly use metric for model selection.",
+      "edge_rationale": "Section 3.3."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Human-level performance on Montezuma’s Revenge, Pitfall!, and Private Eye via imitation-only reward",
+      "target_node": "Train RL agents with similarity-based checkpoint imitation reward derived from pre-trained embedding",
+      "description": "Demonstrated success motivates applying checkpoint imitation in RL training.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical results.",
+      "edge_rationale": "Section 6.2."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Human-level performance on Montezuma’s Revenge, Pitfall!, and Private Eye via imitation-only reward",
+      "target_node": "Combine imitation reward with environment reward during IMPALA training for additional performance",
+      "description": "Additional gains with mixed reward motivate keeping both signals during training when available.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Learning curves show improvement with combined rewards.",
+      "edge_rationale": "Figure 7."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Playing hard exploration games by watching YouTube"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.11592"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-29T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Yusuf Aytar",
+        "Tobias Pfaff",
+        "David Budden",
+        "Tom Le Paine",
+        "Ziyu Wang",
+        "Nando de Freitas"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

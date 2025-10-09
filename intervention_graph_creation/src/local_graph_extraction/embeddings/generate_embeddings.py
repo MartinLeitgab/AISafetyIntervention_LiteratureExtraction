@@ -100,12 +100,12 @@ def node_text(node: dict) -> str:
     parts = []
     if node.get("name"):
         parts.append(f"Name: {node['name']}")
-    if node.get("description"):
-        parts.append(f"Description: {node['description']}")
-    if node.get("aliases"):
-        parts.append(f"Aliases: {', '.join(node['aliases'])}")
-    if node.get("concept_category"):
-        parts.append(f"Category: {node['concept_category']}")
+    # if node.get("description"):
+    #     parts.append(f"Description: {node['description']}")
+    # if node.get("aliases"):
+    #     parts.append(f"Aliases: {', '.join(node['aliases'])}")
+    # if node.get("concept_category"):
+    #     parts.append(f"Category: {node['concept_category']}")
     return " | ".join(parts)
 
 def edge_text(edge: dict) -> str:

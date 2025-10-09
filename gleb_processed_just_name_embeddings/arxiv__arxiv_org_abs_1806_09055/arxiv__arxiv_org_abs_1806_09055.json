@@ -1,0 +1,484 @@
+{
+  "nodes": [
+    {
+      "name": "Extreme computational resource consumption in neural architecture search",
+      "aliases": [
+        "high compute cost in NAS",
+        "computational inefficiency of architecture search"
+      ],
+      "type": "concept",
+      "description": "State-of-the-art NAS methods (RL/evolution) require thousands of GPU-days, creating high economic and environmental costs and impeding widespread, safety-oriented experimentation.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in 1 Introduction: 1800–3150 GPU-day costs deemed a core challenge."
+    },
+    {
+      "name": "Suboptimal architecture performance on target tasks due to transferability limitations",
+      "aliases": [
+        "architecture transferability risk",
+        "cross-dataset performance degradation"
+      ],
+      "type": "concept",
+      "description": "Architectures found on small proxy datasets may underperform when transferred to larger deployment datasets, risking degraded system reliability.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 3.4 Transferability: weaker PTB→WT2 transfer indicates this risk."
+    },
+    {
+      "name": "Black-box discrete architecture optimization requiring many evaluations",
+      "aliases": [
+        "black-box NAS search",
+        "discrete search inefficiency"
+      ],
+      "type": "concept",
+      "description": "Treating architecture design as black-box optimisation over a discrete domain forces evaluation of huge numbers of candidate nets, driving compute usage.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identified in 1 Introduction as the fundamental cause of compute demand."
+    },
+    {
+      "name": "Source dataset discrepancy lowers architecture transferability",
+      "aliases": [
+        "proxy-task mismatch",
+        "dataset size mismatch"
+      ],
+      "type": "concept",
+      "description": "Differences between the proxy dataset used for NAS (e.g. CIFAR-10, PTB) and the deployment dataset (ImageNet, WikiText-2) can hamper the effectiveness of transferred cells.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Inferred from 3.4 where authors note smaller PTB size may explain weaker transfer."
+    },
+    {
+      "name": "Discrete architecture representation prevents gradient-based optimization",
+      "aliases": [
+        "non-differentiable architecture choices"
+      ],
+      "type": "concept",
+      "description": "Because operation choices are categorical, gradients cannot flow, precluding efficient optimisation and leading to reliance on black-box methods.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in 2.2 Continuous Relaxation as motivation for their relaxation."
+    },
+    {
+      "name": "Architecture generalization depends on similarity between search and deployment distributions",
+      "aliases": [
+        "architecture generalisation theory"
+      ],
+      "type": "concept",
+      "description": "An architecture’s performance can drop when deployment data diverges from the data used during architecture optimisation.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implicit in authors’ discussion on transferability limits (3.4)."
+    },
+    {
+      "name": "Gradient descent joint optimization of architecture and weights via bilevel formulation",
+      "aliases": [
+        "bilevel architecture-weight optimisation"
+      ],
+      "type": "concept",
+      "description": "Treat architecture parameters as upper-level variables and network weights as lower-level variables, enabling end-to-end optimisation using gradients.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 2.2 equations 3–4 as key design choice."
+    },
+    {
+      "name": "Leverage DARTS efficiency to search directly on deployment tasks",
+      "aliases": [
+        "direct on-task DARTS search"
+      ],
+      "type": "concept",
+      "description": "Because DARTS is computationally cheap, it becomes feasible to run NAS on the actual deployment dataset, mitigating transferability issues.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Proposed in 3.4 Transferability (‘could be circumvented by directly optimizing the architecture on the task of interest’)."
+    },
+    {
+      "name": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "aliases": [
+        "continuous relaxation with α parameters",
+        "mixed-op softmax"
+      ],
+      "type": "concept",
+      "description": "Each edge in the cell carries a weighted mixture of candidate operations parameterised by α vectors, turning discrete choices into differentiable ones.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Core mechanism in 2.2 Eq. 2 and Fig. 1."
+    },
+    {
+      "name": "Finite difference approximation of second-order gradients in DARTS",
+      "aliases": [
+        "second-order finite-difference trick"
+      ],
+      "type": "concept",
+      "description": "Computes α-w Hessian-vector products cheaply via two finite-difference evaluations, drastically reducing O(|α||w|) cost.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in 2.3 Approximation (Eq. 7)."
+    },
+    {
+      "name": "First-order gradient approximation in DARTS with ξ=0",
+      "aliases": [
+        "first-order DARTS variant",
+        "ξ=0 simplification"
+      ],
+      "type": "concept",
+      "description": "Sets the unrolling step to zero, ignoring second-order terms to accelerate search at a modest performance cost.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in 2.3 (First-order Approximation)."
+    },
+    {
+      "name": "CIFAR-10 2.83% test error with 4 GPU-day second-order DARTS",
+      "aliases": [
+        "DARTS CIFAR-10 SOTA result"
+      ],
+      "type": "concept",
+      "description": "The normal plus reduction cells found by second-order DARTS achieve 2.83 ± 0.06 % error, matching AmoebaNet at <0.1% of its compute.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in Table 1 of 3.2.1."
+    },
+    {
+      "name": "PTB perplexity 56.1 with 1 GPU-day second-order DARTS",
+      "aliases": [
+        "DARTS PTB SOTA result"
+      ],
+      "type": "concept",
+      "description": "A single-cell recurrent network found by DARTS attains 56.1 test perplexity, outperforming tuned LSTM baselines.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "See Table 2, 3.2.2."
+    },
+    {
+      "name": "Three orders-of-magnitude compute reduction compared to RL/evolution methods",
+      "aliases": [
+        "compute savings evidence"
+      ],
+      "type": "concept",
+      "description": "DARTS finishes NAS in 1–4 GPU-days vs. 1800–3150 GPU-days for NASNet/AmoebaNet, empirically demonstrating massive efficiency gains.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantified in 3.3 Results Analysis."
+    },
+    {
+      "name": "CIFAR-10 2.94% test error with 1.5 GPU-day first-order DARTS",
+      "aliases": [
+        "first-order CIFAR result"
+      ],
+      "type": "concept",
+      "description": "First-order DARTS variant attains 2.94 % error using only 1.5 GPU-days, indicating a cost-accuracy trade-off.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 1, row ‘first order’."
+    },
+    {
+      "name": "ImageNet mobile 26.9% top-1 error using DARTS cell searched on CIFAR-10",
+      "aliases": [
+        "ImageNet transfer performance"
+      ],
+      "type": "concept",
+      "description": "When transferred, the DARTS cell achieves 26.9 % top-1 / 9.0 % top-5 on ImageNet with <600 M MACs, competitive with NASNet.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 3, 3.4.1 ImageNet."
+    },
+    {
+      "name": "Use DARTS gradient-based architecture search during model design to reduce compute cost",
+      "aliases": [
+        "adopt DARTS for NAS"
+      ],
+      "type": "intervention",
+      "description": "In the model-design phase, apply the DARTS continuous-relaxation NAS procedure (second-order variant) to discover high-performance architectures with minimal compute.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Applies at architecture design time (Sections 2 & 3).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated across multiple benchmarks (Tables 1–3).",
+      "node_rationale": "Direct actionable step derived from validated DARTS results."
+    },
+    {
+      "name": "Apply first-order DARTS approximation during architecture search to minimize search compute",
+      "aliases": [
+        "first-order DARTS deployment"
+      ],
+      "type": "intervention",
+      "description": "Use the ξ=0 first-order variant of DARTS to further cut optimisation cost when marginal accuracy loss is acceptable.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Still a model-design-phase choice (Section 2.3 First-order Approximation).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Preliminary empirical evidence on CIFAR-10 only (Table 1).",
+      "node_rationale": "Provides a cost–accuracy trade-off variant helpful for constrained settings."
+    },
+    {
+      "name": "Run DARTS search directly on target large-scale tasks to improve architecture transferability",
+      "aliases": [
+        "on-task DARTS search"
+      ],
+      "type": "intervention",
+      "description": "Leverage DARTS’s efficiency to perform NAS on the final deployment dataset (e.g. ImageNet or WT-2) rather than on small proxies, reducing mismatch risks.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Executed during initial architecture design for the deployment task (discussion 3.4).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Suggested but not yet empirically demonstrated; inference from transferability discussion.",
+      "node_rationale": "Addresses the identified transferability risk through direct application."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Extreme computational resource consumption in neural architecture search",
+      "target_node": "Black-box discrete architecture optimization requiring many evaluations",
+      "description": "Excessive compute arises because black-box discrete methods must evaluate vast numbers of candidate architectures.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit quantitative comparison in 1 Introduction.",
+      "edge_rationale": "High compute cost is linked directly to black-box method behaviour."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Black-box discrete architecture optimization requiring many evaluations",
+      "target_node": "Discrete architecture representation prevents gradient-based optimization",
+      "description": "Because operation choices are categorical, optimisation cannot use gradients, forcing black-box evaluation loops.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 2.2 motivates relaxation due to non-differentiability.",
+      "edge_rationale": "Shows deeper cause behind evaluation explosion."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Discrete architecture representation prevents gradient-based optimization",
+      "target_node": "Gradient descent joint optimization of architecture and weights via bilevel formulation",
+      "description": "Bilevel gradient formulation overcomes non-differentiability by redefining architecture parameters continuously.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design presented as response to identified limitation.",
+      "edge_rationale": "Design rationale directly addresses theoretical barrier."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Gradient descent joint optimization of architecture and weights via bilevel formulation",
+      "target_node": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "description": "Softmax-weighted mixed operations realise the continuous architecture needed by the bilevel optimisation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation 2 explicitly links mechanism to design.",
+      "edge_rationale": "Provides concrete implementation for the rationale."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "target_node": "Finite difference approximation of second-order gradients in DARTS",
+      "description": "Finite-difference trick refines the base relaxation by efficiently computing required second-order terms.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 2.3 gives optimisation refinement detail.",
+      "edge_rationale": "Represents a specialised improvement of the main mechanism."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "target_node": "First-order gradient approximation in DARTS with ξ=0",
+      "description": "Setting ξ=0 yields a simplified—but less accurate—variant of the main mechanism.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "First-order variant described as a speed-up option in 2.3.",
+      "edge_rationale": "Captures alternative refinement path."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Finite difference approximation of second-order gradients in DARTS",
+      "target_node": "CIFAR-10 2.83% test error with 4 GPU-day second-order DARTS",
+      "description": "Second-order DARTS with finite-difference shows strong empirical performance on CIFAR-10.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Statistically significant SOTA result (Table 1).",
+      "edge_rationale": "Empirical evidence supports mechanism effectiveness."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Finite difference approximation of second-order gradients in DARTS",
+      "target_node": "PTB perplexity 56.1 with 1 GPU-day second-order DARTS",
+      "description": "Further validates the same mechanism in the language-model domain.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Cross-domain replication (Table 2).",
+      "edge_rationale": "Confirms generality."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "target_node": "Three orders-of-magnitude compute reduction compared to RL/evolution methods",
+      "description": "Overall mechanism achieves dramatic compute savings relative to baseline NAS methods.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative comparison in 3.3.",
+      "edge_rationale": "Evidence supports efficiency claim."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "First-order gradient approximation in DARTS with ξ=0",
+      "target_node": "CIFAR-10 2.94% test error with 1.5 GPU-day first-order DARTS",
+      "description": "Empirical result demonstrates performance of the simplified first-order variant.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1 first-order row.",
+      "edge_rationale": "Provides validation for alternative mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "CIFAR-10 2.83% test error with 4 GPU-day second-order DARTS",
+      "target_node": "Use DARTS gradient-based architecture search during model design to reduce compute cost",
+      "description": "Strong accuracy and efficiency motivate adopting DARTS in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct link from result to proposed adoption.",
+      "edge_rationale": "Performance evidence drives intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "PTB perplexity 56.1 with 1 GPU-day second-order DARTS",
+      "target_node": "Use DARTS gradient-based architecture search during model design to reduce compute cost",
+      "description": "Cross-domain success further justifies broad adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Second dataset supports generalisation.",
+      "edge_rationale": "Additional evidence strengthens motivation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Three orders-of-magnitude compute reduction compared to RL/evolution methods",
+      "target_node": "Use DARTS gradient-based architecture search during model design to reduce compute cost",
+      "description": "Compute savings argument is compelling for practitioners with limited resources.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative resource comparison.",
+      "edge_rationale": "Efficiency evidence encourages intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "CIFAR-10 2.94% test error with 1.5 GPU-day first-order DARTS",
+      "target_node": "Apply first-order DARTS approximation during architecture search to minimize search compute",
+      "description": "Shows acceptable accuracy with even lower compute, motivating use where resources are scarce.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Slightly weaker performance but clear cost benefit.",
+      "edge_rationale": "Illustrates trade-off supporting variant adoption."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal architecture performance on target tasks due to transferability limitations",
+      "target_node": "Source dataset discrepancy lowers architecture transferability",
+      "description": "Performance drop is driven by mismatch between proxy and deployment datasets.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Authors discuss PTB→WT2 mismatch as reason for weaker results.",
+      "edge_rationale": "Links observed risk to immediate cause."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Source dataset discrepancy lowers architecture transferability",
+      "target_node": "Architecture generalization depends on similarity between search and deployment distributions",
+      "description": "Underlying theory explains why dataset mismatch degrades transfer.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "The connection is inferred, not experimentally proven in text.",
+      "edge_rationale": "Provides theoretical explanation."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Architecture generalization depends on similarity between search and deployment distributions",
+      "target_node": "Leverage DARTS efficiency to search directly on deployment tasks",
+      "description": "Direct on-task NAS eliminates distribution gap.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Authors explicitly suggest this remedy in 3.4.",
+      "edge_rationale": "Design rationale addresses theoretical limitation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Leverage DARTS efficiency to search directly on deployment tasks",
+      "target_node": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "description": "Same continuous-relaxation mechanism is used when running NAS on the deployment dataset.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Mechanism remains identical; reference Section 2.",
+      "edge_rationale": "Shows practical implementation path."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Softmax mixed operations with architecture parameters (DARTS continuous relaxation)",
+      "target_node": "ImageNet mobile 26.9% top-1 error using DARTS cell searched on CIFAR-10",
+      "description": "Transfer performance indicates mechanism scalability, supporting feasibility of on-task search.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical result in Table 3.",
+      "edge_rationale": "Evidence relates mechanism to improved deployment task."
+    },
+    {
+      "type": "motivates",
+      "source_node": "ImageNet mobile 26.9% top-1 error using DARTS cell searched on CIFAR-10",
+      "target_node": "Run DARTS search directly on target large-scale tasks to improve architecture transferability",
+      "description": "Positive but still limited transfer motivates directly searching on ImageNet for potentially better results.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Authors explicitly note possible improvement.",
+      "edge_rationale": "Empirical gap inspires intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "authors",
+      "value": [
+        "Hanxiao Liu",
+        "Karen Simonyan",
+        "Yiming Yang"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.09055"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "DARTS: Differentiable Architecture Search"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-06-24T00:00:00Z"
+    }
+  ]
+}

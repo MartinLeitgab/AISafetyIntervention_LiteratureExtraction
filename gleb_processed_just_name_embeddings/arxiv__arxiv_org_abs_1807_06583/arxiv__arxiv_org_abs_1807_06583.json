@@ -1,0 +1,377 @@
+{
+  "nodes": [
+    {
+      "name": "Unrecognized unknown objects in open-world robot manipulation",
+      "aliases": [
+        "failure to detect novel objects",
+        "unknown unknowns during robot tasks"
+      ],
+      "type": "concept",
+      "description": "Robots operating in unstructured environments may encounter objects or situations not present in their training data. When these are not recognised as unfamiliar, the robot can mis-classify and act unsafely.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in 2 Related Work as the ‘open world recognition’ safety concern."
+    },
+    {
+      "name": "Non-interpretable internal representations in autonomous robots",
+      "aliases": [
+        "black-box robot models",
+        "lack of model explainability to humans"
+      ],
+      "type": "concept",
+      "description": "If a robot’s perceptual model cannot be understood by a human, effective oversight and correction are hindered, threatening safe human-robot interaction.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 1 Introduction and 2 Related Work under ‘explainable models’."
+    },
+    {
+      "name": "Entangled latent visual representations in robot perception models",
+      "aliases": [
+        "non-disentangled latent factors",
+        "mixed concept encoding"
+      ],
+      "type": "concept",
+      "description": "Standard unsupervised VAEs tend to mix multiple semantic factors in each latent dimension, making it hard to link individual concepts to axes.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Problem stated in 3 Background: need axes alignment yet β-VAE fails (5.3 Results)."
+    },
+    {
+      "name": "Need for complete labelled datasets in symbol grounding",
+      "aliases": [
+        "full supervision requirement",
+        "label scarcity issue"
+      ],
+      "type": "concept",
+      "description": "Many classifiers require a label for every training example; obtaining exhaustive labels is infeasible in open-world scenarios.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Mentioned in 2 Related Work and 3 Background as limitation motivating weak supervision."
+    },
+    {
+      "name": "Axis-aligned latent factors aligned with user-defined concept groups improve separability",
+      "aliases": [
+        "concept-axis alignment insight",
+        "latent dimension per concept idea"
+      ],
+      "type": "concept",
+      "description": "If each latent dimension corresponds to exactly one semantic concept group, linear separability and human interpretability follow naturally.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formalised in 3 Background (Axes Alignment property)."
+    },
+    {
+      "name": "Weak supervision with partial labels can enforce axis-aligned representations",
+      "aliases": [
+        "partial label alignment insight",
+        "weakly supervised disentanglement"
+      ],
+      "type": "concept",
+      "description": "Providing only a subset of labels and forcing each to map to its own latent dimension suffices to guide the model toward disentangled representations.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in 4 Methodology as core assumption behind auxiliary loss."
+    },
+    {
+      "name": "Per-concept linear classifier on single latent dimension enforces axis alignment",
+      "aliases": [
+        "auxiliary classifier design",
+        "one-dim classifier per concept"
+      ],
+      "type": "concept",
+      "description": "Assigning each concept group its own linear classifier reading from only one latent dimension pushes the encoder to dedicate that axis to the group.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design described in 4 Methodology—‘Classification term (weighted by γ)’. "
+    },
+    {
+      "name": "Balanced reconstruction, KL divergence, and classification losses maintain disentanglement and data fidelity",
+      "aliases": [
+        "loss balancing design",
+        "tri-term loss rationale"
+      ],
+      "type": "concept",
+      "description": "Tuning coefficients α,β,γ so all three loss terms have similar magnitudes prevents any single objective from dominating, keeping both reconstruction quality and disentanglement.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 details empirical coefficient selection to satisfy competing objectives."
+    },
+    {
+      "name": "β-VAE with auxiliary per-group classifiers trained on partially labelled data",
+      "aliases": [
+        "axis-aligned β-VAE",
+        "weakly supervised β-VAE implementation"
+      ],
+      "type": "concept",
+      "description": "Concrete neural architecture: convolutional encoder/decoder plus one linear classifier per concept dimension, optimised with combined loss (α,β,γ).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 in 4 Methodology specifies training steps."
+    },
+    {
+      "name": "1-NN classifier with per-label 1D normals plus interpolated unknown class",
+      "aliases": [
+        "latent-space gaussian 1-NN",
+        "unknown detection classifier"
+      ],
+      "type": "concept",
+      "description": "After training, each label’s latent coordinate distribution is modelled as a 1-D Gaussian; nearest-neighbour over these distributions classifies new images and flags those closer to interpolated ‘unknown’ Gaussians.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described near end of 4 Methodology (test-time classification)."
+    },
+    {
+      "name": "Improved axis alignment and F1 on dSprites and real objects vs baselines",
+      "aliases": [
+        "experimental results on alignment",
+        "F1 improvement evidence"
+      ],
+      "type": "concept",
+      "description": "Full model shows low entropy of alignment metrics and higher F1 scores (e.g., blue 0.88 vs 0.05) compared with β-VAE and classifier baselines.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Results summarised in 5.3 Results, Figure 4 and Table 1(a,b)."
+    },
+    {
+      "name": "Higher unknown object detection F1 in real object experiment",
+      "aliases": [
+        "unknown detection evidence",
+        "real object unknown F1"
+      ],
+      "type": "concept",
+      "description": "Unknown-class F1 rises to 0.95 with the proposed scheme versus 0.10 for classifier-only baseline, demonstrating open-world robustness.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 1(c) in 5.3 Results documents this quantitative gain."
+    },
+    {
+      "name": "Pre-train robot perception models with axis-aligned weakly supervised β-VAE (model design phase)",
+      "aliases": [
+        "axis-aligned latent training intervention",
+        "weakly supervised β-VAE pretraining"
+      ],
+      "type": "intervention",
+      "description": "During representation-learning, apply the proposed β-VAE architecture with auxiliary classifiers and balanced loss coefficients on partially-labelled data to yield interpretable, axis-aligned latent spaces.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Occurs during model training before downstream tasks (4 Methodology).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Only validated in controlled experiments (5 Experiments), not yet deployed on physical robots.",
+      "node_rationale": "Direct actionable step derived from implementation mechanism and validation evidence."
+    },
+    {
+      "name": "Deploy latent-space 1-NN classifier to detect unknown objects during operation",
+      "aliases": [
+        "latent gaussian classifier deployment",
+        "unknown object detection module"
+      ],
+      "type": "intervention",
+      "description": "At run-time, classify each perceived object by nearest 1-D Gaussian in latent space and flag as ‘unknown’ when closer to interpolated unknown distributions, enabling safe human override.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Applied during deployment to incoming sensor data (end of 4 Methodology).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evaluated on held-out test sets but not field-tested (5 Experiments).",
+      "node_rationale": "Provides practical mechanism to mitigate unknown-object risk."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Unrecognized unknown objects in open-world robot manipulation",
+      "target_node": "Entangled latent visual representations in robot perception models",
+      "description": "When latent factors are entangled, the model cannot separate novel variations, leading to misclassification.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit linkage in 2 Related Work; qualitative reasoning.",
+      "edge_rationale": "Section discusses entanglement as root of open-world failures."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unrecognized unknown objects in open-world robot manipulation",
+      "target_node": "Need for complete labelled datasets in symbol grounding",
+      "description": "Requiring exhaustive labels leaves the system blind to unseen classes.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated in 2 Related Work on label scarcity impact.",
+      "edge_rationale": "Open-world papers cited emphasise missing-label problem."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Non-interpretable internal representations in autonomous robots",
+      "target_node": "Entangled latent visual representations in robot perception models",
+      "description": "Entanglement prevents humans from mapping concepts to latent axes, yielding opacity.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Argued in 1 Introduction on explainability.",
+      "edge_rationale": "Representation interpretability depends on axis alignment."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Entangled latent visual representations in robot perception models",
+      "target_node": "Axis-aligned latent factors aligned with user-defined concept groups improve separability",
+      "description": "The insight that axis alignment would remove entanglement follows from diagnosing the entanglement problem.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Logical derivation, not experimentally proven at this edge.",
+      "edge_rationale": "Background formulates alignment as remedy."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Need for complete labelled datasets in symbol grounding",
+      "target_node": "Weak supervision with partial labels can enforce axis-aligned representations",
+      "description": "Weak supervision emerges as solution to label scarcity.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Paper motivates but does not empirically prove at this link.",
+      "edge_rationale": "Section 3 describes partial labels as practical alternative."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Axis-aligned latent factors aligned with user-defined concept groups improve separability",
+      "target_node": "Per-concept linear classifier on single latent dimension enforces axis alignment",
+      "description": "Auxiliary classifiers operationalise the alignment insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design directly follows theoretical property (4 Methodology).",
+      "edge_rationale": "Classifier design enforces one-to-one mapping."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Weak supervision with partial labels can enforce axis-aligned representations",
+      "target_node": "Per-concept linear classifier on single latent dimension enforces axis alignment",
+      "description": "Using only partially-labelled data with the classifier achieves enforcement without full labels.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4 explicitly combines weak labels with classifier loss.",
+      "edge_rationale": "Design depends on weak supervision premise."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Per-concept linear classifier on single latent dimension enforces axis alignment",
+      "target_node": "Balanced reconstruction, KL divergence, and classification losses maintain disentanglement and data fidelity",
+      "description": "Balancing the three loss terms tunes the basic classifier design for stability and fidelity.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Parameter-tuning details in 4 Methodology.",
+      "edge_rationale": "Loss balancing fine-tunes enforcement mechanism."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Balanced reconstruction, KL divergence, and classification losses maintain disentanglement and data fidelity",
+      "target_node": "β-VAE with auxiliary per-group classifiers trained on partially labelled data",
+      "description": "The β-VAE architecture realises the balanced-loss design in code.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 gives concrete implementation.",
+      "edge_rationale": "Implementation mechanism instantiates design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Per-concept linear classifier on single latent dimension enforces axis alignment",
+      "target_node": "1-NN classifier with per-label 1D normals plus interpolated unknown class",
+      "description": "The axis-aligned latent space allows simple 1-D Gaussian nearest-neighbour classification at test-time.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4 connects alignment to 1-NN scheme.",
+      "edge_rationale": "Classifier relies on alignment created by design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "β-VAE with auxiliary per-group classifiers trained on partially labelled data",
+      "target_node": "Improved axis alignment and F1 on dSprites and real objects vs baselines",
+      "description": "Experiments confirm that the implementation achieves better alignment and label accuracy.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative metrics reported in 5.3 Results.",
+      "edge_rationale": "Validation evidence directly measures implementation effect."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "1-NN classifier with per-label 1D normals plus interpolated unknown class",
+      "target_node": "Higher unknown object detection F1 in real object experiment",
+      "description": "F1 for unknown class improves dramatically with the 1-NN scheme.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 1(c) documents numerical gain.",
+      "edge_rationale": "Evidence relates specifically to unknown detection mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Improved axis alignment and F1 on dSprites and real objects vs baselines",
+      "target_node": "Pre-train robot perception models with axis-aligned weakly supervised β-VAE (model design phase)",
+      "description": "Positive empirical results encourage adoption of the β-VAE training procedure in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct link from experimental section to suggested usage.",
+      "edge_rationale": "Intervention justified by validation success."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Higher unknown object detection F1 in real object experiment",
+      "target_node": "Deploy latent-space 1-NN classifier to detect unknown objects during operation",
+      "description": "Demonstrated unknown-object accuracy supports deploying the 1-NN classifier for safety.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Results show feasibility; suggestion in Discussion.",
+      "edge_rationale": "Evidence recommends operational deployment."
+    },
+    {
+      "type": "preceded_by",
+      "source_node": "1-NN classifier with per-label 1D normals plus interpolated unknown class",
+      "target_node": "β-VAE with auxiliary per-group classifiers trained on partially labelled data",
+      "description": "The 1-NN classifier requires the latent representations produced by the β-VAE.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Stated implicitly; light inference applied.",
+      "edge_rationale": "Classifier operates on representations generated by prior mechanism."
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Yordan Hristov",
+        "Alex Lascarides",
+        "Subramanian Ramamoorthy"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Interpretable Latent Spaces for Learning from Demonstration"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.06583"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-07-17T00:00:00Z"
+    }
+  ]
+}

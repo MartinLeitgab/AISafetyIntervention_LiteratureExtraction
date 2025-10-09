@@ -1,0 +1,246 @@
+{
+  "nodes": [
+    {
+      "name": "inefficient exploration in model-based reinforcement learning",
+      "aliases": [
+        "poor exploration in model-based RL",
+        "suboptimal exploration in RL"
+      ],
+      "type": "concept",
+      "description": "Using naïve strategies like ε-greedy, model-based RL agents fail to reach sparse rewards quickly, slowing learning and producing sub-optimal policies.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Problem framed in 1 Introduction as the major obstacle for deep RL."
+    },
+    {
+      "name": "reward-agnostic exploration strategies in reinforcement learning",
+      "aliases": [
+        "undirected exploration in RL",
+        "ε-greedy exploration issues"
+      ],
+      "type": "concept",
+      "description": "Strategies such as ε-greedy or option discovery ignore the reward landscape, leading to excessive or misplaced exploration in high- or low-value regions.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 1 Introduction as a key weakness of current methods."
+    },
+    {
+      "name": "over-exploration of low-value regions by information-gain strategies",
+      "aliases": [
+        "misallocated exploration from information gain",
+        "information gain ignores rewards"
+      ],
+      "type": "concept",
+      "description": "Methods maximising environment information gain treat all observations equally, resulting in unnecessary sampling of demonstrably bad actions (e.g. the −1 arm in a Gaussian bandit).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained with the 3-armed bandit example in 1 Introduction."
+    },
+    {
+      "name": "reward-directed exploration for asymptotic optimality in reinforcement learning",
+      "aliases": [
+        "reward-aware exploration necessity",
+        "reward-directed exploration insight"
+      ],
+      "type": "concept",
+      "description": "Exploration should be guided by expected rewards; an agent is asymptotically optimal iff reward-directed exploration (captured by EP) converges to zero.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formalised in Section 3 with proofs of necessity and sufficiency."
+    },
+    {
+      "name": "minimizing exploration potential to guide exploration",
+      "aliases": [
+        "EP minimisation as exploration strategy",
+        "use EP to balance exploration-exploitation"
+      ],
+      "type": "concept",
+      "description": "Given the insight that EP→0 guarantees optimality, the design choice is to actively choose actions that reduce EP over time to ensure adequate but not excessive exploration.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Articulated in 3.2 Sufficiency and Algorithm 1 description."
+    },
+    {
+      "name": "MinEP algorithm selecting actions that minimize expected exploration potential",
+      "aliases": [
+        "MinEP action selection",
+        "Bayes-expected EP minimisation"
+      ],
+      "type": "concept",
+      "description": "At each timestep, the agent samples future percepts from its posterior and picks the action that minimises the expected EP, operationalising the design rationale.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Algorithm 1 under Section 4."
+    },
+    {
+      "name": "theoretical proofs and bandit experiments validating exploration potential framework",
+      "aliases": [
+        "EP validation proofs and experiments",
+        "empirical & formal validation of EP"
+      ],
+      "type": "concept",
+      "description": "Proofs show EP is necessary and sufficient for optimality; bandit experiments demonstrate MinEP’s exploration profile and competitive regret, supporting the mechanism.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections 3.2–3.3 (proofs) and 4 Exploration Potential in Multi-Armed Bandits (empirical)."
+    },
+    {
+      "name": "Apply MinEP exploration strategy during RL fine-tuning to reduce inefficient exploration",
+      "aliases": [
+        "use MinEP during RL training",
+        "train agents with EP-minimising policy"
+      ],
+      "type": "intervention",
+      "description": "During the fine-tuning or RL phase, replace ε-greedy or UCB with the MinEP algorithm which selects actions that minimise expected exploration potential, driving EP→0 efficiently.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Algorithm 1 is presented as a training-time policy (Section 4), corresponding to Fine-Tuning/RL.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Only demonstrated in proof-of-concept bandit experiments (Section 4), no large-scale deployment yet.",
+      "node_rationale": "Embodies the primary actionable recommendation derived from the paper."
+    },
+    {
+      "name": "Monitor exploration potential convergence to switch from exploration to exploitation before deployment",
+      "aliases": [
+        "EP threshold for stopping exploration",
+        "use EP as exploration stop criterion"
+      ],
+      "type": "intervention",
+      "description": "Track EP during training/testing; once EP falls below a chosen threshold, cease exploratory actions and deploy the greedy policy, preventing unnecessary exploration in production.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Intended for pre-deployment evaluation of whether the model has explored sufficiently (Section 3.2 discussion).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Conceptual suggestion without empirical implementation; foundational.",
+      "node_rationale": "Translates the sufficiency proof (EP→0 implies optimality) into a practical deployment guideline."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "inefficient exploration in model-based reinforcement learning",
+      "target_node": "reward-agnostic exploration strategies in reinforcement learning",
+      "description": "Undirected, ε-greedy style exploration is identified as a main reason agents explore inefficiently.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Based on empirical observations cited in 1 Introduction; accepted but not formally quantified.",
+      "edge_rationale": "Section 1 explicitly links ε-greedy’s limitations to poor exploration outcomes."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "inefficient exploration in model-based reinforcement learning",
+      "target_node": "over-exploration of low-value regions by information-gain strategies",
+      "description": "Information-gain maximisation wastes effort on low-reward arms, contributing to overall inefficiency.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Supported by the 3-armed bandit illustration (Section 1).",
+      "edge_rationale": "The example shows how information gain causes unnecessary sampling of the −1 arm."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "reward-agnostic exploration strategies in reinforcement learning",
+      "target_node": "reward-directed exploration for asymptotic optimality in reinforcement learning",
+      "description": "Incorporating reward information into exploration is proposed as the theoretical fix.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical derivation presented in Section 3; not yet empirically validated at this step.",
+      "edge_rationale": "Authors argue exploration should depend on reward structure to overcome ε-greedy’s shortcomings."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "over-exploration of low-value regions by information-gain strategies",
+      "target_node": "reward-directed exploration for asymptotic optimality in reinforcement learning",
+      "description": "Reward-directed exploration selectively avoids low-value regions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical explanation using bandit counter-example (Section 1).",
+      "edge_rationale": "Shows reward-aware criterion would not over-sample the clearly bad arm."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "reward-directed exploration for asymptotic optimality in reinforcement learning",
+      "target_node": "minimizing exploration potential to guide exploration",
+      "description": "The insight is operationalised by proposing to minimise EP over time.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct reasoning step in Section 3.2 linking EP definition to needed behaviour.",
+      "edge_rationale": "If EP quantifies remaining exploration need, reducing it implements reward-directed exploration."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "minimizing exploration potential to guide exploration",
+      "target_node": "MinEP algorithm selecting actions that minimize expected exploration potential",
+      "description": "MinEP is the concrete mechanism that realises EP minimisation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 explicitly embodies this design; no further inference required.",
+      "edge_rationale": "Algorithm chooses the action that lowers expected EP most."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "MinEP algorithm selecting actions that minimize expected exploration potential",
+      "target_node": "theoretical proofs and bandit experiments validating exploration potential framework",
+      "description": "Proofs and experiments confirm that MinEP reduces EP and yields competitive regret.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong theoretical results plus controlled bandit experiments (Section 3 & 4).",
+      "edge_rationale": "Figures 1 & 2 and necessity/sufficiency theorems substantiate the mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "theoretical proofs and bandit experiments validating exploration potential framework",
+      "target_node": "Apply MinEP exploration strategy during RL fine-tuning to reduce inefficient exploration",
+      "description": "Positive results encourage adopting MinEP in practical training setups.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Evidence is limited to toy domains but is consistent; medium strength.",
+      "edge_rationale": "Section 4 reports MinEP’s strong exploration profile and regret, suggesting practical utility."
+    },
+    {
+      "type": "motivates",
+      "source_node": "theoretical proofs and bandit experiments validating exploration potential framework",
+      "target_node": "Monitor exploration potential convergence to switch from exploration to exploitation before deployment",
+      "description": "Since EP→0 guarantees optimality, monitoring EP offers a stopping rule for exploration.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Suggestion is inferred from sufficiency theorem; not empirically tested.",
+      "edge_rationale": "Section 3.2 discusses phasing out exploration once EP is low."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2016-09-16T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Exploration Potential"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Jan Leike"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1609.04994"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

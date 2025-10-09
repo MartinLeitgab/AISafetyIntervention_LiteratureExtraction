@@ -1,0 +1,332 @@
+{
+  "nodes": [
+    {
+      "name": "Failure-state reachability during imitation learning in robotics",
+      "aliases": [
+        "unsafe states during imitation learning",
+        "safety failures in novice-expert systems"
+      ],
+      "type": "concept",
+      "description": "Risk that a robot controlled by a novice policy during imitation learning transitions into unsafe or failure states, which can be costly or dangerous in the real world. Highlighted in Section I. INTRODUCTION as the central safety concern addressed by EnsembleDAgger.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Represents the top-level safety risk motivating all subsequent reasoning paths (I. INTRODUCTION)."
+    },
+    {
+      "name": "Data mismatch and compounding errors in DAgger training",
+      "aliases": [
+        "distributional shift in DAgger",
+        "compounding error from dataset imbalance"
+      ],
+      "type": "concept",
+      "description": "DAgger trains the novice on expert demonstrations, but as the novice explores unseen states the data distribution shifts, causing compounding prediction errors and unsafe actions (Section I. INTRODUCTION & II.A).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identifies the primary mechanism causing unsafe behaviour under standard DAgger."
+    },
+    {
+      "name": "Fixed discrepancy threshold limitations in SafeDAgger decision rule",
+      "aliases": [
+        "single-threshold SafeDAgger shortcoming",
+        "static ξ bound weakness"
+      ],
+      "type": "concept",
+      "description": "SafeDAgger decides safety solely on the action difference between expert and novice using a single threshold ξ; this is overly conservative far from hazards and too lax near hazards (Algorithm 3 & discussion in I. INTRODUCTION).",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains why prior safety extension (SafeDAgger) still leaves room for failures."
+    },
+    {
+      "name": "Epistemic uncertainty as proxy for proximity to failure states in model-free imitation learning",
+      "aliases": [
+        "novice doubt indicates unfamiliar states",
+        "uncertainty–risk correlation assumption"
+      ],
+      "type": "concept",
+      "description": "Assumes that states dissimilar to expert demonstrations yield higher epistemic uncertainty and are more likely near failure states; thus uncertainty can be used as a model-free safety signal (Section I. INTRODUCTION & III. ENSEMBLEDAgger).",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides theoretical basis for using variance estimates to make safety decisions."
+    },
+    {
+      "name": "Safety gating of novice actions via combined discrepancy and uncertainty thresholds",
+      "aliases": [
+        "dual-threshold action gating",
+        "conjunctive doubt-and-discrepancy policy"
+      ],
+      "type": "concept",
+      "description": "Design choice to allow the novice to act only when (a) its action is close to the expert’s and (b) its predicted variance is below a bound, aiming to maximise novice autonomy while bounding failure probability (Figure 3 & Algorithm 4).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Operationalises the theoretical insight into a concrete safety strategy."
+    },
+    {
+      "name": "Deep ensemble approximating Gaussian Process for novice variance estimation",
+      "aliases": [
+        "ensemble uncertainty estimation",
+        "Bayesian deep ensemble for GP approximation"
+      ],
+      "type": "concept",
+      "description": "Implements uncertainty estimation by training an ensemble of neural networks whose output variance approximates a Gaussian Process, scalable to high-dimensional state spaces (Section II.B & III. ENSEMBLEDAgger).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides the practical mechanism to compute the novice’s epistemic uncertainty."
+    },
+    {
+      "name": "EnsembleDAgger decision rule combining doubt and discrepancy rules",
+      "aliases": [
+        "EnsembleDAgger gating algorithm",
+        "Bayesian DAgger decision policy"
+      ],
+      "type": "concept",
+      "description": "Algorithm (Algorithm 4) that enforces both the discrepancy rule (|a_nov−a_exp|<ξ) and the doubt rule (variance<ψ) before allowing the novice to act, defaulting to the expert otherwise (Section III).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Embeds the design rationale into the training loop and interfaces with uncertainty estimates."
+    },
+    {
+      "name": "Reduced failure rate and improved learning on inverted pendulum benchmark",
+      "aliases": [
+        "inverted pendulum safety evidence",
+        "pendulum experiment results"
+      ],
+      "type": "concept",
+      "description": "Experiments show EnsembleDAgger achieves zero failures and faster novice convergence versus discrepancy-only rule on a feedback-linearised inverted pendulum (Section IV.A, Figure 6 & 10).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical evidence that proposed mechanisms improve safety and learning."
+    },
+    {
+      "name": "Pareto-dominant safety–performance tradeoff on MuJoCo HalfCheetah experiments",
+      "aliases": [
+        "HalfCheetah validation results",
+        "Pareto frontier evidence"
+      ],
+      "type": "concept",
+      "description": "On HalfCheetah-v1, the doubt-based rule and full EnsembleDAgger dominate the discrepancy-only rule, providing better novice performance for equal or better combined safety metrics (Section IV.B, Figure 8).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Demonstrates scalability and efficacy of the approach in a higher-dimensional domain."
+    },
+    {
+      "name": "Apply EnsembleDAgger decision rule during imitation learning training to permit novice actions conditionally",
+      "aliases": [
+        "use EnsembleDAgger gating",
+        "conditional novice action selection"
+      ],
+      "type": "intervention",
+      "description": "During each training step, select the novice’s action only if both the action discrepancy to the expert is below ξ and the ensemble-estimated variance is below ψ; otherwise fall back to the expert. Implement Algorithm 4 in the training loop.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Occurs during Fine-Tuning/RL stage when the mixed expert–novice policy interacts with the environment (Algorithm 4 ENSEMBLEDAgger Decision Rule).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated only in simulation benchmarks (Sections IV.A & IV.B), indicating experimental proof-of-concept maturity.",
+      "node_rationale": "Actionable procedure directly derived from implementation mechanism to mitigate failure risk."
+    },
+    {
+      "name": "Train novice policy as deep ensemble to estimate action variance for safety gating",
+      "aliases": [
+        "deep ensemble uncertainty training",
+        "ensemble-based novice policy"
+      ],
+      "type": "intervention",
+      "description": "Instantiate the novice policy as an ensemble of N neural networks (e.g., 5–10 MLPs) trained on aggregated expert data so that the per-state action variance can be computed and used by the decision rule.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented during the iterative Fine-Tuning phase where the novice is retrained on aggregated datasets (Section III & IV implementation details).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Technique demonstrated experimentally but not yet deployed in production systems (Sections II.B & IV).",
+      "node_rationale": "Provides the uncertainty signal required by EnsembleDAgger; without it the decision rule cannot function."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Failure-state reachability during imitation learning in robotics",
+      "target_node": "Data mismatch and compounding errors in DAgger training",
+      "description": "Unsafe states arise because the novice encounters parts of the state-space insufficiently represented in the expert-labelled dataset, leading to cascading errors.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in INTRODUCTION and Section II.A as primary limitation of DAgger.",
+      "edge_rationale": "Connects top-level safety risk to its immediate mechanistic cause."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Failure-state reachability during imitation learning in robotics",
+      "target_node": "Fixed discrepancy threshold limitations in SafeDAgger decision rule",
+      "description": "Even with SafeDAgger, a single static threshold allows unsafe behaviour near hazards or blocks useful exploration elsewhere, failing to prevent all failure states.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed qualitatively in INTRODUCTION; no formal proof but strong argument.",
+      "edge_rationale": "Shows that prior safety fix still contributes to the overarching risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Data mismatch and compounding errors in DAgger training",
+      "target_node": "Epistemic uncertainty as proxy for proximity to failure states in model-free imitation learning",
+      "description": "Measuring epistemic uncertainty provides a model-free indicator of unfamiliar states, enabling targeted aggregation of safe data.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Hypothesis articulated in INTRODUCTION and supported empirically later; medium evidence.",
+      "edge_rationale": "Links problem mechanism to proposed theoretical solution."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Fixed discrepancy threshold limitations in SafeDAgger decision rule",
+      "target_node": "Epistemic uncertainty as proxy for proximity to failure states in model-free imitation learning",
+      "description": "Adding an uncertainty signal allows thresholds to be state-dependent, overcoming the inflexibility of a static discrepancy bound.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoned argument in INTRODUCTION and Section III.",
+      "edge_rationale": "Addresses how the theoretical insight remedies the SafeDAgger limitation."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Epistemic uncertainty as proxy for proximity to failure states in model-free imitation learning",
+      "target_node": "Safety gating of novice actions via combined discrepancy and uncertainty thresholds",
+      "description": "Once uncertainty is recognised as a safety proxy, a dual-threshold gating policy can be designed to decide when the novice may act.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct logical derivation in Section III with Figure 3.",
+      "edge_rationale": "Transitions from theoretical motivation to concrete design choice."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Safety gating of novice actions via combined discrepancy and uncertainty thresholds",
+      "target_node": "Deep ensemble approximating Gaussian Process for novice variance estimation",
+      "description": "The design requires a practical way to measure uncertainty; this is provided by deep ensembles approximating GPs.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section II.B presents ensembles specifically for this purpose.",
+      "edge_rationale": "Connects design rationale to first implementation mechanism."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Safety gating of novice actions via combined discrepancy and uncertainty thresholds",
+      "target_node": "EnsembleDAgger decision rule combining doubt and discrepancy rules",
+      "description": "The decision rule operationalises the gating logic within the DAgger framework.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Algorithm 4 is an explicit implementation.",
+      "edge_rationale": "Second implementation step realising the design."
+    },
+    {
+      "type": "required_by",
+      "source_node": "Deep ensemble approximating Gaussian Process for novice variance estimation",
+      "target_node": "EnsembleDAgger decision rule combining doubt and discrepancy rules",
+      "description": "The decision rule needs per-state variance estimates supplied by the ensemble to evaluate the doubt condition.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 4 inputs the ensemble-provided variance ψ̂.",
+      "edge_rationale": "Highlights dependency between two implementation mechanisms."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Deep ensemble approximating Gaussian Process for novice variance estimation",
+      "target_node": "Reduced failure rate and improved learning on inverted pendulum benchmark",
+      "description": "Using ensemble variance, the novice acts safely and learns faster, evidenced by zero failures and expanded basin of attraction.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical results in Section IV.A Figures 6 & 10.",
+      "edge_rationale": "Shows empirical verification of the uncertainty mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "EnsembleDAgger decision rule combining doubt and discrepancy rules",
+      "target_node": "Reduced failure rate and improved learning on inverted pendulum benchmark",
+      "description": "Full decision rule produced strictly safer exploration and superior learning compared to baselines.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative comparisons in Section IV.A.",
+      "edge_rationale": "Links algorithm to benchmark evidence."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "EnsembleDAgger decision rule combining doubt and discrepancy rules",
+      "target_node": "Pareto-dominant safety–performance tradeoff on MuJoCo HalfCheetah experiments",
+      "description": "In a high-dimensional domain, EnsembleDAgger dominated discrepancy-only rule on the safety-performance Pareto frontier.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Shown in Section IV.B Figure 8.",
+      "edge_rationale": "Second validation in a more complex environment."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Reduced failure rate and improved learning on inverted pendulum benchmark",
+      "target_node": "Apply EnsembleDAgger decision rule during imitation learning training to permit novice actions conditionally",
+      "description": "Positive safety and learning outcomes encourage adopting the EnsembleDAgger rule in practice.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical evidence suggests the intervention is useful; moderate inference to generalisation.",
+      "edge_rationale": "Evidence-to-intervention linkage."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Reduced failure rate and improved learning on inverted pendulum benchmark",
+      "target_node": "Train novice policy as deep ensemble to estimate action variance for safety gating",
+      "description": "Success on the pendulum validates the need to train novice as an ensemble to supply reliable variance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Same empirical basis with moderate inference.",
+      "edge_rationale": "Evidence motivates accompanying training intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Pareto-dominant safety–performance tradeoff on MuJoCo HalfCheetah experiments",
+      "target_node": "Apply EnsembleDAgger decision rule during imitation learning training to permit novice actions conditionally",
+      "description": "Dominant trade-off in HalfCheetah further supports deploying the decision rule in more complex tasks.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong experimental evidence across multiple seeds (Figure 8).",
+      "edge_rationale": "Reinforces intervention adoption."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Pareto-dominant safety–performance tradeoff on MuJoCo HalfCheetah experiments",
+      "target_node": "Train novice policy as deep ensemble to estimate action variance for safety gating",
+      "description": "Validated benefit of ensemble-based uncertainty estimation in complex environments motivates its inclusion.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical evidence.",
+      "edge_rationale": "Supports the necessity of the training intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "EnsembleDAgger: A Bayesian Approach to Safe Imitation Learning"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-07-22T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.08364"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Kunal Menda",
+        "Katherine Driggs-Campbell",
+        "Mykel J. Kochenderfer"
+      ]
+    }
+  ]
+}

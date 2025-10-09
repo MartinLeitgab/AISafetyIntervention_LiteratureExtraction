@@ -1,0 +1,552 @@
+{
+  "nodes": [
+    {
+      "name": "Irrecoverable state entry during real-world RL training",
+      "aliases": [
+        "irreversible states in physical RL",
+        "catastrophic unrecoverable states during robot learning"
+      ],
+      "type": "concept",
+      "description": "Agents may perform actions that leave the robot or environment in states from which autonomous recovery is impossible, causing safety hazards and halting learning.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Core risk motivating the paper (Section 1 Introduction)."
+    },
+    {
+      "name": "Limited scalability of real-world RL experiments due to manual reset bottlenecks",
+      "aliases": [
+        "manual reset bottleneck in robotics RL",
+        "reset-related experiment downtime"
+      ],
+      "type": "concept",
+      "description": "Frequent need for humans to reset environments stops data collection, limiting experiment length and number of concurrently trained agents.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "The introduction stresses that waiting for manual resets, not data collection speed, is the bottleneck (Section 1)."
+    },
+    {
+      "name": "Insufficient safe exploration mechanisms in deep RL",
+      "aliases": [
+        "unsafe exploration in deep RL",
+        "lack of safety constraints during exploration"
+      ],
+      "type": "concept",
+      "description": "Standard deep RL explores without constraints, easily entering dangerous or unrecoverable regions of the state space.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identified as the mechanism causing both safety failures and reset requirements (Section 1, Section 2 Related Work)."
+    },
+    {
+      "name": "High frequency of manual environment resets in RL training",
+      "aliases": [
+        "excessive hard resets",
+        "constant manual episode resets"
+      ],
+      "type": "concept",
+      "description": "Because agents cannot reliably recover, humans have to reset after every episode or failure, drastically increasing labour cost.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described as the immediate operational problem leading to scalability risk (Section 1)."
+    },
+    {
+      "name": "Reversible action sequences ensure recoverability in RL",
+      "aliases": [
+        "reversibility as safety proxy",
+        "safety through reversible behaviours"
+      ],
+      "type": "concept",
+      "description": "If the agent’s actions are reversible, it can always return to the start distribution; therefore reversible sequences are treated as safe.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Authors posit that learning to undo actions removes dependence on manual resets (Section 1, 4.1)."
+    },
+    {
+      "name": "Value function uncertainty estimates improve safety decisions in RL",
+      "aliases": [
+        "uncertainty-aware safety",
+        "risk-sensitive value estimates"
+      ],
+      "type": "concept",
+      "description": "Estimating uncertainty over Q-values allows distinguishing novel unsafe states from truly safe states when deciding on early aborts.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.4 argues that inaccurate Q-values in unseen states can cause unsafe decisions and proposes ensembles to quantify uncertainty."
+    },
+    {
+      "name": "Joint learning of forward and reset policies for automated recovery",
+      "aliases": [
+        "dual policy learning",
+        "simultaneous task and reset policy training"
+      ],
+      "type": "concept",
+      "description": "Training a task (forward) policy together with a reset policy enables the agent to undo its own actions and eliminates the need to sample from the external initial-state distribution.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Presented as the central design principle (Section 4)."
+    },
+    {
+      "name": "Ensemble-guided early abort decision design",
+      "aliases": [
+        "uncertainty-guided abort design",
+        "ensemble-based safety gating"
+      ],
+      "type": "concept",
+      "description": "Use of an ensemble of Q-functions to decide whether to allow the forward action or switch control to the reset policy (optimistic, realist, pessimistic rules).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.4 lists three ensemble combination strategies for early aborts."
+    },
+    {
+      "name": "Multiple autonomous reset attempts strategy to lower manual resets",
+      "aliases": [
+        "retry reset strategy",
+        "N-attempt reset policy"
+      ],
+      "type": "concept",
+      "description": "Before invoking a costly human reset, the agent may try the learned reset policy up to N times, trading off downtime versus risk.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.2 introduces parameter N controlling how many failed resets trigger a hard reset."
+    },
+    {
+      "name": "Tuning early abort Q-value threshold for cautious exploration",
+      "aliases": [
+        "Qmin threshold tuning",
+        "abort threshold design"
+      ],
+      "type": "concept",
+      "description": "Setting the minimum acceptable reset-policy Q-value (Qmin) higher forces more conservative exploration and fewer failures.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.1 and experiments (6.3) discuss how threshold choice affects safety and learning speed."
+    },
+    {
+      "name": "Alternating execution with early aborts restricting unsafe actions",
+      "aliases": [
+        "early abort control loop",
+        "forward/reset alternation"
+      ],
+      "type": "concept",
+      "description": "At every step the forward action is executed only if the reset-policy Q-value exceeds Qmin; otherwise control is given to the reset policy, dynamically constraining exploration to recoverable states.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 lines 2-6 detail the early-abort gating mechanism (Section 4.3)."
+    },
+    {
+      "name": "Bootstrap ensemble of Q-functions for uncertainty estimation",
+      "aliases": [
+        "Q-ensemble bootstrap",
+        "value function ensemble"
+      ],
+      "type": "concept",
+      "description": "Maintain multiple Q-networks with different random initialisations; their distribution gives uncertainty estimates used in optimistic/realist/pessimistic abort rules.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details in Section 4.4."
+    },
+    {
+      "name": "Threshold N of consecutive failed resets triggers hard reset",
+      "aliases": [
+        "N-failed-resets threshold",
+        "hard reset trigger parameter"
+      ],
+      "type": "concept",
+      "description": "A manual reset is requested only if the reset policy fails for N consecutive episodes, approximating irreversibility without full reachability analysis.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 lines 12-14 and Section 4.2 specify this mechanism."
+    },
+    {
+      "name": "Qmin parameter controlling early abort activation",
+      "aliases": [
+        "abort threshold Qmin",
+        "minimum reset-Q threshold"
+      ],
+      "type": "concept",
+      "description": "Scalar threshold: if Qreset(s,a) < Qmin, the forward action is vetoed. Adjusting Qmin changes exploration conservativeness.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Defined formally in Eq. 1 (Section 4.1)."
+    },
+    {
+      "name": "Simulation experiments demonstrate reduced manual resets with maintained performance",
+      "aliases": [
+        "overall experimental results",
+        "reduced resets evidence"
+      ],
+      "type": "concept",
+      "description": "Across ball-in-cup, pusher, cliff cheetah, etc., the method achieved equal or better task reward while halving or better the number of hard resets.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Figures 4 and 5 summarise core empirical findings (Section 6.1–6.2)."
+    },
+    {
+      "name": "Empirical results: larger ensembles decrease hard resets and increase rewards",
+      "aliases": [
+        "ensemble size evidence",
+        "ensemble safety evidence"
+      ],
+      "type": "concept",
+      "description": "With ensemble size 1 the agent failed; ensembles of 10-50 networks both reduced resets and boosted reward (Figure 8).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.5 provides quantitative evidence."
+    },
+    {
+      "name": "Experimental evidence: increasing reset attempts reduces hard resets with minimal reward impact",
+      "aliases": [
+        "reset attempt evidence",
+        "N-attempt results"
+      ],
+      "type": "concept",
+      "description": "Raising N from 1 to 4 cut hard resets by up to 2.5× on Pusher while reducing reward by <25%; on Cliff Cheetah resets nearly eliminated (Figure 7).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6.4 reports this trade-off."
+    },
+    {
+      "name": "Evidence: higher Qmin reduces hard resets without slowing learning",
+      "aliases": [
+        "threshold tuning evidence",
+        "Qmin experiment results"
+      ],
+      "type": "concept",
+      "description": "In the gridworld and continuous tasks, raising Qmin reduced hard resets by up to 78 % with little change in steps-to-solve (Figure 3 & 6).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Evidence from Section 5 and 6.3."
+    },
+    {
+      "name": "Fine-tune RL agents with joint forward-reset policies and early abort gating",
+      "aliases": [
+        "dual-policy early-abort training",
+        "leave-no-trace training method"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning/RL phase, simultaneously train a task policy and a reset policy; before each environment step, veto the task action if reset-policy Q< Qmin and hand control to the reset policy.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Core algorithm applied during continuous learning phase (Section 4.3 Algorithm 1).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated only in simulation across several tasks (Section 6).",
+      "node_rationale": "Primary actionable procedure to mitigate irrecoverable states and manual resets."
+    },
+    {
+      "name": "Employ bootstrap ensemble of Q-functions in early abort mechanism",
+      "aliases": [
+        "uncertainty-aware early abort intervention",
+        "ensemble-based safety gating"
+      ],
+      "type": "intervention",
+      "description": "Train an ensemble (≥10) of independently initialised Q-networks; use optimistic/realist/pessimistic aggregation rules to decide whether to abort the forward action.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented alongside RL training (Section 4.4).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated effectiveness in controlled simulation only (Section 6.5).",
+      "node_rationale": "Operationalises uncertainty insight for safer exploration."
+    },
+    {
+      "name": "Set adaptive maximum reset attempts before manual intervention",
+      "aliases": [
+        "configure N reset retries",
+        "adaptive hard reset threshold"
+      ],
+      "type": "intervention",
+      "description": "Permit the learned reset policy up to N consecutive attempts (tuned to task cost) before calling a human or scripted hard reset.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Adjustment is made to the deployed learning loop depending on operational costs (Section 4.2).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Studied via simulation parameter sweep (Section 6.4).",
+      "node_rationale": "Reduces human resets while bounding worst-case downtime."
+    },
+    {
+      "name": "Configure conservative Qmin thresholds during training",
+      "aliases": [
+        "tune abort threshold",
+        "set safe Qmin"
+      ],
+      "type": "intervention",
+      "description": "Choose a higher Qmin value (e.g., 0.4 or 80 depending on scale) to enforce cautious exploration that substantially lowers the frequency of hard resets.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Threshold is typically tuned during pre-deployment safety testing (Section 6.3).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Parameter tuning shows consistent benefit across several tasks, but still lacks large-scale real-world validation.",
+      "node_rationale": "Parameterises the safety-performance trade-off for concrete deployments."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Irrecoverable state entry during real-world RL training",
+      "target_node": "Insufficient safe exploration mechanisms in deep RL",
+      "description": "Unsafe exploration directly leads to agents entering states they cannot recover from.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly stated in Introduction without quantitative proof.",
+      "edge_rationale": "Section 1 notes that lack of safety scaffolding causes irreversible failures."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Limited scalability of real-world RL experiments due to manual reset bottlenecks",
+      "target_node": "High frequency of manual environment resets in RL training",
+      "description": "High reset frequency consumes human time, limiting total experiment hours.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative statement in Introduction.",
+      "edge_rationale": "Section 1 emphasises downtime while waiting for manual resets."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Insufficient safe exploration mechanisms in deep RL",
+      "target_node": "Reversible action sequences ensure recoverability in RL",
+      "description": "Focusing on reversible behaviours provides a path to safer exploration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Authors present reversibility as guiding insight; not empirically isolated.",
+      "edge_rationale": "Section 1 rationale for learning to undo actions."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High frequency of manual environment resets in RL training",
+      "target_node": "Reversible action sequences ensure recoverability in RL",
+      "description": "If actions can be undone, external resets become unnecessary.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical extension of the same insight; moderately inferred.",
+      "edge_rationale": "Section 4 discussion."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Reversible action sequences ensure recoverability in RL",
+      "target_node": "Joint learning of forward and reset policies for automated recovery",
+      "description": "Training a dedicated reset policy operationalises the reversibility principle.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct design derivation (Section 4).",
+      "edge_rationale": "Section 4 introduces dual-policy learning as implementation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Joint learning of forward and reset policies for automated recovery",
+      "target_node": "Alternating execution with early aborts restricting unsafe actions",
+      "description": "Early-abort control loop realises policy alternation in practice.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 gives concrete steps.",
+      "edge_rationale": "Section 4.3 details alternation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Alternating execution with early aborts restricting unsafe actions",
+      "target_node": "Simulation experiments demonstrate reduced manual resets with maintained performance",
+      "description": "Experiments show the alternation mechanism halves hard resets while preserving reward.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Multiple tasks, quantitative graphs (Section 6.1-6.2).",
+      "edge_rationale": "Figures 4 & 5."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Simulation experiments demonstrate reduced manual resets with maintained performance",
+      "target_node": "Fine-tune RL agents with joint forward-reset policies and early abort gating",
+      "description": "Positive empirical results motivate adopting the dual-policy early-abort training intervention.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical consequence, not a controlled comparison to alternatives.",
+      "edge_rationale": "Discussion in Section 7 Conclusion."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Insufficient safe exploration mechanisms in deep RL",
+      "target_node": "Value function uncertainty estimates improve safety decisions in RL",
+      "description": "Uncertainty guidance addresses over-confident value estimates that allow unsafe actions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoned argument in Section 4.4.",
+      "edge_rationale": "Section 4.4 describes need for uncertainty."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Value function uncertainty estimates improve safety decisions in RL",
+      "target_node": "Ensemble-guided early abort decision design",
+      "description": "Design introduces ensemble-based decision rules to operationalise uncertainty.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit mapping in Section 4.4.",
+      "edge_rationale": "Optimistic/realist/pessimistic rules derive from uncertainty insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Ensemble-guided early abort decision design",
+      "target_node": "Bootstrap ensemble of Q-functions for uncertainty estimation",
+      "description": "Bootstrap ensembles are concrete technique to obtain Q-value distributions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4.4 provides algorithmic choice.",
+      "edge_rationale": "Implementation subsection."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Bootstrap ensemble of Q-functions for uncertainty estimation",
+      "target_node": "Empirical results: larger ensembles decrease hard resets and increase rewards",
+      "description": "Scaling ensemble size decreased failures and improved reward (Figure 8).",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative evidence across ensemble sizes.",
+      "edge_rationale": "Section 6.5."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical results: larger ensembles decrease hard resets and increase rewards",
+      "target_node": "Employ bootstrap ensemble of Q-functions in early abort mechanism",
+      "description": "Validated benefit motivates adopting ensembles in training pipelines.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct link between evidence and proposed intervention.",
+      "edge_rationale": "Section 7 points to ensembles as a safety improvement."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Insufficient safe exploration mechanisms in deep RL",
+      "target_node": "Multiple autonomous reset attempts strategy to lower manual resets",
+      "description": "Allowing several self-reset attempts reduces risk exposure from exploratory failures.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Connection partly inferred; paper frames it as downtime trade-off.",
+      "edge_rationale": "Section 4.2 and 6.4 discuss the strategy."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Multiple autonomous reset attempts strategy to lower manual resets",
+      "target_node": "Threshold N of consecutive failed resets triggers hard reset",
+      "description": "Parameter N realises the strategy in the algorithm.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit in Algorithm 1.",
+      "edge_rationale": "Section 4.2."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Threshold N of consecutive failed resets triggers hard reset",
+      "target_node": "Experimental evidence: increasing reset attempts reduces hard resets with minimal reward impact",
+      "description": "Experimental sweep shows efficacy of varying N.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative results (Figure 7).",
+      "edge_rationale": "Section 6.4."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Experimental evidence: increasing reset attempts reduces hard resets with minimal reward impact",
+      "target_node": "Set adaptive maximum reset attempts before manual intervention",
+      "description": "Findings motivate tuning N based on reset cost in deployment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical application of evidence.",
+      "edge_rationale": "Conclusion mentions dependency on reset cost."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Insufficient safe exploration mechanisms in deep RL",
+      "target_node": "Tuning early abort Q-value threshold for cautious exploration",
+      "description": "Higher threshold makes exploration safer, addressing unsafe actions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in Section 5 and 6.3.",
+      "edge_rationale": "Gridworld and continuous experiments."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Tuning early abort Q-value threshold for cautious exploration",
+      "target_node": "Qmin parameter controlling early abort activation",
+      "description": "Qmin is the concrete tunable parameter.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Defined mathematically in Eq. 1.",
+      "edge_rationale": "Section 4.1."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Qmin parameter controlling early abort activation",
+      "target_node": "Evidence: higher Qmin reduces hard resets without slowing learning",
+      "description": "Experiments show safety–performance trade-off across Qmin values.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figures 3 and 6 provide quantitative data.",
+      "edge_rationale": "Sections 5 & 6.3."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Evidence: higher Qmin reduces hard resets without slowing learning",
+      "target_node": "Configure conservative Qmin thresholds during training",
+      "description": "Evidence motivates selecting a higher Qmin in safety-critical training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical deployment recommendation.",
+      "edge_rationale": "Conclusion notes threshold tuning benefit."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1711.06782"
+    },
+    {
+      "key": "title",
+      "value": "Leave no Trace: Learning to Reset for Safe and Autonomous Reinforcement Learning"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Benjamin Eysenbach",
+        "Shixiang Gu",
+        "Julian Ibarz",
+        "Sergey Levine"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2017-11-18T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

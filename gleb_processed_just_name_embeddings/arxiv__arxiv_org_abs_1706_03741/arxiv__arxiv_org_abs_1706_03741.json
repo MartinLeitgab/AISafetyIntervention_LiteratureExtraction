@@ -1,0 +1,539 @@
+{
+  "nodes": [
+    {
+      "name": "Reward misspecification leading to misaligned behavior in complex RL tasks",
+      "aliases": [
+        "objective misalignment in RL",
+        "reward hacking in deep RL"
+      ],
+      "type": "concept",
+      "description": "When a reinforcement-learning agent is trained with an ill-specified reward, it can learn behaviours that diverge from human intentions, posing safety risks.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced as the motivating AI-safety concern in 1 Introduction."
+    },
+    {
+      "name": "Difficulty of hand-engineering reward functions for complex behaviors",
+      "aliases": [
+        "hard-to-specify rewards",
+        "complex task reward design problem"
+      ],
+      "type": "concept",
+      "description": "For tasks like tabletop cleanup or egg scrambling, mapping sensor data to a scalar reward that captures human intent is non-trivial.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in examples in 1 Introduction (robot cleaning, egg)."
+    },
+    {
+      "name": "High human feedback cost when using direct human reward in RL",
+      "aliases": [
+        "expensive human reward signals",
+        "feedback bottleneck in RL"
+      ],
+      "type": "concept",
+      "description": "Hundreds or thousands of hours of human scoring would be required if human feedback were supplied every timestep, making it impractical.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantified in 1 Introduction: human feedback must be reduced by several orders of magnitude."
+    },
+    {
+      "name": "Learning reward model from sparse human trajectory comparisons approximates true rewards",
+      "aliases": [
+        "preference-based reward learning",
+        "reward predictor from comparisons"
+      ],
+      "type": "concept",
+      "description": "A neural network trained on pairwise clip comparisons can predict human preference scores that serve as a usable reward signal.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in 2.2 Our Method and Equation 1."
+    },
+    {
+      "name": "Human comparative judgments over trajectory segments are more reliable than absolute scores",
+      "aliases": [
+        "comparisons vs scores insight",
+        "pairwise preference reliability"
+      ],
+      "type": "concept",
+      "description": "Humans find it easier and faster to tell which of two short clips is better than to provide a numeric rating, improving consistency.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical motivation given in 2.2.2 Preference Elicitation and 3.3 Ablations."
+    },
+    {
+      "name": "Separating reward model training from policy optimization reduces feedback requirements",
+      "aliases": [
+        "two-network architecture rationale",
+        "decouple reward learning and RL"
+      ],
+      "type": "concept",
+      "description": "Training a supervised reward predictor allows the RL agent to sample many transitions without human input, cutting feedback by ~1000×.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design goal enumerated in bullets (1-4) end of 1 Introduction."
+    },
+    {
+      "name": "Using short trajectory comparisons instead of absolute scores to elicit reliable human preferences",
+      "aliases": [
+        "clip-based preference elicitation",
+        "short-clip comparison design"
+      ],
+      "type": "concept",
+      "description": "Presenting 1–2 s video snippets for side-by-side comparison simplifies the task for non-expert raters and maintains signal quality.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Specified in 2.2.2 Preference Elicitation."
+    },
+    {
+      "name": "Active query selection based on ensemble disagreement focuses informative feedback",
+      "aliases": [
+        "uncertainty-driven querying",
+        "disagreement-based active learning"
+      ],
+      "type": "concept",
+      "description": "Selecting clip pairs with high variance across reward-predictor ensemble members is intended to maximise information gain per query.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Mechanism detailed in 2.2.4 Selecting Queries."
+    },
+    {
+      "name": "Asynchronous pipeline integrating policy rollout, human comparison collection, and reward predictor updates",
+      "aliases": [
+        "three-process asynchronous loop",
+        "parallel reward learning architecture"
+      ],
+      "type": "concept",
+      "description": "Processes for RL rollouts, query generation, and reward-model training run in parallel, passing trajectories, labels and parameters asynchronously.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in numbered list of 2.2 Our Method."
+    },
+    {
+      "name": "Neural reward predictor trained with Bradley–Terry loss on trajectory comparisons",
+      "aliases": [
+        "pairwise preference network",
+        "Bradley-Terry reward model"
+      ],
+      "type": "concept",
+      "description": "A CNN/MLP is fitted by minimising cross-entropy between predicted and human-labelled comparison outcomes (Equation 1).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation in 2.2.3 Fitting the Reward Function."
+    },
+    {
+      "name": "Ensemble of reward predictors with dropout and regularization for uncertainty estimation",
+      "aliases": [
+        "reward model ensemble",
+        "dropout-based variance estimation"
+      ],
+      "type": "concept",
+      "description": "Bootstrap ensembles normalised individually; disagreement drives active querying and guards against over-fitting.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Modifications listed at end of 2.2.3 and ablated in 3.3."
+    },
+    {
+      "name": "Policy optimization using A2C/TRPO with normalized predicted rewards",
+      "aliases": [
+        "policy gradient on learned reward",
+        "A2C/TRPO with non-stationary reward"
+      ],
+      "type": "concept",
+      "description": "Advantage-actor–critic (Atari) and TRPO (MuJoCo) optimise policies against the moving reward estimate, with reward normalisation for stability.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation details in 2.2.1 Optimizing the Policy."
+    },
+    {
+      "name": "Visualization of two 1–2 second trajectory clips for human comparison interface",
+      "aliases": [
+        "clip visualization UI",
+        "side-by-side clip display"
+      ],
+      "type": "concept",
+      "description": "Raters view short video snippets and choose preferred behaviour, supply tie or ‘incomparable’ responses, stored as triples (σ1,σ2,μ).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Exact procedure in 2.2.2 Preference Elicitation."
+    },
+    {
+      "name": "Near true-reward performance on MuJoCo tasks with ~700 human queries",
+      "aliases": [
+        "MuJoCo 700-label result",
+        "robotics reward-learning validation"
+      ],
+      "type": "concept",
+      "description": "With 15–60 min of feedback, agents match or slightly exceed true-reward RL on 8 MuJoCo tasks (Figure 2).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantitative results in 3.1.1 Simulated Robotics."
+    },
+    {
+      "name": "Substantial learning on Atari games with 5,500 human queries, including human-shaped reward gains",
+      "aliases": [
+        "Atari 5.5k label result",
+        "human-shaped Atari reward"
+      ],
+      "type": "concept",
+      "description": "Agents learn 7 Atari games; human feedback sometimes outperforms ground-truth RL by shaping reward (Enduro) (Figure 3).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantitative results in 3.1.2 Atari."
+    },
+    {
+      "name": "Ablation studies show online preference querying critical for avoiding reward exploitation",
+      "aliases": [
+        "online feedback ablation finding",
+        "non-stationary reward evidence"
+      ],
+      "type": "concept",
+      "description": "Offline training causes degenerate behaviours (e.g., infinite Pong volleys); active online querying prevents this (Section 3.3).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Key result in 3.3 Ablation Studies."
+    },
+    {
+      "name": "Novel complex behaviors learned (robot backflips, one-leg cheetah) with <1 hour feedback",
+      "aliases": [
+        "backflip demonstration",
+        "one-leg cheetah behaviour"
+      ],
+      "type": "concept",
+      "description": "Demonstrates ability to specify tasks lacking programmatic reward, trained with 800–1,300 queries (Section 3.2, Figure 4).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Qualitative evidence that method generalises beyond benchmarks."
+    },
+    {
+      "name": "Fine-tune RL agents using learned reward models from human trajectory comparison data",
+      "aliases": [
+        "preference-based fine-tuning",
+        "RL with learned reward"
+      ],
+      "type": "intervention",
+      "description": "During the RL fine-tuning phase, replace or augment the environment reward with predictions from a trained comparison-based reward model to align agent behaviour with human preferences.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applies while the agent is being RL-trained (Section 2.2 Our Method).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated at prototype scale on MuJoCo and Atari (Section 3 Experimental Results).",
+      "node_rationale": "Central actionable step directly emerging from the validated framework."
+    },
+    {
+      "name": "Collect online human comparative feedback on 1–2 second trajectory clips during training",
+      "aliases": [
+        "online preference collection",
+        "live human comparison queries"
+      ],
+      "type": "intervention",
+      "description": "Continuously sample recent agent behaviour, generate side-by-side 1–2 s clips, and elicit human preference selections to keep the reward model aligned.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Executed concurrently with RL training (2.2.2 Preference Elicitation).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated effective in experiments; ablations show necessity (Section 3.3).",
+      "node_rationale": "Prevents reward model drift and exploitation, per ablation evidence."
+    },
+    {
+      "name": "Prioritize human comparison queries using ensemble-based disagreement uncertainty sampling",
+      "aliases": [
+        "ensemble-uncertainty querying",
+        "active preference elicitation"
+      ],
+      "type": "intervention",
+      "description": "Use variance across an ensemble of reward predictors to rank candidate clip pairs and submit the most uncertain for human labeling.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Operates during RL fine-tuning to choose which clip pairs are shown (2.2.4 Selecting Queries).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Experimental component; mixed benefits in ablation study (Section 3.3).",
+      "node_rationale": "Targets label efficiency, a core scalability constraint."
+    },
+    {
+      "name": "Implement asynchronous reward learning pipeline integrating policy rollout, reward prediction, and feedback collection",
+      "aliases": [
+        "parallel reward learning architecture",
+        "three-process loop deployment"
+      ],
+      "type": "intervention",
+      "description": "Engineer separate concurrent processes or threads for (1) environment interaction, (2) human query generation/collection, and (3) reward-model optimization, sharing data buffers asynchronously.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "System architecture active throughout fine-tuning (2.2 Our Method).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Implemented in research prototypes; not yet production-grade (Section 3).",
+      "node_rationale": "Enables scalable label throughput and non-blocking optimisation."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Reward misspecification leading to misaligned behavior in complex RL tasks",
+      "target_node": "Difficulty of hand-engineering reward functions for complex behaviors",
+      "description": "Poorly specified or misshaped handcrafted rewards are a principal cause of objective misalignment.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit discussion in 1 Introduction examples.",
+      "edge_rationale": "Paper states hand-engineering failures drive reward hacking."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Reward misspecification leading to misaligned behavior in complex RL tasks",
+      "target_node": "High human feedback cost when using direct human reward in RL",
+      "description": "Direct human reward is too expensive, effectively preventing adequate specification and leading to misaligned incentives.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Quantitative remarks but no formal study; 1 Introduction.",
+      "edge_rationale": "High cost blocks corrective feedback, sustaining mis-specification."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Difficulty of hand-engineering reward functions for complex behaviors",
+      "target_node": "Learning reward model from sparse human trajectory comparisons approximates true rewards",
+      "description": "Learning a predictor from preferences removes the need for manual reward design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Central claim of Sections 2 and 3.",
+      "edge_rationale": "Approach directly substitutes learnt reward for manual design."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High human feedback cost when using direct human reward in RL",
+      "target_node": "Learning reward model from sparse human trajectory comparisons approximates true rewards",
+      "description": "Reward predictor converts sparse comparisons into dense reward, cutting human time by ~1000×.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical 3-order magnitude reduction claimed in Discussion.",
+      "edge_rationale": "Predictor amortises feedback over many timesteps."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Learning reward model from sparse human trajectory comparisons approximates true rewards",
+      "target_node": "Separating reward model training from policy optimization reduces feedback requirements",
+      "description": "Decoupling lets the RL loop reuse predicted rewards endlessly, amplifying scarce feedback.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design explanation not directly quantified; Section 2.2.",
+      "edge_rationale": "Supervised predictor is trained once per query yet used for many steps."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Human comparative judgments over trajectory segments are more reliable than absolute scores",
+      "target_node": "Using short trajectory comparisons instead of absolute scores to elicit reliable human preferences",
+      "description": "Design chooses clip comparisons to exploit higher reliability and speed of judgments.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 2.2.2 explicitly motivates this design.",
+      "edge_rationale": "Comparisons operationalise the theoretical insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Separating reward model training from policy optimization reduces feedback requirements",
+      "target_node": "Asynchronous pipeline integrating policy rollout, human comparison collection, and reward predictor updates",
+      "description": "Three parallel processes realise the separation while maintaining continual improvement.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Process list in 2.2 Our Method.",
+      "edge_rationale": "Pipeline architecture embodies the design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Separating reward model training from policy optimization reduces feedback requirements",
+      "target_node": "Neural reward predictor trained with Bradley–Terry loss on trajectory comparisons",
+      "description": "Neural predictor is the concrete implementation of the decoupled reward model.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation 1 and training details 2.2.3.",
+      "edge_rationale": "Predictor realises the concept of learnt reward."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Separating reward model training from policy optimization reduces feedback requirements",
+      "target_node": "Policy optimization using A2C/TRPO with normalized predicted rewards",
+      "description": "Policy gradient methods consume the learned reward to improve behaviour.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 2.2.1 lists chosen algorithms.",
+      "edge_rationale": "RL component realises the optimisation half of separation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Active query selection based on ensemble disagreement focuses informative feedback",
+      "target_node": "Ensemble of reward predictors with dropout and regularization for uncertainty estimation",
+      "description": "Ensemble variance supplies the uncertainty metric driving query prioritisation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Mechanism explained in 2.2.4 and ablated in 3.3.",
+      "edge_rationale": "Implementation transforms design idea into computation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Using short trajectory comparisons instead of absolute scores to elicit reliable human preferences",
+      "target_node": "Visualization of two 1–2 second trajectory clips for human comparison interface",
+      "description": "UI showing paired clips operationalises the comparison-based elicitation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Exact clip interface described in 2.2.2.",
+      "edge_rationale": "Interface embodies design choice."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Asynchronous pipeline integrating policy rollout, human comparison collection, and reward predictor updates",
+      "target_node": "Near true-reward performance on MuJoCo tasks with ~700 human queries",
+      "description": "MuJoCo results show the full pipeline achieves benchmark-level performance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative data Figure 2.",
+      "edge_rationale": "Performance evidence supports implementation efficacy."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Neural reward predictor trained with Bradley–Terry loss on trajectory comparisons",
+      "target_node": "Near true-reward performance on MuJoCo tasks with ~700 human queries",
+      "description": "Accurate reward prediction is necessary for MuJoCo success.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Indirect but compelling from shared experiment.",
+      "edge_rationale": "Predictor quality reflected in task performance."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Policy optimization using A2C/TRPO with normalized predicted rewards",
+      "target_node": "Substantial learning on Atari games with 5,500 human queries, including human-shaped reward gains",
+      "description": "A2C trained on predicted rewards reaches strong Atari scores.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figure 3 measurements.",
+      "edge_rationale": "Shows policy optimisation works with learned rewards."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Asynchronous pipeline integrating policy rollout, human comparison collection, and reward predictor updates",
+      "target_node": "Ablation studies show online preference querying critical for avoiding reward exploitation",
+      "description": "Removing online element degrades performance, validating the pipeline design.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3.3 ablation results.",
+      "edge_rationale": "Evidence demonstrates necessity of asynchronous online feedback."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Visualization of two 1–2 second trajectory clips for human comparison interface",
+      "target_node": "Ablation studies show online preference querying critical for avoiding reward exploitation",
+      "description": "Clip-based comparisons integral to successful online querying.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Ablation comparing single frames vs clips (Section 3.3).",
+      "edge_rationale": "Supports chosen clip length and mode."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Visualization of two 1–2 second trajectory clips for human comparison interface",
+      "target_node": "Novel complex behaviors learned (robot backflips, one-leg cheetah) with <1 hour feedback",
+      "description": "Interface proved sufficient for specifying new tasks without programmatic reward.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative demonstrations 3.2.",
+      "edge_rationale": "Shows generalisation of comparison UI."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Near true-reward performance on MuJoCo tasks with ~700 human queries",
+      "target_node": "Fine-tune RL agents using learned reward models from human trajectory comparison data",
+      "description": "Success in robotics motivates adopting learned-reward fine-tuning more broadly.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct empirical support Figure 2.",
+      "edge_rationale": "Performance suggests intervention effectiveness."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Ablation studies show online preference querying critical for avoiding reward exploitation",
+      "target_node": "Collect online human comparative feedback on 1–2 second trajectory clips during training",
+      "description": "Ablations prove continual online feedback is essential, motivating its adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3.3 controlled comparison.",
+      "edge_rationale": "Evidence-based justification."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Ablation studies show online preference querying critical for avoiding reward exploitation",
+      "target_node": "Prioritize human comparison queries using ensemble-based disagreement uncertainty sampling",
+      "description": "Need for feedback efficiency drives exploration of uncertainty-based query selection.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed though mixed results (3.3).",
+      "edge_rationale": "Indicates potential gain despite mixed evidence."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Substantial learning on Atari games with 5,500 human queries, including human-shaped reward gains",
+      "target_node": "Implement asynchronous reward learning pipeline integrating policy rollout, reward prediction, and feedback collection",
+      "description": "Demonstrated scalability to high-frame-rate Atari justifies engineering asynchronous pipelines.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Scalability noted in 3.1.2.",
+      "edge_rationale": "Operational performance supports intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1706.03741"
+    },
+    {
+      "key": "title",
+      "value": "Deep reinforcement learning from human preferences"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Paul Christiano",
+        "Jan Leike",
+        "Tom B. Brown",
+        "Miljan Martic",
+        "Shane Legg",
+        "Dario Amodei"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2017-06-12T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

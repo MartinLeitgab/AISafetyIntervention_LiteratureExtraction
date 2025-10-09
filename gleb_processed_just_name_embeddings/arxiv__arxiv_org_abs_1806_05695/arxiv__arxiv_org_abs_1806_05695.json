@@ -1,0 +1,480 @@
+{
+  "nodes": [
+    {
+      "name": "Suboptimal policy generalization in CGP-evolved Atari agents",
+      "aliases": [
+        "brittle strategies in CGP Atari",
+        "lack of generalization in CGP controllers"
+      ],
+      "type": "concept",
+      "description": "CGP agents often settle on simple behaviours that score well on training games but do not use pixel input robustly, limiting transferability and interpretability.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussion §5 highlights that many evolved agents crouch–punch or hide in corners, showing limited game understanding and thus poor generalization."
+    },
+    {
+      "name": "Episodic reward-based fitness selection in CGP evolution",
+      "aliases": [
+        "whole episode reward selection pressure",
+        "average score as fitness"
+      ],
+      "type": "concept",
+      "description": "Fitness is the cumulative score over an entire game episode; this drives evolution to prefer any behaviour that maximises average reward, regardless of input use.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussion §5 explicitly attributes simple strategies to selection on average episodic reward."
+    },
+    {
+      "name": "Pixel-agnostic repetitive strategies in Atari gameplay",
+      "aliases": [
+        "safe-spot exploitation",
+        "input-independent action loops"
+      ],
+      "type": "concept",
+      "description": "Agents repeatedly execute actions such as crouch-punch or down-left-fire that ignore screen pixels but yield high scores by exploiting game mechanics.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Results §4 (Figures 2 & 3) show evolved agents that never consult pixel input and rely on fixed action loops."
+    },
+    {
+      "name": "Full-episode evaluation computational cost in CGP evolution",
+      "aliases": [
+        "high compute for whole-episode fitness",
+        "redundant frame evaluation"
+      ],
+      "type": "concept",
+      "description": "Every individual is evaluated over up to 18 000 frames, repeating many similar state–action computations and slowing evolutionary progress.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Methods §3.4 & Discussion §5 note that CGP’s main cost is running full episodes for many similar individuals."
+    },
+    {
+      "name": "Novelty-driven exploration improves evolutionary search in Atari controllers",
+      "aliases": [
+        "novelty metrics for exploration",
+        "escaping local optima via novelty"
+      ],
+      "type": "concept",
+      "description": "Including a behavioural novelty score encourages the search to explore diverse policies, reducing premature convergence on reward-hacking strategies.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussion §5 cites Lehman & Stanley (2008) and proposes novelty metrics exactly for this purpose."
+    },
+    {
+      "name": "Integrate novelty metrics into CGP fitness evaluation",
+      "aliases": [
+        "add novelty objective to fitness",
+        "multi-objective reward + novelty"
+      ],
+      "type": "concept",
+      "description": "Modify the CGP selection criterion so that individuals are chosen based on a combination of episodic reward and behavioural novelty.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Proposed in Discussion §5 as the concrete way to apply novelty."
+    },
+    {
+      "name": "Lehman-Stanley novelty score computation during CGP evolution",
+      "aliases": [
+        "k-nearest neighbour behaviour distance",
+        "archive-based novelty calculation"
+      ],
+      "type": "concept",
+      "description": "At each generation compute a novelty score by measuring the behavioural distance of an individual to its k nearest neighbours in an archive; combine with reward.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Lehman & Stanley 2008 (cited in §5) detail this mechanism; it is the standard implementation the authors refer to."
+    },
+    {
+      "name": "Novelty search aids escape from local optima (Lehman & Stanley 2008)",
+      "aliases": [
+        "empirical evidence for novelty search",
+        "LS08 novelty validation"
+      ],
+      "type": "concept",
+      "description": "Controlled experiments by Lehman & Stanley demonstrated that novelty search discovers higher-quality behaviours on deceptive RL tasks than reward-only search.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Referenced in §5 as supporting evidence for adopting novelty metrics."
+    },
+    {
+      "name": "Add novelty-based secondary objective during CGP training of Atari agents",
+      "aliases": [
+        "apply novelty search in CGP-Atari",
+        "CGP + novelty objective"
+      ],
+      "type": "intervention",
+      "description": "During CGP evolution (fine-tuning/training phase) compute a behavioural novelty score for each individual and select elites on a combined reward-novelty criterion.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Applies while the agent policy is being optimised (Methods §3.2 evolution).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Proposed but not yet tested in this paper; novelty search is demonstrated in other domains only (Discussion §5).",
+      "node_rationale": "Represents the actionable step derived from the novelty pathway."
+    },
+    {
+      "name": "Frame-level prioritized reward shaping targets salient experience",
+      "aliases": [
+        "prioritized frame weighting insight",
+        "selectively rewarding critical frames"
+      ],
+      "type": "concept",
+      "description": "By weighting rewards from particularly informative frames or actions more heavily, evolution can be guided away from repetitive input-agnostic policies.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussion §5 analogises to Deep RL findings that certain frames matter more (Schaul et al. 2015)."
+    },
+    {
+      "name": "Weight CGP fitness by prioritized salient frames and actions",
+      "aliases": [
+        "selective reward aggregation",
+        "importance-sampled frame rewards"
+      ],
+      "type": "concept",
+      "description": "Construct the fitness function as a weighted sum where frames deemed salient (e.g. via TD-error or domain heuristics) contribute more to the total reward.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Proposed practical design derived from the theoretical insight (Discussion §5)."
+    },
+    {
+      "name": "Weighted reward aggregation with prioritized frame sampling",
+      "aliases": [
+        "implementation of frame weighting",
+        "reward sampling mechanism"
+      ],
+      "type": "concept",
+      "description": "During episode evaluation sample or re-weight frames according to priority (e.g. high absolute TD error) before summing into the fitness score.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Makes the design operational; analogous to prioritized experience replay machinery (Results in Schaul et al. 2015)."
+    },
+    {
+      "name": "Prioritized experience frames improve policy learning (Schaul et al. 2015)",
+      "aliases": [
+        "PER validation evidence",
+        "Schaul15 frame prioritization"
+      ],
+      "type": "concept",
+      "description": "Empirical Deep RL work shows that prioritizing high-information frames accelerates learning and yields higher final performance.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Cited in Discussion §5 as evidence motivating frame-level reward shaping."
+    },
+    {
+      "name": "Apply prioritized frame reward weighting during CGP evolution",
+      "aliases": [
+        "CGP with frame-weighted fitness",
+        "salience-weighted CGP training"
+      ],
+      "type": "intervention",
+      "description": "Modify CGP evaluation so that only (or mainly) prioritized frames/actions contribute to the evolutionary fitness, discouraging static repetitive strategies.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implemented during policy optimisation (evolution), not during pre-training or deployment.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Suggested future work; not yet empirically validated in CGP-Atari context (Discussion §5).",
+      "node_rationale": "Actionable step derived from the prioritized-reward pathway."
+    },
+    {
+      "name": "Reduced frame evaluation lowers computation with minimal learning loss",
+      "aliases": [
+        "frame subsampling insight",
+        "early episode truncation idea"
+      ],
+      "type": "concept",
+      "description": "Evaluating fewer frames per individual can cut compute cost while preserving enough feedback to drive learning.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussion §5 explicitly proposes decreasing the frame count to reduce computational load."
+    },
+    {
+      "name": "Limit CGP evaluation to subset of episode frames",
+      "aliases": [
+        "fixed shorter horizon evaluation",
+        "partial episode fitness"
+      ],
+      "type": "concept",
+      "description": "Define the fitness over a predetermined subset/segment of frames rather than the full episode length.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Operationalises the insight by specifying how to shorten evaluation (Discussion §5)."
+    },
+    {
+      "name": "Episode truncation and frame subsampling during fitness evaluation",
+      "aliases": [
+        "compute-efficient evaluation mechanism",
+        "frame skip evaluation reduction"
+      ],
+      "type": "concept",
+      "description": "During each CGP fitness call, stop the game after N frames or evaluate only every k-th frame, thereby reducing emulator calls and pixel processing.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Concrete mechanism referenced in §5 as a way to save compute."
+    },
+    {
+      "name": "Authors suggest frame count reduction decreases computational load (Discussion section)",
+      "aliases": [
+        "paper internal suggestion evidence",
+        "qualitative compute evidence"
+      ],
+      "type": "concept",
+      "description": "The authors argue qualitatively that reducing frames will cut runtime because most cost lies in game simulation; no quantitative test yet.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussion §5 provides this qualitative evidence."
+    },
+    {
+      "name": "Decrease evaluated frames per generation in CGP evolution",
+      "aliases": [
+        "shorter episode CGP training",
+        "compute-light CGP evaluation"
+      ],
+      "type": "intervention",
+      "description": "During CGP optimisation evaluate individuals on a truncated or subsampled set of frames to reduce compute time and enable more generations.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Adjustment to the evaluation procedure during evolutionary fine-tuning.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Only proposed qualitatively; no systematic validation yet.",
+      "node_rationale": "Concrete cost-reduction action derived from the compute-efficiency pathway."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal policy generalization in CGP-evolved Atari agents",
+      "target_node": "Episodic reward-based fitness selection in CGP evolution",
+      "description": "Using total episodic reward as the lone fitness signal drives evolution toward whatever policy maximises that number, regardless of generality.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit reasoning in Discussion §5; no quantitative test but clear qualitative link.",
+      "edge_rationale": "Paper states that averaging over an episode favours simple high-reward loops."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal policy generalization in CGP-evolved Atari agents",
+      "target_node": "Pixel-agnostic repetitive strategies in Atari gameplay",
+      "description": "Agents that settle on repetitive, input-agnostic behaviours illustrate the manifestation of poor generalization.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Supported by concrete examples and score tables in Results §4.",
+      "edge_rationale": "Figures 2 & 3 detail these strategies leading directly to generalization issues."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Suboptimal policy generalization in CGP-evolved Atari agents",
+      "target_node": "Full-episode evaluation computational cost in CGP evolution",
+      "description": "Excessive compute limits population size and generations, exacerbating premature convergence and thus poor generalization.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Authors suggest this link qualitatively; not empirically measured.",
+      "edge_rationale": "Discussion §5 proposes compute reduction as a remedy to evolutionary stagnation."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Episodic reward-based fitness selection in CGP evolution",
+      "target_node": "Novelty-driven exploration improves evolutionary search in Atari controllers",
+      "description": "Adding novelty metrics offsets the over-focus on average reward, encouraging exploration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Cited prior work plus author reasoning; no new experiment in this paper.",
+      "edge_rationale": "Discussion §5 explicitly recommends novelty search to tackle reward-only selection."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Novelty-driven exploration improves evolutionary search in Atari controllers",
+      "target_node": "Integrate novelty metrics into CGP fitness evaluation",
+      "description": "Design step turns the abstract insight into a concrete adjustment of the fitness function.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Standard design step; clearly articulated in §5.",
+      "edge_rationale": "Authors detail combining reward with novelty."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrate novelty metrics into CGP fitness evaluation",
+      "target_node": "Lehman-Stanley novelty score computation during CGP evolution",
+      "description": "Specifies the algorithmic procedure used to measure novelty for each individual.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Lehman & Stanley 2008 is an established, detailed mechanism.",
+      "edge_rationale": "Implementation choice drawn directly from the cited method."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Lehman-Stanley novelty score computation during CGP evolution",
+      "target_node": "Novelty search aids escape from local optima (Lehman & Stanley 2008)",
+      "description": "The original study empirically validates that the mechanism works on deceptive RL tasks.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Peer-reviewed experiments with quantitative improvement.",
+      "edge_rationale": "Cited evidence supports the mechanism’s effectiveness."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Novelty search aids escape from local optima (Lehman & Stanley 2008)",
+      "target_node": "Add novelty-based secondary objective during CGP training of Atari agents",
+      "description": "Because novelty search proved effective elsewhere, authors propose adding it as an intervention here.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical extrapolation acknowledged by authors; medium confidence.",
+      "edge_rationale": "Discussion §5 draws directly on the prior evidence to justify this intervention."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Pixel-agnostic repetitive strategies in Atari gameplay",
+      "target_node": "Frame-level prioritized reward shaping targets salient experience",
+      "description": "Rewarding only salient frames discourages strategies that ignore input during critical moments.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Based on analogous Deep RL findings; moderate inference.",
+      "edge_rationale": "Discussion §5 proposes frame-level weighting for this reason."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Frame-level prioritized reward shaping targets salient experience",
+      "target_node": "Weight CGP fitness by prioritized salient frames and actions",
+      "description": "Design action converts the insight into a modified fitness aggregation scheme.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct design step inferred from author suggestion.",
+      "edge_rationale": "Explicitly laid out as future work in §5."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Weight CGP fitness by prioritized salient frames and actions",
+      "target_node": "Weighted reward aggregation with prioritized frame sampling",
+      "description": "Mechanism specifies how to compute and apply the frame priorities.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Standard translation of design into code-level mechanism; not yet tested here.",
+      "edge_rationale": "Draws on PER algorithm mechanics referenced in same paragraph."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Weighted reward aggregation with prioritized frame sampling",
+      "target_node": "Prioritized experience frames improve policy learning (Schaul et al. 2015)",
+      "description": "Deep RL experiments show that frame prioritization speeds up and stabilises learning.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Controlled studies with large performance gains.",
+      "edge_rationale": "Cited as evidence in Discussion §5."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Prioritized experience frames improve policy learning (Schaul et al. 2015)",
+      "target_node": "Apply prioritized frame reward weighting during CGP evolution",
+      "description": "Positive results motivate transferring the technique to CGP evolution.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical proposal; not yet experimentally confirmed in CGP.",
+      "edge_rationale": "Authors extrapolate from PER success to CGP in §5."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Full-episode evaluation computational cost in CGP evolution",
+      "target_node": "Reduced frame evaluation lowers computation with minimal learning loss",
+      "description": "Evaluating fewer frames directly addresses the high computational burden.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Qualitative suggestion without quantitative backing.",
+      "edge_rationale": "Discussion §5 lists frame reduction as a compute remedy."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Reduced frame evaluation lowers computation with minimal learning loss",
+      "target_node": "Limit CGP evaluation to subset of episode frames",
+      "description": "Design step defines the evaluation horizon truncation.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Conceptual design; no empirical verification yet.",
+      "edge_rationale": "Directly follows from author’s proposal in §5."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Limit CGP evaluation to subset of episode frames",
+      "target_node": "Episode truncation and frame subsampling during fitness evaluation",
+      "description": "Mechanism sets concrete parameters such as N or k for truncation/subsampling.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implementation details inferred; paper does not specify parameters.",
+      "edge_rationale": "Necessary mechanism to realise the design step."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Episode truncation and frame subsampling during fitness evaluation",
+      "target_node": "Authors suggest frame count reduction decreases computational load (Discussion section)",
+      "description": "The authors’ qualitative claim serves as preliminary evidence supporting the mechanism.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Only qualitative reasoning; weak evidence.",
+      "edge_rationale": "No experiment yet, but author discussion offers rationale."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Authors suggest frame count reduction decreases computational load (Discussion section)",
+      "target_node": "Decrease evaluated frames per generation in CGP evolution",
+      "description": "The suggestion motivates adoption of a shorter evaluation horizon as an intervention.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Based solely on author recommendation; light inference.",
+      "edge_rationale": "Discussion §5 translates suggestion into actionable change."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Evolving simple programs for playing Atari games"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.05695"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Dennis G Wilson",
+        "Sylvain Cussat-Blanc",
+        "Hervé Luga",
+        "Julian F Miller"
+      ]
+    },
+    {
+      "key": "date_published",
+      "value": "2018-06-14T00:00:00Z"
+    }
+  ]
+}

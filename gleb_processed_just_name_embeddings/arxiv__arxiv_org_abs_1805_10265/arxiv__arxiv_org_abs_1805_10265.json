@@ -1,0 +1,318 @@
+{
+  "nodes": [
+    {
+      "name": "misclassification under adversarial perturbations in neural networks",
+      "aliases": [
+        "adversarial example misclassification",
+        "robustness failure in DNNs"
+      ],
+      "type": "concept",
+      "description": "Small, human-imperceptible input perturbations crafted by an adversary can cause high-confidence mispredictions in trained neural networks, threatening reliability of deployed systems.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 1 Introduction introduces adversarial perturbations as the primary safety risk."
+    },
+    {
+      "name": "lack of provable robustness guarantees in neural network training",
+      "aliases": [
+        "absence of verified robustness",
+        "unverified model robustness"
+      ],
+      "type": "concept",
+      "description": "Most defence strategies provide empirical robustness only and can be broken by stronger attacks; formal guarantees that no bounded adversary can succeed are missing.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Introduction and §2 as the key shortcoming that leaves models vulnerable."
+    },
+    {
+      "name": "computational overhead of per-example dual optimization in verified training",
+      "aliases": [
+        "intractable verification during training",
+        "scalability limitation of verified training"
+      ],
+      "type": "concept",
+      "description": "Existing verified-training methods solve an expensive optimisation for every training example, making them impractical for large architectures and datasets.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in §1 and §2 as a barrier to scaling formal verification."
+    },
+    {
+      "name": "duality-based verification bounds independent of dual variable optimization",
+      "aliases": [
+        "dual relaxation upper bound property",
+        "any dual variables give valid bound"
+      ],
+      "type": "concept",
+      "description": "A dual relaxation shows that for piece-wise linear networks, any choice of dual variables yields a valid upper bound on worst-case specification violation, enabling fast certificate evaluation.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in §2.2 Duality based verification; central theoretical result leveraged by PVT."
+    },
+    {
+      "name": "learning mapping from examples to dual variables via verifier network",
+      "aliases": [
+        "amortized dual-variable prediction",
+        "verifier network idea"
+      ],
+      "type": "concept",
+      "description": "Because any dual variables give a certificate, a neural network can be trained to predict near-optimal duals from activations and labels, amortising the optimisation cost across data.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in §3 Predictor-Verifier Training as key to scalability."
+    },
+    {
+      "name": "predictor-verifier training with joint task and dual loss",
+      "aliases": [
+        "PVT joint optimisation",
+        "verified training via predictor+verifier"
+      ],
+      "type": "concept",
+      "description": "A training loop where a predictor network and a verifier network are updated together on a combined loss of cross-entropy and log dual bound, yielding models that both fit data and satisfy specifications.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Algorithm 1 (§3) as the concrete realisation of the design rationale."
+    },
+    {
+      "name": "backward-forward verifier architecture for dual variable prediction",
+      "aliases": [
+        "dynamic-programming inspired verifier",
+        "backward-forward verifier network"
+      ],
+      "type": "concept",
+      "description": "A verifier network that first propagates information backward from outputs to inputs and then forward, mirroring dynamic programming structure to predict layer-wise dual variables efficiently.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in §3.1 and Appendix A.2; one concrete mechanism instantiating the design rationale."
+    },
+    {
+      "name": "direct verifier architecture for dual variable prediction",
+      "aliases": [
+        "per-layer direct verifier",
+        "simple verifier architecture"
+      ],
+      "type": "concept",
+      "description": "A simpler verifier predicting each layer’s dual variables directly from that layer’s activations plus the target label.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in §3.1; provides an alternative concrete realisation of the design rationale."
+    },
+    {
+      "name": "state-of-the-art verified accuracy on MNIST and SVHN with PVT",
+      "aliases": [
+        "PVT empirical results",
+        "verified bounds improvements"
+      ],
+      "type": "concept",
+      "description": "Experiments in §4.1 show PVT beating prior verified-training methods and adversarial training: e.g., 4.44% verified error on MNIST (ϵ=0.1) versus 5.82% in Kolter & Wong.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides empirical validation that the implementation mechanism achieves its safety objective."
+    },
+    {
+      "name": "comparable verified bounds of direct and backward-forward verifiers",
+      "aliases": [
+        "verifier architecture evaluation",
+        "architecture comparison results"
+      ],
+      "type": "concept",
+      "description": "Table 2 (§4.3) shows both architectures give tightly similar verified bounds, with backward-forward slightly better on SVHN, validating multiple mechanisms.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Confirms effectiveness of each verifier architecture implementation."
+    },
+    {
+      "name": "integrate predictor-verifier training during neural network fine-tuning to obtain provable adversarial robustness",
+      "aliases": [
+        "apply PVT for robust training",
+        "deploy predictor-verifier training"
+      ],
+      "type": "intervention",
+      "description": "During the model training phase, jointly optimise a predictor and a learned verifier using the combined loss (Equation 8) so that the final model comes with certified ℓ∞ robustness bounds.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Algorithm 1 (§3) is performed during the fine-tuning/training stage of model development.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Demonstrated across three vision benchmarks with systematic evaluation in §4, constituting a prototype with systematic validation.",
+      "node_rationale": "Represents the actionable step recommended by the paper to mitigate adversarial-misclassification risk."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "misclassification under adversarial perturbations in neural networks",
+      "target_node": "lack of provable robustness guarantees in neural network training",
+      "description": "Without formal guarantees, adaptive adversaries can still induce errors, leading to the misclassification risk.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly discussed in Introduction; qualitative causal link.",
+      "edge_rationale": "Section 1 states that absence of guarantees allows adversarial examples to cause misclassification."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "misclassification under adversarial perturbations in neural networks",
+      "target_node": "computational overhead of per-example dual optimization in verified training",
+      "description": "High verification cost prevents wide adoption of certified training, keeping models vulnerable to adversarial misclassification.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Argument made in §1 that intractability blocks practical defences.",
+      "edge_rationale": "§1 explains that current expensive methods hinder deployment of robust models, sustaining the risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "lack of provable robustness guarantees in neural network training",
+      "target_node": "duality-based verification bounds independent of dual variable optimization",
+      "description": "The observation that any dual variables yield a bound provides a path to provable guarantees.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical progression in §2.2.",
+      "edge_rationale": "§2.2 positions dual relaxation as a way to supply certificates, addressing missing guarantees."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "computational overhead of per-example dual optimization in verified training",
+      "target_node": "duality-based verification bounds independent of dual variable optimization",
+      "description": "Because bounds don’t require exact optimisation, potential exists to avoid costly per-example solves.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoning laid out in §2.2 and start of §3.",
+      "edge_rationale": "Paper notes independence property unlocks cheaper approaches."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "duality-based verification bounds independent of dual variable optimization",
+      "target_node": "learning mapping from examples to dual variables via verifier network",
+      "description": "If any duals suffice, a network can be trained to predict good duals, operationalising the insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design step explained in §3.",
+      "edge_rationale": "§3 argues this learning approach exploits the dual property."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "learning mapping from examples to dual variables via verifier network",
+      "target_node": "predictor-verifier training with joint task and dual loss",
+      "description": "PVT instantiates the idea by jointly training predictor and verifier networks.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 gives concrete implementation.",
+      "edge_rationale": "Algorithm 1 realises the design rationale."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "learning mapping from examples to dual variables via verifier network",
+      "target_node": "backward-forward verifier architecture for dual variable prediction",
+      "description": "One concrete network structure that learns dual variables using backward and forward passes.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Architecture detailed in §3.1 and Appendix A.2.",
+      "edge_rationale": "Paper presents this as a direct implementation option."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "learning mapping from examples to dual variables via verifier network",
+      "target_node": "direct verifier architecture for dual variable prediction",
+      "description": "An alternative architecture implementing the same design rationale.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Described in §3.1.",
+      "edge_rationale": "Direct architecture is another instantiation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "predictor-verifier training with joint task and dual loss",
+      "target_node": "state-of-the-art verified accuracy on MNIST and SVHN with PVT",
+      "description": "Empirical results confirm the joint training mechanism produces models with improved verified bounds.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative results in Table 1.",
+      "edge_rationale": "Table 1 links mechanism to observed performance."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "backward-forward verifier architecture for dual variable prediction",
+      "target_node": "comparable verified bounds of direct and backward-forward verifiers",
+      "description": "Architecture evaluation shows backward-forward yields tight bounds, validating the mechanism.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Table 2 provides systematic comparison.",
+      "edge_rationale": "§4.3 reports competitive results for backward-forward."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "direct verifier architecture for dual variable prediction",
+      "target_node": "comparable verified bounds of direct and backward-forward verifiers",
+      "description": "Empirical comparison demonstrates direct verifier also attains strong bounds.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Table 2 data.",
+      "edge_rationale": "§4.3 shows direct architecture performance."
+    },
+    {
+      "type": "motivates",
+      "source_node": "state-of-the-art verified accuracy on MNIST and SVHN with PVT",
+      "target_node": "integrate predictor-verifier training during neural network fine-tuning to obtain provable adversarial robustness",
+      "description": "Successful experimental results motivate adoption of PVT in practice.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Performance gains argued in §5 Conclusions.",
+      "edge_rationale": "Paper recommends PVT based on these results."
+    },
+    {
+      "type": "motivates",
+      "source_node": "comparable verified bounds of direct and backward-forward verifiers",
+      "target_node": "integrate predictor-verifier training during neural network fine-tuning to obtain provable adversarial robustness",
+      "description": "Availability of multiple effective verifier architectures strengthens the case for deploying PVT broadly.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Inference that robust alternative implementations ease adoption.",
+      "edge_rationale": "§4.3 suggests flexibility makes intervention practical."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Training verified learners with learned verifiers"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.10265"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-25T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Krishnamurthy Dvijotham",
+        "Sven Gowal",
+        "Robert Stanforth",
+        "Relja Arandjelovic",
+        "Brendan O'Donoghue",
+        "Jonathan Uesato",
+        "Pushmeet Kohli"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

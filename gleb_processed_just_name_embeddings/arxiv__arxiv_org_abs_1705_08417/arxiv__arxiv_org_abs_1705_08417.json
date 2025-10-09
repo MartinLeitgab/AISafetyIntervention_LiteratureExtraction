@@ -1,0 +1,583 @@
+{
+  "nodes": [
+    {
+      "name": "corrupt reward signal in reinforcement learning",
+      "aliases": [
+        "reward corruption in RL",
+        "corrupted reward channel"
+      ],
+      "type": "concept",
+      "description": "Systematic divergence between observed (hat) reward and designers' true reward within an RL environment, leading to unsafe optimisation.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Section 1 Introduction as the unifying risk behind misspecification, wire-heading and sensory error examples."
+    },
+    {
+      "name": "lack of unbiased estimate of true reward in RL tasks",
+      "aliases": [
+        "biased reward observations",
+        "unreliable reward data"
+      ],
+      "type": "concept",
+      "description": "Observed reward may be noisy or adversarially distorted, so it is not an unbiased estimator of the designers' intent.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 1 and formal Definition 5 emphasise that corrupt reward differs from mere noise because the expectation may be wrong."
+    },
+    {
+      "name": "self-observing reward channel in standard RL",
+      "aliases": [
+        "state-local reward observation",
+        "no cross-checking of reward"
+      ],
+      "type": "concept",
+      "description": "In standard RL an agent only observes reward in the state it currently occupies, preventing cross-validation across states.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed at start of Section 4 as the core reason ordinary RL cannot detect corruption."
+    },
+    {
+      "name": "limited reward corruption assumption enabling learnability",
+      "aliases": [
+        "Assumption 12 limited corruption",
+        "bounded corrupt states"
+      ],
+      "type": "concept",
+      "description": "Assumes a known set of safe states with honest reward and at most q other states corrupted, allowing theoretical guarantees.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formalised in Assumption 12, used throughout Sections 3–5 for positive results."
+    },
+    {
+      "name": "cross-state reward observation via decoupled feedback",
+      "aliases": [
+        "observation graph cross-checking",
+        "decoupled RL feedback"
+      ],
+      "type": "concept",
+      "description": "Allowing each state to provide observations about other states’ reward (R̂_s(sʹ)) creates an observation graph that can reveal corruption.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Definition 17 and Figure 4 in Section 4 frame this as key for learnability."
+    },
+    {
+      "name": "randomised optimisation via quantilisation reduces vulnerability",
+      "aliases": [
+        "quantilisation insight",
+        "limited optimisation pressure"
+      ],
+      "type": "concept",
+      "description": "Optimising only within a random top quantile of apparent high-reward options bounds worst-case regret when some are corrupt.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in Section 5.1 prior to Theorem 23."
+    },
+    {
+      "name": "decoupled feedback framework for value learning",
+      "aliases": [
+        "decoupled RL design rationale"
+      ],
+      "type": "concept",
+      "description": "Design idea to collect reward evidence about many states from safe or multiple vantage points to enable corruption detection.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in Section 4.1 where CIRL, LVFS and SSRL are generalised."
+    },
+    {
+      "name": "δ-quantilising agent design",
+      "aliases": [
+        "quantilising policy design",
+        "top-quantile randomisation"
+      ],
+      "type": "concept",
+      "description": "Agent first estimates rewards, then uniformly samples a policy/state from the δ top-quantile to limit adversarial exploitation.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Definition 22 & 27 in Section 5 describe this design."
+    },
+    {
+      "name": "multi-source value evidence integration",
+      "aliases": [
+        "combined CIRL/SSRL/LVFS evidence"
+      ],
+      "type": "concept",
+      "description": "Using several independent feedback channels (actions, stories, evaluations) increases observation coverage and robustness.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.3 discusses combining frameworks as safest option."
+    },
+    {
+      "name": "cross-state observed reward functions R̂_s(sʹ)",
+      "aliases": [
+        "decoupled reward table",
+        "R hat"
+      ],
+      "type": "concept",
+      "description": "Implementation where each current state outputs a (state, observed-reward) pair about possibly different state sʹ.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Definition 17 lists R̂_s as implementation detail."
+    },
+    {
+      "name": "safe states with guaranteed non-corrupt reward channel",
+      "aliases": [
+        "safe subset S_safe",
+        "lab states"
+      ],
+      "type": "concept",
+      "description": "Designate subset of states where reward sensors are trusted, providing ground truth for crosschecking.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Used in Assumption 12 and throughout Section 4."
+    },
+    {
+      "name": "δ-threshold selection based on sqrt(q/|S|)",
+      "aliases": [
+        "quantilisation threshold rule"
+      ],
+      "type": "concept",
+      "description": "Choose δ = 1 − √(q/|S|) to minimise regret bound under limited corruption.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Theorem 23 provides this heuristic."
+    },
+    {
+      "name": "human evaluation labels in semi-supervised RL",
+      "aliases": [
+        "SSRL feedback",
+        "periodic human scoring"
+      ],
+      "type": "concept",
+      "description": "Occasional trusted human assessments of arbitrary states used as decoupled reward evidence.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in Section 4.1 as one concrete instantiation."
+    },
+    {
+      "name": "story corpus value extraction in LVFS",
+      "aliases": [
+        "learning values from stories",
+        "narrative feedback"
+      ],
+      "type": "concept",
+      "description": "Natural language stories provide off-state descriptions and value judgements that act as cross-state reward information.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.1 lists LVFS as example framework."
+    },
+    {
+      "name": "No Free Lunch theorem for corrupt reward",
+      "aliases": [
+        "Theorem 11 unlearnability",
+        "CRMDP NFL"
+      ],
+      "type": "concept",
+      "description": "Proves that without structural assumptions any policy’s worst-case regret is within factor 2 of the worst possible.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3.1 presents theorem with proof."
+    },
+    {
+      "name": "high regret of Bayesian RL and CR agents under limited corruption",
+      "aliases": [
+        "Theorem 16 near-maximal regret"
+      ],
+      "type": "concept",
+      "description": "Shows that even with limited corruption and easy environments, standard Bayesian RL and CR agents’ regret tends to 1.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3.3 Theorem 16."
+    },
+    {
+      "name": "learnability theorem for decoupled RL under observation coverage",
+      "aliases": [
+        "Theorems 19 & 20 sublinear regret"
+      ],
+      "type": "concept",
+      "description": "If each state is observable from safe or many other states, CR agents can learn true reward and attain sub-linear regret.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4.2 Theorems 19 and 20."
+    },
+    {
+      "name": "regret bound for δ-quantilising agents",
+      "aliases": [
+        "Theorem 23 quantilisation bound"
+      ],
+      "type": "concept",
+      "description": "Provides analytic worst-case regret ≤ 1 − (1 − √(q/|S|))² for quantilising agents under limited corruption.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5.1 Theorem 23."
+    },
+    {
+      "name": "gridworld experiments confirming quantilisation true-reward gains",
+      "aliases": [
+        "Section 6 experimental validation"
+      ],
+      "type": "concept",
+      "description": "Empirical runs show quantilising agents achieve much higher true reward than Q-learning under corrupt reward scenarios.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 6 experimental results."
+    },
+    {
+      "name": "adopt decoupled RL with safe-state cross-state feedback during model design",
+      "aliases": [
+        "design decoupled feedback",
+        "integrate decoupled RL"
+      ],
+      "type": "intervention",
+      "description": "Specify model architecture to include R̂_s(sʹ) mappings and enforce trusted safe states, enabling later corruption detection.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Design decision described in Section 4.1 prior to implementation.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Currently theoretical and demonstrated in toy experiments (Sections 4 & 6).",
+      "node_rationale": "Direct actionable step derived from decoupled feedback rationale."
+    },
+    {
+      "name": "fine-tune agents with semi-supervised human evaluations for reward crosschecking",
+      "aliases": [
+        "SSRL fine-tuning human labels"
+      ],
+      "type": "intervention",
+      "description": "During RL fine-tuning periodically query human supervisors for trusted reward labels on sampled states and integrate into loss.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Occurs during RL fine-tuning phase where feedback is incorporated (Section 4.1 SSRL).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Prototype frameworks exist (Amodei et al. 2016).",
+      "node_rationale": "Implements decoupled feedback via safe external evaluations."
+    },
+    {
+      "name": "pre-train models on story corpora to learn value signals",
+      "aliases": [
+        "LVFS pre-training",
+        "narrative value learning"
+      ],
+      "type": "intervention",
+      "description": "Use large text/story corpora during pre-training to derive a prior over human-aligned reward that decouples from immediate sensors.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Executed during large-scale pre-training before RL (Section 4.1 LVFS).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Early experimental systems; no large-scale validations yet.",
+      "node_rationale": "Provides cross-state reward evidence as per decoupled RL theory."
+    },
+    {
+      "name": "deploy δ-quantilising policy selection to limit over-optimisation",
+      "aliases": [
+        "quantilising deployment control",
+        "top-quantile random policy"
+      ],
+      "type": "intervention",
+      "description": "At deployment time, sample and execute a policy/state from the empirically estimated top-δ reward quantile instead of maximising.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Applied at run-time/production to govern agent choice (Section 5 definitions).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated only in grid-world & theoretical bounds (Section 6).",
+      "node_rationale": "Implements randomised optimisation rationale."
+    },
+    {
+      "name": "combine decoupled RL and quantilisation during deployment",
+      "aliases": [
+        "hybrid robust control"
+      ],
+      "type": "intervention",
+      "description": "First ensure cross-state reward evidence then apply quantilisation over verified high-reward policies for extra robustness.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Composite deployment-time strategy integrating both solution classes (Section 4.3 Implications).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Proposed future research, no implementations yet.",
+      "node_rationale": "Synthesises two validated mechanisms as recommended in conclusions."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "corrupt reward signal in reinforcement learning",
+      "target_node": "lack of unbiased estimate of true reward in RL tasks",
+      "description": "Reward corruption arises because the agent only has access to biased or adversarial reward data.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in Definition 5 and surrounding discussion.",
+      "edge_rationale": "Section 1 frames corrupt reward as harder than noisy reward due to bias."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "lack of unbiased estimate of true reward in RL tasks",
+      "target_node": "self-observing reward channel in standard RL",
+      "description": "The estimate is biased because reward is observed only in the currently visited state, preventing external verification.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4 first paragraph makes this mechanism explicit.",
+      "edge_rationale": "Observation limitation directly leads to inability to de-bias."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "self-observing reward channel in standard RL",
+      "target_node": "cross-state reward observation via decoupled feedback",
+      "description": "Decoupled feedback provides observations of other states, breaking the self-observation limitation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical proposal, no empirical proof yet.",
+      "edge_rationale": "Definition 17 designed to overcome self-observation."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "cross-state reward observation via decoupled feedback",
+      "target_node": "decoupled feedback framework for value learning",
+      "description": "Cross-state observations constitute the core capability that makes the decoupled framework viable.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 4.1 directly derives framework from this property.",
+      "edge_rationale": "Design rationale depends on insight."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "limited reward corruption assumption enabling learnability",
+      "target_node": "decoupled feedback framework for value learning",
+      "description": "Assuming only few states are corrupt allows the framework to prove learnability.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Assumption 12 is cited before positive results.",
+      "edge_rationale": "Framework validity relies on assumption."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "randomised optimisation via quantilisation reduces vulnerability",
+      "target_node": "δ-quantilising agent design",
+      "description": "Insight leads directly to the design that samples from a top-quantile.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 5.1 motivation preceding Definition 22.",
+      "edge_rationale": "Design is an instantiation of insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "decoupled feedback framework for value learning",
+      "target_node": "cross-state observed reward functions R̂_s(sʹ)",
+      "description": "R̂_s tables realise decoupled feedback in code.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Definition 17 lists R̂_s as implementation.",
+      "edge_rationale": "Mechanism instantiates framework."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "decoupled feedback framework for value learning",
+      "target_node": "safe states with guaranteed non-corrupt reward channel",
+      "description": "Safe states operationalise the trusted observations required by the framework.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Assumption 12 defines S_safe as part of framework mechanics.",
+      "edge_rationale": "Mechanism comprises framework component."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "δ-quantilising agent design",
+      "target_node": "δ-threshold selection based on sqrt(q/|S|)",
+      "description": "Threshold rule sets the quantile width used by the agent.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Rule derived within proof of Theorem 23.",
+      "edge_rationale": "Mechanism specifies parameter for design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "multi-source value evidence integration",
+      "target_node": "human evaluation labels in semi-supervised RL",
+      "description": "Human labels are one concrete data source for integration.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4.1 examples.",
+      "edge_rationale": "Mechanism enables rationale."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "multi-source value evidence integration",
+      "target_node": "story corpus value extraction in LVFS",
+      "description": "Story corpora provide another independent evidence channel.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4.1 examples.",
+      "edge_rationale": "Mechanism enables rationale."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "cross-state observed reward functions R̂_s(sʹ)",
+      "target_node": "learnability theorem for decoupled RL under observation coverage",
+      "description": "The theorem proves that with such observations agents attain sub-linear regret.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Mathematical proof in Theorems 19 & 20.",
+      "edge_rationale": "Mechanism’s efficacy formally validated."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "δ-threshold selection based on sqrt(q/|S|)",
+      "target_node": "regret bound for δ-quantilising agents",
+      "description": "Bound shows regret achieved with this threshold.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Exact bound derived in Theorem 23.",
+      "edge_rationale": "Rule is justified by theorem."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "δ-threshold selection based on sqrt(q/|S|)",
+      "target_node": "gridworld experiments confirming quantilisation true-reward gains",
+      "description": "Experiments empirically confirm theoretical improvement.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 6 experimental data repeated over 100 runs.",
+      "edge_rationale": "Empirical support for mechanism."
+    },
+    {
+      "type": "motivates",
+      "source_node": "learnability theorem for decoupled RL under observation coverage",
+      "target_node": "adopt decoupled RL with safe-state cross-state feedback during model design",
+      "description": "Formal guarantee motivates incorporating decoupled RL at design time.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Theorem directly used in Conclusion recommendations.",
+      "edge_rationale": "Validation evidence drives intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "learnability theorem for decoupled RL under observation coverage",
+      "target_node": "fine-tune agents with semi-supervised human evaluations for reward crosschecking",
+      "description": "The theorem’s safe-state observation condition is met by human labels, motivating SSRL fine-tuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4.3 links theorem to SSRL practicality.",
+      "edge_rationale": "Evidence underpins intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "learnability theorem for decoupled RL under observation coverage",
+      "target_node": "pre-train models on story corpora to learn value signals",
+      "description": "LVFS creates large observation sets satisfying theorem’s coverage requirement.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 4.3 implication statement.",
+      "edge_rationale": "Evidence supports intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "regret bound for δ-quantilising agents",
+      "target_node": "deploy δ-quantilising policy selection to limit over-optimisation",
+      "description": "Bound shows quantilisation sharply reduces worst-case regret, motivating deployment.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Theorem with explicit inequality.",
+      "edge_rationale": "Formal result justifies intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "gridworld experiments confirming quantilisation true-reward gains",
+      "target_node": "deploy δ-quantilising policy selection to limit over-optimisation",
+      "description": "Empirical evidence of large true-reward gains reinforces theoretical motivation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "100-run experimental averages in Section 6.",
+      "edge_rationale": "Data supports intervention effectiveness."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "corrupt reward signal in reinforcement learning",
+      "target_node": "adopt decoupled RL with safe-state cross-state feedback during model design",
+      "description": "Designing systems with decoupled feedback addresses reward corruption directly.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Conclusion section states decoupled RL solves corruption under assumptions.",
+      "edge_rationale": "Intervention aims to mitigate risk."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "corrupt reward signal in reinforcement learning",
+      "target_node": "deploy δ-quantilising policy selection to limit over-optimisation",
+      "description": "Randomisation limits exploitation of corrupt rewards, reducing risk impact.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 5 argues quantilisation reduces worst-case regret to far below 1.",
+      "edge_rationale": "Intervention reduces the harm from corruption."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "deploy δ-quantilising policy selection to limit over-optimisation",
+      "target_node": "combine decoupled RL and quantilisation during deployment",
+      "description": "Hybrid approach refines plain quantilisation by adding cross-checking first.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Proposed future work (Conclusions) – moderate inference.",
+      "edge_rationale": "Edge represents refinement of implementation."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2017-05-23T00:00:00Z"
+    },
+    {
+      "key": "title",
+      "value": "Reinforcement Learning with a Corrupted Reward Channel"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Tom Everitt",
+        "Victoria Krakovna",
+        "Laurent Orseau",
+        "Marcus Hutter",
+        "Shane Legg"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1705.08417"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

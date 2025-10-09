@@ -1,0 +1,379 @@
+{
+  "nodes": [
+    {
+      "name": "policy failure from sample inefficiency in model-based reinforcement learning",
+      "aliases": [
+        "data-inefficient RL policy failure",
+        "poor real-world generalisation of RL policies"
+      ],
+      "type": "concept",
+      "description": "Real-world RL policies trained with limited interaction data can underperform or act unsafely because they do not generalise beyond the training distribution.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 1 Introduction describes lack of data-efficiency as a major impediment to applying deep RL outside simulation."
+    },
+    {
+      "name": "high sample complexity of non-factorised transition model estimation",
+      "aliases": [
+        "counting-based transition model sample complexity",
+        "O(|S|^2|A|) transition learning burden"
+      ],
+      "type": "concept",
+      "description": "Estimating a full tabular transition model requires O(|S|^2|A|) samples, which is prohibitive for large state spaces.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in §2.2 Model-based RL with Approximate Transition Models."
+    },
+    {
+      "name": "compounding errors from inaccurate transition models",
+      "aliases": [
+        "model error accumulation in planning",
+        "policy degradation from transition mis-estimation"
+      ],
+      "type": "concept",
+      "description": "If an approximate model is inaccurate, errors accumulate across rollouts, yielding poor value estimates and unsafe policies.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in §3.1 and theoretical analysis (§4) where bias/variance trade-offs are formalised."
+    },
+    {
+      "name": "discrete abstract state bottlenecks reduce variance with controlled bias",
+      "aliases": [
+        "variance–bias trade-off via abstract states",
+        "information bottleneck insight"
+      ],
+      "type": "concept",
+      "description": "Grouping similar full states into far fewer abstract states lowers variance of transition estimates while introducing analysable bias.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Central theoretical claim in §3.1 Definition and expanded in §4 bounds."
+    },
+    {
+      "name": "policy access to full state mitigates abstraction deficiency",
+      "aliases": [
+        "full-state policy compensates coarse abstraction",
+        "policy not restricted to abstract space"
+      ],
+      "type": "concept",
+      "description": "Letting the policy network observe the complete state enables it to correct myopic errors introduced by an imperfect abstract model.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Contrasted with standard state aggregation in §1 and §6 Related Work."
+    },
+    {
+      "name": "factorised transition model with discrete abstract states and fewer parameters",
+      "aliases": [
+        "factorised Bottleneck transition model",
+        "low-parameter abstract transition model"
+      ],
+      "type": "concept",
+      "description": "Design choice to model P(z'|s,a) and P(s'|z') instead of P(s'|s,a), shrinking parameter count to O(|S||Z||A|).",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in §3 Bottleneck Simulator—sample-efficiency argument."
+    },
+    {
+      "name": "mapping full states to abstract states via clustering or deterministic classifiers",
+      "aliases": [
+        "state-to-abstract mapping f_s→z",
+        "abstract state assignment"
+      ],
+      "type": "concept",
+      "description": "Implements the bottleneck by assigning each full state deterministically to one abstract state, using k-means or rule-based classifiers.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation described in §3.2 Learning and §5.1/5.2 task setups."
+    },
+    {
+      "name": "neural transition model conditioned on abstract states",
+      "aliases": [
+        "MLP transition predictor P_Abs",
+        "parametric transition classifier"
+      ],
+      "type": "concept",
+      "description": "A two-layer (or deeper) neural network predicts next abstract state and reconstructs next full state distribution.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in §3.2 and experimental sections."
+    },
+    {
+      "name": "rollout simulation in learned Bottleneck Simulator for policy training",
+      "aliases": [
+        "model-generated trajectories for Q-learning",
+        "simulated rollouts over abstract model"
+      ],
+      "type": "concept",
+      "description": "The learned model is used to generate trajectories cheaply; the policy is updated (e.g. Q-learning) using these simulated experiences.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in §5 experiments—policy training loop."
+    },
+    {
+      "name": "empirical sample-efficiency gains in Home World text adventure",
+      "aliases": [
+        "36.8 % completion vs 15 %",
+        "text adventure validation"
+      ],
+      "type": "concept",
+      "description": "With ~1 500 transitions the Bottleneck Simulator policy achieved 36.8 % game completion versus 15 % baseline.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table 1 in §5.1."
+    },
+    {
+      "name": "real-world user score improvements in Alexa Prize dialogue system",
+      "aliases": [
+        "3.15 user rating vs baselines",
+        "dialogue validation evidence"
+      ],
+      "type": "concept",
+      "description": "Across ~3 000 users, Bottleneck Simulator policy scored 3.15±0.20, outperforming alternatives in two of three A/B tests.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Tables 3-4 in §5.2."
+    },
+    {
+      "name": "mathematical error bound showing O(|S||Z||A|) sample complexity",
+      "aliases": [
+        "four-term error decomposition",
+        "theorem-based validation"
+      ],
+      "type": "concept",
+      "description": "Theorem 2 bounds the value-function loss into structural discrepancy, estimation variance, estimation bias and class bias, underlining sample-efficiency gains.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 4 Mathematical Analysis."
+    },
+    {
+      "name": "integrate Bottleneck Simulator factorised model in RL training pipelines",
+      "aliases": [
+        "apply discrete abstraction model-based RL",
+        "use Bottleneck Simulator during policy learning"
+      ],
+      "type": "intervention",
+      "description": "During fine-tuning/RL training, replace full transition estimation with a factorised Bottleneck Simulator: (1) define abstract state mapping; (2) train neural P(z'|s,a) and P(s'|z'); (3) generate rollout trajectories to update the policy while still giving the policy full-state inputs.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Implementation occurs during policy fine-tuning using simulated rollouts (§5 Experiments ‘Policy’ subsections).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated on two tasks with significant gains but not yet broadly deployed (Tables 1-4).",
+      "node_rationale": "Direct actionable step derived from implementation and validation sections."
+    },
+    {
+      "name": "adaptively refine abstract state granularity as data grows",
+      "aliases": [
+        "iterative abstraction expansion",
+        "reduce structural discrepancy over time"
+      ],
+      "type": "intervention",
+      "description": "After deployment or additional data collection, split existing abstract states to decrease structural discrepancy, retrain P(z'|s,a) and re-optimise the policy.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Refinement carried out during pre-deployment testing iterations or early deployment phases (§4 discussion on decreasing structural discrepancy).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Only theorised; no empirical validation yet—moderate inference.",
+      "node_rationale": "Suggested by bound in §4 (error term dependence on |Z|)."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "policy failure from sample inefficiency in model-based reinforcement learning",
+      "target_node": "high sample complexity of non-factorised transition model estimation",
+      "description": "Large sample requirements directly lead to insufficiently-trained policies that fail in the real world.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit argument in §1 and §2.2.",
+      "edge_rationale": "Data-inefficiency is presented as the core reason for poor policy performance."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "policy failure from sample inefficiency in model-based reinforcement learning",
+      "target_node": "compounding errors from inaccurate transition models",
+      "description": "When models are inaccurate, errors accumulate during planning, producing unsafe behaviour.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Conceptual explanation in §3.1 and §4.",
+      "edge_rationale": "Model inaccuracies are highlighted as a pathway to policy failure."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "high sample complexity of non-factorised transition model estimation",
+      "target_node": "discrete abstract state bottlenecks reduce variance with controlled bias",
+      "description": "Abstract states dramatically lower the number of parameters to learn.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative comparison O(|S|^2|A|) vs O(|S||Z||A|) in §3.1.",
+      "edge_rationale": "Shows how the insight directly tackles sample complexity."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "compounding errors from inaccurate transition models",
+      "target_node": "policy access to full state mitigates abstraction deficiency",
+      "description": "Using full state in the policy limits cascading errors from an imperfect abstract model.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated argument differentiating Bottleneck Simulator from state aggregation (§1, §6).",
+      "edge_rationale": "Full-state access is proposed as mitigation of model bias."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "discrete abstract state bottlenecks reduce variance with controlled bias",
+      "target_node": "factorised transition model with discrete abstract states and fewer parameters",
+      "description": "The design realises the theoretical idea by explicitly factorising P(s'|s,a).",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3 turns the theory into a concrete model definition.",
+      "edge_rationale": "Design concretely implements the insight."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "policy access to full state mitigates abstraction deficiency",
+      "target_node": "factorised transition model with discrete abstract states and fewer parameters",
+      "description": "Design keeps policy network on full state while model uses abstraction.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design discussion in §1 and §3.",
+      "edge_rationale": "Design incorporates the mitigation idea."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "factorised transition model with discrete abstract states and fewer parameters",
+      "target_node": "mapping full states to abstract states via clustering or deterministic classifiers",
+      "description": "A concrete mapping f_s→z is required to realise the abstract state space.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation details in §3.2 and §5.",
+      "edge_rationale": "Mapping is first step of implementation."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "mapping full states to abstract states via clustering or deterministic classifiers",
+      "target_node": "neural transition model conditioned on abstract states",
+      "description": "Once abstract states are defined, a neural classifier can predict their transitions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "§3.2 Learning describes conditioning on z.",
+      "edge_rationale": "Transition predictor depends on abstract state assignment."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "neural transition model conditioned on abstract states",
+      "target_node": "rollout simulation in learned Bottleneck Simulator for policy training",
+      "description": "The learned model provides the environment to generate simulated trajectories.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Policy training loop in §5 relies on the learned model.",
+      "edge_rationale": "Rollouts require the transition model."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "rollout simulation in learned Bottleneck Simulator for policy training",
+      "target_node": "empirical sample-efficiency gains in Home World text adventure",
+      "description": "Text-adventure results confirm the implementation’s effectiveness.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative improvement reported in Table 1.",
+      "edge_rationale": "Performance improvement validates the mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "rollout simulation in learned Bottleneck Simulator for policy training",
+      "target_node": "real-world user score improvements in Alexa Prize dialogue system",
+      "description": "Dialogue A/B tests further confirm effectiveness in a real task.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Tables 3-4 show statistically-significant gains.",
+      "edge_rationale": "Empirical human evaluation validates mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "factorised transition model with discrete abstract states and fewer parameters",
+      "target_node": "mathematical error bound showing O(|S||Z||A|) sample complexity",
+      "description": "Theorem 2 analytically supports the design’s efficiency claim.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Formal proof in §4.",
+      "edge_rationale": "Mathematical validation of design."
+    },
+    {
+      "type": "motivates",
+      "source_node": "empirical sample-efficiency gains in Home World text adventure",
+      "target_node": "integrate Bottleneck Simulator factorised model in RL training pipelines",
+      "description": "Positive experimental results provide motivation to adopt the method.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct empirical success cited in §5.1.",
+      "edge_rationale": "Success informs proposed intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "real-world user score improvements in Alexa Prize dialogue system",
+      "target_node": "integrate Bottleneck Simulator factorised model in RL training pipelines",
+      "description": "Real-world gains further support adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "A/B test gains in §5.2.",
+      "edge_rationale": "Human-facing evidence motivates intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "mathematical error bound showing O(|S||Z||A|) sample complexity",
+      "target_node": "adaptively refine abstract state granularity as data grows",
+      "description": "The bound shows structural discrepancy shrinks when |Z| increases, motivating adaptive refinement.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Moderate inference from theoretical analysis to practical step.",
+      "edge_rationale": "Theory implies benefit of dynamic abstraction."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2018-07-12T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1807.04723"
+    },
+    {
+      "key": "title",
+      "value": "The Bottleneck Simulator: A Model-based Deep Reinforcement Learning Approach"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Iulian Vlad Serban",
+        "Chinnadhurai Sankar",
+        "Michael Pieper",
+        "Joelle Pineau",
+        "Yoshua Bengio"
+      ]
+    }
+  ]
+}

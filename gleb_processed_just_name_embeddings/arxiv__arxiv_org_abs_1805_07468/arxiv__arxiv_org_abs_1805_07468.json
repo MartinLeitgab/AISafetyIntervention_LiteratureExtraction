@@ -1,0 +1,453 @@
+{
+  "nodes": [
+    {
+      "name": "Uninterpretable middle-layer representations in CNNs",
+      "aliases": [
+        "opaque CNN feature maps",
+        "lack of interpretability in convolutional networks"
+      ],
+      "type": "concept",
+      "description": "Middle convolutional layers in standard CNNs produce feature maps whose semantics are not human-understandable, undermining trust and safe deployment.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduction – authors highlight interpretability as the Achilles’ heel of deep neural networks."
+    },
+    {
+      "name": "Chaotic mixture of object parts and textures in middle-layer feature maps",
+      "aliases": [
+        "mixed part–texture activations",
+        "non-disentangled CNN features"
+      ],
+      "type": "concept",
+      "description": "Individual channels respond simultaneously to several object parts and low-level textures, making their meaning ambiguous.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Fig 1 & Sec 1 – feature maps are ‘chaotic mixtures’ of parts and textures."
+    },
+    {
+      "name": "Performance degradation from direct interpretability constraints in CNNs",
+      "aliases": [
+        "interpretability–accuracy trade-off",
+        "accuracy drop when enforcing interpretability"
+      ],
+      "type": "concept",
+      "description": "Directly forcing a performer CNN to learn interpretable filters can lower classification accuracy, creating a trade-off between interpretability and performance.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduction – ‘high interpretability is not necessarily equivalent to, and sometimes conflicts with, high discrimination power’."
+    },
+    {
+      "name": "Interpretability–performance trade-off in direct feature disentanglement",
+      "aliases": [
+        "accuracy loss when disentangling features"
+      ],
+      "type": "concept",
+      "description": "When the performer itself is trained to produce part-level filters, its discrimination power often drops.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 1 – examples of reduced classification performance after part disentanglement."
+    },
+    {
+      "name": "Object-part specific filter representation in CNNs",
+      "aliases": [
+        "single-part filter hypothesis",
+        "per-channel part correspondence"
+      ],
+      "type": "concept",
+      "description": "Making each channel correspond to one object part is hypothesised to provide clear semantics without additional supervision.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 1 & 3.2 – assumption underpinning filter loss."
+    },
+    {
+      "name": "Separate explainer network preserves performance while improving interpretability in CNNs",
+      "aliases": [
+        "add-on explainer hypothesis",
+        "external interpretability module assumption"
+      ],
+      "type": "concept",
+      "description": "Interpreting features with a dedicated network rather than modifying the performer can maintain the original accuracy.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 1 – ‘learning an additional explainer does not affect discrimination power’."
+    },
+    {
+      "name": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "aliases": [
+        "explainer–performer architecture",
+        "appendix explainer network"
+      ],
+      "type": "concept",
+      "description": "The explainer receives mid-level feature maps, encodes them into interpretable object-part features and decodes them to reconstruct upper-layer performer features.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Fig 1 & Sec 3.1 – overall architectural reasoning."
+    },
+    {
+      "name": "Dual-track encoder with interpretable and ordinary paths in explainer",
+      "aliases": [
+        "interpretable vs ordinary track encoder",
+        "two-track encoder design"
+      ],
+      "type": "concept",
+      "description": "One track contains interpretable filters forced to represent single parts; the second track carries residual textural information, combined by a learnable weight p.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 3.1 Encoder – detailed mechanism enabling interpretability without information loss."
+    },
+    {
+      "name": "Template-based filter loss for unsupervised part disentanglement",
+      "aliases": [
+        "mutual-information filter loss",
+        "part-template loss"
+      ],
+      "type": "concept",
+      "description": "A mutual-information loss with positive and negative templates pushes each interpretable filter to fire for exactly one spatial location and one object category.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 3.2.1 – core implementation driving disentanglement."
+    },
+    {
+      "name": "Decoder reconstruction of performer upper-layer features",
+      "aliases": [
+        "feature reconstruction decoder",
+        "information-preserving decoder"
+      ],
+      "type": "concept",
+      "description": "Two fully-connected layers reconstruct the performer’s fc6 and fc7 activations from the disentangled features, limiting information loss.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 3.1 Decoder and Eq (1) reconstruction term."
+    },
+    {
+      "name": "Probability weighting of interpretable track contribution parameter p",
+      "aliases": [
+        "track contribution weight p",
+        "softmax-based interpretable weight"
+      ],
+      "type": "concept",
+      "description": "A sigmoid-parameterised scalar p balances interpretable and ordinary tracks and is encouraged to be high via a −log p loss term.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 3.1 Encoder – mechanism ensuring most information flows through interpretable filters."
+    },
+    {
+      "name": "Location instability reduction of explainer filters over performer",
+      "aliases": [
+        "35-70 % lower location instability",
+        "improved part consistency metric"
+      ],
+      "type": "concept",
+      "description": "Across datasets, explainer filters exhibit only 35.7–68.8 % of the performer’s location-instability, indicating consistent part representation.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 4.1 Table 1 – quantitative interpretability evidence."
+    },
+    {
+      "name": "Minor classification accuracy gap after explainer reconstruction",
+      "aliases": [
+        "<1 % accuracy drop",
+        "minimal performance loss evidence"
+      ],
+      "type": "concept",
+      "description": "Feeding reconstructed features through the performer increases error by ≤1 % in multi-class tasks, showing limited information loss.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 4.1 Table 3 – evaluation of performance retention."
+    },
+    {
+      "name": "High interpretable track contribution (p 0.8–0.96)",
+      "aliases": [
+        "large p values evidence",
+        "interpretable track dominance"
+      ],
+      "type": "concept",
+      "description": "Explainers for VGG networks route 80–96 % of activation magnitude through interpretable filters, confirming successful disentanglement.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec 4.1 Table 2 – quantitative evidence on p."
+    },
+    {
+      "name": "Attach autoencoder-style explainer networks with interpretable track to pretrained CNNs during deployment for real-time interpretability",
+      "aliases": [
+        "deploy explainer network for CNN transparency",
+        "append explainer module at deployment"
+      ],
+      "type": "intervention",
+      "description": "At deployment time, connect an explainer (encoder–decoder, dual track, filter-loss pretrained) to the mid-layer of an existing CNN to provide live part-level feature maps without altering model parameters.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Explainer is learned post-hoc and plugged in as an ‘appendix’ (Fig 1; Sec 4.1 results), matching deployment phase.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated on standard datasets but not yet used in production (Sec 4 Experiments).",
+      "node_rationale": "Actionable step derived from validated explainer architecture for transparency."
+    },
+    {
+      "name": "Fine-tune pretrained CNNs jointly with explainer and filter loss before deployment to achieve part-level feature disentanglement",
+      "aliases": [
+        "explainer-guided fine-tuning",
+        "joint training with filter loss"
+      ],
+      "type": "intervention",
+      "description": "During a fine-tuning stage, optimise performer and explainer together with reconstruction and template-based filter losses to embed interpretable structure while maintaining accuracy.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Involves additional gradient updates after pre-training but prior to release (Sec 3.2 Learning).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated experimentally but not yet systemically validated (Sec 4).",
+      "node_rationale": "Provides earlier insertion point for same safety benefit."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Uninterpretable middle-layer representations in CNNs",
+      "target_node": "Chaotic mixture of object parts and textures in middle-layer feature maps",
+      "description": "Ambiguous part–texture activations make feature semantics opaque.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in Introduction and Fig 1.",
+      "edge_rationale": "Sec 1 – authors attribute lack of interpretability to mixed activations."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Chaotic mixture of object parts and textures in middle-layer feature maps",
+      "target_node": "Object-part specific filter representation in CNNs",
+      "description": "Disentangling channels so each represents a single part directly addresses chaotic mixtures.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoned but not mathematically proven; based on hypothesis in Sec 1.",
+      "edge_rationale": "Sec 1 – proposal to ‘force each channel to represent a certain object part’."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Object-part specific filter representation in CNNs",
+      "target_node": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "description": "Explainer architecture realises the single-part filter insight without altering performer.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design follows directly from theoretical claim (Sec 3.1).",
+      "edge_rationale": "Sec 3.1 – explainer described as mechanism to obtain part-specific filters."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Performance degradation from direct interpretability constraints in CNNs",
+      "target_node": "Interpretability–performance trade-off in direct feature disentanglement",
+      "description": "Accuracy drops arise when performer layers are forced to be interpretable.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical observations cited in Introduction.",
+      "edge_rationale": "Sec 1 – reports of decreased classification performance."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Interpretability–performance trade-off in direct feature disentanglement",
+      "target_node": "Separate explainer network preserves performance while improving interpretability in CNNs",
+      "description": "Using an external explainer instead of modifying performer removes the trade-off.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical argument made in Sec 1.",
+      "edge_rationale": "Sec 1 – explains benefit of separate network."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Separate explainer network preserves performance while improving interpretability in CNNs",
+      "target_node": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "description": "Explainer design operationalises the separation concept.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct reference in design section.",
+      "edge_rationale": "Sec 3.1 architecture description."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "target_node": "Dual-track encoder with interpretable and ordinary paths in explainer",
+      "description": "The encoder realises the design rationale by splitting information streams.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Detailed implementation in Sec 3.1.",
+      "edge_rationale": "Sec 3.1 Encoder subsection."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "target_node": "Template-based filter loss for unsupervised part disentanglement",
+      "description": "Filter loss enforces interpretability within the explainer.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Mathematical formulation in Sec 3.2.1.",
+      "edge_rationale": "Sec 3.2.1 Filter loss."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "target_node": "Decoder reconstruction of performer upper-layer features",
+      "description": "Decoder component secures information preservation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit description in Sec 3.1 Decoder.",
+      "edge_rationale": "Sec 3.1 Decoder."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Autoencoder-style explainer attached to performer CNN for feature distillation",
+      "target_node": "Probability weighting of interpretable track contribution parameter p",
+      "description": "Learnable weight p balances tracks as part of the explainer implementation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation (1) and Encoder discussion.",
+      "edge_rationale": "Sec 3.1 Encoder."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Dual-track encoder with interpretable and ordinary paths in explainer",
+      "target_node": "Location instability reduction of explainer filters over performer",
+      "description": "Encoder design achieves lower instability, validating disentanglement.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical results in Table 1.",
+      "edge_rationale": "Sec 4.1 – comparison of instability metrics."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Template-based filter loss for unsupervised part disentanglement",
+      "target_node": "Location instability reduction of explainer filters over performer",
+      "description": "Filter loss directly responsible for improved consistency.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Associative evidence; mechanism intended for this outcome.",
+      "edge_rationale": "Sec 3.2.1 & Table 1."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Decoder reconstruction of performer upper-layer features",
+      "target_node": "Minor classification accuracy gap after explainer reconstruction",
+      "description": "Successful reconstruction evidenced by negligible accuracy loss.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative gap <1 % in Table 3.",
+      "edge_rationale": "Sec 4.1 performance evaluation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Probability weighting of interpretable track contribution parameter p",
+      "target_node": "High interpretable track contribution (p 0.8–0.96)",
+      "description": "Learned weight p attains high values, showing intended behaviour.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct measurement in Table 2.",
+      "edge_rationale": "Sec 4.1 p-value analysis."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Location instability reduction of explainer filters over performer",
+      "target_node": "Attach autoencoder-style explainer networks with interpretable track to pretrained CNNs during deployment for real-time interpretability",
+      "description": "Demonstrated interpretability benefit justifies deploying explainer.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical support.",
+      "edge_rationale": "Sec 4.1 Table 1 results inform practical deployment."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Minor classification accuracy gap after explainer reconstruction",
+      "target_node": "Attach autoencoder-style explainer networks with interpretable track to pretrained CNNs during deployment for real-time interpretability",
+      "description": "Minimal accuracy loss alleviates concerns of deploying explainer.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical evidence in Table 3.",
+      "edge_rationale": "Sec 4.1."
+    },
+    {
+      "type": "motivates",
+      "source_node": "High interpretable track contribution (p 0.8–0.96)",
+      "target_node": "Attach autoencoder-style explainer networks with interpretable track to pretrained CNNs during deployment for real-time interpretability",
+      "description": "High share of interpretable activation shows deployment will yield meaningful explanations.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Medium – metric indicates quality but not user study.",
+      "edge_rationale": "Sec 4.1 Table 2."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Location instability reduction of explainer filters over performer",
+      "target_node": "Fine-tune pretrained CNNs jointly with explainer and filter loss before deployment to achieve part-level feature disentanglement",
+      "description": "Evidence of improved interpretability supports fine-tuning approach.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct metric improvement.",
+      "edge_rationale": "Sec 4.1."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Minor classification accuracy gap after explainer reconstruction",
+      "target_node": "Fine-tune pretrained CNNs jointly with explainer and filter loss before deployment to achieve part-level feature disentanglement",
+      "description": "Shows fine-tuning can keep accuracy intact.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong empirical data.",
+      "edge_rationale": "Sec 4.1 Table 3."
+    },
+    {
+      "type": "motivates",
+      "source_node": "High interpretable track contribution (p 0.8–0.96)",
+      "target_node": "Fine-tune pretrained CNNs jointly with explainer and filter loss before deployment to achieve part-level feature disentanglement",
+      "description": "High p suggests fine-tuning will maintain interpretability dominance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Metric-based inference.",
+      "edge_rationale": "Sec 4.1 Table 2."
+    }
+  ],
+  "meta": [
+    {
+      "key": "title",
+      "value": "Unsupervised Learning of Neural Networks to Explain Neural Networks"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1805.07468"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-05-18T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Quanshi Zhang",
+        "Yu Yang",
+        "Yuchen Liu",
+        "Ying Nian Wu",
+        "Song-Chun Zhu"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    }
+  ]
+}

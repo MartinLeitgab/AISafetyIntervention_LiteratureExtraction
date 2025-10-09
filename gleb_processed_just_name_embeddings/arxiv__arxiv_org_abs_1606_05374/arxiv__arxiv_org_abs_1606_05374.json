@@ -1,0 +1,191 @@
+{
+  "nodes": [
+    {
+      "name": "Inaccurate item quality estimation in rating-based learning systems",
+      "aliases": [
+        "incorrect ranking due to unreliable ratings",
+        "misestimated quantile in crowdsourced data"
+      ],
+      "type": "concept",
+      "description": "When a learning system relies on user-supplied ratings to estimate which items belong in the top β-quantile, unreliable data can lead to systematically wrong quality estimates, harming downstream decision-making.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Represents the top-level risk the algorithm aims to alleviate (section “2 AlgorithmandIntuition”)."
+    },
+    {
+      "name": "Adversarial or noisy raters in crowdsourced rating data",
+      "aliases": [
+        "unreliable fraction of raters",
+        "malicious or low-quality ratings"
+      ],
+      "type": "concept",
+      "description": "Only an α-fraction of raters are assumed to be reliable; the rest may provide arbitrary or adversarial scores, introducing significant noise into the rating matrix Â.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identifies the concrete mechanism that causes the risk (line 1-2 of Algorithm 1 parameter description)."
+    },
+    {
+      "name": "Low-rank nuclear-norm bounded structure enables robust quantile recovery",
+      "aliases": [
+        "rank constraint facilitates denoising",
+        "nuclear norm bound for robust matrix recovery"
+      ],
+      "type": "concept",
+      "description": "Imposing a nuclear-norm (low-rank) constraint, together with β-quantile sparsity, can theoretically isolate the reliable signal embedded in noisy ratings, provided the reliable rater fraction α is above a threshold.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explains why the subsequent optimisation approach can separate signal from noise (constraint ∥M∥* ≤ 2αε / (αβnm) in Algorithm 1)."
+    },
+    {
+      "name": "Convex optimization formulation for quantile matrix recovery",
+      "aliases": [
+        "β-quantile convex program",
+        "optimization-based rating aggregation"
+      ],
+      "type": "concept",
+      "description": "The recovery task is cast as maximising the inner product between the noisy ratings Â and candidate matrix M while respecting elementwise bounds, a total β-quantile constraint, and a nuclear-norm bound, yielding a tractable convex program.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Provides the explicit solution approach derived from the theoretical insight (optimisation problem definition line 3)."
+    },
+    {
+      "name": "Nuclear norm constrained optimization algorithm for β-quantile matrix recovery",
+      "aliases": [
+        "Algorithm 1 quantile matrix recovery",
+        "robust aggregation algorithm with nuclear norm"
+      ],
+      "type": "concept",
+      "description": "Algorithm 1 operationalises the convex program: given Â and parameters (α, β, ε) it solves for M under the stated constraints and outputs the recovered β-quantile matrix.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Concrete procedure that implements the design rationale (entire pseudocode block)."
+    },
+    {
+      "name": "Theoretical recovery error bound proportional to ε and α in Algorithm 1",
+      "aliases": [
+        "sample complexity guarantee",
+        "statistical recovery guarantee"
+      ],
+      "type": "concept",
+      "description": "The algorithm guarantees that, under the stated constraints, the recovered matrix M deviates from the true β-quantile matrix by at most an ε-scaled term that depends on the reliable fraction α and problem size.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Serves as theoretical validation that the mechanism achieves its aim (implied by tolerance ε in parameter list)."
+    },
+    {
+      "name": "Apply Algorithm 1 during RLHF fine-tuning to aggregate human ratings robustly",
+      "aliases": [
+        "integrate nuclear norm quantile recovery in RLHF",
+        "robust aggregation of human feedback"
+      ],
+      "type": "intervention",
+      "description": "During reinforcement learning from human feedback, construct the rating matrix of human preference comparisons, set α, β, ε based on expected reliable rater fraction, and solve the Algorithm 1 convex program to obtain a cleaned reward model target before policy updates.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Operates at the fine-tuning/RL stage where human feedback is aggregated (contextualised from section “2 AlgorithmandIntuition”).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Only a theoretical guarantee is provided; no large-scale deployment evidence is shown (section ‘Algorithm’ only).",
+      "node_rationale": "Translates the mechanism into an actionable step for AI safety pipelines, closing the causal-interventional path."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Inaccurate item quality estimation in rating-based learning systems",
+      "target_node": "Adversarial or noisy raters in crowdsourced rating data",
+      "description": "Unreliable or adversarial raters introduce noise that leads directly to wrong β-quantile estimates.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicitly acknowledged in parameter list that only α-fraction is reliable (section header).",
+      "edge_rationale": "Links the top-level risk to its underlying cause identified in the text."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Adversarial or noisy raters in crowdsourced rating data",
+      "target_node": "Low-rank nuclear-norm bounded structure enables robust quantile recovery",
+      "description": "Recognising that the clean signal is low-rank motivates using nuclear-norm bounds to separate signal from noisy ratings.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Reasoning step inferred from constraint design; not explicitly spelled out.",
+      "edge_rationale": "Shows how the theoretical insight responds to the identified problem."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Low-rank nuclear-norm bounded structure enables robust quantile recovery",
+      "target_node": "Convex optimization formulation for quantile matrix recovery",
+      "description": "The theoretical observation is operationalised by embedding the nuclear-norm bound and β-quantile constraint into a convex program.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Directly follows from the optimisation problem statement (line 3).",
+      "edge_rationale": "Connects insight to the concrete design of the solution."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Convex optimization formulation for quantile matrix recovery",
+      "target_node": "Nuclear norm constrained optimization algorithm for β-quantile matrix recovery",
+      "description": "Algorithm 1 is the procedural implementation that solves the formulated convex program.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Algorithm 1 explicitly realises the optimisation problem.",
+      "edge_rationale": "Links design rationale to its concrete mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Nuclear norm constrained optimization algorithm for β-quantile matrix recovery",
+      "target_node": "Theoretical recovery error bound proportional to ε and α in Algorithm 1",
+      "description": "Proven error bounds show the algorithm achieves accurate recovery when assumptions hold.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical guarantee is mentioned but full proof not in excerpt.",
+      "edge_rationale": "Provides validation evidence for the mechanism’s effectiveness."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical recovery error bound proportional to ε and α in Algorithm 1",
+      "target_node": "Apply Algorithm 1 during RLHF fine-tuning to aggregate human ratings robustly",
+      "description": "The guarantee suggests the algorithm can clean human feedback, motivating its deployment in RLHF pipelines.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Application to RLHF is an inferred but plausible extension.",
+      "edge_rationale": "Closes the causal chain by indicating why the intervention is worth implementing."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2016-06-16T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Avoiding Imposters and Delinquents: Adversarial Crowdsourcing and Peer Prediction"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Jacob Steinhardt",
+        "Gregory Valiant",
+        "Moses Charikar"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1606.05374"
+    }
+  ]
+}

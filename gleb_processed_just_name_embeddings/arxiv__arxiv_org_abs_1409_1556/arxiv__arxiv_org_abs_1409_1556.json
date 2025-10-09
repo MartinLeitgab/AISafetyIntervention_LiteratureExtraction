@@ -1,0 +1,622 @@
+{
+  "nodes": [
+    {
+      "name": "Low classification accuracy in large-scale image recognition",
+      "aliases": [
+        "High ImageNet error rates",
+        "Poor accuracy on ILSVRC"
+      ],
+      "type": "concept",
+      "description": "Difficulty achieving low top-1 / top-5 error on datasets with 1,000 object classes such as ILSVRC-2012/14, limiting model usefulness.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Introduction as the overarching performance challenge motivating the work."
+    },
+    {
+      "name": "Insufficient representational capacity of shallow ConvNets with large filters",
+      "aliases": [
+        "Shallow large-filter ConvNet limits",
+        "Capacity limits of 7×7 or 11×11 filter architectures"
+      ],
+      "type": "concept",
+      "description": "Shallow architectures using large receptive-field filters provide fewer non-linearities and many parameters, restricting discriminative power.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 2.3 Discussion as the reason earlier networks under-perform."
+    },
+    {
+      "name": "Depth increase with small 3×3 filters increases nonlinear discriminative power while controlling parameters",
+      "aliases": [
+        "Small-filter deep networks hypothesis",
+        "3×3 filter depth benefit"
+      ],
+      "type": "concept",
+      "description": "Stacking many 3×3 convolutions replicates larger receptive fields, adds more ReLU layers, and reduces parameter count, theoretically improving learning.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Justified in 2.3 Discussion with parameter count and receptive-field arguments."
+    },
+    {
+      "name": "Design very deep ConvNets by stacking small 3×3 convolution layers",
+      "aliases": [
+        "Stacked 3×3 ConvNet design",
+        "Deep small-filter architecture principle"
+      ],
+      "type": "concept",
+      "description": "Architectural principle to realise the theoretical benefit: keep filter size 3×3 throughout and add depth to raise representational capacity.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Presented across 2.1 Architecture and 2.2 Configurations as guiding design choice."
+    },
+    {
+      "name": "VGG ConvNet configurations A–E with 16–19 weight layers of 3×3 filters",
+      "aliases": [
+        "VGG-16/19 architectures",
+        "Very deep 3×3 ConvNet implementations"
+      ],
+      "type": "concept",
+      "description": "Concrete network blueprints (up to 19 layers) using only 3×3 convolutions, max-pooling, and three 4096-unit FC layers.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Table 1 (2.2 Configurations); forms the practical realisation of the design rationale."
+    },
+    {
+      "name": "Top-5 error 8.0 % on ImageNet using 19-layer VGG model",
+      "aliases": [
+        "19-layer VGG validation result",
+        "Validation evidence for deep model"
+      ],
+      "type": "concept",
+      "description": "Single-scale training with multi-scale testing of the 19-layer network (configuration E) achieved 25.5 % top-1 and 8.0 % top-5 validation error.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in Table 3 (4.1 Single Scale Evaluation)."
+    },
+    {
+      "name": "Single-scale training limits robustness to object scale variation",
+      "aliases": [
+        "Fixed-scale training limitation",
+        "Lack of scale robustness in training"
+      ],
+      "type": "concept",
+      "description": "Training only at S = 256 or 384 means the model rarely sees objects at significantly different image scales, hurting generalisation.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated at 3.1 Training under 'Training image size'."
+    },
+    {
+      "name": "Scale jittering during training captures multi-scale statistics",
+      "aliases": [
+        "Multi-scale training hypothesis",
+        "Scale-jittering insight"
+      ],
+      "type": "concept",
+      "description": "Randomly rescaling each training image between 256 and 512 exposes network to varied object sizes, expected to improve scale invariance.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in 3.1 Training and evaluated later."
+    },
+    {
+      "name": "Augment training images by random rescaling within range",
+      "aliases": [
+        "Training set scale augmentation",
+        "Scale-jitter data augmentation design"
+      ],
+      "type": "concept",
+      "description": "Design decision to implement scale-jittering by drawing S uniformly from [256, 512] before cropping 224×224 patches.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Specified in 3.1 Training."
+    },
+    {
+      "name": "Training VGG with S in [256,512] scale range",
+      "aliases": [
+        "Multi-scale VGG training procedure",
+        "Scale-jitter implementation"
+      ],
+      "type": "concept",
+      "description": "Fine-tuning all layers (or FC layers) of VGG networks with random image scales each SGD iteration, producing multi-scale-trained weights.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation detail in 3.1 Training and 4.2 Multi-Scale Evaluation."
+    },
+    {
+      "name": "Validation error reduced to 7.5 % top-5 with multi-scale training",
+      "aliases": [
+        "Scale-jitter training validation evidence",
+        "Multi-scale training result"
+      ],
+      "type": "concept",
+      "description": "Configuration D or E trained with scale jittering and multi-scale testing attained 24.8 % top-1 / 7.5 % top-5 error (Table 4).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical result in Table 4 (4.2 Multi-Scale Evaluation)."
+    },
+    {
+      "name": "Single-scale testing fails to exploit scale robustness",
+      "aliases": [
+        "Fixed-scale test limitation",
+        "Lack of multi-scale inference"
+      ],
+      "type": "concept",
+      "description": "Using only one test resolution does not fully leverage models trained to be scale-robust, leaving accuracy untapped.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in 3.2 Testing and evaluated in 4.2."
+    },
+    {
+      "name": "Aggregating predictions over multiple scales reduces error",
+      "aliases": [
+        "Multi-scale inference insight",
+        "Scale ensemble hypothesis"
+      ],
+      "type": "concept",
+      "description": "Averaging class posteriors from several rescaled copies should capture complementary spatial context and lower variance.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Hypothesis stated in 4.2 Multi-Scale Evaluation."
+    },
+    {
+      "name": "Average class probabilities across rescaled test images",
+      "aliases": [
+        "Multi-scale evaluation design",
+        "Scale aggregation strategy"
+      ],
+      "type": "concept",
+      "description": "Design to run the fully-convolutional net at Q = {256, 384, 512} and average the resulting soft-max vectors.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in 4.2 Multi-Scale Evaluation."
+    },
+    {
+      "name": "Evaluate VGG at Q={256,384,512} and average outputs",
+      "aliases": [
+        "Multi-scale evaluation implementation",
+        "Practical scale aggregation"
+      ],
+      "type": "concept",
+      "description": "Implementation performing dense evaluation on three image sizes per test image and averaging posteriors without extra crops.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation specifics in 4.2 and Table 4."
+    },
+    {
+      "name": "Top-5 error 7.5 % with multi-scale evaluation",
+      "aliases": [
+        "Multi-scale inference validation",
+        "Evaluation result for scale aggregation"
+      ],
+      "type": "concept",
+      "description": "Applying multi-scale evaluation to scale-jitter-trained models D/E achieved 7.5 % top-5 validation error (Table 4).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Reported in Table 4 (4.2 Multi-Scale Evaluation)."
+    },
+    {
+      "name": "Single ConvNet variance limits achievable accuracy",
+      "aliases": [
+        "Single-model variance problem",
+        "Individual model limitation"
+      ],
+      "type": "concept",
+      "description": "Due to stochastic training and architecture biases, one network may misclassify samples others would get right.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in 4.4 ConvNet Fusion referencing earlier ILSVRC submissions."
+    },
+    {
+      "name": "Ensembling complementary models reduces variance",
+      "aliases": [
+        "Model fusion insight",
+        "Ensemble variance reduction"
+      ],
+      "type": "concept",
+      "description": "Averaging soft-max outputs from independently-trained models exploits their complementary error patterns.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in 4.4 ConvNet Fusion."
+    },
+    {
+      "name": "Average softmax outputs across multiple ConvNets",
+      "aliases": [
+        "Soft-max score averaging design",
+        "Model fusion design rationale"
+      ],
+      "type": "concept",
+      "description": "Design decision to post-process predictions by taking the mean of per-class probabilities from several networks.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Described in 4.4 ConvNet Fusion."
+    },
+    {
+      "name": "Fusion of two multi-scale VGG models D and E",
+      "aliases": [
+        "Two-model VGG ensemble implementation",
+        "Practical VGG fusion"
+      ],
+      "type": "concept",
+      "description": "Implementation averaging outputs of best two multi-scale-trained models (configs D & E) with dense + multi-crop inference.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation detailed in Table 6 (post-submission row)."
+    },
+    {
+      "name": "Ensemble achieved 6.8 % top-5 error on ImageNet",
+      "aliases": [
+        "Ensemble validation evidence",
+        "6.8 % top-5 result"
+      ],
+      "type": "concept",
+      "description": "Two-model ensemble with dense + multi-crop evaluation produced 23.7 % top-1 / 6.8 % top-5 validation and test error (Table 6).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Validation evidence in Table 6."
+    },
+    {
+      "name": "Design ConvNets with 16–19 layers of 3×3 filters for large-scale image tasks",
+      "aliases": [
+        "Adopt very deep 3×3 ConvNets",
+        "Use VGG-style deep architecture"
+      ],
+      "type": "intervention",
+      "description": "During model-design phase, specify architectures comprising 16–19 convolutional and fully-connected layers using exclusively 3×3 filters to maximise accuracy while controlling parameters.",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Applies at Model Design stage where architecture is chosen (Section 2.2 Configurations).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Prototype validated on ImageNet (Sections 4.1–4.5); widely reproduced but not yet industry-standard at publication.",
+      "node_rationale": "Actionable takeaway explicitly recommended by authors; ends causal path 1."
+    },
+    {
+      "name": "Apply scale-jittered multi-scale training for ConvNets",
+      "aliases": [
+        "Use multi-scale data augmentation in training",
+        "Random scale jitter in pre-training"
+      ],
+      "type": "intervention",
+      "description": "During pre-training, randomly rescale each image’s shortest side within [256, 512] before cropping, exposing the network to varied object sizes.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Executed as part of data-pipeline before and during training (Section 3.1 Training).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Experimental evidence across multiple configurations shows systematic accuracy gains (Table 4).",
+      "node_rationale": "Directly motivated by scale-jitter results; ends causal path 2."
+    },
+    {
+      "name": "Perform multi-scale test-time evaluation by averaging predictions across scales",
+      "aliases": [
+        "Use scale ensemble at inference",
+        "Multi-scale dense evaluation"
+      ],
+      "type": "intervention",
+      "description": "At pre-deployment or evaluation time, run the fully-convolutional model on rescaled versions of each image (e.g., 256/384/512) and average soft-max scores to improve accuracy.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Occurs during model validation or safety testing before release (Section 3.2 Testing & 4.2).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated experimentally but adds computational overhead; used by research systems (Table 4).",
+      "node_rationale": "Final step of causal path 3."
+    },
+    {
+      "name": "Ensemble complementary deep ConvNets by averaging soft-max outputs",
+      "aliases": [
+        "Deploy two-model VGG ensemble",
+        "Model fusion at deployment"
+      ],
+      "type": "intervention",
+      "description": "At deployment, maintain multiple independently trained deep ConvNets and output the mean of their probability vectors to achieve lower error.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Implemented at deployment time when serving or submitting predictions (Section 4.4 ConvNet Fusion).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Prototyped on ImageNet with strong empirical benefit; limited industry deployment at time of publication.",
+      "node_rationale": "Concludes causal path 4."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Low classification accuracy in large-scale image recognition",
+      "target_node": "Insufficient representational capacity of shallow ConvNets with large filters",
+      "description": "Shallow, large-filter networks fail to capture complex visual patterns, resulting in higher error rates.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Supported qualitatively in Introduction & 2.3 Discussion; no formal causality test.",
+      "edge_rationale": "Authors attribute historical performance limits to shallow architectures."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Insufficient representational capacity of shallow ConvNets with large filters",
+      "target_node": "Depth increase with small 3×3 filters increases nonlinear discriminative power while controlling parameters",
+      "description": "Identifies architectural limitation’s root cause and posits depth+small filters as fundamental remedy.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical deduction presented in 2.3; evidence emerges later.",
+      "edge_rationale": "Theoretical insight explains why capacity is insufficient."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Depth increase with small 3×3 filters increases nonlinear discriminative power while controlling parameters",
+      "target_node": "Design very deep ConvNets by stacking small 3×3 convolution layers",
+      "description": "Design principle operationalises the theoretical insight to overcome representational limits.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design directly derived from theory (2.3).",
+      "edge_rationale": "Stacking small filters realises the theoretic benefit."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Design very deep ConvNets by stacking small 3×3 convolution layers",
+      "target_node": "VGG ConvNet configurations A–E with 16–19 weight layers of 3×3 filters",
+      "description": "Concrete architectures realise the design principle.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit implementation in Table 1.",
+      "edge_rationale": "Configurations A–E are the instantiation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "VGG ConvNet configurations A–E with 16–19 weight layers of 3×3 filters",
+      "target_node": "Top-5 error 8.0 % on ImageNet using 19-layer VGG model",
+      "description": "Empirical results show the configuration’s effectiveness.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Controlled experiments in 4.1 Single Scale Evaluation.",
+      "edge_rationale": "Validation evidence derives from using the implementation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Top-5 error 8.0 % on ImageNet using 19-layer VGG model",
+      "target_node": "Design ConvNets with 16–19 layers of 3×3 filters for large-scale image tasks",
+      "description": "Strong validation motivates adoption of the architectural intervention.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative improvement directly leads to recommendation (Conclusion).",
+      "edge_rationale": "Authors propose adopting very deep 3×3 networks."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Low classification accuracy in large-scale image recognition",
+      "target_node": "Single-scale training limits robustness to object scale variation",
+      "description": "Lack of scale robustness contributes to residual error.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section 3.1 explains influence qualitatively.",
+      "edge_rationale": "Error arises when objects appear at unseen scales."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Single-scale training limits robustness to object scale variation",
+      "target_node": "Scale jittering during training captures multi-scale statistics",
+      "description": "Insight identifies training regime modification to solve the limitation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Hypothesis presented prior to experiments.",
+      "edge_rationale": "Scale jitter expected to mitigate limitation."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Scale jittering during training captures multi-scale statistics",
+      "target_node": "Augment training images by random rescaling within range",
+      "description": "Design choice realises scale-jittering idea.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit procedure in 3.1.",
+      "edge_rationale": "Random rescaling is the concrete augmentation."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Augment training images by random rescaling within range",
+      "target_node": "Training VGG with S in [256,512] scale range",
+      "description": "Implementation mechanism applies augmentation during SGD.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Details specified and executed (3.1, 4.2).",
+      "edge_rationale": "Mechanism is the practical application."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Training VGG with S in [256,512] scale range",
+      "target_node": "Validation error reduced to 7.5 % top-5 with multi-scale training",
+      "description": "Empirical results confirm benefit.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 4 shows quantitative gain.",
+      "edge_rationale": "Validation stems from multi-scale trained model."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Validation error reduced to 7.5 % top-5 with multi-scale training",
+      "target_node": "Apply scale-jittered multi-scale training for ConvNets",
+      "description": "Performance improvement motivates adopting the augmentation intervention.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear numerical gains drive recommendation (Conclusion).",
+      "edge_rationale": "Leads to actionable training guideline."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Low classification accuracy in large-scale image recognition",
+      "target_node": "Single-scale testing fails to exploit scale robustness",
+      "description": "Even with scale-robust training, fixed-scale evaluation leaves residual error.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussed in 3.2 and 4.2.",
+      "edge_rationale": "Testing choice affects final accuracy."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Single-scale testing fails to exploit scale robustness",
+      "target_node": "Aggregating predictions over multiple scales reduces error",
+      "description": "Insight proposes using several scales at inference.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Hypothesis detailed in 4.2.",
+      "edge_rationale": "Multi-scale aggregation expected to fix issue."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Aggregating predictions over multiple scales reduces error",
+      "target_node": "Average class probabilities across rescaled test images",
+      "description": "Design decision applies insight.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design stated in 4.2.",
+      "edge_rationale": "Defines evaluation procedure."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Average class probabilities across rescaled test images",
+      "target_node": "Evaluate VGG at Q={256,384,512} and average outputs",
+      "description": "Implementation performs evaluation at specified scales.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Exact procedure in Table 4.",
+      "edge_rationale": "Gives concrete parameter choices."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Evaluate VGG at Q={256,384,512} and average outputs",
+      "target_node": "Top-5 error 7.5 % with multi-scale evaluation",
+      "description": "Empirical evidence shows reduced error.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Reported in Table 4.",
+      "edge_rationale": "Validation confirms benefit."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Top-5 error 7.5 % with multi-scale evaluation",
+      "target_node": "Perform multi-scale test-time evaluation by averaging predictions across scales",
+      "description": "Demonstrated gains motivate intervention adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear quantitative improvement (4.2).",
+      "edge_rationale": "Guides pre-deployment testing steps."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Low classification accuracy in large-scale image recognition",
+      "target_node": "Single ConvNet variance limits achievable accuracy",
+      "description": "Residual misclassifications stem from model variance.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implicit reasoning in 4.4; moderate inference.",
+      "edge_rationale": "Variance contributes to remaining errors."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Single ConvNet variance limits achievable accuracy",
+      "target_node": "Ensembling complementary models reduces variance",
+      "description": "Insight suggests combining models to reduce variance.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Common ensemble theory, referenced in 4.4.",
+      "edge_rationale": "Ensembling known to lower variance."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Ensembling complementary models reduces variance",
+      "target_node": "Average softmax outputs across multiple ConvNets",
+      "description": "Design decision operationalises model fusion.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design spelled out in 4.4.",
+      "edge_rationale": "Averaging outputs is fusion technique."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Average softmax outputs across multiple ConvNets",
+      "target_node": "Fusion of two multi-scale VGG models D and E",
+      "description": "Implementation picks specific models and evaluation modes.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation stated in Table 6.",
+      "edge_rationale": "Concrete ensemble realisation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Fusion of two multi-scale VGG models D and E",
+      "target_node": "Ensemble achieved 6.8 % top-5 error on ImageNet",
+      "description": "Experimental results validate ensemble benefit.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Table 6 shows accuracy drop from 7.5% to 6.8%.",
+      "edge_rationale": "Validation confirms ensemble effectiveness."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Ensemble achieved 6.8 % top-5 error on ImageNet",
+      "target_node": "Ensemble complementary deep ConvNets by averaging soft-max outputs",
+      "description": "Performance improvement motivates deployment-time ensemble intervention.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Authors recommend fusion in Conclusion & 4.4.",
+      "edge_rationale": "Drives adoption of ensemble strategy."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2014-09-04T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Very Deep Convolutional Networks for Large-Scale Image Recognition"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Karen Simonyan",
+        "Andrew Zisserman"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1409.1556"
+    }
+  ]
+}

@@ -1,0 +1,526 @@
+{
+  "nodes": [
+    {
+      "name": "Intractable posterior distributions in continuous latent variable models",
+      "aliases": [
+        "posterior intractability in latent variable models",
+        "intractable latent variable posteriors"
+      ],
+      "type": "concept",
+      "description": "The true posterior p(z|x) for models with continuous latent variables cannot be evaluated or differentiated exactly, preventing exact inference or learning.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.1 ‘Problem scenario’ highlights posterior intractability as the primary obstacle."
+    },
+    {
+      "name": "High computational cost of inference on large datasets in probabilistic models",
+      "aliases": [
+        "scaling difficulty of inference",
+        "expensive inference on big data"
+      ],
+      "type": "concept",
+      "description": "Traditional batch or per-datapoint sampling loops (e.g., MCMC) are too slow when datasets are very large, blocking practical use of generative models.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.1 notes that sampling-based solutions are prohibitively slow for big data."
+    },
+    {
+      "name": "High variance gradient estimators in variational inference",
+      "aliases": [
+        "noisy variational gradients",
+        "unstable Monte Carlo gradients"
+      ],
+      "type": "concept",
+      "description": "The naïve Monte-Carlo estimator for ∇ϕ E_q[f(z)] carries very large variance, making optimization impractical.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in Section 2.2 as the key difficulty with standard VB."
+    },
+    {
+      "name": "Analytical intractability of marginal likelihood integrals",
+      "aliases": [
+        "intractable marginal likelihood",
+        "non-analytical evidence integrals"
+      ],
+      "type": "concept",
+      "description": "Integrating out latent variables to compute pθ(x)=∫pθ(z)pθ(x|z)dz is impossible in many realistic models, preventing EM-style learning.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Identified in Section 2.1 as the fundamental cause of posterior intractability."
+    },
+    {
+      "name": "Inefficiency of sampling-based inference per datapoint",
+      "aliases": [
+        "slow per-datapoint sampling loops",
+        "MCMC inefficiency in large data"
+      ],
+      "type": "concept",
+      "description": "Monte-Carlo EM or MCMC require costly inner loops for every datapoint, which do not scale to modern dataset sizes.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.1 explicitly calls out sampling loops as impractical."
+    },
+    {
+      "name": "Variance explosion in naïve Monte Carlo gradient estimator",
+      "aliases": [
+        "unstable score-function gradients",
+        "high-variance REINFORCE-style gradients"
+      ],
+      "type": "concept",
+      "description": "Estimators of the form E_q[f(z)∇log q] have prohibitively large variance, stopping progress in learning.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.2 equations and discussion emphasize this limitation."
+    },
+    {
+      "name": "Reparameterization of latent variables enabling differentiable sampling",
+      "aliases": [
+        "reparameterization trick",
+        "differentiable sampling transformation"
+      ],
+      "type": "concept",
+      "description": "Express z as a deterministic function gϕ(ε,x) of noise ε∼p(ε), making expectations over qϕ(z|x) differentiable with respect to ϕ while reducing estimator variance.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.4 formally introduces and proves the usefulness of this trick."
+    },
+    {
+      "name": "Variational lower bound regularization in approximate inference",
+      "aliases": [
+        "ELBO regularization",
+        "KL-based regularization of encoder"
+      ],
+      "type": "concept",
+      "description": "The KL term in the ELBO acts as an automatic regularizer, discouraging overfitting even with large latent dimensionality.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.3 and Figure 2 discuss the KL term’s regularising effect."
+    },
+    {
+      "name": "Stochastic gradient variational Bayes optimization of lower bound",
+      "aliases": [
+        "SGVB optimisation",
+        "stochastic ELBO ascent"
+      ],
+      "type": "concept",
+      "description": "Use low-variance gradient estimates from reparameterization to ascend the ELBO with standard optimizers.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 2.3 defines the SGVB estimator and Algorithm 1 for optimisation."
+    },
+    {
+      "name": "Auto-Encoding variational Bayes joint training of encoder and decoder",
+      "aliases": [
+        "AEVB framework",
+        "variational auto-encoder design rationale"
+      ],
+      "type": "concept",
+      "description": "Couples a recognition (encoder) network qϕ(z|x) with a generative (decoder) network pθ(x|z), learning both via the SGVB objective for fast inference and learning.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in Section 2.3 and elaborated in Section 3."
+    },
+    {
+      "name": "SGVB estimator with analytic KL divergence and single-sample minibatch Monte Carlo",
+      "aliases": [
+        "single-sample SGVB with closed-form KL",
+        "low-variance SGVB implementation"
+      ],
+      "type": "concept",
+      "description": "Implements ELBO estimation by computing the KL term analytically (for Gaussian case) and using one reconstruction sample per datapoint within minibatches.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equations 7–10 and Algorithm 1 specify this concrete estimator."
+    },
+    {
+      "name": "Gaussian neural network encoder generating mean and variance parameters",
+      "aliases": [
+        "neural encoder for μ and σ",
+        "Gaussian recognition network"
+      ],
+      "type": "concept",
+      "description": "An MLP outputs μ(x) and σ(x); samples are formed as μ+σ⊙ε enabling back-propagation through sampling.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 3 gives this as the concrete encoder architecture."
+    },
+    {
+      "name": "Minibatch SGD or Adagrad training with L=1 sample per datapoint",
+      "aliases": [
+        "minibatch SGVB optimisation",
+        "Adagrad ELBO ascent"
+      ],
+      "type": "concept",
+      "description": "Parameters θ,ϕ are updated using stochastic gradients computed on minibatches (M≈100) with one Monte-Carlo sample per datapoint, enabling scalability.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithm 1 (Section 2.3) and experimental settings in Section 5 describe this."
+    },
+    {
+      "name": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "aliases": [
+        "convergence evidence on MNIST",
+        "lower-bound comparison results"
+      ],
+      "type": "concept",
+      "description": "Experiments (Figures 2 & 3) show SGVB/AEVB reaches higher ELBOs in fewer updates than wake-sleep and MCEM across latent dimensions.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section 5 ‘Experiments’ provides quantitative evidence."
+    },
+    {
+      "name": "Marginal likelihood improvement demonstrated on MNIST data",
+      "aliases": [
+        "marginal likelihood evidence",
+        "HMC-based likelihood estimates"
+      ],
+      "type": "concept",
+      "description": "For low-dimensional latent spaces, HMC estimates confirm higher marginal likelihood for models trained with AEVB than baselines.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed in Section 5 ‘Marginal likelihood’ comparison."
+    },
+    {
+      "name": "Apply SGVB-based variational auto-encoder training for scalable inference in continuous latent variable models",
+      "aliases": [
+        "deploy VAE with SGVB",
+        "use SGVB VAE training"
+      ],
+      "type": "intervention",
+      "description": "During pre-training, optimise a generative model and recognition model jointly using the SGVB estimator with minibatch stochastic gradients and analytic KL divergence when possible.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Method is executed while fitting model parameters before deployment (Section 2.3 ‘Algorithm 1’).",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Prototype-level validation provided on MNIST and Frey Face datasets (Section 5).",
+      "node_rationale": "Provides the actionable step that realises the design and implementation mechanisms."
+    },
+    {
+      "name": "Use reparameterization trick to reduce gradient variance during variational training",
+      "aliases": [
+        "apply differentiable sampling transform",
+        "implement reparameterized gradients"
+      ],
+      "type": "intervention",
+      "description": "Rewrite latent variable sampling as z=gϕ(ε,x) with fixed noise ε so that gradients flow through the sampler, replacing high-variance score-function estimators.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Implemented at model-training time while constructing gradient estimators (Section 2.4).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Technique demonstrated in controlled experiments but not yet industry-standard.",
+      "node_rationale": "Directly addresses high-variance gradient risk identified in Section 2.2."
+    },
+    {
+      "name": "Integrate analytic KL computation in VAE loss to lower estimator variance",
+      "aliases": [
+        "closed-form KL in ELBO",
+        "exact KL term in SGVB"
+      ],
+      "type": "intervention",
+      "description": "Where qϕ and pθ are from conjugate families (e.g., Gaussians), compute the KL divergence term exactly rather than via sampling to further stabilise training.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Implemented during objective construction prior to gradient updates (Equations 7–10).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Shown effective in prototype experiments but lacks large-scale field validation.",
+      "node_rationale": "Operationalises an implementation detail shown to reduce estimator variance."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Intractable posterior distributions in continuous latent variable models",
+      "target_node": "Analytical intractability of marginal likelihood integrals",
+      "description": "Posterior intractability arises because the evidence integral cannot be solved analytically.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct statement in Section 2.1.",
+      "edge_rationale": "Section 2.1 phrases posterior intractability as a consequence of intractable integrals."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "High computational cost of inference on large datasets in probabilistic models",
+      "target_node": "Inefficiency of sampling-based inference per datapoint",
+      "description": "Per-datapoint sampling loops scale poorly, driving up computation cost.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit discussion in Section 2.1 bullet 2.",
+      "edge_rationale": "Text notes sampling loops are too slow for large datasets."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "High variance gradient estimators in variational inference",
+      "target_node": "Variance explosion in naïve Monte Carlo gradient estimator",
+      "description": "The traditional score-function estimator’s variance leads to unstable gradients.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation in Section 2.2 plus commentary.",
+      "edge_rationale": "Authors call the estimator ‘impractical’ because of variance."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Analytical intractability of marginal likelihood integrals",
+      "target_node": "Reparameterization of latent variables enabling differentiable sampling",
+      "description": "Reparameterization allows Monte-Carlo estimates of the ELBO without evaluating the intractable integral directly.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical link established in Sections 2.3–2.4.",
+      "edge_rationale": "ELBO estimation via reparameterization circumvents exact integration."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Analytical intractability of marginal likelihood integrals",
+      "target_node": "Variational lower bound regularization in approximate inference",
+      "description": "Using the ELBO sidesteps direct evaluation of the marginal likelihood.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implicit; authors rely on ELBO instead of marginal likelihood.",
+      "edge_rationale": "ELBO is a computable surrogate even when evidence is intractable."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Inefficiency of sampling-based inference per datapoint",
+      "target_node": "Reparameterization of latent variables enabling differentiable sampling",
+      "description": "Differentiable sampling enables minibatch gradient updates, avoiding per-datapoint inner sampling loops.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated in Section 2.3 describing efficiency gains.",
+      "edge_rationale": "One forward pass replaces iterative sampling."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Variance explosion in naïve Monte Carlo gradient estimator",
+      "target_node": "Reparameterization of latent variables enabling differentiable sampling",
+      "description": "Reparameterization changes the estimator form, dramatically reducing variance.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 2.4 explicitly frames variance reduction.",
+      "edge_rationale": "Deterministic transformation removes noisy score term."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Reparameterization of latent variables enabling differentiable sampling",
+      "target_node": "Stochastic gradient variational Bayes optimization of lower bound",
+      "description": "Low-variance gradients enable practical stochastic optimisation of the ELBO.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 2.3 directly builds SGVB on reparameterization.",
+      "edge_rationale": "SGVB uses the reparameterized estimator."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Reparameterization of latent variables enabling differentiable sampling",
+      "target_node": "Auto-Encoding variational Bayes joint training of encoder and decoder",
+      "description": "The trick allows encoder parameters to be learned jointly through back-prop.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 2.3 points out encoder learning enabled by reparameterization.",
+      "edge_rationale": "Gradients flow through encoder sampling step."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Variational lower bound regularization in approximate inference",
+      "target_node": "Auto-Encoding variational Bayes joint training of encoder and decoder",
+      "description": "AEVB uses the KL term to regularize encoder-decoder training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Discussion near Figure 2.",
+      "edge_rationale": "Regularization prevents overfitting during joint training."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Stochastic gradient variational Bayes optimization of lower bound",
+      "target_node": "SGVB estimator with analytic KL divergence and single-sample minibatch Monte Carlo",
+      "description": "Concrete estimator instantiates SGVB for Gaussian latent variables.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Equations 7–10 give full formula.",
+      "edge_rationale": "Implementation is explicit formula for SGVB."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Auto-Encoding variational Bayes joint training of encoder and decoder",
+      "target_node": "Gaussian neural network encoder generating mean and variance parameters",
+      "description": "The encoder network supplies the parameters of qϕ(z|x).",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 3 details encoder structure.",
+      "edge_rationale": "Encoder is part of AEVB architecture."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Auto-Encoding variational Bayes joint training of encoder and decoder",
+      "target_node": "Minibatch SGD or Adagrad training with L=1 sample per datapoint",
+      "description": "Training regimen realises the joint optimisation.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Algorithm 1 and Section 5 optimisation setup.",
+      "edge_rationale": "Specifies how optimisation is carried out."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "SGVB estimator with analytic KL divergence and single-sample minibatch Monte Carlo",
+      "target_node": "Gaussian neural network encoder generating mean and variance parameters",
+      "description": "Encoder choice tailors SGVB to Gaussian posterior families.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Structural but implicit link; encoder needed for analytic KL.",
+      "edge_rationale": "Analytic KL possible because q is Gaussian."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "SGVB estimator with analytic KL divergence and single-sample minibatch Monte Carlo",
+      "target_node": "Minibatch SGD or Adagrad training with L=1 sample per datapoint",
+      "description": "Minibatch and single-sample strategy further reduce computation cost.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit in Section 2.3; L=1 and minibatch settings.",
+      "edge_rationale": "These settings operationalise estimator efficiency."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "SGVB estimator with analytic KL divergence and single-sample minibatch Monte Carlo",
+      "target_node": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "description": "Experimental results confirm estimator’s effectiveness.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Figures 2 & 3 directly compare methods.",
+      "edge_rationale": "Higher ELBO indicates implementation works."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Gaussian neural network encoder generating mean and variance parameters",
+      "target_node": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "description": "Encoder architecture part of system whose performance is measured.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implicit but encoder is indispensable component of tested model.",
+      "edge_rationale": "Empirical result depends on encoder choice."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Minibatch SGD or Adagrad training with L=1 sample per datapoint",
+      "target_node": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "description": "Training configuration contributes to observed speedups.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated training details in experiment section.",
+      "edge_rationale": "Performance metrics were obtained under this optimiser."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Gaussian neural network encoder generating mean and variance parameters",
+      "target_node": "Marginal likelihood improvement demonstrated on MNIST data",
+      "description": "Encoder contributed to higher estimated marginal likelihood.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implicit via experimental setup.",
+      "edge_rationale": "Likelihood estimates pertain to complete model including encoder."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "SGVB estimator with analytic KL divergence and single-sample minibatch Monte Carlo",
+      "target_node": "Marginal likelihood improvement demonstrated on MNIST data",
+      "description": "Estimator enabled model that achieved high marginal likelihood.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section 5 ‘Marginal likelihood’ uses same estimator.",
+      "edge_rationale": "Performance metric validates estimator quality."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "target_node": "Apply SGVB-based variational auto-encoder training for scalable inference in continuous latent variable models",
+      "description": "Demonstrated efficiency encourages adoption of SGVB VAE training.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Strong experimental evidence.",
+      "edge_rationale": "Users are motivated by better accuracy and speed."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "target_node": "Use reparameterization trick to reduce gradient variance during variational training",
+      "description": "Variance reduction benefits highlighted in results push users to employ the trick.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Clear quantitative gains.",
+      "edge_rationale": "Reparameterization identified as key driver of gains."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical faster convergence and superior lower bound versus wake-sleep and MCEM",
+      "target_node": "Integrate analytic KL computation in VAE loss to lower estimator variance",
+      "description": "Evidence that analytic KL lowers variance motivates its inclusion.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Variance argument made in Section 2.3; experiments support overall method.",
+      "edge_rationale": "Performance benefit attributed partly to analytic KL."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Marginal likelihood improvement demonstrated on MNIST data",
+      "target_node": "Apply SGVB-based variational auto-encoder training for scalable inference in continuous latent variable models",
+      "description": "Higher likelihood provides additional incentive for adoption.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Likelihood estimates are limited-dimension but supportive.",
+      "edge_rationale": "Better generative performance encourages intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Marginal likelihood improvement demonstrated on MNIST data",
+      "target_node": "Use reparameterization trick to reduce gradient variance during variational training",
+      "description": "Likelihood gains underline the benefit of low-variance gradients.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Indirect but reasonable inference from results.",
+      "edge_rationale": "Trick is integral to likelihood improvements."
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2013-12-20T00:00:00Z"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Auto-Encoding Variational Bayes"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Diederik P Kingma",
+        "Max Welling"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1312.6114"
+    }
+  ]
+}

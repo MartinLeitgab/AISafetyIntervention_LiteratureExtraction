@@ -1,0 +1,408 @@
+{
+  "nodes": [
+    {
+      "name": "Undetected scientific anomalies in large image datasets",
+      "aliases": [
+        "missed novel observations in large image archives",
+        "overlooked anomalies in mission imagery"
+      ],
+      "type": "concept",
+      "description": "Failure to surface unexpected or rare images in massive scientific datasets can prevent new discoveries and degrade mission effectiveness.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Highlighted in 1 Introduction as a core motivation for automated novelty discovery."
+    },
+    {
+      "name": "Opaque novelty detection outputs lacking interpretability in image analysis",
+      "aliases": [
+        "uninterpretable anomaly detector results",
+        "black-box novelty selections"
+      ],
+      "type": "concept",
+      "description": "Existing anomaly/novelty detectors often flag items without conveying why they are novel, hindering human trust and follow-up.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed in 1 Introduction: users need to know the properties that made an observation novel."
+    },
+    {
+      "name": "Pixel-level representations causing noisy novelty assessments",
+      "aliases": [
+        "raw pixel sensitivity in novelty detection",
+        "low-level image representation brittleness"
+      ],
+      "type": "concept",
+      "description": "Using raw pixel vectors for novelty detection is overly sensitive to shifts in position, illumination, and other low-level changes, producing both poor class discovery and uninterpretable residuals.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in 3.1 Novelty Detection with Explanations: pixel inputs \"do not perform well\" and make residuals meaningless."
+    },
+    {
+      "name": "CNN feature embeddings provide robust abstract image representation for novelty detection",
+      "aliases": [
+        "CNN-based image embeddings improve novelty detection",
+        "deep feature vectors for image novelty"
+      ],
+      "type": "concept",
+      "description": "Activations from higher CNN layers (e.g., fc6–fc8 of CaffeNet) capture semantic content while discarding nuisance variation, enabling better novelty scoring.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Motivated in 3.2 CNN Features … and validated in 4 Experimental Results."
+    },
+    {
+      "name": "Residual difference in embedding space isolates novel image content",
+      "aliases": [
+        "embedding-space residual captures novelty",
+        "expected vs novel decomposition via residual"
+      ],
+      "type": "concept",
+      "description": "Subtracting the DEMUD reconstruction from the original CNN embedding yields a vector containing only information not modeled so far, theoretically pinpointing novelty.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Formalized in Eq. 2 and surrounding text in 3.1."
+    },
+    {
+      "name": "Combine DEMUD incremental SVD with CNN embeddings to select anomalous images",
+      "aliases": [
+        "DEMUD-CNN novelty detection integration"
+      ],
+      "type": "concept",
+      "description": "Use DEMUD’s reconstruction-error ranking on CNN feature vectors to iteratively discover images that differ most from what has been seen so far.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Design choice described in Figure 2 pipeline and §3 overall."
+    },
+    {
+      "name": "Visualize residual and reconstruction via up-convolutional network for human comprehension",
+      "aliases": [
+        "upconv visualization of novelty explanation",
+        "UC-based expected vs novel imaging"
+      ],
+      "type": "concept",
+      "description": "Feed DEMUD residuals and reconstructions into a trained up-convolutional network to generate separate images of expected and novel content that humans can inspect.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Outlined in 3.3 Visualization of Explanations; addresses interpretability gap."
+    },
+    {
+      "name": "Derive fc8 activations from pre-trained CaffeNet as image feature vectors",
+      "aliases": [
+        "extract fc8 deep features",
+        "use CaffeNet fc8 embeddings"
+      ],
+      "type": "concept",
+      "description": "Each 227×227 image is propagated through CaffeNet and the 1000-dimensional fc8 activations are recorded as its embedding for novelty scoring.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation detail in 3.2 and 4.1 used for highest discovery performance."
+    },
+    {
+      "name": "Iteratively update SVD model with highest reconstruction-error items in DEMUD",
+      "aliases": [
+        "incremental SVD novelty iteration",
+        "DEMUD selection-and-update loop"
+      ],
+      "type": "concept",
+      "description": "After selecting the image with maximum reconstruction error, DEMUD incorporates it into the SVD basis, refining the model of ‘known content’.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Algorithmic step formalized in Eq. 1 and Eq. 2 (3.1)."
+    },
+    {
+      "name": "Generate explanation images via up-convolutional network from residual vectors",
+      "aliases": [
+        "UC renders residuals",
+        "image generation from DEMUD residual"
+      ],
+      "type": "concept",
+      "description": "A pre-trained up-convolutional network maps residual feature vectors back into pixel space, producing saliency-like images of novel regions.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implementation detailed in 3.3; UC chosen over Deep Goggle for color fidelity."
+    },
+    {
+      "name": "ImageNet balanced and unbalanced class discovery nAUC improvement",
+      "aliases": [
+        "ImageNet discovery performance",
+        "balanced/unbalanced discovery results"
+      ],
+      "type": "concept",
+      "description": "DEMUD-CNN-fc8 achieved near-perfect nAUC on balanced ImageNet subsets and out-performed baselines under severe class imbalance.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Quantitative results in 4.2, Figure 4 and Table 1."
+    },
+    {
+      "name": "Mars rover image discovery performance and explanations",
+      "aliases": [
+        "Mars-rover DEMUD results",
+        "Curiosity image novel discovery evidence"
+      ],
+      "type": "concept",
+      "description": "On 6 712 Mars rover images, DEMUD-CNN out-performed random selection and was the only method to discover all 25 classes, producing meaningful residual visualizations (Figures 6–8).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Empirical evidence in 4.3, Table 2, Figures 6–8."
+    },
+    {
+      "name": "Deploy DEMUD-CNN-UC pipeline for operational image triage to surface novel observations",
+      "aliases": [
+        "operational deployment of DEMUD-CNN novelty detector",
+        "mission triage using DEMUD"
+      ],
+      "type": "intervention",
+      "description": "Integrate the full DEMUD + CNN feature extraction + UC visualization pipeline into mission or laboratory image review workflows so that analysts immediately see images scored as novel along with visual explanations.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Suggested in 4.3 discussion: ‘DEMUD could be used to analyze the latest batch of images and identify those that are novel with respect to the archive’.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated in prototype studies on ImageNet and Mars imagery but not yet field-operational (4 Experimental Results, 5 Conclusions).",
+      "node_rationale": "Directly addresses the top-level risk by providing actionable tooling for human teams."
+    },
+    {
+      "name": "Conduct pre-deployment evaluation of DEMUD-CNN novelty detection with nAUC metrics on representative datasets",
+      "aliases": [
+        "benchmark DEMUD-CNN before deployment",
+        "pre-deployment novelty detection testing"
+      ],
+      "type": "intervention",
+      "description": "Run DEMUD-CNN on samples representative of the target domain, measure normalized AUC of class discovery and explanation quality, and iterate design before operational rollout.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Pertains to testing and validation prior to deployment, aligning with lifecycle stage 4.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Evidence limited to experimental benchmarks; requires additional domain-specific trials (4 Experimental Results).",
+      "node_rationale": "Ensures robustness and trust before live use, as implied by performance analysis in 4 Experimental Results."
+    },
+    {
+      "name": "Train domain-specific autoencoder or CNN on target image distribution to enhance novelty detection robustness",
+      "aliases": [
+        "domain-specific embedding training",
+        "fine-tune CNN for novelty"
+      ],
+      "type": "intervention",
+      "description": "Collect images from the intended deployment environment and train or fine-tune an autoencoder/CNN to produce embeddings that better capture in-domain variation, then substitute these embeddings into the DEMUD pipeline.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Occurs during representation learning prior to any novel-image discovery tasks.",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Proposed future work without experimental validation (5 Conclusions and Future Work).",
+      "node_rationale": "Addresses noted limitation that ImageNet-trained embeddings may not generalize perfectly to domains such as Mars (5 Conclusions)."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Undetected scientific anomalies in large image datasets",
+      "target_node": "Pixel-level representations causing noisy novelty assessments",
+      "description": "Low-level pixel sensitivity makes detectors miss semantically novel items or swamp analysts with false novelties.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explicit discussion in 3.1 about pixel representations failing for class-level novelty.",
+      "edge_rationale": "Section 3.1 links pixel sensitivity to poor discovery, contributing to risk in Introduction."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Undetected scientific anomalies in large image datasets",
+      "target_node": "Opaque novelty detection outputs lacking interpretability in image analysis",
+      "description": "When outputs are unexplained, analysts may ignore or misprioritize flagged items, letting anomalies slip through.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Problem framed in Introduction: need to know ‘why’.",
+      "edge_rationale": "Introduction directly ties lack of interpretability to ineffective anomaly discovery."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Opaque novelty detection outputs lacking interpretability in image analysis",
+      "target_node": "Pixel-level representations causing noisy novelty assessments",
+      "description": "Using raw pixels obscures semantic structure, resulting in residuals that are ‘a sequence of pixel values’ and thus uninterpretable.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Stated in 3.1: pixel residuals are hard to interpret.",
+      "edge_rationale": "Section 3.1 shows pixel residuals leading to opaque outputs (Figure 3b)."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Pixel-level representations causing noisy novelty assessments",
+      "target_node": "CNN feature embeddings provide robust abstract image representation for novelty detection",
+      "description": "Higher-level CNN embeddings remove nuisance variation and focus novelty scoring on semantic content.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Supported by quantitative gains in 4 Experimental Results.",
+      "edge_rationale": "Sections 3.2 & 4 show CNN features improving discovery over pixels."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Opaque novelty detection outputs lacking interpretability in image analysis",
+      "target_node": "Residual difference in embedding space isolates novel image content",
+      "description": "Computing and visualizing residuals in feature space explains which parts of an image the model finds unexpected.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Conceptual argument with illustrative figures (Figure 1, Figure 3c).",
+      "edge_rationale": "3.1 & 3.3 connect residuals to interpretability."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "CNN feature embeddings provide robust abstract image representation for novelty detection",
+      "target_node": "Combine DEMUD incremental SVD with CNN embeddings to select anomalous images",
+      "description": "DEMUD requires meaningful embeddings; CNN features supply them, enabling effective novelty ranking.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Pipeline description in Figure 2; empirical success in Section 4.",
+      "edge_rationale": "Design rationale builds directly on theoretical insight."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Residual difference in embedding space isolates novel image content",
+      "target_node": "Visualize residual and reconstruction via up-convolutional network for human comprehension",
+      "description": "Residuals must be rendered; UC visualization turns abstract residuals into human-visible images.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Explained in 3.3 with example figures.",
+      "edge_rationale": "Design converts theoretical residual concept into a visualization strategy."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Combine DEMUD incremental SVD with CNN embeddings to select anomalous images",
+      "target_node": "Derive fc8 activations from pre-trained CaffeNet as image feature vectors",
+      "description": "The design is realized by extracting fc8 activations as the working embedding.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit methodological step in 3.2 and 4.1.",
+      "edge_rationale": "Implementation mechanism operationalizes the design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Combine DEMUD incremental SVD with CNN embeddings to select anomalous images",
+      "target_node": "Iteratively update SVD model with highest reconstruction-error items in DEMUD",
+      "description": "The DEMUD loop realizes the design’s iterative novelty discovery.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Mathematical formulation in 3.1 (Eq. 1–4).",
+      "edge_rationale": "Algorithmic step is the concrete implementation of the design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Visualize residual and reconstruction via up-convolutional network for human comprehension",
+      "target_node": "Generate explanation images via up-convolutional network from residual vectors",
+      "description": "UC network transforms residual vectors into two explanatory images.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Implementation details in 3.3.",
+      "edge_rationale": "Operationalizes visualization design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Derive fc8 activations from pre-trained CaffeNet as image feature vectors",
+      "target_node": "ImageNet balanced and unbalanced class discovery nAUC improvement",
+      "description": "Using fc8 embeddings led to the highest nAUC in both balanced and imbalanced ImageNet experiments.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Quantitative evidence in Table 1.",
+      "edge_rationale": "Performance validates the chosen embedding implementation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Iteratively update SVD model with highest reconstruction-error items in DEMUD",
+      "target_node": "ImageNet balanced and unbalanced class discovery nAUC improvement",
+      "description": "DEMUD’s incremental updates out-performed batch SVD, confirming the efficacy of the loop.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Empirical results comparing DEMUD vs SVD in Figure 4.",
+      "edge_rationale": "Shows that the implementation mechanism delivers improved discovery."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Generate explanation images via up-convolutional network from residual vectors",
+      "target_node": "Mars rover image discovery performance and explanations",
+      "description": "UC residual visualizations clarified why Mars images were flagged, illustrating interpretability gains.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative examples in Figures 6–8.",
+      "edge_rationale": "Demonstrates effectiveness of explanation generation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "ImageNet balanced and unbalanced class discovery nAUC improvement",
+      "target_node": "Deploy DEMUD-CNN-UC pipeline for operational image triage to surface novel observations",
+      "description": "High discovery accuracy on testbeds suggests readiness for real-world deployment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Performance data but no field trials yet.",
+      "edge_rationale": "Validation evidence encourages operational use."
+    },
+    {
+      "type": "motivates",
+      "source_node": "ImageNet balanced and unbalanced class discovery nAUC improvement",
+      "target_node": "Conduct pre-deployment evaluation of DEMUD-CNN novelty detection with nAUC metrics on representative datasets",
+      "description": "Benchmark procedure itself is a template for systematic pre-deployment testing in other domains.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Light inference from experimental methodology.",
+      "edge_rationale": "Evidence demonstrates usefulness of nAUC evaluation method."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Mars rover image discovery performance and explanations",
+      "target_node": "Deploy DEMUD-CNN-UC pipeline for operational image triage to surface novel observations",
+      "description": "Success on domain-shifted Mars imagery indicates value for mission operations.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical performance and discussion in 4.3.",
+      "edge_rationale": "Domain-specific evidence supports deployment."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Mars rover image discovery performance and explanations",
+      "target_node": "Train domain-specific autoencoder or CNN on target image distribution to enhance novelty detection robustness",
+      "description": "Slight drop in cnn-based performance on Mars imagery suggests gains from domain-specific training.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Proposed future work without current data.",
+      "edge_rationale": "Conclusions (Section 5) explicitly propose training a new network for better performance."
+    }
+  ],
+  "meta": [
+    {
+      "key": "authors",
+      "value": [
+        "Kiri L. Wagstaff",
+        "Jake Lee"
+      ]
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1806.08340"
+    },
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "title",
+      "value": "Interpretable Discovery in Large Image Data Sets"
+    },
+    {
+      "key": "date_published",
+      "value": "2018-06-21T00:00:00Z"
+    }
+  ]
+}
