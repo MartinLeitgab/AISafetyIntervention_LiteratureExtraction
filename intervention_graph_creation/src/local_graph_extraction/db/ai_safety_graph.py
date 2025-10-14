@@ -72,9 +72,20 @@ class AISafetyGraph:
             "description": edge.description,
             "edge_confidence": edge.edge_confidence,
             "url": url,
-            "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
+            # "embedding": (edge.embedding.tolist() if edge.embedding is not None else None)
         }
-
+        # deprecate edge embeddings
+        # edge_cypher = f"""
+        # MATCH (a {{name: $s}}), (b {{name: $t}})
+        # MERGE (a)-[r:EDGE {{type: $type}}]->(b)
+        # SET r.description = $description,
+        #     r.edge_confidence = $edge_confidence,
+        #     r.url = $url,
+        #     r.is_tombstone = false
+        # WITH r, $embedding AS emb
+        # SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
+        # RETURN ID(r) AS edge_id
+        # """
         edge_cypher = f"""
         MATCH (a {{name: $s}}), (b {{name: $t}})
         MERGE (a)-[r:EDGE {{type: $type}}]->(b)
@@ -82,8 +93,6 @@ class AISafetyGraph:
             r.edge_confidence = $edge_confidence,
             r.url = $url,
             r.is_tombstone = false
-        WITH r, $embedding AS emb
-        SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         RETURN ID(r) AS edge_id
         """
 
@@ -214,26 +223,27 @@ class AISafetyGraph:
         print("Created vector index on (n:NODE).embedding.")
 
         # Drop and recreate EDGE vector index
-        result = g.ro_query("CALL db.indexes()")
-        edge_index_exists = False
-        for row in result.result_set:
-            if (
-                (len(row) >= 3)
-                and ("EDGE" in str(row[0]))
-                and ("embedding" in str(row[1]))
-                and ("VECTOR" in str(row[2]).upper())
-            ):
-                edge_index_exists = True
-                break
-        if edge_index_exists:
-            print("Dropping existing vector index on [r:EDGE].embedding...")
-            try:
-                g.query("DROP VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding)")
-            except Exception as e:
-                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
-        print("Creating new vector index on [r:EDGE].embedding...")
-        g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
-        print("Created vector index on (r:EDGE).embedding.")
+        # Deprecate edge embeddings
+        # result = g.ro_query("CALL db.indexes()")
+        # edge_index_exists = False
+        # for row in result.result_set:
+        #     if (
+        #         (len(row) >= 3)
+        #         and ("EDGE" in str(row[0]))
+        #         and ("embedding" in str(row[1]))
+        #         and ("VECTOR" in str(row[2]).upper())
+        #     ):
+        #         edge_index_exists = True
+        #         break
+        # if edge_index_exists:
+        #     print("Dropping existing vector index on [r:EDGE].embedding...")
+        #     try:
+        #         g.query("DROP VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding)")
+        #     except Exception as e:
+        #         print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
+        # print("Creating new vector index on [r:EDGE].embedding...")
+        # g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
+        # print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------
 
@@ -347,8 +357,8 @@ class AISafetyGraph:
         # Load embeddings (non-fatal if missing; zero vectors used)
         for node in local_graph.nodes:
             local_graph.add_embeddings_to_nodes(node, json_path)
-        for edge in local_graph.edges:
-            local_graph.add_embeddings_to_edges(edge, json_path)
+        # for edge in local_graph.edges:
+        #     local_graph.add_embeddings_to_edges(edge, json_path)
 
         # Ingest graph (paper-scoped fatal on exception)
         try:

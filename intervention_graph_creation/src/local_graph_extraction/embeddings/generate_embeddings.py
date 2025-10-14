@@ -23,7 +23,7 @@ import traceback
 import asyncio
 from asyncio import Semaphore
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 import logging
 from datetime import datetime
 
@@ -44,6 +44,7 @@ SETTINGS = load_settings()
 MODEL = SETTINGS.embeddings.model
 BATCH_SIZE = SETTINGS.embeddings.batch_size
 OUTPUT_DIR: Path = SETTINGS.paths.output_dir
+NARROW_EMBEDDINGS = os.environ.get("EMBEDDING_TYPE", "narrow") == "narrow"
 
 # Single errors folder for both per-object error JSONs and moved article folders
 EMB_ERRORS_DIR: Path = SETTINGS.paths.embeddings_error_dir
@@ -96,10 +97,14 @@ def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
 # Text builders
 # -----------------------------------------------------------------------------
 
-def node_text(node: dict) -> str:
-    parts = []
+def node_text(node: Dict[str,str]) -> str:
+    parts: List[str] = []
     if node.get("name"):
         parts.append(f"Name: {node['name']}")
+
+    if NARROW_EMBEDDINGS:
+        return " | ".join(parts)
+    
     if node.get("description"):
         parts.append(f"Description: {node['description']}")
     if node.get("aliases"):
@@ -144,11 +149,13 @@ def enumerate_tasks(paper_json: Path) -> List[EmbTask]:
 
     for node in data.get("nodes", []):
         nid = short_id_node(Node(**node))
+        if (embeddings_dir / f"{nid}.json").exists():
+            continue
         tasks.append(EmbTask(embeddings_dir, "node", nid, node_text(node), paper_dir))
 
-    for edge in data.get("edges", []):
-        eid = short_id_edge(Edge(**edge))
-        tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge), paper_dir))
+    # for edge in data.get("edges", []):
+    #     eid = short_id_edge(Edge(**edge))
+    #     tasks.append(EmbTask(embeddings_dir, "edge", eid, edge_text(edge), paper_dir))
 
     return tasks
 
@@ -245,6 +252,21 @@ async def embed_batch_async(
 # Async main
 # -----------------------------------------------------------------------------
 
+def check_for_duplicates(tasks: List[EmbTask], ignore_duplicates:bool=True) -> List[EmbTask]:
+    """Check for duplicate obj_id within the same paper_dir. Optionally ignore them or raise error."""
+    paper_dirs: Dict[str, Dict[str, EmbTask]] = {}
+    for t in tasks:
+        paper_key = str(t.paper_dir)
+        paper_dirs.setdefault(paper_key, {})
+        if t.obj_id in paper_dirs[paper_key]:
+            if not ignore_duplicates:
+                raise ValueError(f"Duplicate obj_id {t.obj_id} in paper {paper_key}")
+        paper_dirs[paper_key][t.obj_id] = t
+    out_tasks: List[EmbTask] = []
+    for pd in paper_dirs.values():
+        out_tasks.extend(pd.values())
+    return out_tasks
+
 async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
     json_files = [
         p for p in OUTPUT_DIR.rglob("*.json")
@@ -260,10 +282,13 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
 
     for jf in json_files:
         try:
-            if (jf.parent / "embeddings").exists():
+            # if (jf.parent / "embeddings").exists():
+            #     skipped_files += 1
+            #     continue
+            tasks = enumerate_tasks(jf)
+            if not tasks or len(tasks) == 0:
                 skipped_files += 1
                 continue
-            tasks = enumerate_tasks(jf)
             if tasks:
                 all_tasks.extend(tasks)
                 processed_files += 1
@@ -285,8 +310,7 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
                     logger=logger,
                 )
 
-    unique: dict[str, EmbTask] = {t.obj_id: t for t in all_tasks}
-    tasks = list(unique.values())
+    tasks = check_for_duplicates(all_tasks, ignore_duplicates=True)
 
     logger.info(
         "JSON files: %d, Skipped: %d, Processed files: %d, Tasks: %d",
@@ -316,6 +340,13 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
     )
 
 def main():
+    if NARROW_EMBEDDINGS:
+        print("Using NARROW embeddings mode.")
+        logger.info("Using NARROW embeddings mode.")
+    else:
+        print("Using FULL embeddings mode.")
+        logger.info("Using FULL embeddings mode.")
+
     asyncio.run(async_main(MAX_CONCURRENT_BATCHES))
 
 if __name__ == "__main__":

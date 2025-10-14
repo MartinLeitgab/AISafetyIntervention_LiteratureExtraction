@@ -74,23 +74,21 @@ class LocalGraph(BaseModel):
                 node.embedding = np.array(data["embedding"], dtype=np.float32)
             except Exception as e:
                 print(f"[WARN] Failed to load embedding for node {node.name}: {e}")
-                node.embedding = np.zeros(1536, dtype=np.float32)
         else:
             print(f"[WARN] Embedding file not found for node {node.name} -> {emb_path}")
-            node.embedding = np.zeros(1536, dtype=np.float32)
 
-    def add_embeddings_to_edges(self, edge: GraphEdge, json_path: Path) -> None:
-        """Load embeddings for an edge from embeddings folder."""
-        edge_id = short_id_edge(edge)
-        emb_path = json_path.parent / "embeddings" / f"{edge_id}.json"
-        if emb_path.exists():
-            try:
-                with open(emb_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                edge.embedding = np.array(data["embedding"], dtype=np.float32)
-            except Exception as e:
-                print(f"[WARN] Failed to load embedding for edge {edge.type} ({edge.source_node}->{edge.target_node}): {e}")
-                edge.embedding = np.zeros(1536, dtype=np.float32)
-        else:
-            print(f"[WARN] Embedding file not found for edge {edge.type} ({edge.source_node}->{edge.target_node}) -> {emb_path}")
-            edge.embedding = np.zeros(1536, dtype=np.float32)
+    # def add_embeddings_to_edges(self, edge: GraphEdge, json_path: Path) -> None:
+    #     """Load embeddings for an edge from embeddings folder."""
+    #     edge_id = short_id_edge(edge)
+    #     emb_path = json_path.parent / "embeddings" / f"{edge_id}.json"
+    #     if emb_path.exists():
+    #         try:
+    #             with open(emb_path, "r", encoding="utf-8") as f:
+    #                 data = json.load(f)
+    #             edge.embedding = np.array(data["embedding"], dtype=np.float32)
+    #         except Exception as e:
+    #             print(f"[WARN] Failed to load embedding for edge {edge.type} ({edge.source_node}->{edge.target_node}): {e}")
+    #             edge.embedding = np.zeros(1536, dtype=np.float32)
+    #     else:
+    #         print(f"[WARN] Embedding file not found for edge {edge.type} ({edge.source_node}->{edge.target_node}) -> {emb_path}")
+    #         edge.embedding = np.zeros(1536, dtype=np.float32)
