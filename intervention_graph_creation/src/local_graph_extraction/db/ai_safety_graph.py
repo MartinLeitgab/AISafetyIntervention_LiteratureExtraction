@@ -13,6 +13,7 @@ from intervention_graph_creation.src.local_graph_extraction.core.edge import Gra
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.db.helpers import label_for
 from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
+import numpy as np
 
 SETTINGS = load_settings()
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class AISafetyGraph:
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
             "url": url,
-            "embedding": (node.embedding.tolist() if node.embedding is not None else None),
+            "embedding": (node.embedding / np.linalg.norm(node.embedding)).tolist() if node.embedding is not None else None,
         }
 
         cypher = f"""
