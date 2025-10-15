@@ -220,7 +220,8 @@ class AISafetyGraph:
                 print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
 
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
+        # Due to a bug in falkordb cosine similarity does not work correctly, so we use euclidean
+        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'euclidean'}")
         print("Created vector index on (n:NODE).embedding.")
 
         # Drop and recreate EDGE vector index
