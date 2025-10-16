@@ -11,7 +11,11 @@ Validates:
 
 import json
 import sys
+import re
 from typing import Dict, Any, List, Set
+
+ALLOWED_ID_RE = re.compile(r"^[A-Za-z0-9._:-]+$")
+
 
 def _is_str(x):
     return isinstance(x, str)
@@ -35,7 +39,8 @@ def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     for key, typ in [
         ("nodes", list),
         ("edges", list),
-        ("meta", list),
+        ("chains", list),
+        ("meta", dict),
     ]:
         if key not in data:
             issues.append(
@@ -81,7 +86,7 @@ def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
                 {"severity": "BLOCKER", "issue": "Node must be object", "where": path}
             )
             continue
-        for req in ["type", "name"]:
+        for req in ["id", "type", "name"]:
             if req not in n or not isinstance(n[req], str) or not n[req].strip():
                 issues.append(
                     {
@@ -107,7 +112,7 @@ def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
                 {"severity": "BLOCKER", "issue": "Edge must be object", "where": path}
             )
             continue
-        for req in ["type", "source_node", "target_node"]:
+        for req in ["id", "type", "source", "target"]:
             if req not in e or not isinstance(e[req], str) or not e[req].strip():
                 issues.append(
                     {
@@ -124,33 +129,85 @@ def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
                     "where": f"{path}.props",
                 }
             )
+
+    # Chains
+    for i, c in enumerate(data.get("chains", [])):
+        path = f"chains[{i}]"
+        if not _is_dict(c):
+            issues.append(
+                {"severity": "BLOCKER", "issue": "Chain must be object", "where": path}
+            )
+            continue
+        for req, t in [("id", str), ("title", str), ("steps", list)]:
+            if req not in c or not isinstance(c[req], t):
+                issues.append(
+                    {
+                        "severity": "BLOCKER",
+                        "issue": f"Chain missing/invalid '{req}'",
+                        "where": f"{path}.{req}",
+                    }
+                )
+        if "steps" in c and _is_list(c["steps"]):
+            if not c["steps"]:
+                issues.append(
+                    {
+                        "severity": "BLOCKER",
+                        "issue": "Chain.steps cannot be empty",
+                        "where": f"{path}.steps",
+                    }
+                )
+            else:
+                # must start and end with node id positionally; detailed check done later
+                pass
+        if "rationale" in c and not (
+            c["rationale"] is None or isinstance(c["rationale"], str)
+        ):
+            issues.append(
+                {
+                    "severity": "MINOR",
+                    "issue": "Chain.rationale should be string or omitted",
+                    "where": f"{path}.rationale",
+                }
+            )
+
     return issues
 
 
-def validate_name_format_and_uniqueness(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def validate_id_format_and_uniqueness(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     issues = []
 
     def _check_unique(items, kind: str):
         seen: Set[str] = set()
         for i, obj in enumerate(items):
-            _id = obj.get("name")
-            path = f"{kind}[{i}].name"
+            _id = obj.get("id")
+            path = f"{kind}[{i}].id"
             if not isinstance(_id, str) or not _id:
                 issues.append(
                     {
                         "severity": "BLOCKER",
-                        "issue": f"{kind[:-1].capitalize()} name must be non-empty string",
+                        "issue": f"{kind[:-1].capitalize()} id must be non-empty string",
                         "where": path,
                     }
                 )
                 continue
+            if not ALLOWED_ID_RE.match(_id):
+                issues.append(
+                    {
+                        "severity": "MAJOR",
+                        "issue": f"Invalid id format '{_id}'",
+                        "where": path,
+                        "suggestion": "Use [A-Za-z0-9._:-]",
+                    }
+                )
             if _id in seen:
                 issues.append(
-                    {"severity": "BLOCKER", "issue": "Duplicate name", "where": path}
+                    {"severity": "BLOCKER", "issue": "Duplicate id", "where": path}
                 )
             seen.add(_id)
 
     _check_unique(data.get("nodes", []), "nodes")
+    _check_unique(data.get("edges", []), "edges")
+    _check_unique(data.get("chains", []), "chains")
     return issues
 
 
@@ -279,20 +336,20 @@ def detect_duplicate_nodes(data: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def validate_all(data: Dict[str, Any]) -> Dict[str, Any]:
     schema_issues = validate_schema(data)
-    name_issues = validate_name_format_and_uniqueness(data)
+    id_issues = validate_id_format_and_uniqueness(data)
     ref_issues = (
         validate_referential_integrity(data)
-        if not any(i["severity"] == "BLOCKER" for i in schema_issues + name_issues)
+        if not any(i["severity"] == "BLOCKER" for i in schema_issues + id_issues)
         else []
     )
     dup_issues = (
         detect_duplicate_nodes(data)
-        if not any(i["severity"] == "BLOCKER" for i in schema_issues + name_issues)
+        if not any(i["severity"] == "BLOCKER" for i in schema_issues + id_issues)
         else []
     )
 
     has_blockers = any(
-        i["severity"] == "BLOCKER" for i in (schema_issues + name_issues + ref_issues)
+        i["severity"] == "BLOCKER" for i in (schema_issues + id_issues + ref_issues)
     )
     report = {
         "decision": {
@@ -304,7 +361,7 @@ def validate_all(data: Dict[str, Any]) -> Dict[str, Any]:
         },
         "validation_report": {
             "schema_check": schema_issues,
-            "name_check": name_issues,
+            "id_check": id_issues,
             "referential_check": ref_issues,
             "duplicates": dup_issues,
         },

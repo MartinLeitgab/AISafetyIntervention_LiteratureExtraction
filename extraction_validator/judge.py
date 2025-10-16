@@ -5,7 +5,6 @@ A precise and rigorous auditor for knowledge graphs extracted by LLMs
 """
 
 import json
-import re
 import hashlib
 import asyncio
 from typing import Dict, List, Any, Optional, Literal
@@ -13,7 +12,14 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from datetime import datetime
 from openai import AsyncOpenAI
+import time
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+from utilities import upload_and_create_batch
+
+print("key:", os.getenv("OPENAI_API_KEY"))
 
 
 class ValidationSeverity(Enum):
@@ -128,43 +134,68 @@ class KGJudge:
         original_texts: List[str],
         kg_outputs: List[Dict],
         original_prompts: List[str],
-    ) -> List[JudgeReport]:
+        batch_size: int = 50000,
+    ) -> str:
         """
-        Process multiple knowledge graphs in batch using OpenAI API.
-
+        Creates batch files for OpenAI API batch processing.
         Args:
             original_texts: List of source texts
             kg_outputs: List of knowledge graph outputs from LLM
             original_prompts: List of original prompts used for KG extraction
-
+            batch_size: The maximum number of requests per batch file.
         Returns:
-            List of JudgeReports for each input
+            A message indicating the created batch files.
         """
         if len(original_texts) != len(kg_outputs) != len(original_prompts):
             raise ValueError("All input lists must have the same length")
 
-        tasks = []
+        batch_files = []
+        batch_ids = []
+        all_requests = []
         for i, (text, kg_output, prompt) in enumerate(
             zip(original_texts, kg_outputs, original_prompts)
         ):
-            task = self._judge_single_graph(text, kg_output, prompt, i)
-            tasks.append(task)
+            validation_prompt = self._create_validation_prompt(text, kg_output, prompt)
+            request = {
+                "custom_id": f"request-{i}",
+                "method": "POST",
+                "url": "/v1/chat/completions",
+                "body": {
+                    "model": "gpt-4-turbo-preview",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are KG-Judge, a precise and rigorous auditor for knowledge graphs. Always return valid JSON in the exact format requested.",
+                        },
+                        {"role": "user", "content": validation_prompt},
+                    ],
+                    "temperature": 0.1,
+                    "max_tokens": 4000,
+                    "response_format": {"type": "json_object"},
+                },
+            }
+            all_requests.append(request)
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Handle exceptions
-        reports = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                reports.append(
-                    self._create_error_report(
-                        f"Error processing item {i}: {str(result)}"
-                    )
-                )
-            else:
-                reports.append(result)
-
-        return reports
+        for i in range(0, len(all_requests), batch_size):
+            batch = all_requests[i : i + batch_size]
+            batch_file_name = f"batch_requests_{i // batch_size + 1}.jsonl"
+            with open(batch_file_name, "w") as f:
+                for req in batch:
+                    f.write(json.dumps(req) + "\n")
+            batch_files.append(batch_file_name)
+        # Immediately upload each batch after it is written
+        batch_id = await upload_and_create_batch(batch_file_name)
+        batch_ids.append(batch_id)
+        client = AsyncOpenAI()
+        # Monitor the status of each submitted batch using the OpenAI API until completion
+        for batch_id in batch_ids:
+            while True:
+                batch = client.batches.retrieve(batch_id)
+                print(f"Batch {batch_id}: status = {batch.status}")
+                if batch.status in ["completed", "failed", "expired", "cancelled"]:
+                    break
+                time.sleep(30)
+        return f"Created and uploaded batch files: {', '.join(batch_files)}"
 
     async def _judge_single_graph(
         self,
@@ -239,7 +270,6 @@ class KGJudge:
 
         # Parse edges
         for edge_data in kg_output.get("edges", []):
-
             try:
                 edge_confidence = int(edge_data.get("edge_confidence", 1))
             except Exception:
@@ -328,43 +358,6 @@ Return your analysis in this EXACT JSON format:
 }}
 
 Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text - return only valid JSON."""
-
-    async def _get_gpt_validation(self, validation_prompt: str) -> Dict[str, Any]:
-        """Get validation assessment from GPT via OpenAI API."""
-        try:
-            response = await self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are KG-Judge, a precise and rigorous auditor for knowledge graphs. Always return valid JSON in the exact format requested.",
-                    },
-                    {"role": "user", "content": validation_prompt},
-                ],
-                temperature=0.1,
-                max_tokens=4000,
-                response_format={"type": "json_object"},
-            )
-
-            # Parse GPT's response
-            response_text = response.choices[0].message.content.strip()
-
-            # Parse JSON response
-            try:
-                return json.loads(response_text)
-            except json.JSONDecodeError:
-                # Try to extract JSON from response if it's not pure JSON
-                json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
-                if json_match:
-                    return json.loads(json_match.group())
-                else:
-                    return {
-                        "error": "Could not extract JSON from GPT response",
-                        "raw_response": response_text,
-                    }
-
-        except Exception as e:
-            return {"error": f"API call failed: {str(e)}"}
 
     def _perform_local_validation(
         self, kg: KnowledgeGraph, original_text: str, original_prompt: str
@@ -471,7 +464,9 @@ Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text 
                     )
                 )
 
-            if edge.edge_confidence == "invalid" or not (1 <= edge.edge_confidence <= 5):
+            if edge.edge_confidence == "invalid" or not (
+                1 <= edge.edge_confidence <= 5
+            ):
                 issues.append(
                     ValidationIssue(
                         "MINOR",
@@ -902,13 +897,12 @@ async def main():
     judge = KGJudge(api_key=os.getenv("OPENAI_API_KEY"))
 
     # Run batch validation
-    reports = await judge.judge_knowledge_graph_batch(
+    result_message = await judge.judge_knowledge_graph_batch(
         original_texts, kg_outputs, original_prompts
     )
 
     # Export results
-    json_reports = judge.export_reports_json(reports)
-    print(json_reports)
+    print(result_message)
 
 
 # Synchronous wrapper for easier usage
@@ -917,7 +911,7 @@ def run_kg_judge_batch(
     kg_outputs: List[Dict],
     original_prompts: List[str],
     api_key: Optional[str] = None,
-) -> List[JudgeReport]:
+) -> str:
     """Synchronous wrapper for batch KG validation."""
     judge = KGJudge(api_key=api_key)
     return asyncio.run(
