@@ -952,7 +952,7 @@ def main():
             return
 
         # Verify cross-document edges connect different sources
-        verification_result = analyzer.verify_cross_document_edges(
+        _verification_result = analyzer.verify_cross_document_edges(
             cross_doc_rel=cross_doc_rel,
             node_types=node_types_to_analyze,
             sample_size=1000,
@@ -960,7 +960,7 @@ def main():
 
         # Analyze similarity link diversity (how many unique papers each node connects to)
         # Using step-wise approach with tiny queries, filtering to high-degree nodes
-        diversity_result = analyzer.analyze_similarity_link_diversity_stepwise(
+        _diversity_result = analyzer.analyze_similarity_link_diversity_stepwise(
             cross_doc_rel=cross_doc_rel,
             node_types=node_types_to_analyze,
             sample_size=50,  # Analyze 50 nodes
