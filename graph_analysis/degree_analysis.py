@@ -478,29 +478,32 @@ class GraphEdgeAnalyzer:
                     where_type_m = ""
 
                 # Simple query: count connections and check if >= min_degree
-                # DIAGNOSTIC: Check for unexpected edge patterns
+                # DIAGNOSTIC: Check for unexpected edge patterns (limit 1 for multiple source FROM edges, needs to be investigated)
                 node_query = f"""
                 MATCH (n)
                 WHERE id(n) = {node_id}
                 MATCH (n)-[:FROM]->(s:Source)
                 WITH n, s.url as source_url
+                LIMIT 1 
                 MATCH (n)-[r:{cross_doc_rel}]-(m)
                 WHERE m <> n {where_type_m}
                 WITH n, source_url, m, COUNT(r) as edge_count
                 MATCH (m)-[:FROM]->(target:Source)
                 WHERE target.url <> source_url
+                WITH n, source_url, m, edge_count, COLLECT(target.url) as target_urls
+                WITH n, source_url, m, edge_count, target_urls[0] as target_url
                 WITH n.name as node_name,
-                     source_url,
-                     COUNT(DISTINCT m) as total_connections,
-                     SUM(edge_count) as total_edges,
-                     COLLECT(DISTINCT target.url) as unique_target_sources
+                    source_url,
+                    COUNT(DISTINCT m) as total_connections,
+                    SUM(edge_count) as total_edges,
+                    COLLECT(DISTINCT target_url) as unique_target_sources
                 WHERE total_connections > {min_degree}
                 RETURN node_name, 
-                       source_url, 
-                       total_connections,
-                       total_edges,
-                       SIZE(unique_target_sources) as unique_sources,
-                       unique_target_sources
+                    source_url, 
+                    total_connections,
+                    total_edges,
+                    SIZE(unique_target_sources) as unique_sources,
+                    unique_target_sources
                 """
 
                 node_result = self.client.execute_command(
@@ -672,6 +675,92 @@ class GraphEdgeAnalyzer:
             "mean_unique_sources": np.mean(unique_sources_list),
             "ratio_distribution": dict(distribution),
         }
+
+    def inspect_node_edges(
+        self, node_id, rel_type="SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL"
+    ):
+        """
+        Diagnostic function to inspect all edges of a specific node
+
+        Args:
+            node_id: The node ID to inspect
+            rel_type: Relationship type to inspect
+        """
+        print("\n" + "=" * 80)
+        print(f"INSPECTING NODE {node_id} EDGES")
+        print("=" * 80)
+
+        # Check FROM relationships
+        from_query = f"""
+        MATCH (n)-[r:FROM]->(s)
+        WHERE id(n) = {node_id}
+        RETURN type(r) as rel_type, id(s) as source_id, s.url as source_url
+        """
+
+        print(f"\nFROM relationships for node {node_id}:")
+        result = self.client.execute_command("GRAPH.QUERY", self.graph_name, from_query)
+        if len(result) > 1 and len(result[1]) > 0:
+            for i, row in enumerate(result[1]):
+                print(f"  {i + 1}. {row[0]} -> Source {row[1]}: {row[2]}")
+        else:
+            print("  None found")
+
+        # Get all similarity edges with details
+        edge_query = f"""
+        MATCH (n)-[r:{rel_type}]-(m)
+        WHERE id(n) = {node_id}
+        RETURN id(m) as target_id,
+               type(r) as rel_type,
+               startNode(r) = n as is_outgoing,
+               labels(m) as target_labels,
+               m.name as target_name
+        ORDER BY target_id
+        """
+
+        print(f"\nAll {rel_type} edges for node {node_id}:")
+        result = self.client.execute_command("GRAPH.QUERY", self.graph_name, edge_query)
+
+        if len(result) > 1 and len(result[1]) > 0:
+            print(f"  Total edge matches: {len(result[1])}")
+
+            # Count by target
+            from collections import Counter
+
+            target_counts = Counter([int(row[0]) for row in result[1]])
+            unique_targets = len(target_counts)
+
+            print(f"  Unique target nodes: {unique_targets}")
+            print(f"  Edges per target ratio: {len(result[1]) / unique_targets:.2f}")
+
+            # Find duplicates
+            duplicates = {
+                tid: count for tid, count in target_counts.items() if count > 1
+            }
+            if duplicates:
+                print(f"\n  Found {len(duplicates)} targets with multiple edges:")
+                for tid, count in sorted(duplicates.items(), key=lambda x: -x[1])[:10]:
+                    print(f"    Target {tid}: {count} edges")
+                    # Show details for this target
+                    for row in result[1]:
+                        if int(row[0]) == tid:
+                            direction = (
+                                "outgoing (n->m)" if row[2] else "incoming (m->n)"
+                            )
+                            print(
+                                f"      - {direction}, labels: {row[3]}, name: {row[4]}"
+                            )
+            else:
+                print("  No duplicates - each target appears exactly once")
+
+            # Sample first 10 edges
+            print("\n  Sample of first 10 edges:")
+            for i, row in enumerate(result[1][:10]):
+                direction = "n->m" if row[2] else "m->n"
+                print(
+                    f"    {i + 1}. Target {row[0]} ({direction}), labels: {row[3]}, name: {row[4][:50] if row[4] else 'None'}..."
+                )
+        else:
+            print("  No edges found")
 
     def verify_cross_document_edges(
         self,
@@ -957,6 +1046,12 @@ def main():
             node_types=node_types_to_analyze,
             sample_size=1000,
         )
+
+        # DIAGNOSTIC: Inspect a specific high-degree node
+        print("\n" + "=" * 80)
+        print("DIAGNOSTIC: Inspecting node 384 to understand edge counting")
+        print("=" * 80)
+        analyzer.inspect_node_edges(node_id=384, rel_type=cross_doc_rel)
 
         # Analyze similarity link diversity (how many unique papers each node connects to)
         # Using step-wise approach with tiny queries, filtering to high-degree nodes
