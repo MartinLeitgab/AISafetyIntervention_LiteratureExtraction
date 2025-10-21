@@ -43,7 +43,7 @@ class AISafetyGraph:
         }
 
         cypher = f"""
-        MERGE (n:{base_label} {{name: $name, type: $type}})
+        MERGE (n:{base_label} {{name: $name, type: $type, url: $url}})
         SET n:{generic_label},
             n.description = $description,
             n.aliases = $aliases,
@@ -88,7 +88,7 @@ class AISafetyGraph:
         # RETURN ID(r) AS edge_id
         # """
         edge_cypher = f"""
-        MATCH (a {{name: $s}}), (b {{name: $t}})
+        MATCH (a {{name: $s, url: $url}}), (b {{name: $t, url: $url}})
         MERGE (a)-[r:EDGE {{type: $type}}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
@@ -96,17 +96,18 @@ class AISafetyGraph:
             r.is_tombstone = false
         RETURN ID(r) AS edge_id
         """
+        
+        g.query(edge_cypher, params)
+        # result = g.query(edge_cypher, params)
+        # edge_id = result.result_set[0][0] if result.result_set else None
 
-        result = g.query(edge_cypher, params)
-        edge_id = result.result_set[0][0] if result.result_set else None
-
-        if edge_id is not None:
-            rel_cypher = f"""
-            MATCH (r) WHERE ID(r) = {edge_id}
-            MERGE (p:Source {{url: $url}})
-            MERGE (r)-[:FROM]->(p)
-            """
-            g.query(rel_cypher, {"url": params["url"]})
+        # if edge_id is not None:
+        #     rel_cypher = f"""
+        #     MATCH (r) WHERE ID(r) = {edge_id}
+        #     MERGE (p:Source {{url: $url}})
+        #     MERGE (r)-[:FROM]->(p)
+        #     """
+        #     g.query(rel_cypher, {"url": params["url"]})
 
     # ---------- metadata & rationale ----------
 
@@ -125,8 +126,8 @@ class AISafetyGraph:
         if isinstance(authors, str):
             authors = [authors]
 
-        cypher = """
-        MERGE (p:Source {url: $url})
+        cypher = f"""
+        MERGE (p:Source {{url: $url}})
         SET p.title = $title,
             p.authors = $authors,
             p.date_published = $date_published,
@@ -180,9 +181,9 @@ class AISafetyGraph:
             combined_parts.append("# JSON Output\n\n" + json_content)
         combined_content = "\n\n---\n\n".join(combined_parts) if combined_parts else ""
 
-        cypher = """
-        MERGE (p:Source {url: $url})
-        MERGE (r:Rationale {url: $url})
+        cypher = f"""
+        MERGE (p:Source {{url: $url}})
+        MERGE (r:Rationale {{url: $url}})
         SET r.content = $content
         MERGE (p)-[:HAS_RATIONALE]->(r)
         RETURN r

@@ -21,5 +21,5 @@ def copy_graph(new_graph_name: str) -> Graph:
 def test_1():
     db = FalkorDB(host=SETTINGS.falkordb.host, port=SETTINGS.falkordb.port)
     graph = db.select_graph(SETTINGS.falkordb.graph)
-    create_edges(graph, 'SIMILARITY_ABOVE_POINT_EIGHT', min_cosine_similarity=0.)
+    create_edges(graph, 'SIMILARITY_ABOVE_POINT_EIGHT', min_cosine_similarity=0.8)
    
