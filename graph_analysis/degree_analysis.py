@@ -7,6 +7,13 @@ matplotlib.use("Agg")  # Use non-GUI backend to avoid Qt errors
 import matplotlib.pyplot as plt
 from scipy import stats
 
+# different edge names depending on embedding creation before rdb dump created- narrow and wide
+embeddings_type = "wide"  # "narrow" or "wide"
+if embeddings_type == "narrow":
+    similarity_edge_name = "SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST"
+else:
+    similarity_edge_name = "SIMILARITY_ABOVE_POINT_EIGHT_2150_NEAREST"
+
 
 class GraphEdgeAnalyzer:
     def __init__(self, host="localhost", port=6379, graph_name="AISafetyIntervention"):
@@ -109,7 +116,7 @@ class GraphEdgeAnalyzer:
         within_doc_rel,
         cross_doc_rel,
         node_types=["Concept", "Intervention"],
-        batch_size=10000,
+        batch_size=5000,
     ):
         """
         Batched version for large graphs using ID-based partitioning
@@ -265,6 +272,8 @@ class GraphEdgeAnalyzer:
         """
         fig, axes = plt.subplots(1, 3, figsize=(20, 6))
 
+        save_path = save_path.replace("_", "_embeddings{embeddings_type}")
+
         # Colors and labels for the three distributions
         configs = [
             ("combined", "Combined (Local + Similarity)", "#2E86AB", "o"),
@@ -393,7 +402,7 @@ class GraphEdgeAnalyzer:
 
     def analyze_similarity_link_diversity_stepwise(
         self,
-        cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST",
+        cross_doc_rel=similarity_edge_name,
         node_types=["Concept", "Intervention"],
         sample_size=50,
         min_degree=100,
@@ -679,9 +688,7 @@ class GraphEdgeAnalyzer:
             "ratio_distribution": dict(distribution),
         }
 
-    def inspect_node_edges(
-        self, node_id, rel_type="SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST"
-    ):
+    def inspect_node_edges(self, node_id, rel_type=similarity_edge_name):
         """
         Diagnostic function to inspect all edges of a specific node
 
@@ -787,7 +794,7 @@ class GraphEdgeAnalyzer:
 
     def verify_cross_document_edges(
         self,
-        cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST",
+        cross_doc_rel=similarity_edge_name,
         node_types=["Concept", "Intervention"],
         sample_size=1000,
     ):
@@ -1032,7 +1039,7 @@ def main():
 
         # Use specified relationship types
         within_doc_rel = "EDGE"
-        cross_doc_rel = "SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST"
+        cross_doc_rel = similarity_edge_name
 
         # Verify these relationship types exist
         if within_doc_rel not in rel_types:
