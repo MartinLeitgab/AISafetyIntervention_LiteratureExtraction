@@ -176,9 +176,9 @@ class KGJudge:
             }
             all_requests.append(request)
 
-        for i in range(0, len(all_requests), batch_size):
-            batch = all_requests[i : i + batch_size]
-            batch_file_name = f"batch_requests_{i // batch_size + 1}.jsonl"
+        for i, batch_start in enumerate(range(0, len(all_requests), batch_size)):
+            batch = all_requests[batch_start : batch_start + batch_size]
+            batch_file_name = f"batch_requests_{i+1}.jsonl"
             with open(batch_file_name, "w") as f:
                 for req in batch:
                     f.write(json.dumps(req) + "\n")
