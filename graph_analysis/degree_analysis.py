@@ -317,9 +317,13 @@ class GraphEdgeAnalyzer:
                 )
 
                 # Fit power law ONLY for cross-document and combined (not for within-document)
-                if key in ["cross_document", "combined"] and len(unique_degrees) > 5:
+                if key in ["cross_document"] and len(unique_degrees) > 5:
                     log_degrees = np.log10(unique_degrees)
                     log_freqs = np.log10(frequencies)
+                    # Create mask and apply to both arrays
+                    mask = log_degrees <= 2
+                    log_degrees = log_degrees[mask]
+                    log_freqs = log_freqs[mask]
                     slope, intercept, r_value, p_value, std_err = stats.linregress(
                         log_degrees, log_freqs
                     )
@@ -389,7 +393,7 @@ class GraphEdgeAnalyzer:
 
     def analyze_similarity_link_diversity_stepwise(
         self,
-        cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL",
+        cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST",
         node_types=["Concept", "Intervention"],
         sample_size=50,
         min_degree=100,
@@ -478,13 +482,12 @@ class GraphEdgeAnalyzer:
                     where_type_m = ""
 
                 # Simple query: count connections and check if >= min_degree
-                # DIAGNOSTIC: Check for unexpected edge patterns (limit 1 for multiple source FROM edges, needs to be investigated)
+                # DIAGNOSTIC: Check for unexpected edge patterns
                 node_query = f"""
                 MATCH (n)
                 WHERE id(n) = {node_id}
                 MATCH (n)-[:FROM]->(s:Source)
                 WITH n, s.url as source_url
-                LIMIT 1 
                 MATCH (n)-[r:{cross_doc_rel}]-(m)
                 WHERE m <> n {where_type_m}
                 WITH n, source_url, m, COUNT(r) as edge_count
@@ -677,7 +680,7 @@ class GraphEdgeAnalyzer:
         }
 
     def inspect_node_edges(
-        self, node_id, rel_type="SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL"
+        self, node_id, rel_type="SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST"
     ):
         """
         Diagnostic function to inspect all edges of a specific node
@@ -694,14 +697,16 @@ class GraphEdgeAnalyzer:
         from_query = f"""
         MATCH (n)-[r:FROM]->(s)
         WHERE id(n) = {node_id}
-        RETURN type(r) as rel_type, id(s) as source_id, s.url as source_url
+        RETURN type(r) as rel_type, id(s) as source_id, s.url as source_url, n.url as node_url
         """
 
         print(f"\nFROM relationships for node {node_id}:")
         result = self.client.execute_command("GRAPH.QUERY", self.graph_name, from_query)
         if len(result) > 1 and len(result[1]) > 0:
             for i, row in enumerate(result[1]):
-                print(f"  {i + 1}. {row[0]} -> Source {row[1]}: {row[2]}")
+                print(
+                    f"  {i + 1}. {row[0]} -> Source ID {row[1]}, url {row[2]}; node.url: {row[3]}"
+                )
         else:
             print("  None found")
 
@@ -713,7 +718,9 @@ class GraphEdgeAnalyzer:
                type(r) as rel_type,
                startNode(r) = n as is_outgoing,
                labels(m) as target_labels,
-               m.name as target_name
+               m.name as target_name,
+               r.score as similarity_score,
+               n.name as node_name
         ORDER BY target_id
         """
 
@@ -752,19 +759,35 @@ class GraphEdgeAnalyzer:
             else:
                 print("  No duplicates - each target appears exactly once")
 
-            # Sample first 10 edges
-            print("\n  Sample of first 10 edges:")
-            for i, row in enumerate(result[1][:10]):
+            # Sample first 100 edges sorted by highest cosine similarity
+            print(
+                f"\n  Sample of 100 highest similarity edges of node {node_id} with name {result[1][0][6]}:"
+            )
+            sorted_edges = sorted(
+                result[1][:100],
+                key=lambda row: 1 - (float(row[5]) ** 2) / 2
+                if row[5] is not None
+                else float("-inf"),
+                reverse=True,
+            )
+
+            for i, row in enumerate(sorted_edges):
                 direction = "n->m" if row[2] else "m->n"
+                eucl_score = f"{float(row[5]):.3g}" if row[5] is not None else "None"
+                cosine_similarity = (
+                    f"{(1 - (float(row[5]) ** 2) / 2):.3g}"
+                    if row[5] is not None
+                    else "None"
+                )
                 print(
-                    f"    {i + 1}. Target {row[0]} ({direction}), labels: {row[3]}, name: {row[4][:50] if row[4] else 'None'}..."
+                    f"    {i + 1}. Target {row[0]} ({direction}), labels: {row[3]}, name: {row[4] if row[4] else 'None'}, Cosine sim: {cosine_similarity}, Eucl score: {eucl_score}"
                 )
         else:
             print("  No edges found")
 
     def verify_cross_document_edges(
         self,
-        cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL",
+        cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST",
         node_types=["Concept", "Intervention"],
         sample_size=1000,
     ):
@@ -945,14 +968,19 @@ class GraphEdgeAnalyzer:
                     f"    Degree {degree}: {count:,} nodes ({100 * count / len(degrees):.1f}%)"
                 )
 
-            # Power law fit - only for cross-document and combined
-            if key in ["cross_document", "combined"] and len(non_zero_degrees) > 5:
+            # Power law fit - only for cross-document
+            if key in ["cross_document"] and len(non_zero_degrees) > 5:
                 degree_counts_nz = Counter(non_zero_degrees)
                 unique_degrees = sorted(degree_counts_nz.keys())
                 frequencies = [degree_counts_nz[d] for d in unique_degrees]
 
                 log_degrees = np.log10(unique_degrees)
+                # limit fit to low noise range with sufficient statistics
                 log_freqs = np.log10(frequencies)
+                # Create mask and apply to both arrays
+                mask = log_degrees <= 2
+                log_degrees = log_degrees[mask]
+                log_freqs = log_freqs[mask]
                 slope, intercept, r_value, p_value, std_err = stats.linregress(
                     log_degrees, log_freqs
                 )
@@ -961,7 +989,7 @@ class GraphEdgeAnalyzer:
                 print(f"    Exponent (γ): {-slope:.3f}")
                 print(f"    R² value: {r_value**2:.3f}")
                 print(f"    P-value: {p_value:.6f}")
-
+                # print(f" degree distribution:{log_degrees}  ")
                 # Interpretation
                 if -slope < 2:
                     print(
@@ -1004,7 +1032,7 @@ def main():
 
         # Use specified relationship types
         within_doc_rel = "EDGE"
-        cross_doc_rel = "SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL"
+        cross_doc_rel = "SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST"
 
         # Verify these relationship types exist
         if within_doc_rel not in rel_types:
