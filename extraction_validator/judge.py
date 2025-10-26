@@ -197,7 +197,7 @@ class KGJudge:
                     break
                 await asyncio.sleep(30)
                 #if completed -> retrieve results 
-        if batch.status = "completed"
+        if batch.status == "completed" :
         output_file_id = batch.output_file_id
         #downloading results
         result_content = await client.files.content(output_file_id)
