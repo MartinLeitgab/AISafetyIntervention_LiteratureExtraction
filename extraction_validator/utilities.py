@@ -57,7 +57,6 @@ def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     for key, typ in [
         ("nodes", list),
         ("edges", list),
-        ("chains", list),
         ("meta", dict),
     ]:
         if key not in data:
