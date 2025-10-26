@@ -31,7 +31,25 @@ def _is_list(x):
 
 def ok(value: bool) -> str:
     return "PASS" if value else "FAIL"
+async def upload_and_create_batch(batch_file_name: str) -> str:
 
+    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    #Upload the file
+    with open(batch_file_name, "rb") as f:
+        uploaded_file = await client.files.create(
+            file=f,
+            purpose="batch"
+        )
+
+    # Create the batch
+    batch = await client.batches.create(
+        input_file_id=uploaded_file.id,
+        endpoint="/v1/chat/completions",
+        completion_window="24h"
+    )
+
+    return batch.id
 
 def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     issues = []
