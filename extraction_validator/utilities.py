@@ -148,45 +148,6 @@ def validate_schema(data: Dict[str, Any]) -> List[Dict[str, Any]]:
                 }
             )
 
-    # Chains
-    for i, c in enumerate(data.get("chains", [])):
-        path = f"chains[{i}]"
-        if not _is_dict(c):
-            issues.append(
-                {"severity": "BLOCKER", "issue": "Chain must be object", "where": path}
-            )
-            continue
-        for req, t in [("id", str), ("title", str), ("steps", list)]:
-            if req not in c or not isinstance(c[req], t):
-                issues.append(
-                    {
-                        "severity": "BLOCKER",
-                        "issue": f"Chain missing/invalid '{req}'",
-                        "where": f"{path}.{req}",
-                    }
-                )
-        if "steps" in c and _is_list(c["steps"]):
-            if not c["steps"]:
-                issues.append(
-                    {
-                        "severity": "BLOCKER",
-                        "issue": "Chain.steps cannot be empty",
-                        "where": f"{path}.steps",
-                    }
-                )
-            else:
-                # must start and end with node id positionally; detailed check done later
-                pass
-        if "rationale" in c and not (
-            c["rationale"] is None or isinstance(c["rationale"], str)
-        ):
-            issues.append(
-                {
-                    "severity": "MINOR",
-                    "issue": "Chain.rationale should be string or omitted",
-                    "where": f"{path}.rationale",
-                }
-            )
 
     return issues
 
