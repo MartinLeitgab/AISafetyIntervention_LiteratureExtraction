@@ -186,6 +186,8 @@ class KGJudge:
         # Immediately upload each batch after it is written
         batch_ids = await asyncio.gather(*(upload_and_create_batch(batch_file_name) for batch_file_name in batch_files))
         client = AsyncOpenAI()
+        #monitor and retrieve the resultts for each batch 
+        results = []
         # Monitor the status of each submitted batch using the OpenAI API until completion
         for batch_id in batch_ids:
             while True:
@@ -194,7 +196,24 @@ class KGJudge:
                 if batch.status in ["completed", "failed", "expired", "cancelled"]:
                     break
                 await asyncio.sleep(30)
-        return f"Created and uploaded batch files: {', '.join(batch_files)}"
+                #if completed -> retrieve results 
+        if batch.status = "completed"
+        output_file_id = batch.output_file_id
+        #downloading results
+        result_content = await client.files.content(output_file_id)
+        # Parse the results (each line is a JSON object)
+
+        for line in result_content.text.splitlines():
+            if line.strip():
+                result = json.loads(line)
+                all_results.append(result)
+                print(f"Batch {batch_id}: Retrieved {len(result_content.text.splitlines())} results")
+            else:
+                print(f"Batch {batch_id}: Failed with status {batch.status}")
+                
+            return all_results
+        
+         
 
     async def _judge_single_graph(
         self,
@@ -896,12 +915,12 @@ async def main():
     judge = KGJudge(api_key=os.getenv("OPENAI_API_KEY"))
 
     # Run batch validation
-    result_message = await judge.judge_knowledge_graph_batch(
+    reports = await judge.judge_knowledge_graph_batch(
         original_texts, kg_outputs, original_prompts
     )
 
     # Export results
-    print(result_message)
+    print(reports)
 
 
 # Synchronous wrapper for easier usage
@@ -910,7 +929,7 @@ def run_kg_judge_batch(
     kg_outputs: List[Dict],
     original_prompts: List[str],
     api_key: Optional[str] = None,
-) -> str:
+) -> List[JudgeReport]:
     """Synchronous wrapper for batch KG validation."""
     judge = KGJudge(api_key=api_key)
     return asyncio.run(
