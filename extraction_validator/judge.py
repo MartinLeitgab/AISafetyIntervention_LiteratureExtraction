@@ -189,7 +189,7 @@ class KGJudge:
         # Monitor the status of each submitted batch using the OpenAI API until completion
         for batch_id in batch_ids:
             while True:
-                batch = client.batches.retrieve(batch_id)
+                batch = await client.batches.retrieve(batch_id)
                 print(f"Batch {batch_id}: status = {batch.status}")
                 if batch.status in ["completed", "failed", "expired", "cancelled"]:
                     break
