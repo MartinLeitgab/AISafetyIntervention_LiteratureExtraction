@@ -193,7 +193,7 @@ class KGJudge:
                 print(f"Batch {batch_id}: status = {batch.status}")
                 if batch.status in ["completed", "failed", "expired", "cancelled"]:
                     break
-                time.sleep(30)
+                await asyncio.sleep(30)
         return f"Created and uploaded batch files: {', '.join(batch_files)}"
 
     async def _judge_single_graph(
