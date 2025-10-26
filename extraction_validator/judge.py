@@ -184,8 +184,7 @@ class KGJudge:
                     f.write(json.dumps(req) + "\n")
             batch_files.append(batch_file_name)
         # Immediately upload each batch after it is written
-        batch_id = await upload_and_create_batch(batch_file_name)
-        batch_ids.append(batch_id)
+        batch_ids = await asyncio.gather(*(upload_and_create_batch(batch_file_name) for batch_file_name in batch_files))
         client = AsyncOpenAI()
         # Monitor the status of each submitted batch using the OpenAI API until completion
         for batch_id in batch_ids:
