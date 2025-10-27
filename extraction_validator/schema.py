@@ -84,7 +84,6 @@ Return your analysis in this EXACT JSON format:
 
 Be surgical and precise. Cite specific evidence from DATA_SOURCE. No extra text - return only valid JSON."""
 
-
 class GeneratedFixProps(BaseModel):
     stable_key: Optional[str] = None
 
@@ -114,7 +113,7 @@ class MergeFix(BaseModel):
     retargeted_edge_ids: List[str]
 
 class GeneratedDeleteFix(BaseModel):
-    kind: Optional[Literal["node", "edge"]] = None
+    kind: Optional[Literal["node", "edge"] | str] = None
     id: Optional[str] = None
     reason: Optional[str] = None
 
@@ -137,13 +136,13 @@ class ProposedFixes(BaseModel):
   
 
 class SchemaIssue(BaseModel):
-    severity: Optional[Literal["BLOCKER", "MAJOR", "MINOR", "STYLE"]] = None
+    severity: Optional[Literal["BLOCKER", "MAJOR", "MINOR", "STYLE"] | str] = None
     issue: Optional[str] = None
     where: Optional[str] = None
     suggestion: Optional[str] = None
 
 class ReferentialIssue(BaseModel):
-    severity: Optional[Literal["BLOCKER", "MAJOR", "MINOR"]] = None
+    severity: Optional[Literal["BLOCKER", "MAJOR", "MINOR"] | str] = None
     issue: Optional[str] = None
     ids: Optional[List[str]] = None
 
@@ -153,7 +152,7 @@ class OrphanIssue(BaseModel):
     suggested_fix: Optional[str] = None
 
 class DuplicateIssue(BaseModel):
-    kind: Optional[Literal["node", "edge"]] = None
+    kind: Optional[Literal["node", "edge"] | str] = None
     ids: Optional[List[str]] = None
     merge_strategy: Optional[str] = None
 
@@ -165,7 +164,7 @@ class RationaleMismatch(BaseModel):
 class CoverageExpectedEdge(BaseModel):
     title: Optional[str] = None
     evidence: Optional[str] = None
-    status: Optional[Literal["covered", "partially_covered", "missing"]] = None
+    status: Optional[Literal["covered", "partially_covered", "missing"] | str] = None
     mapped_edge_ids: Optional[List[str]] = None
 
 class CoverageIssue(BaseModel):

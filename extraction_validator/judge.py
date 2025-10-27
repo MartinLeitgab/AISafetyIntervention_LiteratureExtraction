@@ -467,6 +467,7 @@ class KGJudge:
                     "error": error,
                     "raw_response": raw_response,
                     "error_code": error_code,
+                    "custom_id": request.custom_id,
                 },
                 local_validation,
                 request.kg_output,
@@ -479,16 +480,24 @@ class KGJudge:
     def _parse_judge_response(self, response_text: str) -> GPT_Assessment_Result:
         try:
             raw: OpenAIResponse = json.loads(response_text)
-            if raw["response"]["status_code"] != 200:
-                return {
-                    "type": "failure",
-                    "error": f"OpenAI API error: {raw['response']['status_code']}",
-                    "raw_response": response_text,
-                    "error_code": "http_error"
-                }
-            body = raw["response"]["body"]
-            custom_id = raw["custom_id"]
-
+        except json.JSONDecodeError as e:
+             return {
+                "type": "failure",
+                "error": "Could not extract JSON from GPT response, error: " + str(e),
+                "raw_response": response_text,
+                "error_code": "parse_or_validate_error"
+            }
+        custom_id = raw["custom_id"]
+        if raw["response"]["status_code"] != 200:
+            return {
+                "type": "failure",
+                "error": f"OpenAI API error: {raw['response']['status_code']}",
+                "raw_response": response_text,
+                "error_code": "http_error",
+                "custom_id": custom_id,
+            }
+        body = raw["response"]["body"]
+        try:
             chat_completion = ChatCompletion.model_validate(body)
 
             if chat_completion.usage:
@@ -502,7 +511,8 @@ class KGJudge:
                     "type": "failure",
                     "error": f"GPT did not finish properly, finish_reason: {choice.finish_reason}",
                     "raw_response": response_text,
-                    "error_code": choice.finish_reason
+                    "error_code": choice.finish_reason,
+                    "custom_id": custom_id,
                 }
 
             content = choice.message.content
@@ -512,7 +522,8 @@ class KGJudge:
                     "type": "failure",
                     "error": "No content in GPT response",
                     "raw_response": response_text,
-                    "error_code": "empty_response"
+                    "error_code": "empty_response",
+                    "custom_id": custom_id,
                 }
 
             result = GPT_Assessment.model_validate_json(content)
@@ -521,12 +532,13 @@ class KGJudge:
                 "gpt_assessment": result,
                 "custom_id": custom_id,
             }
-        except (json.JSONDecodeError, ValidationError) as e:
+        except ValidationError as e:
             return {
                 "type": "failure",
-                "error": "Could not extract JSON from GPT response, error: " + str(e),
+                "error": "Could not validate GPT response into GPT_Assessment model: " + str(e),
                 "raw_response": response_text,
-                "error_code": "parse_or_validate_error"
+                "error_code": "parse_or_validate_error",
+                "custom_id": custom_id,
             }
 
     def _perform_local_validation(self, kg: PaperSchema) -> LocalAssessment:
