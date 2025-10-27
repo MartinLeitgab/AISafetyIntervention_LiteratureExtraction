@@ -62,12 +62,16 @@ class Node(BaseModel):
         if self.type == "concept":
             if self.intervention_lifecycle is not None or self.intervention_maturity is not None:
                 raise ValueError("intervention_* must be null for concept nodes")
-        else:
+            if self.concept_category is None:
+                raise ValueError("concept_category is required for concept nodes")
+            return self
+        if self.type == "intervention":
             if self.concept_category is not None:
                 raise ValueError("concept_category must be null for intervention nodes")
             if self.intervention_lifecycle is None or self.intervention_maturity is None:
                 raise ValueError("intervention_lifecycle and intervention_maturity are required for intervention nodes")
-        return self
+            return self
+        raise ValueError("invalid type")
 
 
 class GraphNode(Node):
