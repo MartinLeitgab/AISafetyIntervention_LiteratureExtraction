@@ -1,0 +1,257 @@
+{
+  "nodes": [
+    {
+      "name": "Slower convergence and suboptimal policy learning in Advantage Learning RL algorithms",
+      "aliases": [
+        "slow value convergence in AL",
+        "suboptimal policies due to AL regularization"
+      ],
+      "type": "concept",
+      "description": "Advantage Learning can take significantly more iterations to reach an optimal policy and may settle on inferior behaviours, reducing robustness and sample efficiency.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduction & Sec.4 identify slow convergence and policy sub-optimality as the primary undesired outcome."
+    },
+    {
+      "name": "Cumulative performance bound errors from blind action gap enlargement in Advantage Learning",
+      "aliases": [
+        "extra performance loss bound in AL",
+        "error accumulation due to unconditional advantage term"
+      ],
+      "type": "concept",
+      "description": "Adding the advantage term at every state–action regardless of correctness introduces additional discounted errors into the performance loss bound.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec.4 derives Theorem 1 showing how the advantage term increases the loss bound when induced actions are not truly optimal."
+    },
+    {
+      "name": "Conditional advantage term addition to control action gap in Advantage Learning",
+      "aliases": [
+        "necessity-based advantage term hypothesis",
+        "Occam’s razor for action gap"
+      ],
+      "type": "concept",
+      "description": "Hypothesis: the advantage term should only be added when the current action gap is below a threshold, avoiding needless regularization.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec.5 Method motivation: 'advantage term should not be added without necessity'."
+    },
+    {
+      "name": "Clipped Advantage Learning design balancing action gap and convergence in RL",
+      "aliases": [
+        "clipped AL rationale",
+        "balanced gap-convergence design"
+      ],
+      "type": "concept",
+      "description": "Solution approach that increases the action gap only when needed, aiming to keep robustness while speeding convergence.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec.5 introduces the overall design goal of clipped AL."
+    },
+    {
+      "name": "Advantage term clipping operator using ratio threshold and lower bound (Clipped AL)",
+      "aliases": [
+        "clipped AL operator",
+        "ratio-based advantage clipping"
+      ],
+      "type": "concept",
+      "description": "Implementation: apply the AL operator only if (Q(s,a)−Ql)/(V(s)−Ql) ≥ c; otherwise default to the Bellman operator.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Eq.(4–5) in Sec.5 provide the exact operator definition."
+    },
+    {
+      "name": "Theoretical proof of reduced performance loss bound and maintained gap in Clipped AL",
+      "aliases": [
+        "clipped AL theoretical guarantees",
+        "performance-loss bound theorem"
+      ],
+      "type": "concept",
+      "description": "Corollary 1 and Theorem 2 show clipped AL remains optimality-preserving and gap-increasing while tightening the convergence bound compared to AL.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec.5 Balance & theoretical analysis supply formal guarantees."
+    },
+    {
+      "name": "Empirical benchmark improvements with Clipped AL across MinAtar, PLE tasks",
+      "aliases": [
+        "clipped AL experimental results",
+        "benchmark reward gains"
+      ],
+      "type": "concept",
+      "description": "Experiments on six tasks show ~45% average improvement over DQN and faster convergence than AL, confirming practical efficacy.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sec.6 Experiments and Table 1 quantify empirical gains."
+    },
+    {
+      "name": "Apply Clipped Advantage Learning operator during RL training to improve convergence and robustness",
+      "aliases": [
+        "use clipped AL in value-based RL",
+        "train with clipped AL"
+      ],
+      "type": "intervention",
+      "description": "Replace the standard AL or DQN target with the clipped AL operator in the fine-tuning/RL training loop.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Operator is used during the main learning updates (Sec.5 Methods).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Validated on academic benchmarks but not yet widely adopted in production (Sec.6 Experiments).",
+      "node_rationale": "Central actionable step that implements the proposed mechanism."
+    },
+    {
+      "name": "Tune clipping ratio c and scaling parameter alpha in Clipped AL for tradeoff control",
+      "aliases": [
+        "hyper-parameter tuning for clipped AL",
+        "adjust c and alpha"
+      ],
+      "type": "intervention",
+      "description": "Select c∈(0,1) and alpha∈[0,1) to reach desired balance between action gap size and convergence speed, guided by ablation results.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Parameter tuning is part of algorithm-training configuration (Sec.6 Ablation Study).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Only exploratory ablation evidence provided; no systematic tuning methodology yet.",
+      "node_rationale": "Provides a refinement path to optimise the primary intervention."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Slower convergence and suboptimal policy learning in Advantage Learning RL algorithms",
+      "target_node": "Cumulative performance bound errors from blind action gap enlargement in Advantage Learning",
+      "description": "Accumulated performance-loss errors directly manifest as slower convergence and inferior policies.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Derived formally in Sec.4 Theorem 1 with supporting toy example.",
+      "edge_rationale": "Introduction & Sec.4 explicitly link the increased bound to observed slow convergence."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Cumulative performance bound errors from blind action gap enlargement in Advantage Learning",
+      "target_node": "Conditional advantage term addition to control action gap in Advantage Learning",
+      "description": "Adding the advantage term only when necessary avoids accumulating extra errors.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Hypothesised in Sec.5 prior to formal definition; medium strength.",
+      "edge_rationale": "Sec.5: authors motivate conditional addition to solve the identified error problem."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Conditional advantage term addition to control action gap in Advantage Learning",
+      "target_node": "Clipped Advantage Learning design balancing action gap and convergence in RL",
+      "description": "The conditional-addition insight underpins the overall design of clipped AL.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Design section directly cites the insight; no independent proof.",
+      "edge_rationale": "Sec.5 Methods transitions from hypothesis to design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Clipped Advantage Learning design balancing action gap and convergence in RL",
+      "target_node": "Advantage term clipping operator using ratio threshold and lower bound (Clipped AL)",
+      "description": "The clipping operator translates the design into a concrete update rule.",
+      "edge_confidence": "5",
+      "edge_confidence_rationale": "Exact mathematical operator given (Eq.4–5).",
+      "edge_rationale": "Sec.5 provides formula implementing the design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Advantage term clipping operator using ratio threshold and lower bound (Clipped AL)",
+      "target_node": "Theoretical proof of reduced performance loss bound and maintained gap in Clipped AL",
+      "description": "Formal proofs confirm the operator’s desired properties.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Rigorous derivations and theorems supplied.",
+      "edge_rationale": "Sec.5 Corollary 1 & Theorem 2 validate implementation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Advantage term clipping operator using ratio threshold and lower bound (Clipped AL)",
+      "target_node": "Empirical benchmark improvements with Clipped AL across MinAtar, PLE tasks",
+      "description": "Experiments show practical gains that align with theoretical expectations.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Multiple tasks, five seeds, clear gains (Fig.3, Table 1).",
+      "edge_rationale": "Sec.6 experiments directly test the operator."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical proof of reduced performance loss bound and maintained gap in Clipped AL",
+      "target_node": "Apply Clipped Advantage Learning operator during RL training to improve convergence and robustness",
+      "description": "Formal guarantees provide justification for adopting clipped AL in training.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Proofs give strong rationale but do not implement deployment themselves.",
+      "edge_rationale": "Sec.5 discussion recommends practical use based on proofs."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical benchmark improvements with Clipped AL across MinAtar, PLE tasks",
+      "target_node": "Apply Clipped Advantage Learning operator during RL training to improve convergence and robustness",
+      "description": "Empirical gains demonstrate real-world benefit, encouraging adoption.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Consistent experimental performance across six tasks.",
+      "edge_rationale": "Sec.6 shows better rewards and sample efficiency."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical benchmark improvements with Clipped AL across MinAtar, PLE tasks",
+      "target_node": "Tune clipping ratio c and scaling parameter alpha in Clipped AL for tradeoff control",
+      "description": "Benchmark variability highlights need for task-specific hyper-parameter tuning.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Inference from ablation study; not prescriptive across all domains.",
+      "edge_rationale": "Sec.6 Ablation Study indicates different c/alpha settings affect outcomes."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Apply Clipped Advantage Learning operator during RL training to improve convergence and robustness",
+      "target_node": "Tune clipping ratio c and scaling parameter alpha in Clipped AL for tradeoff control",
+      "description": "Hyper-parameter tuning refines the primary adoption of clipped AL.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Light inference; tuning refines but is not mandatory.",
+      "edge_rationale": "Ablation study shows tuning yields better balance, refining main intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2022-03-20T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/2203.11677"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Zhe Zhang",
+        "Yaozhong Gan",
+        "Xiaoyang Tan"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Robust Action Gap Increasing with Clipped Advantage Learning"
+    }
+  ]
+}
