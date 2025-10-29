@@ -191,92 +191,92 @@ Check that the JSON deliverables are not corrupted in any way by checking each o
 **Now carefully process the provided data source using all instructions.**
 """
 
-PROMPT_RESPONSE_EVAL = """
+# PROMPT_RESPONSE_EVAL = """
 
-You are tasked with evaluating LLM-generated “Logical Chain” analyses of a research data source. Your evaluation must be thorough, structured, and consistent across data sources and runs.
+# You are tasked with evaluating LLM-generated “Logical Chain” analyses of a research data source. Your evaluation must be thorough, structured, and consistent across data sources and runs.
 
-Produce your evaluation in markdown with the following mandatory sections:
+# Produce your evaluation in markdown with the following mandatory sections:
 
-⸻
+# ⸻
 
-1. Analysis Clarity & Precision
+# 1. Analysis Clarity & Precision
 
-Assess whether each analysis is faithful to the data source, internally coherent, and explicit about inference strategy.
-Check for:
-	•	data source alignment: Does the summary capture all key findings, limitations, and context?
-	•	Inference strategy: If the data source does not propose interventions, are interventions correctly marked inferred_theoretical? If non-AI data source, was the correct strategy applied?
-	•	Clarity & readability: Is prose concise, structured, and unambiguous?
-	•	Cross-run consistency: Compare between analyses/runs. Are scales, node IDs, and terminology stable?
+# Assess whether each analysis is faithful to the data source, internally coherent, and explicit about inference strategy.
+# Check for:
+# 	•	data source alignment: Does the summary capture all key findings, limitations, and context?
+# 	•	Inference strategy: If the data source does not propose interventions, are interventions correctly marked inferred_theoretical? If non-AI data source, was the correct strategy applied?
+# 	•	Clarity & readability: Is prose concise, structured, and unambiguous?
+# 	•	Cross-run consistency: Compare between analyses/runs. Are scales, node IDs, and terminology stable?
 
-⸻
+# ⸻
 
-2. Logical-Chain Reasoning
+# 2. Logical-Chain Reasoning
 
-Evaluate the quality of causal reasoning and schema compliance.
-Check for:
-	•	Completeness of coverage: Are all causal chains in the data source captured (problem → concepts → interventions)? Note omissions.
-	•	Node uniqueness & definitions: No redundant nodes; each has a clear description.
-	•	Intervention decomposition: Multi-step interventions must be represented with implemented_by edges.
-	•	Edge types & flow: Chains must flow Problem → Concept → Intervention. Edge types restricted to: causes, contributes_to, mitigated_by, implemented_by. No ad-hoc types unless justified.
-	•	Confidence & maturity: Every edge has numeric confidence (with documented scale) and every intervention has numeric maturity, aligned with the data source and the analysis. Concepts must not have maturity values.
+# Evaluate the quality of causal reasoning and schema compliance.
+# Check for:
+# 	•	Completeness of coverage: Are all causal chains in the data source captured (problem → concepts → interventions)? Note omissions.
+# 	•	Node uniqueness & definitions: No redundant nodes; each has a clear description.
+# 	•	Intervention decomposition: Multi-step interventions must be represented with implemented_by edges.
+# 	•	Edge types & flow: Chains must flow Problem → Concept → Intervention. Edge types restricted to: causes, contributes_to, mitigated_by, implemented_by. No ad-hoc types unless justified.
+# 	•	Confidence & maturity: Every edge has numeric confidence (with documented scale) and every intervention has numeric maturity, aligned with the data source and the analysis. Concepts must not have maturity values.
 
-These are the scales provided to the original prompts:
+# These are the scales provided to the original prompts:
 
-**Intervention Maturity Scale** (for intervention nodes only):
+# **Intervention Maturity Scale** (for intervention nodes only):
 
-1. inferred_theoretical: Intervention inferred from data source's findings but not explicitly proposed by authors
-2. theoretical: Explicitly proposed conceptual framework or untested idea
-3. proposed: Explicitly suggested specific method but not implemented
-4. tested: Empirically evaluated in controlled setting
-5. deployed: Implemented in production systems
+# 1. inferred_theoretical: Intervention inferred from data source's findings but not explicitly proposed by authors
+# 2. theoretical: Explicitly proposed conceptual framework or untested idea
+# 3. proposed: Explicitly suggested specific method but not implemented
+# 4. tested: Empirically evaluated in controlled setting
+# 5. deployed: Implemented in production systems
 
-**Edge Confidence Scale**:
+# **Edge Confidence Scale**:
 
-1. speculative: Theoretical reasoning only
-2. supported: Empirical evidence, limited scope
-3. validated: Strong empirical evidence, broader scope
-4. established: Replicated findings, high confidence
-5. proven: Logical/mathematical proof exists
+# 1. speculative: Theoretical reasoning only
+# 2. supported: Empirical evidence, limited scope
+# 3. validated: Strong empirical evidence, broader scope
+# 4. established: Replicated findings, high confidence
+# 5. proven: Logical/mathematical proof exists
 
-⸻
+# ⸻
 
-3. Strengths & Weaknesses
+# 3. Strengths & Weaknesses
 
-Summarize strengths and weaknesses of each analysis.
-	•	Strengths: accuracy, clear structure, metadata presence, etc.
-	•	Weaknesses: missing chains, lack of implemented_by, inconsistent scales, redundant nodes, or schema drift.
+# Summarize strengths and weaknesses of each analysis.
+# 	•	Strengths: accuracy, clear structure, metadata presence, etc.
+# 	•	Weaknesses: missing chains, lack of implemented_by, inconsistent scales, redundant nodes, or schema drift.
 
-⸻
+# ⸻
 
-4. Recommendations for Improvement
+# 4. Recommendations for Improvement
 
-List specific, actionable fixes, e.g.:
-	•	Add missing causal chains (name them explicitly).
-	•	Decompose complex interventions into sub-nodes linked with implemented_by.
-	•	Merge duplicate nodes or clarify aliasing.
-	•	Define and enforce numeric confidence/maturity scales consistently across runs.
-	•	Demonstrate cross-run stability via two independent generations.
+# List specific, actionable fixes, e.g.:
+# 	•	Add missing causal chains (name them explicitly).
+# 	•	Decompose complex interventions into sub-nodes linked with implemented_by.
+# 	•	Merge duplicate nodes or clarify aliasing.
+# 	•	Define and enforce numeric confidence/maturity scales consistently across runs.
+# 	•	Demonstrate cross-run stability via two independent generations.
 
-⸻
+# ⸻
 
-5. Final Scores
+# 5. Final Scores
 
-Give 0-5 ratings for each dimension, and an overall composite. Use a consistent rubric:
+# Give 0-5 ratings for each dimension, and an overall composite. Use a consistent rubric:
 
-Criterion	Analysis 1	Analysis 2
-Clarity & Precision	X	X
-Logical-Chain Coverage	X	X
-Node/Edge Quality	X	X
-Complex-Intervention Handling	X	X
-Consistency Across Runs	X	X
-Overall	X / 5	X / 5
+# Criterion	Analysis 1	Analysis 2
+# Clarity & Precision	X	X
+# Logical-Chain Coverage	X	X
+# Node/Edge Quality	X	X
+# Complex-Intervention Handling	X	X
+# Consistency Across Runs	X	X
+# Overall	X / 5	X / 5
 
-⸻
+# ⸻
 
-Formatting Notes
-	•	Always use tables for side-by-side comparison.
-	•	Always state explicitly if a requirement is missing, even if everything else is good.
-	•	If scales (confidence, maturity) are not defined, mark it as non-compliant.
-	•	Evaluations must be self-contained: assume reader has data source & analyses but not prior evals.
+# Formatting Notes
+# 	•	Always use tables for side-by-side comparison.
+# 	•	Always state explicitly if a requirement is missing, even if everything else is good.
+# 	•	If scales (confidence, maturity) are not defined, mark it as non-compliant.
+# 	•	Evaluations must be self-contained: assume reader has data source & analyses but not prior evals.
 
-"""
+# """
