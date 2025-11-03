@@ -968,8 +968,8 @@ def main(
     ard_dir: str,
     output_dir: str,
     # TODO look at openAI limits
-    how_many_batches_in_flight_at_once: int = 30,
-    batch_size: int = 50000,
+    how_many_batches_in_flight_at_once: int = 5,
+    batch_size: int = 5,
 ):
     """Main function to run KG-Judge on a directory of processed KG outputs.
 
