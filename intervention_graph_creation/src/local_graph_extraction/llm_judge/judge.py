@@ -19,7 +19,7 @@ from datetime import datetime
 import uuid
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-from extraction_validator.utilities import (
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.utilities import (
     BatchOutput,
     BatchResult,
     EverythingInTheBatchHasAnError,
@@ -32,7 +32,7 @@ from extraction_validator.utilities import (
     unknown_judge_request,
     upload_and_create_batch,
 )
-from extraction_validator.schema import (
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.schema import (
     AddNodeFix,
     DeleteFix,
     FixProps,

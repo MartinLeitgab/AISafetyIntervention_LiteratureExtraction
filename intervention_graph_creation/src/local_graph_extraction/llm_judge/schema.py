@@ -6,7 +6,7 @@ as TypedDicts.
 from typing import List, Literal, Optional
 from pydantic import BaseModel
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
-from intervention_graph_creation.src.prompt.final_primary_prompt import PROMPT_EXTRACT  # type: ignore[reportMissingImports, reportMissingTypeStubs]
+from intervention_graph_creation.src.prompt.final_primary_prompt import PROMPT_EXTRACT
 
 
 

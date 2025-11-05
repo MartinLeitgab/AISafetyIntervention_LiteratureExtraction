@@ -19,7 +19,7 @@ from openai.types.chat.completion_create_params import (
     CompletionCreateParamsNonStreaming,
 )
 
-from extraction_validator.schema import PaperSchema
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.schema import PaperSchema
 import uuid
 
 USE_DEBUG_BATCH = environ.get("USE_DEBUG_BATCH", "0") == "1"

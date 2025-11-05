@@ -6,10 +6,10 @@ import json
 from pathlib import Path
 import shutil
 from typing import List
-from fire import Fire  # type: ignore[reportMissingImports, reportMissingTypeStubs]
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
-from extraction_validator.judge import get_all_json_files, get_by_file_url_to_text_map, find_url
-from tqdm import tqdm  # type: ignore[reportMissingImports, reportMissingTypeStubs]
+from fire import Fire
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.judge import get_all_json_files, get_by_file_url_to_text_map, find_url
+from tqdm import tqdm
 
 def main( processed_dir: str,
     ard_dir: str,
