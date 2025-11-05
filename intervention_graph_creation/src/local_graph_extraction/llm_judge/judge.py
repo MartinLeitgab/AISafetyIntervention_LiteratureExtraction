@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 KG-Judge: Knowledge Graph Validation and Improvement System
 A precise and rigorous auditor for knowledge graphs extracted by LLMs

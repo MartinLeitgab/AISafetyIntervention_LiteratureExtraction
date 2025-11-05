@@ -1,3 +1,19 @@
+"""Validates knowledge graph extraction output folders and moves invalid ones to an error directory.
+
+Key validation criteria:
+- Folder contains ≥3 files
+- Contains a JSON file named {folder_name}.json
+- JSON has non-empty nodes and edges arrays
+- Folder is not already in error directories (extraction/graph/embeddings errors)
+
+Workflow:
+1. Iterates through all subfolders in output_dir
+2. Validates each folder against the criteria
+3. Moves invalid folders to extraction_error_dir
+
+Purpose: Cleans up the output directory by segregating corrupted or incomplete extraction results.
+"""
+
 import json
 import shutil
 from pathlib import Path

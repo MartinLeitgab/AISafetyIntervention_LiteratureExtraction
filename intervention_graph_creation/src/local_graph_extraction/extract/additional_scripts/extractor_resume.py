@@ -1,3 +1,10 @@
+"""Recovers results from interrupted extraction processes to avoid wasting OpenAI API costs.
+
+If an extraction process is accidentally cancelled, API requests were already sent and paid for,
+but results may not have been saved. This script retrieves those completed API responses
+and saves them properly, preventing wasted money.
+"""
+
 import argparse
 import json
 import logging
