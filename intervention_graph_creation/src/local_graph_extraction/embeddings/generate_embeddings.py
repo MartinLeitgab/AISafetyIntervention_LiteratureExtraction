@@ -15,26 +15,27 @@ Features:
 - Logging to ./logs/embeddings_MM-DD_HH-MM.log
 """
 
-import os
+import asyncio
 import json
+import logging
+import os
 import random
 import time
 import traceback
-import asyncio
 from asyncio import Semaphore
-from pathlib import Path
-from typing import List, Dict
-import logging
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from config import load_settings
-from intervention_graph_creation.src.utils import short_id_node, short_id_edge
 from intervention_graph_creation.src.local_graph_extraction.core.node import Node
-from intervention_graph_creation.src.local_graph_extraction.core.edge import Edge
-from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
+from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
+    write_failure,
+)
+from intervention_graph_creation.src.utils import short_id_node
 
 # -----------------------------------------------------------------------------
 # Settings
@@ -73,12 +74,14 @@ client = OpenAI(api_key=api_key)
 # Utils
 # -----------------------------------------------------------------------------
 
+
 def atomic_write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + f".tmp-{random.randint(0, 1_000_000)}")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     tmp.replace(path)
+
 
 def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
     """Per-object error json (node/edge) stays in embeddings_error_dir."""
@@ -93,18 +96,20 @@ def log_error(obj_id: str, obj_type: str, text: str, error: Exception):
     }
     atomic_write_json(error_path, payload)
 
+
 # -----------------------------------------------------------------------------
 # Text builders
 # -----------------------------------------------------------------------------
 
-def node_text(node: Dict[str,str]) -> str:
+
+def node_text(node: Dict[str, str]) -> str:
     parts: List[str] = []
     if node.get("name"):
         parts.append(f"Name: {node['name']}")
 
     if NARROW_EMBEDDINGS:
         return " | ".join(parts)
-    
+
     if node.get("description"):
         parts.append(f"Description: {node['description']}")
     if node.get("aliases"):
@@ -112,6 +117,7 @@ def node_text(node: Dict[str,str]) -> str:
     if node.get("concept_category"):
         parts.append(f"Category: {node['concept_category']}")
     return " | ".join(parts)
+
 
 def edge_text(edge: dict) -> str:
     parts = []
@@ -125,12 +131,21 @@ def edge_text(edge: dict) -> str:
         parts.append(f"To: {edge['target_node']}")
     return " | ".join(parts)
 
+
 # -----------------------------------------------------------------------------
 # Task enumeration
 # -----------------------------------------------------------------------------
 
+
 class EmbTask:
-    def __init__(self, embeddings_dir: Path, obj_type: str, obj_id: str, text: str, paper_dir: Path):
+    def __init__(
+        self,
+        embeddings_dir: Path,
+        obj_type: str,
+        obj_id: str,
+        text: str,
+        paper_dir: Path,
+    ):
         self.embeddings_dir = embeddings_dir
         self.obj_type = obj_type
         self.obj_id = obj_id
@@ -140,6 +155,7 @@ class EmbTask:
     @property
     def out_path(self) -> Path:
         return self.embeddings_dir / f"{self.obj_id}.json"
+
 
 def enumerate_tasks(paper_json: Path) -> List[EmbTask]:
     data = json.loads(paper_json.read_text(encoding="utf-8"))
@@ -159,15 +175,14 @@ def enumerate_tasks(paper_json: Path) -> List[EmbTask]:
 
     return tasks
 
+
 # -----------------------------------------------------------------------------
 # Async Embeddings client with retries
 # -----------------------------------------------------------------------------
 
+
 async def embed_batch_async(
-    batch: List[EmbTask],
-    sem: Semaphore,
-    stats: dict,
-    max_retries: int = 3
+    batch: List[EmbTask], sem: Semaphore, stats: dict, max_retries: int = 3
 ):
     async with sem:
         delay = 2.0
@@ -248,11 +263,15 @@ async def embed_batch_async(
                 await asyncio.sleep(sleep_for)
                 delay = min(delay * 2.0, 10.0)
 
+
 # -----------------------------------------------------------------------------
 # Async main
 # -----------------------------------------------------------------------------
 
-def check_for_duplicates(tasks: List[EmbTask], ignore_duplicates:bool=True) -> List[EmbTask]:
+
+def check_for_duplicates(
+    tasks: List[EmbTask], ignore_duplicates: bool = True
+) -> List[EmbTask]:
     """Check for duplicate obj_id within the same paper_dir. Optionally ignore them or raise error."""
     paper_dirs: Dict[str, Dict[str, EmbTask]] = {}
     for t in tasks:
@@ -267,10 +286,15 @@ def check_for_duplicates(tasks: List[EmbTask], ignore_duplicates:bool=True) -> L
         out_tasks.extend(pd.values())
     return out_tasks
 
+
 async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
     json_files = [
-        p for p in OUTPUT_DIR.rglob("*.json")
-        if not any(part in {"embeddings_error", "issues", "error", "embeddings"} for part in p.parts)
+        p
+        for p in OUTPUT_DIR.rglob("*.json")
+        if not any(
+            part in {"embeddings_error", "issues", "error", "embeddings"}
+            for part in p.parts
+        )
     ]
     if not json_files:
         logger.info("No JSON files found.")
@@ -294,8 +318,7 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
                 processed_files += 1
         except Exception as e:
             logger.warning(
-                "Failed to enumerate %s: %s\n%s",
-                jf, str(e), traceback.format_exc()
+                "Failed to enumerate %s: %s\n%s", jf, str(e), traceback.format_exc()
             )
             # Fatal for this paper: move folder using shared write_failure
             paper_dir = jf.parent
@@ -314,17 +337,22 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
 
     logger.info(
         "JSON files: %d, Skipped: %d, Processed files: %d, Tasks: %d",
-        len(json_files), skipped_files, processed_files, len(tasks)
+        len(json_files),
+        skipped_files,
+        processed_files,
+        len(tasks),
     )
 
     if not tasks:
         logger.info("All embeddings already computed. Nothing to do.")
         return
 
-    batches = [tasks[i:i + BATCH_SIZE] for i in range(0, len(tasks), BATCH_SIZE)]
+    batches = [tasks[i : i + BATCH_SIZE] for i in range(0, len(tasks), BATCH_SIZE)]
     logger.info(
         "Planned batches: %d (batch_size=%d, concurrency=%d)",
-        len(batches), BATCH_SIZE, max_concurrent_batches
+        len(batches),
+        BATCH_SIZE,
+        max_concurrent_batches,
     )
 
     sem = Semaphore(max_concurrent_batches)
@@ -336,8 +364,11 @@ async def async_main(max_concurrent_batches: int = MAX_CONCURRENT_BATCHES):
 
     logger.info(
         "Done. Success: %d, Errors: %d, Duration: %.1fs",
-        stats["done"], stats["errors"], duration
+        stats["done"],
+        stats["errors"],
+        duration,
     )
+
 
 def main():
     if NARROW_EMBEDDINGS:
@@ -348,6 +379,7 @@ def main():
         logger.info("Using FULL embeddings mode.")
 
     asyncio.run(async_main(MAX_CONCURRENT_BATCHES))
+
 
 if __name__ == "__main__":
     main()

@@ -1,8 +1,11 @@
-from collections import Counter
 import re
+from collections import Counter
 
-
-with open("./AISafetyIntervention_LiteratureExtraction/logs/extraction_10-08_14-00.log", "r", encoding="utf-8") as f:
+with open(
+    "./AISafetyIntervention_LiteratureExtraction/logs/extraction_10-08_14-00.log",
+    "r",
+    encoding="utf-8",
+) as f:
     lines = f.readlines()
 
 pattern = re.compile(r"Skipping already processed or failed JSONL: (.+)")

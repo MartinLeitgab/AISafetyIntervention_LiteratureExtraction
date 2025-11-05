@@ -9,18 +9,19 @@ Validates:
 - Duplicate nodes by (type, normalized name)
 """
 
-# pyright: strict
-
-from typing import Any, List, Literal, Optional, TypedDict, cast
-from openai import AsyncOpenAI
+import uuid
 from dataclasses import dataclass
 from os import environ
+from typing import Any, List, Literal, Optional, TypedDict, cast
+
+from openai import AsyncOpenAI
 from openai.types.chat.completion_create_params import (
     CompletionCreateParamsNonStreaming,
 )
 
-from intervention_graph_creation.src.local_graph_extraction.llm_judge.schema import PaperSchema
-import uuid
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.schema import (
+    PaperSchema,
+)
 
 USE_DEBUG_BATCH = environ.get("USE_DEBUG_BATCH", "0") == "1"
 

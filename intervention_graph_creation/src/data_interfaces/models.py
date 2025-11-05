@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional
 
+
 @dataclass
 class Publication:
     title: str
@@ -18,7 +19,9 @@ class Publication:
         # If references not provided, attempt to split them from the text heuristically
         if self.references is None and isinstance(self.text, str) and self.text:
             try:
-                from .utils import split_references  # local import to avoid circular deps
+                from .utils import (  # local import to avoid circular deps
+                    split_references,
+                )
 
                 content, refs = split_references(self.text)
                 self.text = content
@@ -30,10 +33,15 @@ class Publication:
         # If PDF file path provided, remove the references from the file
         if self.pdf_file_path and self.references:
             try:
-                from .utils import remove_references_from_pdf  # local import to avoid circular deps
+                from .utils import (  # local import to avoid circular deps
+                    remove_references_from_pdf,
+                )
 
                 remove_references_from_pdf(self.pdf_file_path)
             except Exception as e:
                 # On any failure, log the error but don't crash
                 import logging
-                logging.getLogger(__name__).warning(f"Failed to modify PDF {self.pdf_file_path}: {e}")
+
+                logging.getLogger(__name__).warning(
+                    f"Failed to modify PDF {self.pdf_file_path}: {e}"
+                )

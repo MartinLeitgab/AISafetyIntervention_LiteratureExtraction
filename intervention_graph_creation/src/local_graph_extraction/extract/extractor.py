@@ -1,34 +1,41 @@
-import os
-import json
-import time
-import httpx
 import asyncio
+import hashlib
+import json
 import logging
+import os
 import statistics
-from pathlib import Path
-from typing import Any, Optional, List, Dict
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-import hashlib
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-
+import httpx
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from config import load_settings
-from intervention_graph_creation.src.prompt.final_primary_prompt import PROMPT_EXTRACT
 from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
+    filter_dict,
     safe_write,
     split_text_and_json,
-    filter_dict,
     write_failure,
 )
+from intervention_graph_creation.src.prompt.final_primary_prompt import PROMPT_EXTRACT
 
 MODEL = "o3"
 REASONING_EFFORT = "medium"
 SETTINGS = load_settings()
 META_KEYS = frozenset(
-    ["authors", "date_published", "filename", "source", "source_filetype", "title", "url"]
+    [
+        "authors",
+        "date_published",
+        "filename",
+        "source",
+        "source_filetype",
+        "title",
+        "url",
+    ]
 )
 
 LOGS_DIR = SETTINGS.paths.logs_dir
@@ -38,10 +45,7 @@ log_file = LOGS_DIR / f"extraction_{datetime.now().strftime('%m-%d_%H-%M')}.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(log_file, encoding="utf-8"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler(log_file, encoding="utf-8"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -55,7 +59,9 @@ class Extractor:
 
         http_client = httpx.Client(
             timeout=httpx.Timeout(300.0),
-            limits=httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=300.0),
+            limits=httpx.Limits(
+                max_keepalive_connections=10, max_connections=20, keepalive_expiry=300.0
+            ),
             headers={"Connection": "keep-alive", "Keep-Alive": "timeout=300, max=1000"},
             transport=httpx.HTTPTransport(retries=3, verify=True),
         )
@@ -121,17 +127,27 @@ class Extractor:
         if req:
             request_obj = req.get("request") or {}
             body = request_obj.get("body") or {}
-            context.update({
-                "request": {
-                    "endpoint": request_obj.get("url"),
-                    "custom_id": request_obj.get("custom_id"),
-                    "body_keys": list(body.keys()) if isinstance(body, dict) else None,
-                },
-                "file_path": str(req.get("file_path")) if req.get("file_path") else None,
-            })
+            context.update(
+                {
+                    "request": {
+                        "endpoint": request_obj.get("url"),
+                        "custom_id": request_obj.get("custom_id"),
+                        "body_keys": list(body.keys())
+                        if isinstance(body, dict)
+                        else None,
+                    },
+                    "file_path": str(req.get("file_path"))
+                    if req.get("file_path")
+                    else None,
+                }
+            )
 
         if raw_line:
-            snippet = raw_line if len(raw_line) <= 4096 else raw_line[:4096] + "...(truncated)"
+            snippet = (
+                raw_line
+                if len(raw_line) <= 4096
+                else raw_line[:4096] + "...(truncated)"
+            )
             context["raw_error_snippet"] = snippet
 
         if raw_response_status_note:
@@ -196,7 +212,14 @@ class Extractor:
             raise ValueError("No message object in output")
         if message.get("status") != "completed":
             raise ValueError(f"Message not completed (status={message.get('status')})")
-        text_obj = next((item for item in message.get("content", []) if item.get("type") == "output_text"), None)
+        text_obj = next(
+            (
+                item
+                for item in message.get("content", [])
+                if item.get("type") == "output_text"
+            ),
+            None,
+        )
         if not text_obj:
             raise ValueError("No output_text found")
         return text_obj["text"]
@@ -222,7 +245,9 @@ class Extractor:
             err_dir = SETTINGS.paths.extraction_error_dir / paper_id
 
             if out_dir.exists() or err_dir.exists():
-                logger.info("Skipping already processed or failed PDF: %s", pdf_path.name)
+                logger.info(
+                    "Skipping already processed or failed PDF: %s", pdf_path.name
+                )
                 continue
 
             try:
@@ -260,7 +285,12 @@ class Extractor:
                 )
             except Exception as e:
                 self._handle_failure(
-                    req={"paper_id": paper_id, "file_path": pdf_path, "request": {}, "file_type": "pdf"},
+                    req={
+                        "paper_id": paper_id,
+                        "file_path": pdf_path,
+                        "request": {},
+                        "file_type": "pdf",
+                    },
                     err=e,
                     stage="create_batch_requests (pdf)",
                     meta={"filename": pdf_path.name},
@@ -276,7 +306,10 @@ class Extractor:
             try:
                 with jsonl_path.open("r", encoding="utf-8") as f:
                     for idx, line in enumerate(f):
-                        if json_items_cap is not None and len(batch_requests) >= first_n:
+                        if (
+                            json_items_cap is not None
+                            and len(batch_requests) >= first_n
+                        ):
                             break
                         if not line.strip():
                             continue
@@ -286,7 +319,12 @@ class Extractor:
                         except Exception as e:
                             pid = f"{jsonl_path.stem}__badjson_{idx}"
                             self._handle_failure(
-                                req={"paper_id": pid, "file_path": jsonl_path, "request": {}, "file_type": "jsonl"},
+                                req={
+                                    "paper_id": pid,
+                                    "file_path": jsonl_path,
+                                    "request": {},
+                                    "file_type": "jsonl",
+                                },
                                 err=e,
                                 stage="create_batch_requests (jsonl parse)",
                                 meta={"filename": jsonl_path.name},
@@ -302,7 +340,10 @@ class Extractor:
                         err_dir = SETTINGS.paths.extraction_error_dir / paper_id
 
                         if out_dir.exists() or err_dir.exists():
-                            logger.info("Skipping already processed or failed JSONL: %s", paper_id)
+                            logger.info(
+                                "Skipping already processed or failed JSONL: %s",
+                                paper_id,
+                            )
                             continue
 
                         custom_id = f"jsonl_{paper_id}_{idx}"
@@ -316,7 +357,10 @@ class Extractor:
                                     {
                                         "role": "user",
                                         "content": [
-                                            {"type": "input_text", "text": PROMPT_EXTRACT},
+                                            {
+                                                "type": "input_text",
+                                                "text": PROMPT_EXTRACT,
+                                            },
                                             {
                                                 "type": "input_text",
                                                 "text": f"\n\nHere is the paper for analysis:\n\n{paper_json['text']}",
@@ -338,7 +382,12 @@ class Extractor:
                         )
             except Exception as e:
                 self._handle_failure(
-                    req={"paper_id": jsonl_path.stem, "file_path": jsonl_path, "request": {}, "file_type": "jsonl"},
+                    req={
+                        "paper_id": jsonl_path.stem,
+                        "file_path": jsonl_path,
+                        "request": {},
+                        "file_type": "jsonl",
+                    },
                     err=e,
                     stage="create_batch_requests (jsonl file read)",
                     meta={"filename": jsonl_path.name},
@@ -350,8 +399,13 @@ class Extractor:
     # ---------------------------
     # Batch job lifecycle
     # ---------------------------
-    def create_batch_input_file(self, batch_requests: List[Dict], batch_num: int = 1) -> str:
-        batch_input_path = SETTINGS.paths.output_dir / f"batch_input_{batch_num}_{int(time.time())}.jsonl"
+    def create_batch_input_file(
+        self, batch_requests: List[Dict], batch_num: int = 1
+    ) -> str:
+        batch_input_path = (
+            SETTINGS.paths.output_dir
+            / f"batch_input_{batch_num}_{int(time.time())}.jsonl"
+        )
         with batch_input_path.open("w", encoding="utf-8") as f:
             for batch_req in batch_requests:
                 f.write(json.dumps(batch_req["request"], ensure_ascii=False) + "\n")
@@ -383,7 +437,9 @@ class Extractor:
         description: str = "Paper extraction batch",
     ) -> None:
         SETTINGS.paths.output_dir.mkdir(parents=True, exist_ok=True)
-        batch_requests = await self._run_in_thread(self.create_batch_requests, input_dir, first_n)
+        batch_requests = await self._run_in_thread(
+            self.create_batch_requests, input_dir, first_n
+        )
 
         if not batch_requests:
             logger.warning("No files to process.")
@@ -391,7 +447,7 @@ class Extractor:
 
         batch_chunks = [
             {
-                "chunk": batch_requests[i:i + batch_size],
+                "chunk": batch_requests[i : i + batch_size],
                 "batch_num": i // batch_size + 1,
                 "description": f"{description} - Batch {i // batch_size + 1}",
             }
@@ -406,7 +462,11 @@ class Extractor:
 
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.error("Batch %d failed with exception: %s", batch_chunks[i]["batch_num"], result)
+                logger.error(
+                    "Batch %d failed with exception: %s",
+                    batch_chunks[i]["batch_num"],
+                    result,
+                )
 
         self.print_summary()
 
@@ -418,25 +478,38 @@ class Extractor:
         in_progress = self.total_batches - self.completed_batches
         logger.info(
             "Batch %d started (Processed: %d / In progress: %d / Total: %d)",
-            batch_num, self.completed_batches, in_progress, self.total_batches
+            batch_num,
+            self.completed_batches,
+            in_progress,
+            self.total_batches,
         )
 
         t0 = time.time()
-        input_file_id = await self._run_in_thread(self.create_batch_input_file, chunk, batch_num)
+        input_file_id = await self._run_in_thread(
+            self.create_batch_input_file, chunk, batch_num
+        )
         batch_id = await self._run_in_thread(self.create_batch_job, input_file_id, desc)
 
-        completed_batch = await self._wait_for_batch_completion_async(batch_id, batch_num)
+        completed_batch = await self._wait_for_batch_completion_async(
+            batch_id, batch_num
+        )
 
         elapsed = time.time() - t0
         self._batch_times.append(elapsed)
 
-        await self._run_in_thread(self._process_batch_results, completed_batch, chunk, elapsed)
+        await self._run_in_thread(
+            self._process_batch_results, completed_batch, chunk, elapsed
+        )
 
         self.completed_batches += 1
         in_progress = self.total_batches - self.completed_batches
         logger.info(
             "Batch %d completed in %.1fs (Processed: %d / In progress: %d / Total: %d)",
-            batch_num, elapsed, self.completed_batches, in_progress, self.total_batches
+            batch_num,
+            elapsed,
+            self.completed_batches,
+            in_progress,
+            self.total_batches,
         )
 
         return completed_batch
@@ -451,7 +524,9 @@ class Extractor:
                 return batch
 
             if batch.status in ["failed", "expired", "cancelled"]:
-                raise RuntimeError(f"Batch {batch_num} ended with status {batch.status}")
+                raise RuntimeError(
+                    f"Batch {batch_num} ended with status {batch.status}"
+                )
 
             now = time.time()
 
@@ -460,7 +535,9 @@ class Extractor:
                     in_progress = self.total_batches - self.completed_batches
                     logger.info(
                         "Progress update: Processed: %d / In progress: %d / Total: %d",
-                        self.completed_batches, in_progress, self.total_batches
+                        self.completed_batches,
+                        in_progress,
+                        self.total_batches,
                     )
                     self._last_log_time = now
 
@@ -469,7 +546,9 @@ class Extractor:
     # ---------------------------
     # Batch result processing
     # ---------------------------
-    def _process_batch_results(self, batch: Dict, batch_requests: List[Dict], elapsed: float) -> None:
+    def _process_batch_results(
+        self, batch: Dict, batch_requests: List[Dict], elapsed: float
+    ) -> None:
         if batch.status != "completed":
             return
 
@@ -537,7 +616,9 @@ class Extractor:
                         status_note = ""
                         try:
                             out = resp_body.get("output", [])
-                            message_obj = next((it for it in out if it.get("type") == "message"), None)
+                            message_obj = next(
+                                (it for it in out if it.get("type") == "message"), None
+                            )
                             status_note = f"Message status: {message_obj.get('status') if message_obj else 'N/A'}"
                         except Exception:
                             pass
@@ -555,12 +636,20 @@ class Extractor:
 
                     out_dir = SETTINGS.paths.output_dir / paper_id
                     out_dir.mkdir(parents=True, exist_ok=True)
-                    self.write_batch_outputs(out_dir, paper_id, resp_body, (req or {}).get("meta"))
+                    self.write_batch_outputs(
+                        out_dir, paper_id, resp_body, (req or {}).get("meta")
+                    )
                     tokens = resp_body.get("usage", {}).get("total_tokens", 0)
-                    self._papers_status.append({"status": "success", "elapsed": elapsed, "tokens": tokens})
+                    self._papers_status.append(
+                        {"status": "success", "elapsed": elapsed, "tokens": tokens}
+                    )
 
                 except Exception as e:
-                    req = custom_id_map.get(result.get("custom_id")) if isinstance(result, dict) else None
+                    req = (
+                        custom_id_map.get(result.get("custom_id"))
+                        if isinstance(result, dict)
+                        else None
+                    )
                     self._handle_failure(
                         req=req,
                         err=e,
@@ -638,7 +727,11 @@ class Extractor:
         success = sum(1 for p in self._papers_status if p.get("status") == "success")
         failed = sum(1 for p in self._papers_status if p.get("status") == "failed")
 
-        tokens = [p["tokens"] for p in self._papers_status if p.get("status") == "success" and "tokens" in p]
+        tokens = [
+            p["tokens"]
+            for p in self._papers_status
+            if p.get("status") == "success" and "tokens" in p
+        ]
 
         logger.info("=== 📊 Extraction Summary ===")
         logger.info("Total papers processed: %d", total)
@@ -673,7 +766,7 @@ if __name__ == "__main__":
             input_dir=input_dir,
             first_n=total_articles,
             batch_size=batch_size,
-            description=f"Paper extraction (first {total_articles}, {batch_size} per batch)"
+            description=f"Paper extraction (first {total_articles}, {batch_size} per batch)",
         )
 
     asyncio.run(main())

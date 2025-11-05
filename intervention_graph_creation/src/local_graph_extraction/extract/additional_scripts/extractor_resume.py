@@ -4,18 +4,33 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from intervention_graph_creation.src.local_graph_extraction.extract.extractor import Extractor
-from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
-    url_to_id,
-    filter_dict,
-)
 from config import load_settings
+from intervention_graph_creation.src.local_graph_extraction.extract.extractor import (
+    Extractor,
+)
+from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
+    filter_dict,
+    url_to_id,
+)
 
 SETTINGS = load_settings()
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
-META_KEYS = frozenset(["authors", "date_published", "filename", "source", "source_filetype", "title", "url"])
+META_KEYS = frozenset(
+    [
+        "authors",
+        "date_published",
+        "filename",
+        "source",
+        "source_filetype",
+        "title",
+        "url",
+    ]
+)
+
 
 class BatchResumer(Extractor):
     def __init__(self):
@@ -23,11 +38,11 @@ class BatchResumer(Extractor):
 
     def parse_custom_id(self, custom_id: str) -> Tuple[str, str, int]:
         if custom_id.startswith("pdf_"):
-            rest = custom_id[len("pdf_"):]
+            rest = custom_id[len("pdf_") :]
             base, idx = rest.rsplit("_", 1)
             return "pdf", base, int(idx)
         if custom_id.startswith("jsonl_"):
-            rest = custom_id[len("jsonl_"):]
+            rest = custom_id[len("jsonl_") :]
             base, idx = rest.rsplit("_", 1)
             return "jsonl", base, int(idx)
         base, idx = custom_id.rsplit("_", 1)
@@ -89,7 +104,9 @@ class BatchResumer(Extractor):
                 pass
         return cids
 
-    def make_batch_requests_for(self, custom_ids: Set[str], meta_index: Dict[str, Dict]) -> List[Dict]:
+    def make_batch_requests_for(
+        self, custom_ids: Set[str], meta_index: Dict[str, Dict]
+    ) -> List[Dict]:
         reqs: List[Dict] = []
         for cid in custom_ids:
             try:
@@ -97,16 +114,20 @@ class BatchResumer(Extractor):
             except Exception:
                 ftype, pid = "jsonl", cid
             meta = meta_index.get(pid, {})
-            reqs.append({
-                "request": {"custom_id": cid},
-                "paper_id": pid,
-                "meta": meta,
-                "file_type": ftype,
-                "file_path": None,
-            })
+            reqs.append(
+                {
+                    "request": {"custom_id": cid},
+                    "paper_id": pid,
+                    "meta": meta,
+                    "file_type": ftype,
+                    "file_path": None,
+                }
+            )
         return reqs
 
-    def process_existing_batch(self, batch_id: str, meta_index: Dict[str, Dict]) -> None:
+    def process_existing_batch(
+        self, batch_id: str, meta_index: Dict[str, Dict]
+    ) -> None:
         batch = self.client.batches.retrieve(batch_id)
         if batch.status != "completed":
             logger.warning(f"Batch {batch_id} not completed (status={batch.status})")
@@ -125,7 +146,12 @@ class BatchResumer(Extractor):
                 self.process_existing_batch(bid, meta_index)
             except Exception as e:
                 self._handle_failure(
-                    req={"paper_id": "batch_level", "request": {"custom_id": bid}, "file_type": None, "file_path": None},
+                    req={
+                        "paper_id": "batch_level",
+                        "request": {"custom_id": bid},
+                        "file_type": None,
+                        "file_path": None,
+                    },
                     err=e,
                     stage="resume_many.process_existing_batch",
                     meta={"batch_id": bid},
@@ -141,6 +167,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--sources", type=Path, nargs="+", required=False)
     p.add_argument("--include-default-arxiv", action="store_true", default=False)
     return p.parse_args()
+
 
 def main():
     args = parse_args()
@@ -161,9 +188,14 @@ def main():
 
     sources: List[Path] = args.sources or []
     if args.include_default_arxiv:
-        sources.append(Path("./AISafetyIntervention_LiteratureExtraction/intervention_graph_creation/data/raw/ard_json/arxiv.jsonl"))
+        sources.append(
+            Path(
+                "./AISafetyIntervention_LiteratureExtraction/intervention_graph_creation/data/raw/ard_json/arxiv.jsonl"
+            )
+        )
     resumer = BatchResumer()
     resumer.resume_many(batch_ids, sources)
+
 
 if __name__ == "__main__":
     main()

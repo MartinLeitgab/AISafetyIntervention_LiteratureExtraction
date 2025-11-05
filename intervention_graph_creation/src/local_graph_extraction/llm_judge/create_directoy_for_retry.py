@@ -3,17 +3,16 @@ Grabs the files that had errors during extraction validation
 and puts them in a directory for retrying.
 """
 
-
-# pyright: strict
 import json
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Any, Dict
-from fire import Fire # type: ignore[import]
+
+from fire import Fire
 
 
-def main(last_processed_dir: str, last_output_dir: str,  new_folder_for_retry: str):
+def main(last_processed_dir: str, last_output_dir: str, new_folder_for_retry: str):
     errors_path = Path(last_output_dir) / "errors.json"
     last_proccessed_dir_path = Path(last_processed_dir)
 
@@ -23,8 +22,8 @@ def main(last_processed_dir: str, last_output_dir: str,  new_folder_for_retry: s
         print(f"No errors found in {errors_path}!")
         return
     try:
-        with open(errors_path, 'r') as f:
-            error_dictionary : Dict[str, Any] = json.load(f)
+        with open(errors_path, "r") as f:
+            error_dictionary: Dict[str, Any] = json.load(f)
     except json.JSONDecodeError:
         print(f"Error: Could not decode JSON from {errors_path}.")
         return
@@ -36,6 +35,7 @@ def main(last_processed_dir: str, last_output_dir: str,  new_folder_for_retry: s
             continue
         destination_folder = new_folder_for_retry_path / file
         shutil.copytree(folder_to_copy, destination_folder)
+
 
 if __name__ == "__main__":
     Fire(main)

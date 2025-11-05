@@ -1,8 +1,10 @@
 # pyright: standard
-from falkordb import FalkorDB, Graph
-import torch
-import pytest
 from dataclasses import dataclass
+
+import pytest
+import torch
+from falkordb import FalkorDB, Graph
+
 from config import load_settings
 
 SETTINGS = load_settings()
@@ -41,24 +43,27 @@ def test_1(single_test_graph: GraphFixture):
     distance_matrix = 1 - dot_products
 
     normalized_embeddings = embeddings / embeddings.norm(dim=1, keepdim=True)
-    cosine_similarity_matrix = normalized_embeddings @ normalized_embeddings.T
-    cosine_distance_matrix = 1 - cosine_similarity_matrix
 
-    euclidean_distance_matrix = torch.cdist(normalized_embeddings, normalized_embeddings, p=2)
+    euclidean_distance_matrix = torch.cdist(
+        normalized_embeddings, normalized_embeddings, p=2
+    )
 
     def node_index_to_name(i: int) -> str:
         return f"node_{i}"
 
     for i, embedding in enumerate(embeddings):
         single_test_graph.graph.query(
-            f"""
-        MERGE (n:NODE {{name: $name}})
+            """
+        MERGE (n:NODE {name: $name})
         WITH n, $embedding AS emb
         SET n.embedding = vecf32(emb)
         RETURN n
         """,
             # params={"name": node_index_to_name(i), "embedding": embedding.tolist()},
-            params={"name": node_index_to_name(i), "embedding": (embedding / embedding.norm()).tolist()},
+            params={
+                "name": node_index_to_name(i),
+                "embedding": (embedding / embedding.norm()).tolist(),
+            },
         )
 
     single_test_graph.graph.query(
@@ -82,10 +87,10 @@ def test_1(single_test_graph: GraphFixture):
         # sort by nodename
         # result.result_set.sort(key=lambda x: x[0])
         for k, (node_name, score) in enumerate(result.result_set):
-            assert node_name == node_index_to_name(
-                k
-            ), f"Unexpected node name, got {node_name}, expected {node_index_to_name(k)}"
+            assert node_name == node_index_to_name(k), (
+                f"Unexpected node name, got {node_name}, expected {node_index_to_name(k)}"
+            )
             expected = euclidean_distance_matrix[i, k].item()
-            assert (
-                abs(score - expected) < 1e-5
-            ), f"Unexpected score for seed {i}, node {k}, got {score}, expected {expected}. The 1 - dot-product is {distance_matrix[i, k].item()}."
+            assert abs(score - expected) < 1e-5, (
+                f"Unexpected score for seed {i}, node {k}, got {score}, expected {expected}. The 1 - dot-product is {distance_matrix[i, k].item()}."
+            )

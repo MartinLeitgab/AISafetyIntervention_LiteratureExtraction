@@ -1,19 +1,25 @@
-from pathlib import Path
 import json
 import logging
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List
 
+import numpy as np
 from falkordb import FalkorDB
 from tqdm import tqdm
 
 from config import load_settings
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
-from intervention_graph_creation.src.local_graph_extraction.core.local_graph import LocalGraph
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
+from intervention_graph_creation.src.local_graph_extraction.core.local_graph import (
+    LocalGraph,
+)
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    PaperSchema,
+)
 from intervention_graph_creation.src.local_graph_extraction.db.helpers import label_for
-from intervention_graph_creation.src.local_graph_extraction.extract.utilities import write_failure
-import numpy as np
+from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
+    write_failure,
+)
 
 SETTINGS = load_settings()
 logger = logging.getLogger(__name__)
@@ -27,7 +33,7 @@ class AISafetyGraph:
 
     def upsert_node(self, node: GraphNode, url: str) -> None:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
-        base_label = label_for(node.type)            # "Concept" or "Intervention"
+        base_label = label_for(node.type)  # "Concept" or "Intervention"
         generic_label = "NODE"
 
         params = {
@@ -39,7 +45,9 @@ class AISafetyGraph:
             "intervention_lifecycle": node.intervention_lifecycle,
             "intervention_maturity": node.intervention_maturity,
             "url": url,
-            "embedding": (node.embedding / np.linalg.norm(node.embedding)).tolist() if node.embedding is not None else None,
+            "embedding": (node.embedding / np.linalg.norm(node.embedding)).tolist()
+            if node.embedding is not None
+            else None,
         }
 
         cypher = f"""
@@ -87,9 +95,9 @@ class AISafetyGraph:
         # SET r.embedding = CASE WHEN emb IS NULL THEN NULL ELSE vecf32(emb) END
         # RETURN ID(r) AS edge_id
         # """
-        edge_cypher = f"""
-        MATCH (a {{name: $s}}), (b {{name: $t}})
-        MERGE (a)-[r:EDGE {{type: $type}}]->(b)
+        edge_cypher = """
+        MATCH (a {name: $s}), (b {name: $t})
+        MERGE (a)-[r:EDGE {type: $type}]->(b)
         SET r.description = $description,
             r.edge_confidence = $edge_confidence,
             r.url = $url,
@@ -143,7 +151,7 @@ class AISafetyGraph:
             "date_published": date_published,
             "source": source,
             "filename": filename,
-            "source_filetype": source_filetype
+            "source_filetype": source_filetype,
         }
 
         g.query(cypher, params)
@@ -151,7 +159,9 @@ class AISafetyGraph:
     def ingest_rationale(self, rationale_path: Path, url: str) -> None:
         """Ingest rationale record as :Rationale node linked to :Source node."""
         summary_path = rationale_path
-        json_path = rationale_path.with_name(rationale_path.name.replace("_summary.txt", ".json"))
+        json_path = rationale_path.with_name(
+            rationale_path.name.replace("_summary.txt", ".json")
+        )
 
         if not summary_path.exists() and not json_path.exists():
             return
@@ -160,17 +170,17 @@ class AISafetyGraph:
 
         summary_content = ""
         if summary_path.exists():
-            with open(summary_path, 'r', encoding='utf-8') as f:
+            with open(summary_path, "r", encoding="utf-8") as f:
                 summary_content = f.read().strip()
 
         json_content = ""
         if json_path.exists():
             try:
-                with open(json_path, 'r', encoding='utf-8') as f:
+                with open(json_path, "r", encoding="utf-8") as f:
                     json_dict = json.load(f)
                 json_content = json.dumps(json_dict, ensure_ascii=False, indent=2)
             except Exception:
-                with open(json_path, 'r', encoding='utf-8') as f:
+                with open(json_path, "r", encoding="utf-8") as f:
                     json_content = f.read().strip()
 
         combined_parts = []
@@ -217,10 +227,14 @@ class AISafetyGraph:
             try:
                 g.query("DROP VECTOR INDEX FOR (n:NODE) ON (n.embedding)")
             except Exception as e:
-                print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
+                print(
+                    f"Warning: Failed to drop vector index (may not exist or not supported): {e}"
+                )
 
         print("Creating new vector index on (n:NODE).embedding...")
-        g.query("CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
+        g.query(
+            "CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}"
+        )
         print("Created vector index on (n:NODE).embedding.")
 
         # Drop and recreate EDGE vector index
@@ -284,8 +298,10 @@ class AISafetyGraph:
             return True
 
         # Filter out meta entries with None (avoid validation errors)
-        if 'meta' in data and data['meta']:
-            data['meta'] = [meta for meta in data['meta'] if meta.get('value') is not None]
+        if "meta" in data and data["meta"]:
+            data["meta"] = [
+                meta for meta in data["meta"] if meta.get("value") is not None
+            ]
 
         try:
             doc = PaperSchema(**data)
@@ -323,7 +339,9 @@ class AISafetyGraph:
             return True
 
         try:
-            rationale_path = json_path.with_stem(json_path.stem + '_summary').with_suffix('.txt')
+            rationale_path = json_path.with_stem(
+                json_path.stem + "_summary"
+            ).with_suffix(".txt")
             if rationale_path.exists() or json_path.exists():
                 self.ingest_rationale(rationale_path, url)
         except Exception as e:
@@ -333,14 +351,20 @@ class AISafetyGraph:
                 paper_id=paper_id,
                 err=e,
                 error_type="ingest_rationale_failed",
-                context={"json_path": str(json_path), "rationale_path": str(rationale_path), "url": url},
+                context={
+                    "json_path": str(json_path),
+                    "rationale_path": str(rationale_path),
+                    "url": url,
+                },
                 logger=logger,
             )
             errors[paper_id] = [f"Rationale ingest failed: {e}"]
             return True
 
         # Graph validation (pure) → decide here if fatal and move with write_failure
-        local_graph, error_code, error_msg, ctx = LocalGraph.from_paper_schema(doc, json_path)
+        local_graph, error_code, error_msg, ctx = LocalGraph.from_paper_schema(
+            doc, json_path
+        )
         if local_graph is None:
             write_failure(
                 output_root=SETTINGS.paths.output_dir,
@@ -352,7 +376,9 @@ class AISafetyGraph:
                 context=ctx or {"json_path": str(json_path)},
                 logger=logger,
             )
-            errors[paper_id] = [error_msg or "Invalid paper: see error log for details."]
+            errors[paper_id] = [
+                error_msg or "Invalid paper: see error log for details."
+            ]
             return True
 
         # Load embeddings (non-fatal if missing; zero vectors used)
@@ -371,7 +397,12 @@ class AISafetyGraph:
                 paper_id=paper_id,
                 err=e,
                 error_type="ingest_local_graph_failed",
-                context={"json_path": str(json_path), "url": url, "node_count": len(local_graph.nodes), "edge_count": len(local_graph.edges)},
+                context={
+                    "json_path": str(json_path),
+                    "url": url,
+                    "node_count": len(local_graph.nodes),
+                    "edge_count": len(local_graph.edges),
+                },
                 logger=logger,
             )
             errors[paper_id] = [f"Local graph ingest failed: {e}"]
@@ -415,7 +446,9 @@ class AISafetyGraph:
     def get_graph(self) -> Dict[str, List[Dict[str, Any]]]:
         g = self.db.select_graph(SETTINGS.falkordb.graph)
 
-        node_res = g.ro_query("MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node")
+        node_res = g.ro_query(
+            "MATCH (n) RETURN ID(n) AS id, labels(n) AS labels, n AS node"
+        )
         nodes = []
         for row in node_res.result_set:
             node_id = row[0]
@@ -483,7 +516,9 @@ class AISafetyGraph:
         rel_types = [row[0] for row in res.result_set if row[0]]
 
         if not rel_types:
-            return graph.query("MATCH (a {name: $remove}) DELETE a", {"remove": remove_name})
+            return graph.query(
+                "MATCH (a {name: $remove}) DELETE a", {"remove": remove_name}
+            )
 
         parts = []
         for rtype in rel_types:

@@ -1,19 +1,29 @@
 """Not all sources have recoverable errors that the judge can fix.
 This module identifies sources that are likely to have judge-able errors."""
-# pyright: strict
 
 import json
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import List
+
 from fire import Fire
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema
-from intervention_graph_creation.src.local_graph_extraction.llm_judge.judge import get_all_json_files, get_by_file_url_to_text_map, find_url
 from tqdm import tqdm
 
-def main( processed_dir: str,
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    PaperSchema,
+)
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.judge import (
+    find_url,
+    get_all_json_files,
+    get_by_file_url_to_text_map,
+)
+
+
+def main(
+    processed_dir: str,
     ard_dir: str,
-    output_dir: str,) -> None:
+    output_dir: str,
+) -> None:
     base = Path(processed_dir).expanduser().resolve()
     if not base.exists() or not base.is_dir():
         raise FileNotFoundError(f"Directory not found or not a directory: {base}")
@@ -44,7 +54,7 @@ def main( processed_dir: str,
                 if len(kg_output.nodes) == 0:
                     continue
                 source.append(json_file)
-                
+
         except Exception as _:
             continue
     print(f"Found {len(source)}/{len(json_files)},")
@@ -56,9 +66,8 @@ def main( processed_dir: str,
     for a_source in source:
         a_source_path = Path(a_source)
         folder = a_source_path.parent
-        shutil.copytree(folder,
-                        output_path / folder.name
-        )
+        shutil.copytree(folder, output_path / folder.name)
+
 
 if __name__ == "__main__":
     Fire(main)
