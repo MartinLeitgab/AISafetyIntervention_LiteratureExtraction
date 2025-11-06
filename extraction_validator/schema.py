@@ -42,16 +42,12 @@ VALIDATION_TASKS:
 4. Find duplicate nodes/edges that should be merged
 5. Check if extracted knowledge matches source text evidence
 6. Assess coverage - are important edges from source missing?
+7. Propose specific fixes for any issues found
+8. Output a decision on overall validity, taking into account the proposed fixes. (Ie is it valid if fixes are applied?)
 
 Return your analysis in this EXACT JSON format:
 
 {{
-  "decision": {{
-    "is_valid_json": true/false,
-    "has_blockers": true/false,
-    "flag_underperformance": true/false,
-    "summary": "One-paragraph executive summary of validation results"
-  }},
   "validation_report": {{
     "schema_check": [
       {{ "severity": "BLOCKER|MAJOR|MINOR|STYLE", "issue": "description", "where": "path.to.field", "suggestion": "fix suggestion" }}
@@ -74,6 +70,30 @@ Return your analysis in this EXACT JSON format:
       ]
     }}
   }},
+  "proposed_fixes": {{
+    "add_nodes": [
+      {{"id": "new_id",
+      "type": "concept|intervention",
+      "name": "node name",
+      "edge_ids": [{{
+        "target_node": "target node name",
+        "type": "edge type",
+        "description": "edge description",
+        "edge_confidence": 1-5
+      }},
+      "props": {{"stable_key": "optional_key"}} }}],
+    "merges": [
+      {{"target_id": "id_to_keep", "absorbed_ids": ["id1","id2"], "retargeted_edge_ids": ["edge1","edge2"] }}],
+    "deletions": [
+      {{"kind": "node|edge", "id": "id_to_delete", "reason": "explanation" }}]
+  }},
+  "decision": {{
+    "is_valid_json": true/false,
+    "has_blockers": true/false,
+    "flag_underperformance": true/false,
+    "summary": "One-paragraph executive summary of validation results"
+  }},
+  
   "rationale_record": {{
     "method": "systematic_validation",
     "notes": [
@@ -90,17 +110,27 @@ class GeneratedFixProps(BaseModel):
 class FixProps(BaseModel):
     stable_key: str
 
+
+class GeneratedAddEdgeFix(BaseModel):
+    type: Optional[str] = None
+    name: Optional[str] = None
+    target_node: Optional[str] = None
+    description: Optional[str] = None
+    edge_confidence: Optional[int] = None
+
 class GeneratedAddNodeFix(BaseModel):
     id: Optional[str] = None
     type: Optional[str] = None
     name: Optional[str] = None
     props: Optional[GeneratedFixProps] = None
+    edge_ids: Optional[List[GeneratedAddEdgeFix]] = None
 
 class AddNodeFix(BaseModel):
     id: str
     type: str
     name: str
     props: FixProps
+    edge_ids: Optional[List[GeneratedAddEdgeFix]] = None
 
 class GeneratedMergFix(BaseModel):
     target_id: Optional[str] = None

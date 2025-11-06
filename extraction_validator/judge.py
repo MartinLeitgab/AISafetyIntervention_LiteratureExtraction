@@ -37,6 +37,7 @@ from extraction_validator.schema import (
     DeleteFix,
     FixProps,
     GPT_Assessment,
+    GeneratedProposedFixes,
     MergeFix,
     ProposedFixes,
     ValidationReport,
@@ -47,6 +48,7 @@ from openai.types.chat.chat_completion import ChatCompletion
 from pydantic import ValidationError
 from fire import Fire  # type: ignore[reportMissingImports, reportMissingTypeStubs]
 
+from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
 
@@ -599,11 +601,15 @@ class KGJudge:
 
         gpt_assessment = gpt_assessment_result["gpt_assessment"]
 
-        # Generate proposed fixes based on issues found
-        proposed_fixes = self._generate_proposed_fixes(gpt_assessment.validation_report)
 
-        # Apply fixes to create final graph
-        final_graph = self._apply_fixes_to_graph(kg, proposed_fixes, original_text)
+        if gpt_assessment.proposed_fixes is None:
+            # Generate proposed fixes based on issues found
+            proposed_fixes = self._generate_proposed_fixes(gpt_assessment.validation_report)
+
+            # Apply fixes to create final graph
+            final_graph = self._apply_fixes_to_graph(kg, proposed_fixes, original_text)
+        else:
+            final_graph = self._apply_fixes_to_graph(kg, gpt_assessment.proposed_fixes, original_text)
 
         # Create complete report
         return JudgeReport(
@@ -696,7 +702,7 @@ class KGJudge:
         return ProposedFixes(add_nodes=add_nodes, merges=merges, deletions=deletions)
 
     def _apply_fixes_to_graph(
-        self, kg: PaperSchema, proposed_fixes: ProposedFixes, original_text: str
+        self, kg: PaperSchema, proposed_fixes: ProposedFixes | GeneratedProposedFixes, original_text: str
     ) -> Final_Knowledge_Graph:
         """Apply fixes to create the final improved knowledge graph."""
 
@@ -709,6 +715,8 @@ class KGJudge:
         # Apply add_nodes fixes
         for add_node in proposed_fixes.add_nodes or []:
             candidate_name = add_node.name if add_node.name else add_node.id
+            if not candidate_name:
+                continue
             # Ensure unique node names
             if candidate_name in existing_names:
                 continue
@@ -729,9 +737,21 @@ class KGJudge:
                     node_rationale=None,
                 )
             )
+            if add_node.edge_ids is not None and add_node.edge_ids:
+                for edge_id in add_node.edge_ids:
+                    final_edges.append(
+                        GraphEdge(
+                            source_node=add_node.name,
+                            target_node=edge_id.target_node,
+                            type=edge_id.type if edge_id.type else "related_to",
+                            description=edge_id.description if edge_id.description else "Auto-generated edge based on validation",
+                            edge_confidence=edge_id.edge_confidence if edge_id.edge_confidence else 3,
+                        )
+                        
+                    )
 
         # Apply deletions
-        nodes_to_delete = {d.id for d in proposed_fixes.deletions if d.kind == "node"}
+        nodes_to_delete = {d.id for d in proposed_fixes.deletions or [] if d.kind == "node"}
         final_nodes = [
             n.model_dump() for n in final_nodes if n.name not in nodes_to_delete
         ]
