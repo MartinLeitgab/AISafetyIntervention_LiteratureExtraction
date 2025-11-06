@@ -35,7 +35,9 @@ from intervention_graph_creation.src.local_graph_extraction.core.node import Nod
 from intervention_graph_creation.src.local_graph_extraction.extract.utilities import (
     write_failure,
 )
-from intervention_graph_creation.src.utils import short_id_node
+from intervention_graph_creation.src.local_graph_extraction.utilities.utils import (
+    short_id_node,
+)
 
 # -----------------------------------------------------------------------------
 # Settings
@@ -45,7 +47,7 @@ SETTINGS = load_settings()
 MODEL = SETTINGS.embeddings.model
 BATCH_SIZE = SETTINGS.embeddings.batch_size
 OUTPUT_DIR: Path = SETTINGS.paths.output_dir
-NARROW_EMBEDDINGS = os.environ.get("EMBEDDING_TYPE", "narrow") == "narrow"
+NARROW_EMBEDDINGS = SETTINGS.embeddings.type == "narrow"
 
 # Single errors folder for both per-object error JSONs and moved article folders
 EMB_ERRORS_DIR: Path = SETTINGS.paths.embeddings_error_dir

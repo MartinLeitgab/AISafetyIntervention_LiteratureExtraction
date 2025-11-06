@@ -758,8 +758,8 @@ if __name__ == "__main__":
     extractor = Extractor()
 
     input_dir = SETTINGS.paths.input_dir
-    total_articles = 1000
-    batch_size = 10
+    total_articles = SETTINGS.extraction.total_articles
+    batch_size = SETTINGS.extraction.batch_size
 
     async def main():
         await extractor.process_dir_batch_async(
