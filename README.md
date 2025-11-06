@@ -6,6 +6,46 @@ This repository contains all results created as part of the Eleuther AI Summer o
 
 The project aims to automatically extract structured knowledge from AI Safety scientific literature and build a Knowledge Graph that connects concepts, methods, and interventions from different research papers.
 
+---
+
+## Data is Ready — Time for Research!
+
+**All data processing is complete.** We have built a comprehensive knowledge graph from [**Alignment Research Dataset**](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) — a curated collection of AI Safety research from HuggingFace.
+
+### What We Have
+
+**Global Knowledge Graph** connecting concepts, interventions, and research ideas across **11,800 AI Safety papers**:
+
+**Graph Structure:**
+- **Concepts** — risks, methods, ideas, and research directions extracted from papers
+- **Interventions** — proposed solutions and mitigation strategies
+- **Relationships** — how concepts connect across different papers (caused_by, mitigated_by, validated_by, etc.)
+- **Semantic embeddings** — vector representations enabling similarity search and concept clustering
+- *[More details and statistics](#processing-statistics)*
+
+### Ready-to-Use Formats
+
+The knowledge graph is available in three formats:
+
+1. **CSV Tables** — Easy analysis in Excel, pandas, R
+   - 📁 [Download CSV Export](https://drive.google.com/drive/u/0/folders/1zwJ0RnixYV9NW8l8QHPsslORDrAzgXlG)
+
+2. **JSON Graph** — For custom scripts and NetworkX analysis
+   - 📁 [Download graph.json](https://drive.google.com/drive/u/0/folders/1RPbETx21KMyEATtVOBt8LOClVd56eZ4x)
+
+3. **FalkorDB Database** — Interactive queries with vector search
+   - 📁 [Download FalkorDB dumps](https://drive.google.com/drive/u/0/folders/1y_Q3Ti4nBlUG0l51hGqc0rDID88jbtGw)
+   - Requires: Docker, 8GB+ RAM, 20GB+ disk space
+   - See [Stage 4](#stage-4-merging-into-global-graph-falkordb) for setup instructions
+
+### Next Step: Explore the Graph
+
+**For Researchers:** 🔬 Jump to [Stage 5: Analysis and Research](#stage-5-analysis-and-research-of-results) to start working with the data.
+
+**For Developers:** 💻 Start with [Pipeline Architecture](#pipeline-architecture) to understand the system, review [Stages 1-4](#stage-1-raw-data-loading) for implementation details, then see [Development Setup](#development-setup) to contribute.
+
+---
+
 ## Table of Contents
 
 - [Pipeline Architecture](#pipeline-architecture)
@@ -13,16 +53,19 @@ The project aims to automatically extract structured knowledge from AI Safety sc
 - [Stage 2: Local Graph Extraction](#stage-2-local-graph-extraction)
 - [Stage 3: Embeddings Computation](#stage-3-embeddings-computation)
 - [Stage 4: Merging into Global Graph (FalkorDB)](#stage-4-merging-into-global-graph-falkordb)
-- [Stage 5: Analysis and Research of Results](#stage-5-analysis-and-research-of-results)
 - [Processing Statistics](#processing-statistics)
 - [Development Setup](#development-setup)
+- [Stage 5: Analysis and Research of Results](#stage-5-analysis-and-research-of-results)
 - [Possible Future Projects](#possible-future-projects-based-on-knowledge-graph)
 
-### Pipeline Architecture
+## Pipeline Architecture
+
+*The sections below describe how this knowledge graph was created. This is useful for understanding the data processing pipeline, contributing to the codebase, or replicating the process on new data.*
 
 The system operates in 5 stages:
 
-![alt text](./docs/image.png)
+![AI Safety Knowledge Extraction Pipeline](./docs/image.png)
+*Figure 1: Five-stage pipeline from raw papers to knowledge graph (Stages 1-4 complete)*
 
 **Stage 1: Raw Data Loading**
 - Load articles from HuggingFace dataset
@@ -122,7 +165,8 @@ The LLM receives the full article text and a special prompt (`PROMPT_EXTRACT`) t
 
 ### Processing Architecture
 
-![alt text](./docs/image-1.png)
+![Asynchronous Batch Processing Architecture](./docs/image-1.png)
+*Figure 2: Asynchronous batch processing with OpenAI API — polling mechanism, parallel execution, and automatic error handling*
 
 **Key Features:**
 
@@ -477,64 +521,6 @@ This method allows you to immediately get a ready database without reloading.
 
 ---
 
-## Stage 5: Analysis and Research of Results
-
-This is an open space for analyzing and researching the built knowledge graph. Research results will be published in a scientific paper.
-
-### Available Data for Analysis
-
-**1. CSV Tables (Simplest Method)**
-- Global graph exported as CSV tables
-- 📁 [Google Drive — CSV Export](https://drive.google.com/drive/u/0/folders/1zwJ0RnixYV9NW8l8QHPsslORDrAzgXlG)
-- Ideal for analysis in Excel, pandas, R
-- Includes nodes (concepts, interventions, sources) and edges (relationships between nodes, similarity edges)
-
-**2. JSON Graph (`graph.json`)**
-- Complete knowledge graph in JSON format
-- Available at [Google Drive — Processed Results](https://drive.google.com/drive/u/0/folders/1RPbETx21KMyEATtVOBt8LOClVd56eZ4x)
-- Can be analyzed using Python, NetworkX, or other tools
-- Contains all nodes, edges, and metadata
-
-**3. FalkorDB (Graph Database)**
-- Interactive database with vector search
-- Web interface for visualization: <http://localhost:3000/graph>
-- Cypher query support for complex analysis
-- Vector search for similar concepts via embeddings
-
-### Research Direction Examples
-
-**Graph Structure Analysis:**
-- Find most connected concepts (central nodes)
-- Identify isolated idea clusters
-- Analyze distribution of relationship types (edges)
-
-**Semantic Analysis:**
-- Search for similar concepts via vector embeddings
-- Cluster concepts by semantic similarity
-- Identify duplicate concepts from different articles
-
-**Intervention Analysis:**
-- Which AI Safety risks are most studied?
-- What interventions are proposed for specific risks?
-- Which areas require more research?
-
-**Temporal Analysis:**
-- Evolution of concepts over time (via article metadata)
-- Emergence of new research directions
-- Changes in AI Safety community focus
-
-### Next Steps
-
-This is a space for research. We invite researchers to:
-- Conduct their own data analyses
-- Test hypotheses about AI Safety knowledge structure
-- Develop new methods for knowledge graph analysis
-- Visualize interesting patterns
-
-**Results will be published in a scientific paper.**
-
----
-
 ## Processing Statistics
 
 ### General Metrics
@@ -657,6 +643,63 @@ OPENAI_API_KEY=your_api_key_here
 4. Test code on small data volume OR create unit tests
 5. Request review from @MartinLeitgab
 
+## Stage 5: Analysis and Research of Results
+
+This is an open space for analyzing and researching the built knowledge graph. Research results will be published in a scientific paper.
+
+### Available Data for Analysis
+
+**1. CSV Tables (Simplest Method)**
+- Global graph exported as CSV tables
+- 📁 [Google Drive — CSV Export](https://drive.google.com/drive/u/0/folders/1zwJ0RnixYV9NW8l8QHPsslORDrAzgXlG)
+- Ideal for analysis in Excel, pandas, R
+- Includes nodes (concepts, interventions, sources) and edges (relationships between nodes, similarity edges)
+
+**2. JSON Graph (`graph.json`)**
+- Complete knowledge graph in JSON format
+- Available at [Google Drive — Processed Results](https://drive.google.com/drive/u/0/folders/1RPbETx21KMyEATtVOBt8LOClVd56eZ4x)
+- Can be analyzed using Python, NetworkX, or other tools
+- Contains all nodes, edges, and metadata
+
+**3. FalkorDB (Graph Database)**
+- Interactive database with vector search
+- Web interface for visualization: <http://localhost:3000/graph>
+- Cypher query support for complex analysis
+- Vector search for similar concepts via embeddings
+
+### Research Direction Examples
+
+**Graph Structure Analysis:**
+- Find most connected concepts (central nodes)
+- Identify isolated idea clusters
+- Analyze distribution of relationship types (edges)
+
+**Semantic Analysis:**
+- Search for similar concepts via vector embeddings
+- Cluster concepts by semantic similarity
+- Identify duplicate concepts from different articles
+
+**Intervention Analysis:**
+- Which AI Safety risks are most studied?
+- What interventions are proposed for specific risks?
+- Which areas require more research?
+
+**Temporal Analysis:**
+- Evolution of concepts over time (via article metadata)
+- Emergence of new research directions
+- Changes in AI Safety community focus
+
+### Next Steps
+
+This is a space for research. We invite researchers to:
+- Conduct their own data analyses
+- Test hypotheses about AI Safety knowledge structure
+- Develop new methods for knowledge graph analysis
+- Visualize interesting patterns
+
+**Results will be published in a scientific paper.**
+
+---
 
 ## Possible Future Projects (Based on Knowledge Graph)
 
