@@ -99,6 +99,9 @@ JudgeErrorCode = Literal[
     "function_call",
     "empty_response",
     "batch_cancelled",
+    "batch_status_check_error",
+    "process_completed_batch_error",
+    "process_result_content_error",
 ]
 
 

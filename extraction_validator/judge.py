@@ -136,6 +136,24 @@ class JudgeInput:
     kg_output: PaperSchema
     data_source: DataSource
 
+@dataclass
+class ReadyBatch:
+    ready: bool
+    batch: Batch
+    result: JudgeBatchResult
+    is_debug: bool = False
+
+@dataclass
+class ReadyBatchError:
+    result: JudgeBatchResult
+    error: Exception
+
+@dataclass
+class DebugReadyBatch:
+    result: JudgeBatchResult
+    ready: bool = True
+    is_debug: bool = False
+
 
 class KGJudge:
     def __init__(self, output_dir: Path):
@@ -224,131 +242,91 @@ class KGJudge:
             batch_files.append(
                 JudgeBatch(file_path=str(batch_file_path), requests=batch)
             )
-        for meta_batch_index in range(
-            0, len(batch_files), how_many_batches_in_flight_at_once
-        ):
-            
-            slice_of_batches = batch_files[
-                meta_batch_index : meta_batch_index + how_many_batches_in_flight_at_once
-            ]
-            if self.cancelled:
-                for batch in slice_of_batches:
-                    self.save_results(
-                        self._error_result(
-                            "Cancelled",
-                            "Cancelled",
-                            "batch_cancelled",
-                            batch.requests
-                        )
-                    )
-                continue
-
-
-            # Immediately upload each batch after it is written
-            batch_results = await asyncio.gather(
-                *(
-                    upload_and_create_batch(self.client, batch)
-                    for batch in slice_of_batches
-                )
+        total_amount_of_batches = len(batch_files)
+        first_slice_of_batches = batch_files[
+            0 : how_many_batches_in_flight_at_once
+        ]
+        batch_files = batch_files[how_many_batches_in_flight_at_once:]
+        
+        # Immediately upload each batch after it is written
+        batches_in_flight = await asyncio.gather(
+            *(
+                upload_and_create_batch(self.client, batch)
+                for batch in first_slice_of_batches
             )
-            # monitor and retrieve the resultts for each batch
-            # Monitor the status of each submitted batch using the OpenAI API until completion
-            # This does it sequentially, but that's fine for now, because the time for this
-            # processing is significantly shorter than the time waiting for the batch to complete
-            for batch_result in batch_results:
-                result_content = await self._poll_for_batch_completion(batch_result)
-                if result_content.type == "error":
-                    if self.cancelled:
-                        break
+        )
+
+        # monitor and retrieve the results for each batch. as soon
+        # as one is done, upload the next one if any remain
+        while True:
+            if len(batches_in_flight) == 0 or self.cancelled:
+                break
+            batches = await asyncio.gather(
+                *[self.is_batch_ready_for_processing(batch_result) for batch_result in batches_in_flight]
+            )
+            next_batches_in_flight : List[JudgeBatchResult] = []
+            for r in batches:
+                if isinstance(r, ReadyBatchError):
+                    batch_result = r.result
+                    print(f"Batch {batch_result.batch_id}: encountered error: {str(r.error)}")
                     self.save_results(
                         self._error_result(
-                            result_content.message,
-                            result_content.raw,
-                            result_content.error_code,
+                            f"Error while checking batch status: {str(r.error)}",
+                            "",
+                            "batch_status_check_error",
                             batch_result.batch.requests,
-                        ),
+                        )
                     )
                     continue
-
-                if result_content.error_content is not None:
-                    for line in result_content.error_content.splitlines():
-                        response_text = line.strip()
-                        if not response_text:
-                            # Skip empty lines
-                            continue
-                        self._parse_judge_error(custom_id_to_request, response_text)
-
-                if result_content.content is not None:
-                    # Parse the results (each line is a JSON object)
-                    lines = result_content.content.splitlines()
-                    for line in lines:
-                        response_text = line.strip()
-                        if not response_text:
-                            # Skip empty lines
-                            continue
-                        gpt_assessment = self._parse_judge_response(response_text)
-                        if gpt_assessment["type"] == "failure":
-                            self.save_results(
-                                self._error_result(
-                                    gpt_assessment["error"],
-                                    gpt_assessment["raw_response"],
-                                    gpt_assessment["error_code"],
-                                    [
-                                       custom_id_to_request.get(
-                                           gpt_assessment.get("custom_id", "unknown"),
-                                           unknown_judge_request("unknown"),
-                                       )
-                                    ],
-                                ),
-                            )
-                            continue
-                        judge_request = custom_id_to_request.get(
-                            gpt_assessment["custom_id"]
-                        )
-                        if judge_request is None:
-                            # this should not happen
-                            self.save_results(
-                                self._error_result(
-                                    f"Unknown custom_id in GPT response {gpt_assessment['custom_id']}",
-                                    "",
-                                    "unknown_custom_id",
-                                    [unknown_judge_request(gpt_assessment["custom_id"])],
-                                ),
-                            )
-                            continue
-
-                        # Perform local validation checks
-                        local_validation = self._perform_local_validation(
-                            judge_request.kg_output
-                        )
-                        combined_report = self._combine_validations(
-                            gpt_assessment,
-                            local_validation,
-                            judge_request.kg_output,
-                            judge_request.original_text,
-                            judge_request.data_source,
-                        )
-                        self.save_results([combined_report])
-            if self.cancelled:
-                print("Cancelling all running batches...")
-                cancelled_count = 0
-                for batch_result in batch_results:
-                    # Attempt to cancel running batches
+                batch_result = r.result
+                if not r.ready:
+                    next_batches_in_flight.append(batch_result)
+                    continue
+                # A debug batch is None
+                if isinstance(r, DebugReadyBatch):
+                    with open("extraction_validator/debug_batch_results/1.jsonl", "r") as f:
+                        result_content = BatchOutput(content=f.read(), type="content")
+                else:
+                    print(f"Batch {batch_result.batch_id}: {r.batch.status}")
+                    result_content = await self.process_completed_batch(batch_result, r.batch)
+                self.process_result_content(custom_id_to_request, batch_result, result_content)
+                if len(batch_files) > 0 and not self.cancelled:
+                    new_judge_batch = batch_files.pop(0)
                     try:
-                        await self.client.batches.cancel(batch_result.batch_id)
-                        cancelled_count += 1
+                        new_batch = await upload_and_create_batch(self.client, new_judge_batch)
+                        next_batches_in_flight.append(new_batch)
                     except Exception as e:
-                        print(f"Could not cancel batch {batch_result.batch_id}: {str(e)}")
-                print(f"Cancelled {cancelled_count}/{len(batch_results)} batches.")
-                for batch_result in batch_results:
-                    self.save_results(
-                        self._error_result(
-                            "Cancelled",
-                            "Cancelled",
-                            "batch_cancelled",
-                            batch_result.batch.requests
-                    ))
+                        self.save_results(
+                            self._error_result(
+                                f"Could not upload and create new batch",
+                                str(e),
+                                "http_error",
+                                new_judge_batch.requests,
+                            )
+                        )
+            batches_in_flight = next_batches_in_flight
+            print(f"\t{len(batches_in_flight)} in flight\n\t{len(batch_files)} remaining\n\t{total_amount_of_batches - (len(batches_in_flight) + len(batch_files))} completed\n\t{total_amount_of_batches} total")
+            await asyncio.sleep(10)
 
+        if self.cancelled:
+            print("Cancelling all running batches...")
+            cancelled_count = 0
+            for batch_result in batches_in_flight:
+                # Attempt to cancel running batches
+                try:
+                    await self.client.batches.cancel(batch_result.batch_id)
+                    cancelled_count += 1
+                except Exception as e:
+                    print(f"Could not cancel batch {batch_result.batch_id}: {str(e)}")
+            print(f"Cancelled {cancelled_count}/{len(batches_in_flight)} batches.")
+            for batch_result in batches_in_flight:
+                self.save_results(
+                    self._error_result(
+                        "Cancelled",
+                        "Cancelled",
+                        "batch_cancelled",
+                        batch_result.batch.requests
+                ))
     def save_results(self, results: List[JudgeReport]):
         """Save the judge reports to JSON files in the specified output directory."""
         for report in results:
@@ -386,66 +364,150 @@ class KGJudge:
                 ),
             )
 
-    async def _poll_for_batch_completion(
-        self, batch_result: JudgeBatchResult
-    ) -> BatchResult:
+    def process_result_content(self, custom_id_to_request: Dict[str, JudgeRequest], batch_result: JudgeBatchResult, result_content: BatchOutput | EverythingInTheBatchHasAnError):
+        if result_content.type == "error":
+            self.save_results(
+                self._error_result(
+                    result_content.message,
+                    result_content.raw,
+                    result_content.error_code,
+                    batch_result.batch.requests,
+                ),
+            )
+            return
+        try:
+            if result_content.error_content is not None:
+                for line in result_content.error_content.splitlines():
+                    response_text = line.strip()
+                    if not response_text:
+                        # Skip empty lines
+                        continue
+                    self._parse_judge_error(custom_id_to_request, response_text)
+
+            if result_content.content is None:
+                return
+            # Parse the results (each line is a JSON object)
+            lines = result_content.content.splitlines()
+            for line in lines:
+                response_text = line.strip()
+                if not response_text:
+                    # Skip empty lines
+                    continue
+                gpt_assessment = self._parse_judge_response(response_text)
+                if gpt_assessment["type"] == "failure":
+                    self.save_results(
+                        self._error_result(
+                            gpt_assessment["error"],
+                            gpt_assessment["raw_response"],
+                            gpt_assessment["error_code"],
+                            [
+                                custom_id_to_request.get(
+                                    gpt_assessment.get("custom_id", "unknown"),
+                                    unknown_judge_request("unknown"),
+                                )
+                            ],
+                        ),
+                    )
+                    continue
+                judge_request = custom_id_to_request.get(
+                    gpt_assessment["custom_id"]
+                )
+                if judge_request is None:
+                    # this should not happen
+                    self.save_results(
+                        self._error_result(
+                            f"Unknown custom_id in GPT response {gpt_assessment['custom_id']}",
+                            "",
+                            "unknown_custom_id",
+                            [unknown_judge_request(gpt_assessment["custom_id"])],
+                        ),
+                    )
+                    continue
+
+                # Perform local validation checks
+                local_validation = self._perform_local_validation(
+                    judge_request.kg_output
+                )
+                combined_report = self._combine_validations(
+                    gpt_assessment,
+                    local_validation,
+                    judge_request.kg_output,
+                    judge_request.original_text,
+                    judge_request.data_source,
+                )
+                self.save_results([combined_report])
+            return
+        except Exception as e:
+            self.save_results(
+                self._error_result(
+                    f"Could not process result content",
+                    str(e),
+                    "process_result_content_error",
+                    batch_result.batch.requests,
+                ),
+            )
+            return
+
+    async def is_batch_ready_for_processing(self, batch_result: JudgeBatchResult) -> ReadyBatch | DebugReadyBatch | ReadyBatchError:
         if batch_result.is_debug:
-            with open("extraction_validator/debug_batch_results/1.jsonl", "r") as f:
-                return BatchOutput(content=f.read(), type="content")
-
-        while True:
-            if self.cancelled:
-                return EverythingInTheBatchHasAnError(
-                    message="Batch processing was cancelled.",
-                    raw="",
-                    error_code="batch_cancelled",
-                )
+            return DebugReadyBatch(result=batch_result)
+        try:
             batch = await self.client.batches.retrieve(batch_result.batch_id)
-            print(f"Batch {batch_result.batch_id}: status = {batch.status}")
-            if batch.status in ["completed", "failed", "expired", "cancelled"]:
-                break
-            await asyncio.sleep(15)
-        # if completed -> retrieve results
-        if batch.status != "completed":
-            return EverythingInTheBatchHasAnError(
-                message=f"Batch did not complete successfully, final status: {batch.status}",
-                raw=self._get_open_batch_errors(batch),
-                error_code="batch_not_completed",
-            )
+            print(f"Batch {batch_result.batch_id} status: {batch.status}")
+        
+            return ReadyBatch(ready=batch.status in ["completed", "failed", "expired", "cancelled"], batch=batch, result=batch_result)
+        except Exception as e:
+            return ReadyBatchError(result=batch_result, error=e)
 
-        output_file_id = batch.output_file_id
-
-        error_content = None
-        if batch.error_file_id is not None:
-            error_content_result = await self.client.files.content(batch.error_file_id)
-            error_content = error_content_result.text
-
-        if output_file_id is None:
-            if error_content is not None:
-                return BatchOutput(
-                    error_content=error_content,
-                    content=None,
+    async def process_completed_batch(self, batch_result: JudgeBatchResult, batch: Batch) -> BatchResult:
+        try:
+            # if completed -> retrieve results
+            if batch.status != "completed":
+                return EverythingInTheBatchHasAnError(
+                    message=f"Batch did not complete successfully, final status: {batch.status}",
+                    raw=self._get_open_batch_errors(batch),
+                    error_code="batch_not_completed",
                 )
+
+            output_file_id = batch.output_file_id
+
+            error_content = None
+            if batch.error_file_id is not None:
+                error_content_result = await self.client.files.content(batch.error_file_id)
+                error_content = error_content_result.text
+
+            if output_file_id is None:
+                if error_content is not None:
+                    return BatchOutput(
+                        error_content=error_content,
+                        content=None,
+                    )
+                return EverythingInTheBatchHasAnError(
+                    message="Batch completed but no output_file_id found",
+                    raw=self._get_open_batch_errors(batch),
+                    error_code="missing_output",
+                )
+
+            # downloading results, it will be a .jsonl file
+            result_content = await self.client.files.content(output_file_id)
+            content = result_content.text
+
+            if os.environ.get("DEBUG_SAVE_BATCH_RESULTS") == "1":
+                # Save a copy of the batch results for debugging
+                debug_dir = Path("extraction_validator/debug_batch_results")
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                debug_file = debug_dir / f"batch_{batch_result.batch_id}_{timestamp}.jsonl"
+                with open(debug_file, "w") as f:
+                    f.write(content)
+
+            return BatchOutput(content=content, error_content=error_content)
+        except Exception as e:
             return EverythingInTheBatchHasAnError(
-                message="Batch completed but no output_file_id found",
-                raw=self._get_open_batch_errors(batch),
-                error_code="missing_output",
+                message=f"Could not process completed batch: {str(e)}",
+                raw="",
+                error_code="process_completed_batch_error",
             )
-
-        # downloading results, it will be a .jsonl file
-        result_content = await self.client.files.content(output_file_id)
-        content = result_content.text
-
-        if os.environ.get("DEBUG_SAVE_BATCH_RESULTS") == "1":
-            # Save a copy of the batch results for debugging
-            debug_dir = Path("extraction_validator/debug_batch_results")
-            debug_dir.mkdir(parents=True, exist_ok=True)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            debug_file = debug_dir / f"batch_{batch_result.batch_id}_{timestamp}.jsonl"
-            with open(debug_file, "w") as f:
-                f.write(content)
-
-        return BatchOutput(content=content, error_content=error_content)
 
     def _get_open_batch_errors(self, batch: Batch) -> str:
         """Extract error messages from an OpenAI Batch object."""
@@ -551,7 +613,7 @@ class KGJudge:
         # Only put checks here that are not covered by the model validation
 
         # Node validation
-        node_names = set[str]()
+        node_names : set[str] = set()
         for node in kg.nodes:
             node_names.add(node.name)
 
@@ -679,12 +741,10 @@ class KGJudge:
             ids = duplicate.ids or []
             if duplicate.kind == "node" and len(ids) > 1:
                 target_id = ids[0]
-                absorbed_ids = ids[1:]
                 merges.append(
                     MergeFix(
-                        target_id=target_id,
-                        absorbed_ids=absorbed_ids,
-                        retargeted_edge_ids=[],
+                        new_node_name=target_id,
+                        nodes_to_merge=ids,
                     )
                 )
 
@@ -730,24 +790,28 @@ class KGJudge:
                     concept_category=(
                         "framework" if add_node.type == "concept" else None
                     ),
-                    intervention_lifecycle=None,
-                    intervention_maturity=None,
+                    intervention_lifecycle=add_node.intervention_lifecycle if add_node.intervention_lifecycle else (
+                        1 if add_node.type == "intervention" else None
+                    ),
+                    intervention_maturity=add_node.intervention_maturity if add_node.intervention_maturity else (
+                        1 if add_node.type == "intervention" else None
+                    ),
                     intervention_lifecycle_rationale=None,
                     intervention_maturity_rationale=None,
                     node_rationale=None,
                 )
             )
-            if add_node.edge_ids is not None and add_node.edge_ids:
-                for edge_id in add_node.edge_ids:
+
+            if add_node.edges is not None and add_node.edges:
+                for edge in add_node.edges:
                     final_edges.append(
                         GraphEdge(
                             source_node=add_node.name,
-                            target_node=edge_id.target_node,
-                            type=edge_id.type if edge_id.type else "related_to",
-                            description=edge_id.description if edge_id.description else "Auto-generated edge based on validation",
-                            edge_confidence=edge_id.edge_confidence if edge_id.edge_confidence else 3,
+                            target_node=edge.target_node,
+                            type=edge.type if edge.type else "related_to",
+                            description=edge.description if edge.description else "Auto-generated edge based on validation",
+                            edge_confidence=edge.edge_confidence if edge.edge_confidence else 3,
                         )
-                        
                     )
 
         # Apply deletions

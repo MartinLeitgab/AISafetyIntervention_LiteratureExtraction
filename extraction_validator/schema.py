@@ -29,7 +29,7 @@ EXTRACTED_KNOWLEDGE_GRAPH:
 {kg_output.model_dump_json(indent=2)}
 
 SCHEMA_REQUIREMENTS:
-- Nodes must have: name, aliases (2-3 items), type (concept|intervention), description (1-2 sentences)
+- Nodes must have: name, aliases (2-3 items but not a BLOCKER), type (concept|intervention), description (1-2 sentences amount of sentences not a BLOCKER)
 - If type=concept: must have concept_category
 - If type=intervention: must have intervention_lifecycle (1-6) and intervention_maturity (1-4)
 - Edges must have: type, source_node, target_node, description, edge_confidence (1-5)
@@ -72,18 +72,23 @@ Return your analysis in this EXACT JSON format:
   }},
   "proposed_fixes": {{
     "add_nodes": [
-      {{"id": "new_id",
+      {{
       "type": "concept|intervention",
       "name": "node name",
-      "edge_ids": [{{
+      "edges": [{{
+        # the source_node is implied to be the newly added node
         "target_node": "target node name",
         "type": "edge type",
         "description": "edge description",
         "edge_confidence": 1-5
       }},
+      "intervention_lifecycle": 1-6,          # only for intervention nodes
+      "intervention_maturity": 1-4,            # only for intervention nodes
       "props": {{"stable_key": "optional_key"}} }}],
     "merges": [
-      {{"target_id": "id_to_keep", "absorbed_ids": ["id1","id2"], "retargeted_edge_ids": ["edge1","edge2"] }}],
+      {{"new_node_name": "name of the new node", 
+      "nodes_to_merge": ["node name 1","node name 2", ...] 
+      }}],
     "deletions": [
       {{"kind": "node|edge", "id": "id_to_delete", "reason": "explanation" }}]
   }},
@@ -118,29 +123,32 @@ class GeneratedAddEdgeFix(BaseModel):
     description: Optional[str] = None
     edge_confidence: Optional[int] = None
 
+
 class GeneratedAddNodeFix(BaseModel):
     id: Optional[str] = None
     type: Optional[str] = None
     name: Optional[str] = None
     props: Optional[GeneratedFixProps] = None
-    edge_ids: Optional[List[GeneratedAddEdgeFix]] = None
+    edges: Optional[List[GeneratedAddEdgeFix]] = None
+    intervention_lifecycle: Optional[int] = None
+    intervention_maturity: Optional[int] = None
 
 class AddNodeFix(BaseModel):
     id: str
     type: str
     name: str
     props: FixProps
-    edge_ids: Optional[List[GeneratedAddEdgeFix]] = None
+    edges: Optional[List[GeneratedAddEdgeFix]] = None
+    intervention_lifecycle: Optional[int] = None
+    intervention_maturity: Optional[int] = None
 
 class GeneratedMergFix(BaseModel):
-    target_id: Optional[str] = None
-    absorbed_ids: Optional[List[str]] = None
-    retargeted_edge_ids: Optional[List[str]] = None
+    new_node_name: Optional[str] = None
+    nodes_to_merge: Optional[List[str]] = None
 
 class MergeFix(BaseModel):
-    target_id: str
-    absorbed_ids: List[str]
-    retargeted_edge_ids: List[str]
+    new_node_name: str
+    nodes_to_merge: List[str]
 
 class GeneratedDeleteFix(BaseModel):
     kind: Optional[Literal["node", "edge"] | str] = None
@@ -193,7 +201,7 @@ class RationaleMismatch(BaseModel):
 
 class CoverageExpectedEdge(BaseModel):
     title: Optional[str] = None
-    evidence: Optional[str] = None
+    evidence: Optional[str | List[str]] = None
     status: Optional[Literal["covered", "partially_covered", "missing"] | str] = None
     mapped_edge_ids: Optional[List[str]] = None
 
