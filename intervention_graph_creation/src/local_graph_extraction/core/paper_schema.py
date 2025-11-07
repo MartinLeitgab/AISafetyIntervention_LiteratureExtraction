@@ -1,5 +1,6 @@
 from typing import List, Union
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
@@ -7,7 +8,9 @@ from intervention_graph_creation.src.local_graph_extraction.core.node import Gra
 
 class Meta(BaseModel):
     key: str = Field(min_length=1, max_length=64, description="metadata key")
-    value: Union[str, List[str]] = Field(min_length=1, max_length=256, description="metadata value")
+    value: Union[str, List[str]] = Field(
+        min_length=1, max_length=256, description="metadata value"
+    )
 
     model_config = ConfigDict(extra="forbid")
 
@@ -30,6 +33,7 @@ class Meta(BaseModel):
                 new_list.append(item2)
             return new_list
         return v
+
 
 class PaperSchema(BaseModel):
     nodes: List[GraphNode] = Field(default_factory=list)

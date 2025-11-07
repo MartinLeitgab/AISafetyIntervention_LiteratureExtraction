@@ -1,38 +1,33 @@
-#!/usr/bin/env python3
 """
 KG-Judge: Knowledge Graph Validation and Improvement System
 A precise and rigorous auditor for knowledge graphs extracted by LLMs
 """
-# pyright: strict
 
-from dataclasses import dataclass
-import json
-import hashlib
 import asyncio
+import hashlib
+import json
 import os
-from pathlib import Path
 import shutil
 import signal
 import tempfile
-from typing import Any, List, NotRequired, Optional, Tuple, TypedDict, Literal, Dict
-from datetime import datetime
 import uuid
-from openai import AsyncOpenAI
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Literal, NotRequired, Optional, Tuple, TypedDict
+
 from dotenv import load_dotenv
-from extraction_validator.utilities import (
-    BatchOutput,
-    BatchResult,
-    EverythingInTheBatchHasAnError,
-    CompletionsRequest,
-    DataSource,
-    JudgeBatchResult,
-    JudgeBatch,
-    JudgeErrorCode,
-    JudgeRequest,
-    unknown_judge_request,
-    upload_and_create_batch,
+from fire import Fire
+from openai import AsyncOpenAI
+from openai.types.batch import Batch
+from openai.types.chat.chat_completion import ChatCompletion
+from pydantic import ValidationError
+
+from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    PaperSchema,
 )
-from extraction_validator.schema import (
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.schema import (
     AddNodeFix,
     DeleteFix,
     FixProps,
@@ -42,13 +37,19 @@ from extraction_validator.schema import (
     ValidationReport,
     create_validation_prompt,
 )
-from openai.types.batch import Batch
-from openai.types.chat.chat_completion import ChatCompletion
-from pydantic import ValidationError
-from fire import Fire  # type: ignore[reportMissingImports, reportMissingTypeStubs]
-
-from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
+from intervention_graph_creation.src.local_graph_extraction.llm_judge.utilities import (
+    BatchOutput,
+    BatchResult,
+    CompletionsRequest,
+    DataSource,
+    EverythingInTheBatchHasAnError,
+    JudgeBatch,
+    JudgeBatchResult,
+    JudgeErrorCode,
+    JudgeRequest,
+    unknown_judge_request,
+    upload_and_create_batch,
+)
 
 # Loads the OpenAI API key from .env file OPENAI_API_KEY
 load_dotenv()
@@ -122,7 +123,6 @@ class AssessmentFailure(TypedDict):
     raw_response: str
     custom_id: NotRequired[str]
     error_code: JudgeErrorCode
-
 
 
 GPT_Assessment_Result = AssessmentSuccess | AssessmentFailure
@@ -214,7 +214,7 @@ class KGJudge:
         batch_files: List[JudgeBatch] = []
         for i, batch_start in enumerate(range(0, len(all_requests), batch_size)):
             batch = all_requests[batch_start : batch_start + batch_size]
-            batch_file_path = self.temp_dir / f"batch_requests_{i+1}.jsonl"
+            batch_file_path = self.temp_dir / f"batch_requests_{i + 1}.jsonl"
 
             with open(batch_file_path, "w") as f:
                 for req in batch:
@@ -225,7 +225,6 @@ class KGJudge:
         for meta_batch_index in range(
             0, len(batch_files), how_many_batches_in_flight_at_once
         ):
-            
             slice_of_batches = batch_files[
                 meta_batch_index : meta_batch_index + how_many_batches_in_flight_at_once
             ]
@@ -233,14 +232,10 @@ class KGJudge:
                 for batch in slice_of_batches:
                     self.save_results(
                         self._error_result(
-                            "Cancelled",
-                            "Cancelled",
-                            "batch_cancelled",
-                            batch.requests
+                            "Cancelled", "Cancelled", "batch_cancelled", batch.requests
                         )
                     )
                 continue
-
 
             # Immediately upload each batch after it is written
             batch_results = await asyncio.gather(
@@ -292,10 +287,10 @@ class KGJudge:
                                     gpt_assessment["raw_response"],
                                     gpt_assessment["error_code"],
                                     [
-                                       custom_id_to_request.get(
-                                           gpt_assessment.get("custom_id", "unknown"),
-                                           unknown_judge_request("unknown"),
-                                       )
+                                        custom_id_to_request.get(
+                                            gpt_assessment.get("custom_id", "unknown"),
+                                            unknown_judge_request("unknown"),
+                                        )
                                     ],
                                 ),
                             )
@@ -310,7 +305,11 @@ class KGJudge:
                                     f"Unknown custom_id in GPT response {gpt_assessment['custom_id']}",
                                     "",
                                     "unknown_custom_id",
-                                    [unknown_judge_request(gpt_assessment["custom_id"])],
+                                    [
+                                        unknown_judge_request(
+                                            gpt_assessment["custom_id"]
+                                        )
+                                    ],
                                 ),
                             )
                             continue
@@ -336,7 +335,9 @@ class KGJudge:
                         await self.client.batches.cancel(batch_result.batch_id)
                         cancelled_count += 1
                     except Exception as e:
-                        print(f"Could not cancel batch {batch_result.batch_id}: {str(e)}")
+                        print(
+                            f"Could not cancel batch {batch_result.batch_id}: {str(e)}"
+                        )
                 print(f"Cancelled {cancelled_count}/{len(batch_results)} batches.")
                 for batch_result in batch_results:
                     self.save_results(
@@ -344,8 +345,9 @@ class KGJudge:
                             "Cancelled",
                             "Cancelled",
                             "batch_cancelled",
-                            batch_result.batch.requests
-                    ))
+                            batch_result.batch.requests,
+                        )
+                    )
 
     def save_results(self, results: List[JudgeReport]):
         """Save the judge reports to JSON files in the specified output directory."""
@@ -370,7 +372,9 @@ class KGJudge:
                     line,
                     "unknown_custom_id",
                     [
-                        custom_id_to_request.get(custom_id, unknown_judge_request(custom_id))
+                        custom_id_to_request.get(
+                            custom_id, unknown_judge_request(custom_id)
+                        )
                     ],
                 ),
             )
@@ -455,11 +459,14 @@ class KGJudge:
         return "; ".join(error_messages)
 
     def _error_result(
-        self, error: str, raw_response: str, error_code: JudgeErrorCode, batch_requests: List[JudgeRequest]
+        self,
+        error: str,
+        raw_response: str,
+        error_code: JudgeErrorCode,
+        batch_requests: List[JudgeRequest],
     ) -> List[JudgeReport]:
         reports: List[JudgeReport] = []
         for request in batch_requests:
-
             local_validation = self._perform_local_validation(request.kg_output)
             combined_report = self._combine_validations(
                 {
@@ -481,11 +488,11 @@ class KGJudge:
         try:
             raw: OpenAIResponse = json.loads(response_text)
         except json.JSONDecodeError as e:
-             return {
+            return {
                 "type": "failure",
                 "error": "Could not extract JSON from GPT response, error: " + str(e),
                 "raw_response": response_text,
-                "error_code": "parse_or_validate_error"
+                "error_code": "parse_or_validate_error",
             }
         custom_id = raw["custom_id"]
         if raw["response"]["status_code"] != 200:
@@ -535,7 +542,8 @@ class KGJudge:
         except ValidationError as e:
             return {
                 "type": "failure",
-                "error": "Could not validate GPT response into GPT_Assessment model: " + str(e),
+                "error": "Could not validate GPT response into GPT_Assessment model: "
+                + str(e),
                 "raw_response": response_text,
                 "error_code": "parse_or_validate_error",
                 "custom_id": custom_id,
@@ -607,15 +615,21 @@ class KGJudge:
 
         # Create complete report
         return JudgeReport(
-            decision=gpt_assessment.decision.model_dump() if gpt_assessment.decision else {},
-            validation_report=gpt_assessment.validation_report.model_dump() if gpt_assessment.validation_report else {},
+            decision=gpt_assessment.decision.model_dump()
+            if gpt_assessment.decision
+            else {},
+            validation_report=gpt_assessment.validation_report.model_dump()
+            if gpt_assessment.validation_report
+            else {},
             proposed_fixes=(
                 gpt_assessment.proposed_fixes.model_dump()
                 if gpt_assessment.proposed_fixes
                 else {}
             ),
             final_graph=final_graph,
-            rationale_record=gpt_assessment.rationale_record.model_dump() if gpt_assessment.rationale_record else {},
+            rationale_record=gpt_assessment.rationale_record.model_dump()
+            if gpt_assessment.rationale_record
+            else {},
             url=data_source.url,
             paper_id=data_source.paper_id,
             ard_file_source=data_source.ard_file_source,
@@ -628,16 +642,15 @@ class KGJudge:
         """Generate proposed fixes based on validation issues."""
 
         # fixes = ProposedFixes(add_nodes=[], merges=[], deletions=[])
-        
+
         if validation_report is None:
             return ProposedFixes(add_nodes=[], merges=[], deletions=[])
-        add_nodes : List[AddNodeFix] = []
-        merges : List[MergeFix] = []
-        deletions : List[DeleteFix] = []
-
+        add_nodes: List[AddNodeFix] = []
+        merges: List[MergeFix] = []
+        deletions: List[DeleteFix] = []
 
         # Process schema issues
-        for issue in  validation_report.schema_check or []:
+        for issue in validation_report.schema_check or []:
             if issue.issue is not None and "missing" in issue.issue.lower():
                 if issue.where is not None and "node" in issue.where:
                     add_nodes.append(
@@ -684,7 +697,10 @@ class KGJudge:
 
         # Process orphans
         for orphan in validation_report.orphans or []:
-            if orphan.suggested_fix is not None and "delete" not in orphan.suggested_fix.lower():
+            if (
+                orphan.suggested_fix is not None
+                and "delete" not in orphan.suggested_fix.lower()
+            ):
                 deletions.append(
                     DeleteFix(
                         kind="node",
@@ -826,7 +842,7 @@ def get_by_file_url_to_text_map(ard_path: str) -> URL_To_Text_Map:
                     data = json.loads(line)
                     url = data["url"]
                     out_dict[url] = data["text"]
-                except:
+                except Exception:
                     continue
         out[stem] = out_dict
     return out
@@ -856,7 +872,6 @@ async def process_directory(
     how_many_batches_in_flight_at_once: int,
     batch_size: int,
 ):
-
     base = Path(processed_dir).expanduser().resolve()
     if not base.exists() or not base.is_dir():
         raise FileNotFoundError(f"Directory not found or not a directory: {base}")

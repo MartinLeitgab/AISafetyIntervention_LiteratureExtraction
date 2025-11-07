@@ -5,9 +5,9 @@ import logging
 import os
 from typing import List, Optional
 
+from config import load_settings
 from intervention_graph_creation.src.data_interfaces.dedupe import dedupe_publications
 from intervention_graph_creation.src.data_interfaces.models import Publication
-from config import load_settings
 
 SETTINGS = load_settings()
 logger = logging.getLogger(__name__)
@@ -44,14 +44,18 @@ def _iter_records(file_path: str):
                         yield item
 
 
-def load_publications_from_local_ard(path_or_dir: str, strict: bool = False) -> List[Publication]:
+def load_publications_from_local_ard(
+    path_or_dir: str, strict: bool = False
+) -> List[Publication]:
     publications: List[Publication] = []
 
     for fp in _iter_files(path_or_dir):
         for rec in _iter_records(fp):
             if not isinstance(rec, dict):
                 if strict:
-                    raise ValueError(f"Invalid record (expected dict) in {fp}: {type(rec)}")
+                    raise ValueError(
+                        f"Invalid record (expected dict) in {fp}: {type(rec)}"
+                    )
                 logger.warning("Skipping non-dict record in %s: %r", fp, type(rec))
                 continue
 
@@ -67,12 +71,12 @@ def load_publications_from_local_ard(path_or_dir: str, strict: bool = False) -> 
             text = rec.get("text")
             if text is None:
                 text = ""
-            
+
             # Skip publications with empty text
             if not str(text).strip():
                 logger.debug("Skipping publication with empty text: %s", title)
                 continue
-            
+
             url = rec.get("url")
             if url is None:
                 url = None
@@ -122,7 +126,9 @@ def load_publications_from_hf_ard(
                 json_files.append(os.path.join(root, fn))
 
     if not json_files:
-        raise RuntimeError(f"No JSON/JSONL files found in downloaded dataset at {repo_path}")
+        raise RuntimeError(
+            f"No JSON/JSONL files found in downloaded dataset at {repo_path}"
+        )
 
     publications: List[Publication] = []
     for path in json_files:
@@ -137,7 +143,7 @@ def main():
         repo_id="StampyAI/alignment-research-dataset",
         allow_patterns=["arxiv/*"],
         local_dir=str(SETTINGS.paths.input_dir),
-        dedupe=True
+        dedupe=True,
     )
 
     print(f"Downloaded publications: {len(publications)}\n")

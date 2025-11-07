@@ -1,13 +1,12 @@
 import json
-import traceback
 import logging
-import shutil
 import re
-from pathlib import Path
-from typing import Any, Optional, Tuple, Dict
-from urllib.parse import urlparse
+import shutil
+import traceback
 from datetime import datetime, timezone
-
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
+from urllib.parse import urlparse
 
 FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.S | re.I)
 logger = logging.getLogger("intervention.extractor")
@@ -32,14 +31,14 @@ def split_text_and_json(s: str) -> Tuple[str, Optional[str]]:
     s = s or ""
     m = FENCE_RE.search(s)
     if m:
-        return (s[:m.start()] + s[m.end():]).strip(), m.group(1).strip()
+        return (s[: m.start()] + s[m.end() :]).strip(), m.group(1).strip()
 
     i, j = s.find("{"), s.rfind("}")
     if i != -1 and j != -1 and i < j:
-        candidate = s[i:j + 1].strip()
+        candidate = s[i : j + 1].strip()
         # Let json library decide validity; JSONDecodeError will bubble up
         json.loads(candidate)
-        return (s[:i] + s[j + 1:]).strip(), candidate
+        return (s[:i] + s[j + 1 :]).strip(), candidate
 
     return s.strip(), None
 
@@ -59,7 +58,12 @@ def url_to_id(url: str) -> str:
 
 def _utc_now_iso() -> str:
     # Matches your existing Z-suffixed UTC format
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def write_failure(
@@ -155,7 +159,10 @@ def write_failure(
             json.dumps(context)
             diag["context"] = context
         except Exception:
-            diag["context"] = {"note": "context not JSON-serializable", "repr": repr(context)}
+            diag["context"] = {
+                "note": "context not JSON-serializable",
+                "repr": repr(context),
+            }
 
     # Include traceback if an exception is provided
     tb = traceback.format_exc() if err is not None else None
@@ -163,10 +170,14 @@ def write_failure(
         diag["traceback"] = tb
 
     try:
-        error_file.write_text(json.dumps(diag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        error_file.write_text(
+            json.dumps(diag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
     except Exception as write_err:
         # As a last resort, write a plaintext version
-        log.warning("Could not write JSON error.txt, falling back to plaintext: %s", write_err)
+        log.warning(
+            "Could not write JSON error.txt, falling back to plaintext: %s", write_err
+        )
         text = (
             f"timestamp: {diag['timestamp']}\n"
             f"paper_id: {clean_id}\n"

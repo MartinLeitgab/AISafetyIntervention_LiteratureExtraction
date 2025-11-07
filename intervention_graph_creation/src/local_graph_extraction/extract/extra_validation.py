@@ -1,6 +1,23 @@
+"""Validates knowledge graph extraction output folders and moves invalid ones to an error directory.
+
+Key validation criteria:
+- Folder contains ≥3 files
+- Contains a JSON file named {folder_name}.json
+- JSON has non-empty nodes and edges arrays
+- Folder is not already in error directories (extraction/graph/embeddings errors)
+
+Workflow:
+1. Iterates through all subfolders in output_dir
+2. Validates each folder against the criteria
+3. Moves invalid folders to extraction_error_dir
+
+Purpose: Cleans up the output directory by segregating corrupted or incomplete extraction results.
+"""
+
 import json
 import shutil
 from pathlib import Path
+
 from config import load_settings
 
 SETTINGS = load_settings()
@@ -15,6 +32,7 @@ SKIP_DIRS = {
     SETTINGS.paths.embeddings_error_dir,
 }
 
+
 def _is_relative_to(a: Path, b: Path) -> bool:
     try:
         return a.resolve().is_relative_to(b.resolve())
@@ -25,11 +43,13 @@ def _is_relative_to(a: Path, b: Path) -> bool:
         except Exception:
             return False
 
+
 def _in_skip_dirs(folder: Path) -> bool:
     for skip in SKIP_DIRS:
         if skip and _is_relative_to(folder, skip):
             return True
     return False
+
 
 def validate_json(json_path: Path) -> bool:
     try:
@@ -44,6 +64,7 @@ def validate_json(json_path: Path) -> bool:
     if not isinstance(edges, list) or not edges:
         return False
     return True
+
 
 def validate_folder(folder: Path) -> bool:
     if _in_skip_dirs(folder):
@@ -61,6 +82,7 @@ def validate_folder(folder: Path) -> bool:
         return False
     return True
 
+
 def run_validation():
     for subfolder in ROOT_DIR.iterdir():
         if subfolder.is_dir():
@@ -70,6 +92,7 @@ def run_validation():
                     shutil.move(str(subfolder), str(target))
                 except Exception:
                     pass
+
 
 if __name__ == "__main__":
     run_validation()
