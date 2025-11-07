@@ -233,7 +233,7 @@ class AISafetyGraph:
 
         print("Creating new vector index on (n:NODE).embedding...")
         g.query(
-            "CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}"
+            "CREATE VECTOR INDEX FOR (n:NODE) ON (n.embedding) OPTIONS {dimension:1536, similarityFunction:'euclidean'}"
         )
         print("Created vector index on (n:NODE).embedding.")
 
@@ -257,7 +257,7 @@ class AISafetyGraph:
         #     except Exception as e:
         #         print(f"Warning: Failed to drop vector index (may not exist or not supported): {e}")
         # print("Creating new vector index on [r:EDGE].embedding...")
-        # g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'cosine'}")
+        # g.query("CREATE VECTOR INDEX FOR ()-[r:EDGE]-() ON (r.embedding) OPTIONS {dimension:1536, similarityFunction:'euclidean'}")
         # print("Created vector index on (r:EDGE).embedding.")
 
     # ---------- ingest ----------

@@ -7,32 +7,16 @@ and creates edges between them. It converts cosine similarity to euclidean
 distance for compatibility with FalkorDB's vector index.
 
 Usage:
-    uv run python -m intervention_graph_creation.src.local_graph_extraction.db.create_similarity_edges
+    uv run intervention_graph_creation.src.local_graph_extraction.db.create_similarity_edges.py  [--edge_label SIMILAR_TO] [--min_cosine_similarity 0.5] [--max_cosine_similarity 1.0] [--top_k 100]
 """
-
+# pyright: standard
 import logging
 
-from falkordb import FalkorDB, Graph
+from falkordb import FalkorDB, Graph, QueryResult
 
 from config import load_settings
 
-# ============================================================================
-# CONFIGURATION - Edit these parameters
-# ============================================================================
-
-# Label for the edges to create (e.g., "SIMILAR_TO", "RELATED_TO")
-EDGE_LABEL = "SIMILAR_TO"
-
-# Minimum cosine similarity threshold for creating edges (range: -1.0 to 1.0)
-MIN_COSINE_SIMILARITY = 0.8
-
-# Maximum cosine similarity threshold (range: -1.0 to 1.0)
-MAX_COSINE_SIMILARITY = 1.0
-
-# Number of similar nodes to retrieve per query
-TOP_K = 100
-
-# ============================================================================
+from fire import Fire
 
 # Configure logging
 logging.basicConfig(
@@ -70,7 +54,7 @@ def create_edges(
     min_cosine_similarity: float,
     max_cosine_similarity: float = 1.0,
     top_k: int = 100,
-) -> dict:
+) -> QueryResult:
     """
     Create edges between nodes based on embedding similarity.
 
@@ -116,8 +100,8 @@ def create_edges(
     YIELD node, score
     // score is euclidean_distance = sqrt(2 - 2 * cosine_similarity)
     WHERE node.is_tombstone = false
-      AND score >= {min_euclidean_distance}
-      AND score <= {max_euclidean_distance}
+      AND score >= $minE
+      AND score <= $maxE
       AND seed.url <> node.url
     MERGE (seed)-[r:{edge_label}]-(node)
     SET r.score = score
@@ -128,7 +112,13 @@ def create_edges(
     """
 
     logger.info("Executing similarity search and edge creation query...")
-    result = graph.query(query)
+    result = graph.query(
+        query,
+        {
+            "minE": min_euclidean_distance,
+            "maxE": max_euclidean_distance,
+        },
+    )
 
     return result
 
@@ -164,16 +154,26 @@ def get_edge_stats(graph: Graph, edge_label: str) -> dict:
         }
     return {}
 
-
-def main():
-    """Main function to create similarity edges."""
+def main(
+    edge_label="SIMILAR_TO",
+    min_cosine_similarity=0.8,
+    max_cosine_similarity=1.0,
+    top_k=100,
+):
+    """Main function to create similarity edges.
+    Args:
+        edge_label: Label for the edges to create (e.g., "SIMILAR_TO", "RELATED_TO")
+        min_cosine_similarity: Minimum cosine similarity threshold for creating edges (range: -1.0 to 1.0)
+        max_cosine_similarity: Maximum cosine similarity threshold (range: -1.0 to 1.0)
+        top_k: Number of similar nodes to retrieve per query. For narrow embeddings use 1300, for wide embeddings use 2100
+    """
 
     # Validate similarity range
-    if not (-1.0 <= MIN_COSINE_SIMILARITY <= 1.0):
+    if not (-1.0 <= min_cosine_similarity <= 1.0):
         raise ValueError("MIN_COSINE_SIMILARITY must be in range [-1, 1]")
-    if not (-1.0 <= MAX_COSINE_SIMILARITY <= 1.0):
+    if not (-1.0 <= max_cosine_similarity <= 1.0):
         raise ValueError("MAX_COSINE_SIMILARITY must be in range [-1, 1]")
-    if MIN_COSINE_SIMILARITY >= MAX_COSINE_SIMILARITY:
+    if min_cosine_similarity >= max_cosine_similarity:
         raise ValueError(
             "MIN_COSINE_SIMILARITY must be less than MAX_COSINE_SIMILARITY"
         )
@@ -183,11 +183,11 @@ def main():
     logger.info("=" * 70)
     logger.info(f"Database: {SETTINGS.falkordb.host}:{SETTINGS.falkordb.port}")
     logger.info(f"Graph: {SETTINGS.falkordb.graph}")
-    logger.info(f"Edge label: {EDGE_LABEL}")
+    logger.info(f"Edge label: {edge_label}")
     logger.info(
-        f"Cosine similarity range: [{MIN_COSINE_SIMILARITY}, {MAX_COSINE_SIMILARITY}]"
+        f"Cosine similarity range: [{min_cosine_similarity}, {max_cosine_similarity}]"
     )
-    logger.info(f"Top K: {TOP_K}")
+    logger.info(f"Top K: {top_k}")
     logger.info("=" * 70)
 
     # Connect to database
@@ -203,10 +203,10 @@ def main():
     try:
         result = create_edges(
             graph=graph,
-            edge_label=EDGE_LABEL,
-            min_cosine_similarity=MIN_COSINE_SIMILARITY,
-            max_cosine_similarity=MAX_COSINE_SIMILARITY,
-            top_k=TOP_K,
+            edge_label=edge_label,
+            min_cosine_similarity=min_cosine_similarity,
+            max_cosine_similarity=max_cosine_similarity,
+            top_k=top_k,
         )
 
         # Log results
@@ -235,12 +235,12 @@ def main():
         logger.info(f"Total edges created: {total_edges}")
 
         # Get and display edge statistics
-        stats = get_edge_stats(graph, EDGE_LABEL)
+        stats = get_edge_stats(graph, edge_label)
         if stats:
             logger.info("=" * 70)
             logger.info("Edge Statistics")
             logger.info("=" * 70)
-            logger.info(f"Total '{EDGE_LABEL}' edges: {stats.get('total_edges', 0)}")
+            logger.info(f"Total '{edge_label}' edges: {stats.get('total_edges', 0)}")
             logger.info(
                 f"Min score (euclidean distance): {stats.get('min_score', 0):.4f}"
             )
@@ -260,4 +260,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    Fire(main)
