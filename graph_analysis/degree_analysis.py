@@ -272,7 +272,10 @@ class GraphEdgeAnalyzer:
         """
         fig, axes = plt.subplots(1, 3, figsize=(20, 6))
 
-        save_path = save_path.replace("_", "_embeddings{embeddings_type}")
+        save_path = save_path.replace(
+            "degree_",
+            f"degree_analysis_degreedistribution_embeddings-{embeddings_type}_",
+        )
 
         # Colors and labels for the three distributions
         configs = [
@@ -727,7 +730,13 @@ class GraphEdgeAnalyzer:
                labels(m) as target_labels,
                m.name as target_name,
                r.score as similarity_score,
-               n.name as node_name
+               n.name as node_name,
+               n.description as source_desc,
+               n.concept_category as source_category,
+               n.aliases as source_aliases,
+               m.description as target_desc,
+               m.concept_category as target_category,
+               m.aliases as target_aliases
         ORDER BY target_id
         """
 
@@ -768,8 +777,31 @@ class GraphEdgeAnalyzer:
 
             # Sample first 100 edges sorted by highest cosine similarity
             print(
-                f"\n  Sample of 100 highest similarity edges of node {node_id} with name {result[1][0][6]}:"
+                f"\n  Sample of 100 highest similarity edges of node {node_id} with name '{result[1][0][6]}', description '{result[1][0][7]}', concept_category '{result[1][0][8]}' and ",
+                end="",
             )
+            target_aliases_str = result[1][0][9]
+
+            if target_aliases_str and target_aliases_str != "[]":
+                # Strip brackets and split by comma
+                aliases_list = [
+                    x.strip() for x in target_aliases_str.strip("[]").split(", ")
+                ]
+
+                first_alias = aliases_list[0] if len(aliases_list) > 0 else None
+                second_alias = aliases_list[1] if len(aliases_list) > 1 else None
+                third_alias = aliases_list[2] if len(aliases_list) > 2 else None
+
+                print(f"aliases '{first_alias}' and '{second_alias}'", end="")
+                if third_alias:
+                    print(f" and '{third_alias}':")
+                else:
+                    print(":")
+
+                # Output: aliases 'AI-caused human extinction' and 'Existential risk from misaligned AI'
+            else:
+                print("No aliases")
+
             sorted_edges = sorted(
                 result[1][:100],
                 key=lambda row: 1 - (float(row[5]) ** 2) / 2
@@ -787,8 +819,24 @@ class GraphEdgeAnalyzer:
                     else "None"
                 )
                 print(
-                    f"    {i + 1}. Target {row[0]} ({direction}), labels: {row[3]}, name: {row[4] if row[4] else 'None'}, Cosine sim: {cosine_similarity}, Eucl score: {eucl_score}"
+                    f"    {i + 1}. Target {row[0]} ({direction}), labels: {row[3]}, name: {row[4] if row[4] else 'None'}, Cosine sim: {cosine_similarity}, Eucl score: {eucl_score},  description '{row[10]}', concept_category '{row[11]}' and ",
+                    end="",
                 )
+                target_aliases_str = row[12]
+
+                if target_aliases_str and target_aliases_str != "[]":
+                    # Strip brackets and split by comma
+                    aliases_list = [
+                        x.strip() for x in target_aliases_str.strip("[]").split(", ")
+                    ]
+
+                    first_alias = aliases_list[0] if len(aliases_list) > 0 else None
+                    second_alias = aliases_list[1] if len(aliases_list) > 1 else None
+
+                    print(f"aliases '{first_alias}' and '{second_alias}'")
+                    # Output: aliases 'AI-caused human extinction' and 'Existential risk from misaligned AI'
+                else:
+                    print("No aliases")
         else:
             print("  No edges found")
 
