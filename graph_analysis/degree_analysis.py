@@ -1116,6 +1116,17 @@ def main():
             within_doc_rel, cross_doc_rel, node_types=node_types_to_analyze
         )
 
+        # Find max degree node
+        print("\n" + "=" * 80)
+        print("Node ID with max degree:")
+        combined_degrees = degrees_dict["combined"]
+        max_degree = max(combined_degrees)
+        max_idx = combined_degrees.index(max_degree)
+
+        print("\nNode with max degree:")
+        print(f"  Index in degree list: {max_idx}")
+        print(f"  Combined degree: {max_degree}")
+
         # Check if we actually got data
         if all(max(degrees_dict[key]) == 0 for key in degrees_dict):
             print("\n✗ WARNING: All degrees are 0!")
