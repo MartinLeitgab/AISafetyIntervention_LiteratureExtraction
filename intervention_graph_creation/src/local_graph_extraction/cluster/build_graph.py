@@ -38,6 +38,10 @@ def build_graph_from_csv(csv_dir: str) -> nx.Graph:
                 to_id = row["to_id"]
                 attrs = row.drop(["id", "from_id", "to_id"]).to_dict()
                 attrs.pop("type", None)
+                if "score" in attrs:
+                    attrs["weight"] = float(attrs["score"])
+                else:
+                    attrs["weight"] = 1.0
                 G.add_edge(str(from_id), str(to_id), type=edge_type, **attrs)
 
     return G

@@ -13,13 +13,38 @@ output_dir = SETTINGS.paths.output_dir
 
 
 def run_louvain_clustering(G: nx.Graph):
-    """Compute the best partition using Louvain Method"""
+    """
+    Perform community detection on a given graph using the Louvain method.
+
+    This function computes an optimal partition of nodes that maximizes modularity,
+    using the specified edge weight (default: "weight") to determine connection strength.
+
+    Args:
+        G (nx.Graph): The input NetworkX graph (can be weighted or unweighted).
+
+    Returns:
+        dict: A mapping of each node to its assigned community ID.
+    """
 
     partition = community_louvain.best_partition(G, weight="weight")
     return partition
 
 
 def visualize_interactive(G, partition):
+    """
+    Create an interactive PyVis visualization of the Louvain communities.
+
+    Each node is colored according to its detected community, and all edges
+    in the graph are displayed. The result is saved as an HTML file that
+    can be opened in a web browser.
+
+    Args:
+        G (nx.Graph): The input NetworkX graph.
+        partition (dict): A dictionary mapping nodes to community IDs.
+
+    Output:
+        Generates an interactive HTML file named 'louvain_clusters.html'.
+    """
     net = Network(height="800px", width="100%", notebook=False, directed=True)
     community_colors = {}
 
@@ -39,6 +64,22 @@ def visualize_interactive(G, partition):
 def visualize_top_communities(
     G: nx.Graph, partition: dict, top_k=5, filename="louvain_top5.html"
 ):
+    """
+    Visualize the top-k largest Louvain communities using PyVis.
+
+    This function selects the 'top_k' largest communities based on node count,
+    extracts the corresponding subgraph, and produces an interactive visualization
+    highlighting their internal structure.
+
+    Args:
+        G (nx.Graph): The input NetworkX graph.
+        partition (dict): Mapping of nodes to community IDs.
+        top_k (int, optional): Number of largest communities to visualize. Defaults to 5.
+        filename (str, optional): Name of the output HTML file. Defaults to 'louvain_top5.html'.
+
+    Output:
+        Saves an interactive visualization (HTML) of the top-k communities to disk.
+    """
     community_sizes = Counter(partition.values())
     top_comms = [comm for comm, _ in community_sizes.most_common(top_k)]
     selected_nodes = [n for n, c in partition.items() if c in top_comms]
