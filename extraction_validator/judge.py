@@ -5,6 +5,7 @@ A precise and rigorous auditor for knowledge graphs extracted by LLMs
 """
 # pyright: strict
 
+from collections import defaultdict
 from dataclasses import dataclass
 import json
 import hashlib
@@ -16,7 +17,6 @@ import signal
 import tempfile
 from typing import Any, List, NotRequired, Optional, Tuple, TypedDict, Literal, Dict
 from datetime import datetime
-import uuid
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from extraction_validator.utilities import (
@@ -33,14 +33,8 @@ from extraction_validator.utilities import (
     upload_and_create_batch,
 )
 from extraction_validator.schema import (
-    AddNodeFix,
-    DeleteFix,
-    FixProps,
     GPT_Assessment,
-    GeneratedProposedFixes,
-    MergeFix,
     ProposedFixes,
-    ValidationReport,
     create_validation_prompt,
 )
 from openai.types.batch import Batch
@@ -218,7 +212,8 @@ class KGJudge:
                     # "temperature": 0.1,
                     "temperature": 1.0,
                     # "max_tokens": 4000,
-                    "max_completion_tokens": 16_000,
+                    # "max_completion_tokens": 16_000,
+                    "max_completion_tokens": 32_000,
                     "response_format": {"type": "json_object"},
                 },
             }
@@ -663,15 +658,7 @@ class KGJudge:
 
         gpt_assessment = gpt_assessment_result["gpt_assessment"]
 
-
-        if gpt_assessment.proposed_fixes is None:
-            # Generate proposed fixes based on issues found
-            proposed_fixes = self._generate_proposed_fixes(gpt_assessment.validation_report)
-
-            # Apply fixes to create final graph
-            final_graph = self._apply_fixes_to_graph(kg, proposed_fixes, original_text)
-        else:
-            final_graph = self._apply_fixes_to_graph(kg, gpt_assessment.proposed_fixes, original_text)
+        final_graph = self._apply_fixes_to_graph(kg, gpt_assessment.proposed_fixes or ProposedFixes(), original_text)
 
         # Create complete report
         return JudgeReport(
@@ -690,79 +677,8 @@ class KGJudge:
             errors=None,
         )
 
-    def _generate_proposed_fixes(
-        self, validation_report: Optional[ValidationReport]
-    ) -> ProposedFixes:
-        """Generate proposed fixes based on validation issues."""
-
-        # fixes = ProposedFixes(add_nodes=[], merges=[], deletions=[])
-        
-        if validation_report is None:
-            return ProposedFixes(add_nodes=[], merges=[], deletions=[])
-        add_nodes : List[AddNodeFix] = []
-        merges : List[MergeFix] = []
-        deletions : List[DeleteFix] = []
-
-
-        # Process schema issues
-        for issue in  validation_report.schema_check or []:
-            if issue.issue is not None and "missing" in issue.issue.lower():
-                if issue.where is not None and "node" in issue.where:
-                    add_nodes.append(
-                        AddNodeFix(
-                            id=f"generated_node_{len(add_nodes)}",
-                            type="concept",
-                            name="Generated Node",
-                            props=FixProps(
-                                stable_key=hashlib.md5(
-                                    f"gen_node_{len(add_nodes)}".encode()
-                                ).hexdigest()[:8]
-                            ),
-                        )
-                    )
-
-        # Process referential issues
-        for issue in validation_report.referential_check or []:
-            if issue.severity == "BLOCKER":
-                for node_id in issue.ids or []:
-                    add_nodes.append(
-                        AddNodeFix(
-                            id=node_id,
-                            type="concept",
-                            name=node_id,
-                            props=FixProps(
-                                stable_key=hashlib.md5(node_id.encode()).hexdigest()[:8]
-                            ),
-                        )
-                    )
-
-        # Process duplicates
-        for duplicate in validation_report.duplicates or []:
-            ids = duplicate.ids or []
-            if duplicate.kind == "node" and len(ids) > 1:
-                target_id = ids[0]
-                merges.append(
-                    MergeFix(
-                        new_node_name=target_id,
-                        nodes_to_merge=ids,
-                    )
-                )
-
-        # Process orphans
-        for orphan in validation_report.orphans or []:
-            if orphan.suggested_fix is not None and "delete" not in orphan.suggested_fix.lower():
-                deletions.append(
-                    DeleteFix(
-                        kind="node",
-                        id=orphan.node_id or f"unknown_{uuid.uuid4().hex[:8]}",
-                        reason="orphaned_node",
-                    )
-                )
-
-        return ProposedFixes(add_nodes=add_nodes, merges=merges, deletions=deletions)
-
     def _apply_fixes_to_graph(
-        self, kg: PaperSchema, proposed_fixes: ProposedFixes | GeneratedProposedFixes, original_text: str
+        self, kg: PaperSchema, proposed_fixes: ProposedFixes, original_text: str
     ) -> Final_Knowledge_Graph:
         """Apply fixes to create the final improved knowledge graph."""
 
@@ -774,62 +690,101 @@ class KGJudge:
 
         # Apply add_nodes fixes
         for add_node in proposed_fixes.add_nodes or []:
-            candidate_name = add_node.name if add_node.name else add_node.id
+            candidate_name = add_node.name
             if not candidate_name:
                 continue
             # Ensure unique node names
             if candidate_name in existing_names:
                 continue
             existing_names.add(candidate_name)
-            final_nodes.append(
-                GraphNode(
-                    name=add_node.name if add_node.name else add_node.id,
-                    aliases=[add_node.name if add_node.name else add_node.id],
-                    type=add_node.type if add_node.type else "concept",
-                    description="Auto-generated node based on validation",
-                    concept_category=(
-                        "framework" if add_node.type == "concept" else None
-                    ),
-                    intervention_lifecycle=add_node.intervention_lifecycle if add_node.intervention_lifecycle else (
-                        1 if add_node.type == "intervention" else None
-                    ),
-                    intervention_maturity=add_node.intervention_maturity if add_node.intervention_maturity else (
-                        1 if add_node.type == "intervention" else None
-                    ),
-                    intervention_lifecycle_rationale=None,
-                    intervention_maturity_rationale=None,
-                    node_rationale=None,
-                )
-            )
-
-            if add_node.edges is not None and add_node.edges:
-                for edge in add_node.edges:
-                    final_edges.append(
-                        GraphEdge(
-                            source_node=add_node.name,
-                            target_node=edge.target_node,
-                            type=edge.type if edge.type else "related_to",
-                            description=edge.description if edge.description else "Auto-generated edge based on validation",
-                            edge_confidence=edge.edge_confidence if edge.edge_confidence else 3,
-                        )
+            if add_node.type == "concept":
+                   final_nodes.append(
+                    GraphNode(
+                        name=add_node.name,
+                        aliases=[add_node.name],
+                        type=add_node.type,
+                        description="Auto-generated node based on validation",
+                        concept_category="concept",
+                        intervention_lifecycle=None,
+                        intervention_maturity=None,
+                        intervention_lifecycle_rationale=None,
+                        intervention_maturity_rationale=None,
+                        node_rationale=None,
                     )
+                )
+            else:
+                final_nodes.append(
+                    GraphNode(
+                        name=add_node.name,
+                        aliases=[add_node.name],
+                        type=add_node.type,
+                        description="Auto-generated node based on validation",
+                        concept_category=None,
+                        intervention_lifecycle=add_node.intervention_lifecycle if add_node.intervention_lifecycle else 
+                            1 
+                        ,
+                        intervention_maturity=add_node.intervention_maturity if add_node.intervention_maturity else 
+                            1 ,
+                        intervention_lifecycle_rationale=None,
+                        intervention_maturity_rationale=None,
+                        node_rationale=None,
+                    )
+                )
+
+            for edge in add_node.edges:
+                if add_node.name == edge.target_node:
+                    # skip self-referential edges
+                    continue
+                final_edges.append(
+                    GraphEdge(
+                        source_node=add_node.name,
+                        target_node=edge.target_node,
+                        type=edge.type,
+                        description=edge.description,
+                        edge_confidence=edge.edge_confidence,
+                    )
+                )
 
         # Apply deletions
-        nodes_to_delete = {d.id for d in proposed_fixes.deletions or [] if d.kind == "node"}
+        nodes_to_delete = {d.node_name for d in proposed_fixes.deletions or []}
+
+
+
+        for fix in proposed_fixes.change_node_fields:
+            
+
+
         final_nodes = [
             n.model_dump() for n in final_nodes if n.name not in nodes_to_delete
         ]
 
-        final_edges = [
-            e.model_dump()
-            for e in final_edges
-            if e.source_node not in nodes_to_delete
-            and e.target_node not in nodes_to_delete
-        ]
+        edges_to_delete = defaultdict[str, set[str]](set)
+        for d in proposed_fixes.edge_deletions or []:
+            edges_to_delete[d.source_node_name].add(d.target_node_name)
+
+        out_final_edges: List[Dict[str, Any]] = []
+
+        for e in final_edges:
+            if e.source_node in edges_to_delete:
+                continue
+            if e.target_node in edges_to_delete:
+                continue
+            if  e.target_node in edges_to_delete[e.source_node]:
+                continue
+            out_final_edges.append(e.model_dump())
+
+        
+
+        # final_edges = [
+        #     e.model_dump()
+        #     for e in final_edges
+        #     if e.source_node not in nodes_to_delete
+        #     and e.target_node not in nodes_to_delete
+        # ]
 
         return {
             "nodes": final_nodes,
-            "edges": final_edges,
+            "edges": out_final_edges,
             "meta": {
                 "version": "1.0",
                 "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
