@@ -65,7 +65,7 @@ class DeleteEdgeFix(BaseModel):
 class ChangeNodeFieldFix(BaseModel):
     node_name: str = Field(..., description="Name of the node to change")
     field: str = Field(..., description="Field name to change")
-    new_value: str = Field(..., description="New value for the field")
+    json_new_value: str = Field(..., description="Json string of the New value for the field")
     reason: str = Field(..., description="explanation")
 
 class ProposedFixes(BaseModel):
@@ -181,6 +181,7 @@ class Decision(BaseModel):
     is_valid_json: Optional[bool] = None
     has_blockers: Optional[bool] = Field(default=None, description="Whether there are BLOCKER issues, that have not been solved by proposed fixes")
     flag_underperformance: Optional[bool] = None
+    valid_and_mergeable_after_fixes: Optional[bool] = Field(default=None, description="Whether the KG would be valid after applying the proposed fixes")
     summary: Optional[str] = Field(default=None, description="One-paragraph executive summary of validation results")
 
 class RationaleRecord(BaseModel):
@@ -288,14 +289,14 @@ Return your analysis in this EXACT JSON format:
       {{ "source_node_name": "source node name", "target_node_name": "target node name", "reason": "explanation" }}
     ],
     "change_node_fields": [
-      {{ "node_name": "node name", "field": "field name", "new_value": "new value", "reason": "explanation" }}
+      {{ "node_name": "node name", "field": "field name", "json_new_value": "new value as a json string", "reason": "explanation" }}
     ]
   }},
   "decision": {{
     "summary": "One-paragraph executive summary of validation results"
     "is_valid_json": true/false,
-    "has_blockers": false/false, //has BLOCKER issues that are not fixed by proposed fixes
-                                // if proposed fixes resolve all BLOCKER issues, this should be false
+    "has_blockers": false/false,
+    "valid_and_mergeable_after_fixes": true/false,
     "flag_underperformance": true/false,
   
   }},

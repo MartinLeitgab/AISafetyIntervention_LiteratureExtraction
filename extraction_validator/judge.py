@@ -15,7 +15,7 @@ from pathlib import Path
 import shutil
 import signal
 import tempfile
-from typing import Any, List, NotRequired, Optional, Tuple, TypedDict, Literal, Dict
+from typing import Any, List, NotRequired, Optional, Tuple, TypedDict, Literal, Dict, cast
 from datetime import datetime
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -29,6 +29,7 @@ from extraction_validator.utilities import (
     JudgeBatch,
     JudgeErrorCode,
     JudgeRequest,
+    fix_node_field,
     unknown_judge_request,
     upload_and_create_batch,
 )
@@ -82,17 +83,18 @@ class FinalGraphMetaError(TypedDict):
     error: str
 
 
+# class FinalGraphMeta(TypedDict):
+#     version: Literal["1.0"]
+#     source_hash: str
+#     validation_timestamp: Optional[str]
+
 class FinalGraphMeta(TypedDict):
-    version: Literal["1.0"]
-    source_hash: str
-    validation_timestamp: Optional[str]
-
-
+    key: str
+    value: str
 class Final_Knowledge_Graph(TypedDict):
     nodes: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
-    meta: FinalGraphMeta | FinalGraphMetaError
-
+    meta: List[FinalGraphMeta]
 
 class JudgeReport(TypedDict):
     final_graph: Final_Knowledge_Graph
@@ -683,10 +685,10 @@ class KGJudge:
         """Apply fixes to create the final improved knowledge graph."""
 
         # Start with original graph
-        final_nodes = list(kg.nodes)
+        final_nodes : Dict[str, GraphNode] = {node.name: node for node in kg.nodes}
         final_edges = list(kg.edges)
 
-        existing_names = {node.name for node in final_nodes}
+        existing_names = set(final_nodes.keys())
 
         # Apply add_nodes fixes
         for add_node in proposed_fixes.add_nodes or []:
@@ -698,8 +700,7 @@ class KGJudge:
                 continue
             existing_names.add(candidate_name)
             if add_node.type == "concept":
-                   final_nodes.append(
-                    GraphNode(
+                   final_nodes[add_node.name] = GraphNode(
                         name=add_node.name,
                         aliases=[add_node.name],
                         type=add_node.type,
@@ -711,10 +712,9 @@ class KGJudge:
                         intervention_maturity_rationale=None,
                         node_rationale=None,
                     )
-                )
+                
             else:
-                final_nodes.append(
-                    GraphNode(
+                final_nodes[add_node.name] = GraphNode(
                         name=add_node.name,
                         aliases=[add_node.name],
                         type=add_node.type,
@@ -729,8 +729,6 @@ class KGJudge:
                         intervention_maturity_rationale=None,
                         node_rationale=None,
                     )
-                )
-
             for edge in add_node.edges:
                 if add_node.name == edge.target_node:
                     # skip self-referential edges
@@ -750,12 +748,16 @@ class KGJudge:
 
 
 
-        for fix in proposed_fixes.change_node_fields:
+        for fix in proposed_fixes.change_node_fields or []:
+            # Have to pop here because we may need to change the node name
+            node_to_fix = cast(Dict[str, GraphNode | None], final_nodes).pop(fix.node_name, None)
+            if node_to_fix is None:
+                continue
+            node_to_fix = fix_node_field(node_to_fix, fix)
+            final_nodes[node_to_fix.name] = node_to_fix
             
-
-
-        final_nodes = [
-            n.model_dump() for n in final_nodes if n.name not in nodes_to_delete
+        final_node_list = [
+            n.model_dump() for n in final_nodes.values() if n.name not in nodes_to_delete
         ]
 
         edges_to_delete = defaultdict[str, set[str]](set)
@@ -765,6 +767,8 @@ class KGJudge:
         out_final_edges: List[Dict[str, Any]] = []
 
         for e in final_edges:
+            if e.source_node == e.target_node:
+                continue
             if e.source_node in edges_to_delete:
                 continue
             if e.target_node in edges_to_delete:
@@ -773,23 +777,19 @@ class KGJudge:
                 continue
             out_final_edges.append(e.model_dump())
 
-        
-
-        # final_edges = [
-        #     e.model_dump()
-        #     for e in final_edges
-        #     if e.source_node not in nodes_to_delete
-        #     and e.target_node not in nodes_to_delete
-        # ]
-
         return {
-            "nodes": final_nodes,
+            "nodes": final_node_list,
             "edges": out_final_edges,
-            "meta": {
-                "version": "1.0",
-                "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
-                "validation_timestamp": datetime.now().isoformat(),
-            },
+            "meta": [
+                {"key": "version", "value": "1.0"},
+                {"key": "source_hash", "value": hashlib.md5(original_text.encode()).hexdigest()},
+                {"key": "validation_timestamp", "value": datetime.now().isoformat()},
+            ]
+            # "meta": {
+            #     "version": "1.0",
+            #     "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
+            #     "validation_timestamp": datetime.now().isoformat(),
+            # },
         }
 
     def _create_fallback_report(
@@ -842,12 +842,17 @@ class KGJudge:
         return {
             "nodes": [node.model_dump() for node in kg.nodes],
             "edges": [edge.model_dump() for edge in kg.edges],
-            "meta": {
-                "version": "1.0",
-                # "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
-                "source_hash": "fallback_hash",
-                "validation_timestamp": None,
-            },
+            "meta": [
+                {"key": "version", "value": "1.0"},
+                {"key": "source_hash", "value": "fallback_hash"},
+                {"key": "validation_timestamp", "value":  datetime.now().isoformat()},
+            ]
+            # "meta": {
+            #     "version": "1.0",
+            #     # "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
+            #     "source_hash": "fallback_hash",
+            #     "validation_timestamp": None,
+            # },
         }
 
 

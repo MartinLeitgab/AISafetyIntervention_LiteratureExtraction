@@ -18,9 +18,12 @@ from os import environ
 from openai.types.chat.completion_create_params import (
     CompletionCreateParamsNonStreaming,
 )
-
-from extraction_validator.schema import PaperSchema
 import uuid
+from dataclasses import dataclass
+from extraction_validator.schema import ChangeNodeFieldFix
+from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
+import json
 
 USE_DEBUG_BATCH = environ.get("USE_DEBUG_BATCH", "0") == "1"
 
@@ -140,3 +143,15 @@ async def upload_and_create_batch(
     )
 
     return JudgeBatchResult(is_debug=False, batch_id=batch.id, batch=judge_batch)
+
+def fix_node_field(node: GraphNode, fix: ChangeNodeFieldFix) -> GraphNode:
+    """Apply a ChangeNodeFieldFix to a GraphNode."""
+    try:
+        field_name = fix.field
+        value = json.loads(fix.json_new_value)  # type: ignore[reportGeneralTypeIssues]
+        new_model_dump = node.model_dump()
+        new_model_dump[field_name] = value
+        return GraphNode.model_validate(new_model_dump)
+    except:
+        return node
+    
