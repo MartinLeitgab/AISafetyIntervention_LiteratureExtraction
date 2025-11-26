@@ -20,7 +20,9 @@ from datetime import datetime
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from extraction_validator.utilities import (
-    BatchOutput,
+    AnthropicBatchOutput,
+    AnthropicCompletionsRequest,
+    OpenAIBatchOutput,
     BatchResult,
     EverythingInTheBatchHasAnError,
     CompletionsRequest,
@@ -29,9 +31,12 @@ from extraction_validator.utilities import (
     JudgeBatch,
     JudgeErrorCode,
     JudgeRequest,
+    OpenAICompletionsRequest,
     fix_node_field,
+    get_last_json_block,
     unknown_judge_request,
     upload_and_create_batch,
+    AnthropicContent
 )
 from extraction_validator.schema import (
     GPT_Assessment,
@@ -46,6 +51,9 @@ from fire import Fire  # type: ignore[reportMissingImports, reportMissingTypeStu
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
+import anthropic
+from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
+from anthropic.types.messages.message_batch import MessageBatch
 
 # Loads the OpenAI API key from .env file OPENAI_API_KEY
 load_dotenv()
@@ -132,12 +140,26 @@ class JudgeInput:
     kg_output: PaperSchema
     data_source: DataSource
 
+
+@dataclass
+class OpenAIBatch:
+    batch: Batch
+
+@dataclass
+class AnthropicBatch:
+    message_batch: MessageBatch
+
 @dataclass
 class ReadyBatch:
     ready: bool
-    batch: Batch
+    batch: AnthropicBatch | OpenAIBatch
     result: JudgeBatchResult
     is_debug: bool = False
+    def get_status_string(self) -> str:
+        if isinstance(self.batch, OpenAIBatch):
+            return self.batch.batch.status
+        else:
+            return self.batch.message_batch.processing_status
 
 @dataclass
 class ReadyBatchError:
@@ -150,11 +172,18 @@ class DebugReadyBatch:
     ready: bool = True
     is_debug: bool = False
 
+SYSTEM_PROMPT = """You are KG-Judge, a precise and rigorous auditor for knowledge graphs. Always return valid JSON in the exact format requested."""
 
 class KGJudge:
-    def __init__(self, output_dir: Path):
+    def __init__(self, type: Literal["OpenAI" , "Anthropic"] , output_dir: Path):
         """Initialize KG-Judge with OpenAI API client."""
-        self.client = AsyncOpenAI()
+        # self.client = AsyncOpenAI()
+        if type == "OpenAI":
+            self.client = AsyncOpenAI()
+        elif type == "Anthropic":
+            self.client = anthropic.Anthropic()
+        else:
+            raise ValueError(f"Unknown type {type} for KGJudge")
         self.total_tokens_used = 0
         self.total_prompt_tokens = 0
         self.total_completion_tokens = 0
@@ -198,27 +227,40 @@ class KGJudge:
                 judge_input.original_text, judge_input.kg_output
             )
             custom_id = f"request-{i}"
-            request: CompletionsRequest = {
-                "custom_id": custom_id,
-                "method": "POST",
-                "url": "/v1/chat/completions",
-                "body": {
-                    "model": "gpt-5-nano",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are KG-Judge, a precise and rigorous auditor for knowledge graphs. Always return valid JSON in the exact format requested.",
-                        },
+            request: OpenAICompletionsRequest | AnthropicCompletionsRequest
+            MAX_TOKENS = 32_000
+            if isinstance(self.client, AsyncOpenAI):
+                request = OpenAICompletionsRequest(request=CompletionsRequest(
+                    custom_id=custom_id,
+                    method="POST",
+                    url="/v1/chat/completions",
+                    body={
+                        "model": "gpt-4-vision-preview",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": SYSTEM_PROMPT,
+                            },
+                            {"role": "user", "content": validation_prompt},
+                        ],
+                        # "temperature": 0.1,
+                        "temperature": 1.0,
+                        # "max_tokens": 4000,
+                        # "max_completion_tokens": 16_000,
+                        "max_completion_tokens": MAX_TOKENS,
+                        "response_format": {"type": "json_object"},
+                    },
+                ))
+            else:
+                request = AnthropicCompletionsRequest(request=MessageCreateParamsNonStreaming(
+                    model="claude-haiku-4-5",
+                    max_tokens=MAX_TOKENS,
+                    system=SYSTEM_PROMPT,
+                    messages=[
                         {"role": "user", "content": validation_prompt},
                     ],
-                    # "temperature": 0.1,
-                    "temperature": 1.0,
-                    # "max_tokens": 4000,
-                    # "max_completion_tokens": 16_000,
-                    "max_completion_tokens": 32_000,
-                    "response_format": {"type": "json_object"},
-                },
-            }
+                    
+                ))
             judge_request = JudgeRequest(
                 request=request,
                 original_text=judge_input.original_text,
@@ -231,11 +273,13 @@ class KGJudge:
         batch_files: List[JudgeBatch] = []
         for i, batch_start in enumerate(range(0, len(all_requests), batch_size)):
             batch = all_requests[batch_start : batch_start + batch_size]
-            batch_file_path = self.temp_dir / f"batch_requests_{i+1}.jsonl"
-
-            with open(batch_file_path, "w") as f:
-                for req in batch:
-                    f.write(json.dumps(req.request) + "\n")
+            if isinstance(self.client, AsyncOpenAI):
+                batch_file_path = self.temp_dir / f"batch_requests_{i+1}.jsonl"
+                with open(batch_file_path, "w") as f:
+                    for req in batch:
+                        f.write(json.dumps(req.request) + "\n")
+            else:
+                batch_file_path = "fake_path_anthropic"
             batch_files.append(
                 JudgeBatch(file_path=str(batch_file_path), requests=batch)
             )
@@ -282,9 +326,9 @@ class KGJudge:
                 # A debug batch is None
                 if isinstance(r, DebugReadyBatch):
                     with open("extraction_validator/debug_batch_results/1.jsonl", "r") as f:
-                        result_content = BatchOutput(content=f.read(), type="content")
+                        result_content = OpenAIBatchOutput(content=f.read(), type="content")
                 else:
-                    print(f"Batch {batch_result.batch_id}: {r.batch.status}")
+                    print(f"Batch {batch_result.batch_id}: {r.get_status_string()}")
                     result_content = await self.process_completed_batch(batch_result, r.batch)
                 self.process_result_content(custom_id_to_request, batch_result, result_content)
                 if len(batch_files) > 0 and not self.cancelled:
@@ -311,7 +355,10 @@ class KGJudge:
             for batch_result in batches_in_flight:
                 # Attempt to cancel running batches
                 try:
-                    await self.client.batches.cancel(batch_result.batch_id)
+                    if isinstance(self.client, AsyncOpenAI):
+                        await self.client.batches.cancel(batch_result.batch_id)
+                    else:
+                        self.client.messages.batches.cancel(batch_result.batch_id)
                     cancelled_count += 1
                 except Exception as e:
                     print(f"Could not cancel batch {batch_result.batch_id}: {str(e)}")
@@ -361,7 +408,52 @@ class KGJudge:
                 ),
             )
 
-    def process_result_content(self, custom_id_to_request: Dict[str, JudgeRequest], batch_result: JudgeBatchResult, result_content: BatchOutput | EverythingInTheBatchHasAnError):
+
+    def _validate_and_save_assessment(self, custom_id_to_request: Dict[str, JudgeRequest], gpt_assessment: GPT_Assessment_Result):
+        if gpt_assessment["type"] == "failure":
+            self.save_results(
+                self._error_result(
+                    gpt_assessment["error"],
+                    gpt_assessment["raw_response"],
+                    gpt_assessment["error_code"],
+                    [
+                        custom_id_to_request.get(
+                            gpt_assessment.get("custom_id", "unknown"),
+                            unknown_judge_request("unknown"),
+                        )
+                    ],
+                ),
+            )
+            return
+        judge_request = custom_id_to_request.get(
+            gpt_assessment["custom_id"]
+        )
+        if judge_request is None:
+            # this should not happen
+            self.save_results(
+                self._error_result(
+                    f"Unknown custom_id in GPT response {gpt_assessment['custom_id']}",
+                    "",
+                    "unknown_custom_id",
+                    [unknown_judge_request(gpt_assessment["custom_id"])],
+                ),
+            )
+            return
+
+        # Perform local validation checks
+        local_validation = self._perform_local_validation(
+            judge_request.kg_output
+        )
+        combined_report = self._combine_validations(
+            gpt_assessment,
+            local_validation,
+            judge_request.kg_output,
+            judge_request.original_text,
+            judge_request.data_source,
+        )
+        self.save_results([combined_report])
+
+    def process_result_content(self, custom_id_to_request: Dict[str, JudgeRequest], batch_result: JudgeBatchResult, result_content: OpenAIBatchOutput | AnthropicBatchOutput | EverythingInTheBatchHasAnError):
         if result_content.type == "error":
             self.save_results(
                 self._error_result(
@@ -373,67 +465,42 @@ class KGJudge:
             )
             return
         try:
-            if result_content.error_content is not None:
-                for line in result_content.error_content.splitlines():
+            if isinstance(result_content, OpenAIBatchOutput ):
+                if result_content.error_content is not None:
+                    for line in result_content.error_content.splitlines():
+                        response_text = line.strip()
+                        if not response_text:
+                            # Skip empty lines
+                            continue
+                        self._parse_judge_error(custom_id_to_request, response_text)
+
+                if result_content.content is None:
+                    return
+                # Parse the results (each line is a JSON object)
+                lines = result_content.content.splitlines()
+                for line in lines:
                     response_text = line.strip()
                     if not response_text:
                         # Skip empty lines
                         continue
-                    self._parse_judge_error(custom_id_to_request, response_text)
-
-            if result_content.content is None:
+                    gpt_assessment = self._parse_openai_judge_response(response_text)
+                    self._validate_and_save_assessment(custom_id_to_request, gpt_assessment)
                 return
-            # Parse the results (each line is a JSON object)
-            lines = result_content.content.splitlines()
-            for line in lines:
-                response_text = line.strip()
-                if not response_text:
-                    # Skip empty lines
-                    continue
-                gpt_assessment = self._parse_judge_response(response_text)
-                if gpt_assessment["type"] == "failure":
-                    self.save_results(
-                        self._error_result(
-                            gpt_assessment["error"],
-                            gpt_assessment["raw_response"],
-                            gpt_assessment["error_code"],
-                            [
-                                custom_id_to_request.get(
-                                    gpt_assessment.get("custom_id", "unknown"),
-                                    unknown_judge_request("unknown"),
-                                )
-                            ],
-                        ),
-                    )
-                    continue
-                judge_request = custom_id_to_request.get(
-                    gpt_assessment["custom_id"]
+            for error_result in result_content.error_content:
+                 error_result.content
+                 self.save_results(
+                    self._error_result(
+                        f"Unknown error in gpt response, custom_id: {error_result.request_id}. Got this error:",
+                        error_result.content,
+                        "unknown_custom_id",
+                        [
+                            custom_id_to_request.get(error_result.request_id, unknown_judge_request(error_result.request_id))
+                        ],
+                    ),
                 )
-                if judge_request is None:
-                    # this should not happen
-                    self.save_results(
-                        self._error_result(
-                            f"Unknown custom_id in GPT response {gpt_assessment['custom_id']}",
-                            "",
-                            "unknown_custom_id",
-                            [unknown_judge_request(gpt_assessment["custom_id"])],
-                        ),
-                    )
-                    continue
-
-                # Perform local validation checks
-                local_validation = self._perform_local_validation(
-                    judge_request.kg_output
-                )
-                combined_report = self._combine_validations(
-                    gpt_assessment,
-                    local_validation,
-                    judge_request.kg_output,
-                    judge_request.original_text,
-                    judge_request.data_source,
-                )
-                self.save_results([combined_report])
-            return
+            for result in result_content.content:
+                gpt_assessment = self._parse_anthropic_judge_response(result)
+                self._validate_and_save_assessment(custom_id_to_request, gpt_assessment)
         except Exception as e:
             self.save_results(
                 self._error_result(
@@ -449,56 +516,137 @@ class KGJudge:
         if batch_result.is_debug:
             return DebugReadyBatch(result=batch_result)
         try:
-            batch = await self.client.batches.retrieve(batch_result.batch_id)
-            print(f"Batch {batch_result.batch_id} status: {batch.status}")
-        
-            return ReadyBatch(ready=batch.status in ["completed", "failed", "expired", "cancelled"], batch=batch, result=batch_result)
+            if isinstance(self.client, AsyncOpenAI):
+                batch = await self.client.batches.retrieve(batch_result.batch_id)
+                print(f"Batch {batch_result.batch_id} status: {batch.status}")
+            
+                return ReadyBatch(ready=batch.status in ["completed", "failed", "expired", "cancelled"], batch=OpenAIBatch(batch=batch), result=batch_result)
+            else:
+                message_batch = self.client.messages.batches.retrieve(batch_result.batch_id)
+                print(f"Batch {batch_result.batch_id} status: {message_batch.processing_status}")
+                
+                return ReadyBatch(ready=message_batch.processing_status in [ "ended", "cancelled"], batch=AnthropicBatch(message_batch=message_batch), result=batch_result)
         except Exception as e:
             return ReadyBatchError(result=batch_result, error=e)
 
-    async def process_completed_batch(self, batch_result: JudgeBatchResult, batch: Batch) -> BatchResult:
+    async def process_completed_batch(self, batch_result: JudgeBatchResult, batch_in: AnthropicBatch | OpenAIBatch) -> BatchResult:
         try:
-            # if completed -> retrieve results
-            if batch.status != "completed":
-                return EverythingInTheBatchHasAnError(
-                    message=f"Batch did not complete successfully, final status: {batch.status}",
-                    raw=self._get_open_batch_errors(batch),
-                    error_code="batch_not_completed",
-                )
-
-            output_file_id = batch.output_file_id
-
-            error_content = None
-            if batch.error_file_id is not None:
-                error_content_result = await self.client.files.content(batch.error_file_id)
-                error_content = error_content_result.text
-
-            if output_file_id is None:
-                if error_content is not None:
-                    return BatchOutput(
-                        error_content=error_content,
-                        content=None,
+            if isinstance(self.client, AsyncOpenAI):
+                assert isinstance(batch_in, OpenAIBatch), "Expected OpenAIBatch"
+                batch = batch_in.batch
+                # if completed -> retrieve results
+                if batch.status != "completed":
+                    return EverythingInTheBatchHasAnError(
+                        message=f"Batch did not complete successfully, final status: {batch.status}",
+                        raw=self._get_open_batch_errors(batch),
+                        error_code="batch_not_completed",
                     )
-                return EverythingInTheBatchHasAnError(
-                    message="Batch completed but no output_file_id found",
-                    raw=self._get_open_batch_errors(batch),
-                    error_code="missing_output",
-                )
 
-            # downloading results, it will be a .jsonl file
-            result_content = await self.client.files.content(output_file_id)
-            content = result_content.text
+                output_file_id = batch.output_file_id
 
-            if os.environ.get("DEBUG_SAVE_BATCH_RESULTS") == "1":
-                # Save a copy of the batch results for debugging
-                debug_dir = Path("extraction_validator/debug_batch_results")
-                debug_dir.mkdir(parents=True, exist_ok=True)
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                debug_file = debug_dir / f"batch_{batch_result.batch_id}_{timestamp}.jsonl"
-                with open(debug_file, "w") as f:
-                    f.write(content)
+                error_content = None
+                if batch.error_file_id is not None:
+                    error_content_result = await self.client.files.content(batch.error_file_id)
+                    error_content = error_content_result.text
 
-            return BatchOutput(content=content, error_content=error_content)
+                if output_file_id is None:
+                    if error_content is not None:
+                        return OpenAIBatchOutput(
+                            error_content=error_content,
+                            content=None,
+                        )
+                    return EverythingInTheBatchHasAnError(
+                        message="Batch completed but no output_file_id found",
+                        raw=self._get_open_batch_errors(batch),
+                        error_code="missing_output",
+                    )
+
+                # downloading results, it will be a .jsonl file
+                result_content = await self.client.files.content(output_file_id)
+                content = result_content.text
+
+                if os.environ.get("DEBUG_SAVE_BATCH_RESULTS") == "1":
+                    # Save a copy of the batch results for debugging
+                    debug_dir = Path("extraction_validator/debug_batch_results")
+                    debug_dir.mkdir(parents=True, exist_ok=True)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    debug_file = debug_dir / f"batch_{batch_result.batch_id}_{timestamp}.jsonl"
+                    with open(debug_file, "w") as f:
+                        f.write(content)
+
+                return OpenAIBatchOutput(content=content, error_content=error_content)
+            assert isinstance(batch_in, AnthropicBatch), "Expected AnthropicBatch"
+            batch = batch_in.message_batch
+
+            out_content: List[AnthropicContent] = []
+            out_error_content: List[AnthropicContent] = []
+
+            for response in self.client.messages.batches.results(
+                batch.id
+            ):
+                result = response.result
+                request_id = response.custom_id
+                match result.type:
+                    case "succeeded":
+                        input_tokens = result.message.usage.input_tokens
+                        output_tokens = result.message.usage.output_tokens
+                        if len(result.message.content) == 0:
+                            out_error_content.append(
+                                AnthropicContent(
+                                    request_id=request_id,
+                                    content="Empty response content",
+                                    input_tokens=input_tokens,
+                                    output_tokens=output_tokens,
+                                )
+                            )
+                            continue
+                        last_content = result.message.content[-1]
+                        if last_content.type != "text":
+                            out_error_content.append(
+                                AnthropicContent(
+                                    request_id=request_id,
+                                    content=f"Unexpected content type: {last_content.type}",
+                                    input_tokens=input_tokens,
+                                    output_tokens=output_tokens,
+                                )
+                            )
+                            continue
+                        out_content.append(
+                            AnthropicContent(
+                                request_id=request_id,
+                                content=last_content.text,
+                                input_tokens=input_tokens,
+                                output_tokens=output_tokens,
+                            )
+                        )
+                    case "canceled":
+                        out_error_content.append(
+                            AnthropicContent(
+                                request_id=request_id,
+                                content="Request was cancelled",
+                                input_tokens=0,
+                                output_tokens=0,
+                            )
+                        )
+                    case "errored":
+                        out_error_content.append(
+                            AnthropicContent(
+                                request_id=request_id,
+                                content=f"Request errored: {result.error.error.type}  : {result.error.error.message}",
+                                input_tokens=0,
+                                output_tokens=0,
+                            )
+                        )
+                    case "expired":
+                        out_error_content.append(
+                            AnthropicContent(
+                                request_id=request_id,
+                                content="Request expired",
+                                input_tokens=0,
+                                output_tokens=0,
+                            )
+                        )
+            return AnthropicBatchOutput(content=out_content, error_content=out_error_content)
         except Exception as e:
             return EverythingInTheBatchHasAnError(
                 message=f"Could not process completed batch: {str(e)}",
@@ -538,7 +686,28 @@ class KGJudge:
             reports.append(combined_report)
         return reports
 
-    def _parse_judge_response(self, response_text: str) -> GPT_Assessment_Result:
+
+    def _parse_anthropic_judge_response(self, result: AnthropicContent) -> GPT_Assessment_Result:
+        self.total_prompt_tokens += result.input_tokens
+        self.total_completion_tokens += result.output_tokens
+        try:
+            json_block = get_last_json_block(result.content)
+            assessment = GPT_Assessment.model_validate_json(json_block)
+            return {
+                "type": "success",
+                "gpt_assessment": assessment,
+                "custom_id": result.request_id,
+            }
+        except ValidationError as e:
+            return {
+                "type": "failure",
+                "error": "Could not validate GPT response into GPT_Assessment model: " + str(e),
+                "raw_response": result.content,
+                "error_code": "parse_or_validate_error",
+                "custom_id": result.request_id,
+            }
+
+    def _parse_openai_judge_response(self, response_text: str) -> GPT_Assessment_Result:
         try:
             raw: OpenAIResponse = json.loads(response_text)
         except json.JSONDecodeError as e:
@@ -892,15 +1061,11 @@ def find_url(kg_output: PaperSchema) -> Optional[str]:
                 return item.value
     return None
 
-
-async def process_directory(
+def get_judge_inputs(
     ard_dir: str,
     processed_dir: str,
     output_dir: str,
-    how_many_batches_in_flight_at_once: int,
-    batch_size: int,
 ):
-
     base = Path(processed_dir).expanduser().resolve()
     if not base.exists() or not base.is_dir():
         raise FileNotFoundError(f"Directory not found or not a directory: {base}")
@@ -970,8 +1135,22 @@ async def process_directory(
 
     output_dir_path = Path(output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
+    return inputs, output_dir_path
+async def process_directory(
+    ard_dir: str,
+    processed_dir: str,
+    output_dir: str,
+    model_type: Literal["OpenAI" , "Anthropic"],
+    how_many_batches_in_flight_at_once: int,
+    batch_size: int,
+):
+    inputs, output_dir_path = get_judge_inputs(
+        ard_dir,
+        processed_dir,
+        output_dir,
+    )
 
-    judge = KGJudge(output_dir=output_dir_path)
+    judge = KGJudge( type=model_type, output_dir=output_dir_path)
     # Run batch validation
 
     await judge.judge_knowledge_graph_batch(
@@ -1011,6 +1190,7 @@ def main(
     processed_dir: str,
     ard_dir: str,
     output_dir: str,
+    model_type: Literal["OpenAI" , "Anthropic"]= "Anthropic",
     # TODO look at openAI limits
     how_many_batches_in_flight_at_once: int = 5,
     batch_size: int = 5,
@@ -1030,6 +1210,7 @@ def main(
             ard_dir,
             processed_dir,
             output_dir,
+            model_type,
             how_many_batches_in_flight_at_once,
             batch_size,
         )
