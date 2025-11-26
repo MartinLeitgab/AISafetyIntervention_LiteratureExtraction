@@ -24,6 +24,10 @@ from extraction_validator.schema import ChangeNodeFieldFix
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
 from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
 import json
+import anthropic
+from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
+from anthropic.types.messages.batch_create_params import Request
+from anthropic.types.messages.message_batch import MessageBatch
 
 USE_DEBUG_BATCH = environ.get("USE_DEBUG_BATCH", "0") == "1"
 
@@ -41,10 +45,17 @@ class DataSource:
     paper_id: str
     ard_file_source: str
 
+@dataclass
+class OpenAICompletionsRequest:
+    request: CompletionsRequest
+
+@dataclass
+class AnthropicCompletionsRequest:
+    request: MessageCreateParamsNonStreaming
 
 @dataclass
 class JudgeRequest:
-    request: CompletionsRequest
+    request: OpenAICompletionsRequest | AnthropicCompletionsRequest
     original_text: str
     kg_output: PaperSchema
     data_source: DataSource
@@ -53,12 +64,12 @@ class JudgeRequest:
 
 def unknown_judge_request(custom_id: str) -> JudgeRequest:
     return JudgeRequest(
-        request=CompletionsRequest(
+        request=OpenAICompletionsRequest(request=CompletionsRequest(
             custom_id=custom_id,
             method="POST",
             url="/v1/chat/completions",
             body=cast(Any, {}),  # empty body for unknown request
-        ),
+        )),
         original_text="A text that I don't know about",
         kg_output=PaperSchema(nodes=[], edges=[]),
         data_source=DataSource(
@@ -80,12 +91,25 @@ class JudgeBatchResult:
     """Whether this is a debug batch (just for testing purpose, not uploaded to OpenAI)"""
     batch_id: str
     batch: JudgeBatch
+    anthropic_message_batch: Optional[MessageBatch] = None
 
 
 @dataclass
-class BatchOutput:
+class OpenAIBatchOutput:
     content: Optional[str] = None
     error_content: Optional[str] = None
+    type: Literal["content"] = "content"
+
+
+@dataclass
+class AnthropicContent:
+    request_id: str
+    content: str
+
+@dataclass
+class AnthropicBatchOutput:
+    content: List[AnthropicContent]
+    error_content: List[AnthropicContent]
     type: Literal["content"] = "content"
 
 
@@ -116,7 +140,7 @@ class EverythingInTheBatchHasAnError:
     type: Literal["error"] = "error"
 
 
-BatchResult = BatchOutput | EverythingInTheBatchHasAnError
+BatchResult = OpenAIBatchOutput | AnthropicBatchOutput | EverythingInTheBatchHasAnError
 
 
 def ok(value: bool) -> str:
@@ -124,25 +148,43 @@ def ok(value: bool) -> str:
 
 
 async def upload_and_create_batch(
-    client: AsyncOpenAI, judge_batch: JudgeBatch
+    client: AsyncOpenAI | anthropic.Anthropic, judge_batch: JudgeBatch
 ) -> JudgeBatchResult:
     if USE_DEBUG_BATCH:
         return JudgeBatchResult(
             is_debug=True, batch_id="debug-batch-id", batch=judge_batch
         )
+    
+    if isinstance(client, AsyncOpenAI):
 
-    # Upload the file
-    with open(judge_batch.file_path, "rb") as f:
-        uploaded_file = await client.files.create(file=f, purpose="batch")
+        # Upload the file
+        with open(judge_batch.file_path, "rb") as f:
+            uploaded_file = await client.files.create(file=f, purpose="batch")
 
-    # Create the batch
-    batch = await client.batches.create(
-        input_file_id=uploaded_file.id,
-        endpoint="/v1/chat/completions",
-        completion_window="24h",
-    )
+        # Create the batch
+        batch = await client.batches.create(
+            input_file_id=uploaded_file.id,
+            endpoint="/v1/chat/completions",
+            completion_window="24h",
+        )
 
-    return JudgeBatchResult(is_debug=False, batch_id=batch.id, batch=judge_batch)
+        return JudgeBatchResult(is_debug=False, batch_id=batch.id, batch=judge_batch)
+    requests: List[Request] = []
+    for judge_request in judge_batch.requests:
+        assert isinstance(
+            judge_request.request, AnthropicCompletionsRequest
+        ), "Expected AnthropicCompletionsRequest"   
+        requests.append(
+            {
+                "custom_id": judge_request.custom_id,
+                "params": judge_request.request.request,
+            }
+        )
+    message_batch = client.messages.batches.create(requests=requests)
+    
+    return JudgeBatchResult(is_debug=False, batch_id=message_batch.id, batch=judge_batch,
+                            anthropic_message_batch=message_batch
+        )
 
 def fix_node_field(node: GraphNode, fix: ChangeNodeFieldFix) -> GraphNode:
     """Apply a ChangeNodeFieldFix to a GraphNode."""
