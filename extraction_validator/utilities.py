@@ -28,7 +28,8 @@ import anthropic
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 from anthropic.types.messages.batch_create_params import Request
 from anthropic.types.messages.message_batch import MessageBatch
-
+from mistletoe.block_token import Document, CodeFence
+from mistletoe.span_token import RawText
 USE_DEBUG_BATCH = environ.get("USE_DEBUG_BATCH", "0") == "1"
 
 
@@ -105,6 +106,8 @@ class OpenAIBatchOutput:
 class AnthropicContent:
     request_id: str
     content: str
+    input_tokens: int
+    output_tokens: int
 
 @dataclass
 class AnthropicBatchOutput:
@@ -197,3 +200,18 @@ def fix_node_field(node: GraphNode, fix: ChangeNodeFieldFix) -> GraphNode:
     except:
         return node
     
+
+
+def get_last_json_block(md_text: str) -> str:
+    try:
+        doc = Document(md_text)
+        json_blocks = [
+            token for token in doc.children or []
+            if isinstance(token, CodeFence) and token.language and token.language.lower() == "json"
+        ]
+        if not json_blocks:
+            return md_text
+        last : RawText = json_blocks[-1].children[0]  # type: ignore
+        return last.content # type: ignore
+    except Exception:
+        return md_text

@@ -33,6 +33,7 @@ from extraction_validator.utilities import (
     JudgeRequest,
     OpenAICompletionsRequest,
     fix_node_field,
+    get_last_json_block,
     unknown_judge_request,
     upload_and_create_batch,
     AnthropicContent
@@ -53,6 +54,7 @@ from intervention_graph_creation.src.local_graph_extraction.core.paper_schema im
 import anthropic
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 from anthropic.types.messages.message_batch import MessageBatch
+
 # Loads the OpenAI API key from .env file OPENAI_API_KEY
 load_dotenv()
 
@@ -271,11 +273,13 @@ class KGJudge:
         batch_files: List[JudgeBatch] = []
         for i, batch_start in enumerate(range(0, len(all_requests), batch_size)):
             batch = all_requests[batch_start : batch_start + batch_size]
-            batch_file_path = self.temp_dir / f"batch_requests_{i+1}.jsonl"
-
-            with open(batch_file_path, "w") as f:
-                for req in batch:
-                    f.write(json.dumps(req.request) + "\n")
+            if isinstance(self.client, AsyncOpenAI):
+                batch_file_path = self.temp_dir / f"batch_requests_{i+1}.jsonl"
+                with open(batch_file_path, "w") as f:
+                    for req in batch:
+                        f.write(json.dumps(req.request) + "\n")
+            else:
+                batch_file_path = "fake_path_anthropic"
             batch_files.append(
                 JudgeBatch(file_path=str(batch_file_path), requests=batch)
             )
@@ -495,7 +499,7 @@ class KGJudge:
                     ),
                 )
             for result in result_content.content:
-                gpt_assessment = self._parse_anthropic_judge_response(result.request_id, result.content)
+                gpt_assessment = self._parse_anthropic_judge_response(result)
                 self._validate_and_save_assessment(custom_id_to_request, gpt_assessment)
         except Exception as e:
             self.save_results(
@@ -584,11 +588,15 @@ class KGJudge:
                 request_id = response.custom_id
                 match result.type:
                     case "succeeded":
+                        input_tokens = result.message.usage.input_tokens
+                        output_tokens = result.message.usage.output_tokens
                         if len(result.message.content) == 0:
                             out_error_content.append(
                                 AnthropicContent(
                                     request_id=request_id,
                                     content="Empty response content",
+                                    input_tokens=input_tokens,
+                                    output_tokens=output_tokens,
                                 )
                             )
                             continue
@@ -598,6 +606,8 @@ class KGJudge:
                                 AnthropicContent(
                                     request_id=request_id,
                                     content=f"Unexpected content type: {last_content.type}",
+                                    input_tokens=input_tokens,
+                                    output_tokens=output_tokens,
                                 )
                             )
                             continue
@@ -605,6 +615,8 @@ class KGJudge:
                             AnthropicContent(
                                 request_id=request_id,
                                 content=last_content.text,
+                                input_tokens=input_tokens,
+                                output_tokens=output_tokens,
                             )
                         )
                     case "canceled":
@@ -612,6 +624,8 @@ class KGJudge:
                             AnthropicContent(
                                 request_id=request_id,
                                 content="Request was cancelled",
+                                input_tokens=0,
+                                output_tokens=0,
                             )
                         )
                     case "errored":
@@ -619,6 +633,8 @@ class KGJudge:
                             AnthropicContent(
                                 request_id=request_id,
                                 content=f"Request errored: {result.error.error.type}  : {result.error.error.message}",
+                                input_tokens=0,
+                                output_tokens=0,
                             )
                         )
                     case "expired":
@@ -626,6 +642,8 @@ class KGJudge:
                             AnthropicContent(
                                 request_id=request_id,
                                 content="Request expired",
+                                input_tokens=0,
+                                output_tokens=0,
                             )
                         )
             return AnthropicBatchOutput(content=out_content, error_content=out_error_content)
@@ -669,21 +687,22 @@ class KGJudge:
         return reports
 
 
-    def _parse_anthropic_judge_response(self, request_id: str,  content: str) -> GPT_Assessment_Result:
+    def _parse_anthropic_judge_response(self, result: AnthropicContent) -> GPT_Assessment_Result:
         try:
-            result = GPT_Assessment.model_validate_json(content)
+            json_block = get_last_json_block(result.content)
+            assessment = GPT_Assessment.model_validate_json(json_block)
             return {
                 "type": "success",
-                "gpt_assessment": result,
-                "custom_id": request_id,
+                "gpt_assessment": assessment,
+                "custom_id": result.request_id,
             }
         except ValidationError as e:
             return {
                 "type": "failure",
                 "error": "Could not validate GPT response into GPT_Assessment model: " + str(e),
-                "raw_response": content,
+                "raw_response": result.content,
                 "error_code": "parse_or_validate_error",
-                "custom_id": request_id,
+                "custom_id": result.request_id,
             }
 
     def _parse_openai_judge_response(self, response_text: str) -> GPT_Assessment_Result:
