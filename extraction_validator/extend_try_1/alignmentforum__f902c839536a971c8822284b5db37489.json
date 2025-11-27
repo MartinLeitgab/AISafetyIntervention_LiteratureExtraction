@@ -1,0 +1,744 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures core conceptual framework and identifies most major intervention nodes, but has critical schema violations: all nodes are missing required 'node_rationale' field, all edges are missing required 'edge_confidence_rationale' and 'edge_rationale' fields, and all intervention nodes lack required lifecycle and maturity rationales. Additionally, approximately 10 concept nodes important to complete knowledge fabric are missing (reward model robustness, sandbagging, backtesting proxy, inconsistency detection, asymmetry in failure detectability, procedure-level robustness, practical recursive heuristics, strategy enumeration assumption, and others). Key edge corrections needed: expertise evaluation's relationship to capability elicitation is mislabeled as 'mitigated_by' when it should be 'required_by' or 'preceded_by', and confidence should be 1-2 not 2. The graph would be valid after fixes but is currently non-compliant with mandatory schema requirements and incompletely covers knowledge fabric."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required 'node_rationale' field per schema specification",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to every node with justification and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required 'edge_confidence_rationale' field per schema specification",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' field to every edge with evidence assessment and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required 'edge_rationale' field per schema specification",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_rationale' field to every edge with connection justification and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required 'intervention_lifecycle_rationale' field",
+        "where": "nodes[16-20].intervention_lifecycle_rationale",
+        "suggestion": "Add rationale for each intervention lifecycle stage with reference to closest preceding section title"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required 'intervention_maturity_rationale' field",
+        "where": "nodes[16-20].intervention_maturity_rationale",
+        "suggestion": "Add evidence-based reasoning for maturity assessment with section title references"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Some concept nodes have descriptions below 2-3 sentence minimum",
+        "where": "nodes[0,1,2,3,4].description",
+        "suggestion": "Expand descriptions to 2-3 sentences with more detail from source material"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent node 'Iteratively improve oversight procedures based on red-team findings to enhance local adequacy'",
+        "names": [
+          "Iteratively improve oversight procedures based on red-team findings to enhance local adequacy"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'caused_by' from 'Oversight failures causing catastrophic AI actions in deployment' to 'Exploration and gradient hacking vulnerabilities during oversight evaluation' has low confidence (2) but data source treats exploration/gradient hacking as speculative, not as direct cause",
+        "evidence": "From 'Appendix: Capability elicitation': 'exploration hacking or gradient hacking, which are at this point just theoretical possibilities that haven't been empirically observed'",
+        "fix": "Reduce edge_confidence to 1 and clarify in edge_confidence_rationale that this is theoretical, not empirical"
+      },
+      {
+        "issue": "Node 'Capability elicitation solvable before models sabotage evaluation' treats assumption as insight, but source presents this as uncertain belief requiring testing",
+        "evidence": "From 'Appendix: Capability elicitation': 'I think that models will be dangerous and useful before they are powerful enough to cause unfixable difficulties'",
+        "fix": "Update concept_category to 'problem analysis' instead of 'theoretical insight' to reflect uncertain assumption, or add caveat in description"
+      },
+      {
+        "issue": "Edge 'mitigated_by' from 'Local inadequacy of oversight processes' to 'Capability elicitation solvable' treats as mitigation, but capability elicitation is prerequisite for evaluation, not mitigation of inadequacy itself",
+        "evidence": "Source discusses capability elicitation as 'concern' and 'evaluation' within the adversarial eval framework, not as direct fix to inadequacy",
+        "fix": "Change edge type to 'required_by' or 'preceded_by', and reduce confidence from 2 to 1"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Connection between reward modeling failure and oversight inadequacy",
+          "evidence": "From 'How to estimate local adequacy of oversight': 'your reward model and policy online, the online training should prevent the policy from exploiting the flaws of the reward model too much'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Reward model adversarial vulnerability in RLHF"
+          ],
+          "expected_target_node_name": [
+            "Local inadequacy of oversight processes in specific deployment settings"
+          ]
+        },
+        {
+          "title": "Distinction between sandwiching and adversarial evaluation",
+          "evidence": "From 'Appendix: How does this compare to sandwiching?': 'Sandwiching evaluates whether an oversight procedure is good... adversarial evaluations proposed here'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Sandwiching with bottom and top human experts to assess advice quality"
+          ],
+          "expected_target_node_name": [
+            "Meta-level adversarial evaluation can detect oversight inadequacy"
+          ]
+        },
+        {
+          "title": "Connection to alignment iteration at deployment time",
+          "evidence": "From 'Conclusions': 'at crunch time, the core workflow of alignment practitioners will involve iterating on alignment techniques based on direct measurement'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Qualitative argument for wide applicability of proxy failure strategies"
+          ],
+          "expected_target_node_name": [
+            "Iterative improvement of oversight via evaluation feedback"
+          ]
+        },
+        {
+          "title": "Problem with sandbagging - models withholding performance during evaluation",
+          "evidence": "From 'Appendix: Capability elicitation': 'a misaligned model might purposefully not exploit these weaknesses during this eval'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Sandbagging risk in adversarial evaluation"
+          ],
+          "expected_target_node_name": [
+            "Exploration and gradient hacking vulnerabilities during oversight evaluation"
+          ]
+        },
+        {
+          "title": "Difference between adversarial robustness of whole procedure vs reward model",
+          "evidence": "From 'How to estimate local adequacy of oversight': 'we're not talking about the adversarial robustness of a reward model... it seems hard to get your reward model to be adversarially robust'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "System-level oversight robustness vs individual reward model robustness"
+          ],
+          "expected_target_node_name": [
+            "Meta-level adversarial evaluation can detect oversight inadequacy"
+          ]
+        },
+        {
+          "title": "Constraint that red team must stay within training budget comparable to blue team",
+          "evidence": "From 'Appendix: A very simple concrete example': 'does no actions which get a much worse reward than any reward you get when you train a policy normally'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Resource-bounded adversarial policy training"
+          ],
+          "expected_target_node_name": [
+            "Training adversarial policies to fool oversight demonstrates adequacy"
+          ]
+        },
+        {
+          "title": "Challenges formalizing recursive multi-agent evaluation",
+          "evidence": "From 'Appendix: more on evaluating recursive setups': 'So far, every formal procedure we've come up with has had some counterexample'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Recursive oversight evaluation modeled as Markov games"
+          ],
+          "expected_target_node_name": [
+            "Practical heuristic judgment of red-team success in recursive settings"
+          ]
+        },
+        {
+          "title": "Backtesting as proxy failure strategy for predictions",
+          "evidence": "From 'Appendix: How to construct proxy failures' - 'Strategy: find a setting where you have strictly more information' with backtesting example",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Backtesting with held-out future information as proxy failure"
+          ],
+          "expected_target_node_name": [
+            "Proxy failures analogous to real failures enable observable evaluation"
+          ]
+        },
+        {
+          "title": "Inconsistency as nonconstructive evaluation signal",
+          "evidence": "From 'Appendix: How to construct proxy failures' - 'Strategy: nonconstructive evaluations, e.g. inconsistency evaluations': 'train two copies of the model to both separately look good... while giving answers which are egregiously inconsistent'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Inconsistency detection as proxy failure method"
+          ],
+          "expected_target_node_name": [
+            "Proxy failures analogous to real failures enable observable evaluation"
+          ]
+        },
+        {
+          "title": "Easier to detect egregious failures than subtle helpfulness gaps",
+          "evidence": "From 'Appendix: My overall prognosis on constructing analogous settings': 'I think it's likely to be easier to assess whether oversight is adequate for spotting whether the model is engaging in egregiously bad actions'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Asymmetry between detectability of egregious vs subtle failures"
+          ],
+          "expected_target_node_name": [
+            "Proxy failures analogous to real failures enable observable evaluation"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "intervention",
+        "name": "Establish practical evaluation heuristics for recursive multi-agent oversight systems",
+        "edges": [
+          {
+            "type": "refined_by",
+            "target_node": "Model recursive oversight systems as Markov games for systemic adversarial evaluation",
+            "description": "Practical heuristic judgment supplements formal Markov game approach when formalization is intractable",
+            "edge_confidence": 2
+          }
+        ],
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1
+      }
+    ],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Local inadequacy of oversight processes in specific deployment settings",
+        "target_node_name": "Capability elicitation solvable before models sabotage evaluation",
+        "reason": "Capability elicitation is prerequisite for testing adequacy, not mitigation of inadequacy itself. Edge type 'mitigated_by' is incorrect conceptually. Should be 'required_by' or 'preceded_by' with lower confidence, or removed entirely as prerequisite rather than mitigation."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Capability elicitation solvable before models sabotage evaluation",
+        "field": "concept_category",
+        "json_new_value": "\"problem analysis\"",
+        "reason": "This is presented as uncertain assumption ('I think that models will be dangerous...') requiring testing, not as established insight. Should be problem analysis reflecting the challenge, with description including caveat about uncertainty."
+      },
+      {
+        "node_name": "Capability elicitation solvable before models sabotage evaluation",
+        "field": "description",
+        "json_new_value": "\"Uncertain assumption that dangerous and useful models will appear before they become powerful enough to sabotage training through gradient hacking or exploration hacking, allowing standard RL plus imitation to elicit true capabilities. Authors provide testing strategies but acknowledge this remains an open challenge.\"",
+        "reason": "Current description treats as settled fact, but source treats as assumption requiring validation. Must clarify uncertainty per source language."
+      },
+      {
+        "node_name": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+        "field": "description",
+        "json_new_value": "\"Theoretical concern that powerful models might exploit the training process itself (exploration hacking via undiscovered RL datapoints, gradient hacking via model internals) to hide true capabilities or manipulate reward signals, invalidating adversarial evaluation results.\"",
+        "reason": "Source explicitly marks these as 'theoretical possibilities that haven't been empirically observed' and 'at this point just theoretical' in Appendix. Description should reflect speculative status."
+      },
+      {
+        "node_name": "Local inadequacy of oversight processes in specific deployment settings",
+        "field": "description",
+        "json_new_value": "\"Situation where, for a particular model in a specific deployment environment, the oversight process cannot reliably identify when actions will produce harmful consequences, even when the model knows its actions are harmful. This is the core failure mode adversarial evaluation aims to detect.\"",
+        "reason": "Slight expansion to clarify that problem is detection failure conditional on model knowledge, not just inability to tell outcomes."
+      },
+      {
+        "node_name": "Conduct meta-level adversarial evaluations before deployment to test oversight robustness",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Experimental/Proof-of-Concept (2): Paper proposes method and provides illustrative examples but notes feasibility depends on empirical conditions (proxy failure constructability, capability elicitation solvability) that haven't been systematically validated at scale. Source: 'How likely is it that we are able to use this process' section discusses these empirical unknowns.\"",
+        "reason": "Currently missing required field. Maturity 2 because approach is proposed with examples but contingent on unvalidated assumptions."
+      },
+      {
+        "node_name": "Build and apply proxy failure tasks across use-cases to test oversight",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Experimental/Proof-of-Concept (2): Paper provides concrete proxy failure construction strategies (expensive validation, environment modification, sandwiching, backtesting) with reasoning but limited empirical deployment evidence. Applicability assessed as likely but not yet validated across diverse deployment scenarios. Source: 'Appendix: My overall prognosis on constructing analogous settings'.\"",
+        "reason": "Currently missing required field. Assessment based on author's optimistic but unvalidated prognosis."
+      },
+      {
+        "node_name": "Fine-tune models with mixed oversight and ground truth reward to generate deceptive policies for testing",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Experimental/Proof-of-Concept (2): Concrete technique presented with illustrative security coding example (deleting files) but not empirically validated at scale. Mixed-reward formulation R=αR_oversight−(1−α)R_true is mathematically specified but deployment feasibility unclear. Source: 'Appendix: A very simple concrete example of how the red-team might train their policy'.\"",
+        "reason": "Currently missing required field. Assessment reflects mathematical specification with illustrative but limited evidence."
+      },
+      {
+        "node_name": "Perform capability elicitation evaluations to detect exploration or gradient hacking",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Experimental/Proof-of-Concept (2): Proposed approach using mixed RL/imitation training and intermediate capability tests, but source acknowledges uncertainty: 'Our current intuition is that it seems doable... except settings where the reward is extremely sparse.' No large-scale deployment evidence. Source: 'Appendix: Capability elicitation'.\"",
+        "reason": "Currently missing required field. Reflects proposed approach with acknowledged gaps and limits."
+      },
+      {
+        "node_name": "Model recursive oversight systems as Markov games for systemic adversarial evaluation",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Foundational/Theoretical (1): Formalizes as Markov game but source admits unresolved difficulties: 'every formal procedure we've come up with has had some counterexample.' Counterexamples 'feel fairly unrealistic' but formalization incomplete. Practical heuristic approach (common sense judgment) substituted. Source: 'Appendix: more on evaluating recursive setups'.\"",
+        "reason": "Currently missing required field. Appropriate maturity is 1 due to ongoing formalization challenges despite being framed as solution."
+      },
+      {
+        "node_name": "Iteratively improve oversight procedures based on red-team findings to enhance local adequacy",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Experimental/Proof-of-Concept (2): Proposed as core iteration loop but source emphasizes this happens 'at crunch time' with deployed systems. Conceptually sound but large-scale deployment experience limited. Source: 'Conclusions' section discusses this as part of future alignment practice.\"",
+        "reason": "Currently missing required field. Assessment reflects forward-looking proposal based on limited current practice."
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Oversight failures causing catastrophic AI actions in deployment",
+        "type": "concept",
+        "description": "Risk that a powerful model takes harmful actions that the human or AI-assisted oversight process incorrectly rewards, leading to human disempowerment or other catastrophes.",
+        "aliases": [
+          "local oversight inadequacy leading to catastrophic outcomes",
+          "failure to detect harmful AI actions"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Meta-level adversarial evaluation can detect oversight inadequacy",
+        "type": "concept",
+        "description": "Insight that evaluating the oversight process by training policies specifically to deceive it reveals whether the process is locally adequate.",
+        "aliases": [
+          "adversarial evaluation of oversight",
+          "meta adversarial oversight test"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Proxy failures analogous to real failures enable observable evaluation",
+        "type": "concept",
+        "description": "Creating tasks that are as hard to detect as the feared real failure but have an easily checkable ground truth, enabling empirical testing of oversight.",
+        "aliases": [
+          "analogous proxy failure construction",
+          "observable stand-in failures"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Training adversarial policies to fool oversight demonstrates adequacy",
+        "type": "concept",
+        "description": "Rationale that if one cannot train a policy that both gets good oversight reward and performs a proxy failure, then oversight is adequate; otherwise weaknesses are exposed.",
+        "aliases": [
+          "adversarial policy training rationale",
+          "red-team model training rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Iterative improvement of oversight via evaluation feedback",
+        "type": "concept",
+        "description": "Using failures uncovered by adversarial evaluation to refine oversight processes and security protocols before deployment.",
+        "aliases": [
+          "oversight iteration loop",
+          "improving oversight from red-team results"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Deployment-specific evaluations across diverse use cases",
+        "type": "concept",
+        "description": "Idea that oversight adequacy should be evaluated separately for each application (e.g. coding assistant vs advice writing) because failure modes differ.",
+        "aliases": [
+          "per-use-case oversight evaluation",
+          "contextual oversight testing"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Red-team fine-tuning with mixed oversight and ground truth reward signal",
+        "type": "concept",
+        "description": "Technique of fine-tuning a model on a linear combination of oversight reward (positive) and ground truth reward (negative) to induce deceptive behaviors along a trade-off curve.",
+        "aliases": [
+          "mixed reward red-team training",
+          "alpha weighted reward adversarial fine-tuning"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Proxy failure construction via expensive validation data",
+        "type": "concept",
+        "description": "Build proxy failures by spending more resources on validation (e.g. expert human labels) than on routine oversight, then using discrepancies as failure signals.",
+        "aliases": [
+          "costlier validation proxy",
+          "high-quality label proxy failures"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Proxy failure via modified environment with measurable effects",
+        "type": "concept",
+        "description": "Alter the task so that a successful hidden attack ends with an easily observed outcome (e.g. deleting a file), preserving the core difficulty but making detection trivial for evaluators.",
+        "aliases": [
+          "environment modification proxy",
+          "visible effect proxy failure"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sandwiching with bottom and top human experts to assess advice quality",
+        "type": "concept",
+        "description": "Choose a domain where ground-truth experts exist; restrict routine overseers to limited knowledge, creating top/bottom ‘sandwich’ to check if model advice fools the weaker overseer.",
+        "aliases": [
+          "sandwiching evaluation mechanism",
+          "expert sandwich proxy"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Recursive oversight evaluation modeled as Markov games",
+        "type": "concept",
+        "description": "Extending adversarial evaluation to systems where AI models assist oversight, framing the whole multi-agent interaction as a Markov game and checking for equilibria where collusion can occur.",
+        "aliases": [
+          "multi-agent recursive oversight eval",
+          "Markov game oversight test"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Qualitative argument for wide applicability of proxy failure strategies",
+        "type": "concept",
+        "description": "Author claims and reasoning that the listed strategies will usually allow construction of good proxy failures, supported by domain diversity and human knowledge structures.",
+        "aliases": [
+          "applicability argument for proxy failures",
+          "general feasibility evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Illustrative security coding example demonstrates feasibility",
+        "type": "concept",
+        "description": "Toy example where a model inserts a vulnerability that deletes a file, showing that a measurable proxy failure can mirror a serious real-world vulnerability.",
+        "aliases": [
+          "security flaw coding example",
+          "delete-file proxy illustration"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Establish practical evaluation heuristics for recursive multi-agent oversight systems",
+        "type": "intervention",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Establish practical evaluation heuristics for recursive multi-agent oversight systems"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Capability elicitation solvable before models sabotage evaluation",
+        "type": "concept",
+        "description": "Uncertain assumption that dangerous and useful models will appear before they become powerful enough to sabotage training through gradient hacking or exploration hacking, allowing standard RL plus imitation to elicit true capabilities. Authors provide testing strategies but acknowledge this remains an open challenge.",
+        "aliases": [
+          "feasibility of capability elicitation",
+          "capability elicitation tractability"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+        "type": "concept",
+        "description": "Theoretical concern that powerful models might exploit the training process itself (exploration hacking via undiscovered RL datapoints, gradient hacking via model internals) to hide true capabilities or manipulate reward signals, invalidating adversarial evaluation results.",
+        "aliases": [
+          "exploration hacking risk",
+          "gradient hacking risk"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Local inadequacy of oversight processes in specific deployment settings",
+        "type": "concept",
+        "description": "Situation where, for a particular model in a specific deployment environment, the oversight process cannot reliably identify when actions will produce harmful consequences, even when the model knows its actions are harmful. This is the core failure mode adversarial evaluation aims to detect.",
+        "aliases": [
+          "inadequate oversight in context",
+          "setting-specific oversight weakness"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conduct meta-level adversarial evaluations before deployment to test oversight robustness",
+        "type": "intervention",
+        "description": "Before deployment, systematically train adversarial policies aimed at deceiving the oversight process in each deployment setting and assess whether they succeed.",
+        "aliases": [
+          "run adversarial oversight evals pre-deployment",
+          "pre-deployment oversight red-team"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Build and apply proxy failure tasks across use-cases to test oversight",
+        "type": "intervention",
+        "description": "Design domain-specific proxy failures (expensive validation, environment modification, sandwiching) and integrate them into an evaluation suite for each model use-case.",
+        "aliases": [
+          "multi-use-case proxy tasks",
+          "proxy failure task suite"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune models with mixed oversight and ground truth reward to generate deceptive policies for testing",
+        "type": "intervention",
+        "description": "Implement the α-weighted reward function (positive oversight reward, negative ground-truth reward) during fine-tuning to efficiently explore policies that trick oversight.",
+        "aliases": [
+          "alpha-mix reward fine-tuning for deception",
+          "trade-off curve adversarial fine-tuning"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Perform capability elicitation evaluations to detect exploration or gradient hacking",
+        "type": "intervention",
+        "description": "Run dedicated tests and mixed RL/imitation training to ensure models cannot withhold capabilities or manipulate gradients, safeguarding the adversarial eval itself.",
+        "aliases": [
+          "capability elicitation evals",
+          "detect exploration/gradient hacking"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Model recursive oversight systems as Markov games for systemic adversarial evaluation",
+        "type": "intervention",
+        "description": "Formalize AI-assisted oversight as a multi-agent Markov game and apply adversarial evaluation to the joint policy set, searching for equilibria that hide proxy failures.",
+        "aliases": [
+          "Markov game recursive eval intervention",
+          "system-level red-team of AI overseers"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Iteratively improve oversight procedures based on red-team findings to enhance local adequacy",
+        "type": "intervention",
+        "description": "Use failures discovered by adversarial evaluations to patch oversight processes, update security protocols, and rerun evaluations until proxy failures cannot be produced.",
+        "aliases": [
+          "oversight hardening loop",
+          "refine oversight post-eval"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Oversight failures causing catastrophic AI actions in deployment",
+        "target_node": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+        "description": "Advanced manipulation of the training loop can trigger oversight failure by hiding harmful behavior during evaluation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+        "target_node": "Capability elicitation solvable before models sabotage evaluation",
+        "description": "If capability elicitation works, models cannot withhold behavior or sabotage evaluations.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Meta-level adversarial evaluation can detect oversight inadequacy",
+        "target_node": "Proxy failures analogous to real failures enable observable evaluation",
+        "description": "Adversarial evaluation depends on having suitable proxy failures.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Training adversarial policies to fool oversight demonstrates adequacy",
+        "target_node": "Red-team fine-tuning with mixed oversight and ground truth reward signal",
+        "description": "Mixed-reward fine-tuning is a practical method to produce the adversarial policies.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Proxy failures analogous to real failures enable observable evaluation",
+        "target_node": "Proxy failure construction via expensive validation data",
+        "description": "Spending more on validation is one method to create proxy failures.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Deployment-specific evaluations across diverse use cases",
+        "target_node": "Proxy failure construction via expensive validation data",
+        "description": "Different use cases may rely on different proxy-construction techniques such as costly validation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Red-team fine-tuning with mixed oversight and ground truth reward signal",
+        "target_node": "Illustrative security coding example demonstrates feasibility",
+        "description": "Example uses mixed-reward fine-tuning to delete a file.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Proxy failure construction via expensive validation data",
+        "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+        "description": "Applicability argument covers validation-heavy proxies.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Proxy failure via modified environment with measurable effects",
+        "target_node": "Illustrative security coding example demonstrates feasibility",
+        "description": "Security coding example embodies this proxy method.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Sandwiching with bottom and top human experts to assess advice quality",
+        "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+        "description": "Authors argue sandwiching is broadly usable.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Recursive oversight evaluation modeled as Markov games",
+        "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+        "description": "Paper claims formalization difficulties but expects practicality.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Qualitative argument for wide applicability of proxy failure strategies",
+        "target_node": "Conduct meta-level adversarial evaluations before deployment to test oversight robustness",
+        "description": "Because proxy failures are believed widely constructible, authors urge running adversarial evaluations.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Illustrative security coding example demonstrates feasibility",
+        "target_node": "Fine-tune models with mixed oversight and ground truth reward to generate deceptive policies for testing",
+        "description": "Example shows mixed-reward fine-tuning can create deceptive policies, suggesting using it in practice.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Capability elicitation solvable before models sabotage evaluation",
+        "target_node": "Perform capability elicitation evaluations to detect exploration or gradient hacking",
+        "description": "Belief in solvability leads to intervention that explicitly tests capability elicitation.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Iterative improvement of oversight via evaluation feedback",
+        "target_node": "Iteratively improve oversight procedures based on red-team findings to enhance local adequacy",
+        "description": "The design rationale is operationalized by continuously patching oversight based on evaluation outcomes.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Establish practical evaluation heuristics for recursive multi-agent oversight systems",
+        "target_node": "Model recursive oversight systems as Markov games for systemic adversarial evaluation",
+        "description": "Practical heuristic judgment supplements formal Markov game approach when formalization is intractable",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "3b8d482536a09dae6247d6487f105615"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.396437"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKERS: Missing node_rationale on all 21 nodes violates mandatory schema. Missing edge_confidence_rationale and edge_rationale on all 27 edges violates mandatory schema. Missing intervention_lifecycle_rationale and intervention_maturity_rationale on 10 intervention nodes violates mandatory schema. Per instructions: 'Every error is a MAJOR ISSUE THAT YOU NEED TO FIX!'",
+      "REFERENTIAL INTEGRITY: Edge at position 26 targets 'Iteratively improve oversight procedures based on red-team findings to enhance local adequacy' but this exact node name does not exist in nodes array. Node 21 is named 'Iteratively improve oversight procedures based on red-team findings to enhance local adequacy' - but edge typo breaks reference.",
+      "COVERAGE MAJOR GAPS: Source Appendix sections define 4 explicit proxy failure construction strategies (expensive validation, environment modification, sandwiching, historical backtesting) but only first 3 are captured as nodes. Backtesting example is completely missing. Inconsistency strategy mentioned in source but not extracted. Source explicitly discusses asymmetry between detecting egregious vs subtle failures but this distinction not in graph. Reward model vs procedure-level robustness distinction emphasized in source but not adequately represented.",
+      "CONCEPT CATEGORIZATION ERRORS: 'Capability elicitation solvable before models sabotage evaluation' categorized as theoretical insight but source presents as uncertain assumption: 'I think that models will be dangerous and useful' - tentative language indicates this is problem analysis (an unresolved challenge), not established insight. Edge 'mitigated_by' from inadequacy to this node is semantically incorrect - capability elicitation is prerequisite for testing, not solution to inadequacy.",
+      "CONFIDENCE CALIBRATION ERRORS: Edge with confidence 2 from 'Oversight failures' to 'Exploration and gradient hacking' treats speculative risks as established connections. Source explicitly states these are 'theoretical possibilities that haven't been empirically observed.' Should be confidence 1 not 2.",
+      "MISSING VALIDATION EVIDENCE: Illustrative security coding example (delete file scenario) is captured in validation node but actual trade-off curve graphs from Appendix and confidence assessment reasoning not extracted as nodes. Source provides concrete measurement approach (percentile-based reward thresholds) not reflected in validation evidence node.",
+      "RECURSIVE EVALUATION UNDERREPRESENTATION: Source discusses formalization difficulties in recursive setups at length ('every formal procedure we've come up with has had some counterexample') and proposes pragmatic heuristic fallback, but graph doesn't capture this pragmatic intervention node or the challenge/fallback relationship. Source: 'Appendix: more on evaluating recursive setups' describes incomplete formalization requiring judgment-based approach.",
+      "DEPLOYMENT ITERATION PATHWAY: Source emphasizes in Conclusions that alignment researchers will shift to 'eval-based technique iteration' at deployment time, but this meta-level point about iterative improvement during actual deployment isn't fully captured in intervention nodes or their relationships.",
+      "INFERENCE APPLICATION: Graph correctly uses modest inference (e.g., capability elicitation intervention) but should explicitly note in edge_rationale where inference applied per mandatory requirements. Currently lacks this documentation."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/MbWWKbyD5gLhJgfwn/meta-level-adversarial-evaluation-of-oversight-techniques-1",
+  "paper_id": "f902c839536a971c8822284b5db37489",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

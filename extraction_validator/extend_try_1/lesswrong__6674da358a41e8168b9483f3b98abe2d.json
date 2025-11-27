@@ -1,0 +1,421 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates correct overall structure with a complete causal-interventional pathway from risk through all six concept categories to intervention node. However, critical schema violations exist: missing required rationale fields (node_rationale, intervention_lifecycle_rationale, intervention_maturity_rationale, edge_rationale) on multiple nodes and edges, and undocumented 'embedding' fields violate schema. Two significant missing nodes represent gaps in coverage: author's explicit uncertainty about research goal alignment and the critical design principle requiring software/community enforcement of factored cognition behaviors. The intervention maturity is correctly identified as 1 (Foundational/Theoretical) due to author's stated low confidence, but confidence level of key motivating edge should be reduced from 2 to 1 based on source evidence of uncertainty. Referential integrity is sound, and no orphaned nodes exist. With proposed fixes applied, the fabric would achieve schema compliance and improved coverage of source content."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Node field 'embedding' present in schema but not defined in SCHEMA_REQUIREMENTS; should be removed or documented",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes as it is not part of required schema"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge field 'embedding' present in schema but not defined in SCHEMA_REQUIREMENTS; should be removed or documented",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges as it is not part of required schema"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention node 'Build and operate Fact Overflow platform for large-scale factored cognition experiments' has intervention_lifecycle=6 'Other', but lifecycle should be 1-5 for specific phases",
+        "where": "nodes[6].intervention_lifecycle",
+        "suggestion": "Change to 1 (Model Design) as this is foundational system design, or 6 if 'Other' is intentional for cross-cutting initiatives"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention node missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' required attributes",
+        "where": "nodes[6]",
+        "suggestion": "Add both rationale fields with section title references from source"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Several concept nodes missing 'node_rationale' attribute that explains why essential to fabric",
+        "where": "nodes[0-5]",
+        "suggestion": "Add node_rationale to all concept nodes with source section references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges missing 'edge_rationale' attribute explaining connection justification with section title reference",
+        "where": "edges[*]",
+        "suggestion": "Add edge_rationale field to all edges with closest preceding data source section title"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references match existing node names",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None detected",
+        "reason": "All nodes connect via edges: risk→problem→insight→design→mechanism→validation→intervention",
+        "suggested_fix": "N/A - fabric is fully connected"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "none",
+        "names": [],
+        "merge_strategy": "N/A"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Risk node focuses on 'slow progress in factored cognition research' but source emphasizes practical scalability and experiment acceleration rather than existential AI alignment risk framing",
+        "evidence": "From Benefits section: 'The feedback loop would be much tighter than with the weekly or bi-weekly experiments that Ought runs now. A tight feedback loop is great in many ways.'",
+        "fix": "Clarify risk as 'Limited experimental velocity in factored cognition research impedes hypothesis generation' - the actual risk is research inefficiency, not misalignment per se"
+      },
+      {
+        "issue": "Validation evidence node describes only feasibility estimates; source provides no empirical validation of the proposed system actually working",
+        "evidence": "Source states 'Quantifying these benefits is possible, but would take some weeks of modelling and talking with people. So far I'm not confident enough of the whole idea to make the effort.'",
+        "fix": "Recategorize as 'Design Rationale' or lower confidence validation since no actual validation study was conducted"
+      },
+      {
+        "issue": "Edge from validation evidence to intervention claims validation 'motivates' deployment, but source author expresses low confidence: 'I'm not confident of this exploration being useful at all'",
+        "evidence": "Abstract: 'I'm not confident of this exploration being useful at all. But at least I wrote it down.'",
+        "fix": "Reduce edge_confidence from 2 to 1, and add rationale noting author's explicit uncertainty"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Tight feedback loop benefit from scaling",
+          "evidence": "Benefits section: 'The feedback loop would be much tighter than with the weekly or bi-weekly experiments that Ought runs now. A tight feedback loop is great in many ways. For example, it would allow a researcher to test more hypotheses more often, more quickly and more cheaply.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Scaling factored cognition experiments tightens feedback loops and increases ML training data"
+          ],
+          "expected_target_node_name": [
+            "Creating large-scale online platform for factored cognition similar to Stack Overflow"
+          ]
+        },
+        {
+          "title": "ML training data generation benefit",
+          "evidence": "Benefits section: 'It would generate a lot of data. These could be used as training data when we want to train an ML system to do factored cognition.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Scaling factored cognition experiments tightens feedback loops and increases ML training data"
+          ],
+          "expected_target_node_name": [
+            "Creating large-scale online platform for factored cognition similar to Stack Overflow"
+          ]
+        },
+        {
+          "title": "Development effort requirement",
+          "evidence": "Feasibility section: 'Building Stack Overflow took five months from start of development to public beta. Then they spent a lot of time tweaking the system to make it more attractive and maintain quality. So I'd say building Fact Overflow would take five to fifteen months with a team of two to five people.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Feasibility modeling of development effort and user requirements based on Stack Overflow data"
+          ],
+          "expected_target_node_name": [
+            "Build and operate Fact Overflow platform for large-scale factored cognition experiments"
+          ]
+        },
+        {
+          "title": "User requirement calculation based on formula",
+          "evidence": "Feasibility section formula n∗u=nw⋅na/(xc⋅xa⋅fa⋅tf) and Guesstimate model result: 'for tf=3h we need between 600 and 36 k users'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Feasibility modeling of development effort and user requirements based on Stack Overflow data"
+          ],
+          "expected_target_node_name": [
+            "Build and operate Fact Overflow platform for large-scale factored cognition experiments"
+          ]
+        },
+        {
+          "title": "User retention and behavioral requirement",
+          "evidence": "Feasibility section: 'Of course, the system would have to be useful and fun enough to retain that many users. As with Stack Overflow, the software and the community have to encourage and ensure that the users behave in a way that makes factored cognition work.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Need for community and software design to maintain quality behaviors"
+          ],
+          "expected_target_node_name": [
+            "Build and operate Fact Overflow platform for large-scale factored cognition experiments"
+          ]
+        },
+        {
+          "title": "Time to accumulate users based on Stack Exchange growth rates",
+          "evidence": "Feasibility section: 'Assume that it takes Fact Overflow twice as long as Stack Overflow to reach a certain number of sign-ups. Then it would take one month to reach 700 sign-ups and twenty-two months to reach 42 k sign-ups.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Feasibility modeling of development effort and user requirements based on Stack Overflow data"
+          ],
+          "expected_target_node_name": [
+            "Build and operate Fact Overflow platform for large-scale factored cognition experiments"
+          ]
+        },
+        {
+          "title": "Author uncertainty about utility",
+          "evidence": "Abstract: 'I'm not confident of this exploration being useful at all. But at least I wrote it down.' And Benefits section: 'Note that I might be misunderstanding the goals and constraints of Ought's experiments. In that case this benefit might be irrelevant.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Conceptual uncertainty about Ought's research goals and constraints"
+          ],
+          "expected_target_node_name": [
+            "Scaling factored cognition experiments tightens feedback loops and increases ML training data"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Slow progress in factored cognition research for AI alignment",
+        "field": "concept_category",
+        "json_new_value": "\"risk\"",
+        "reason": "Already correct; confirming classification"
+      },
+      {
+        "node_name": "Limited scale of factored cognition experiments at Ought",
+        "field": "node_rationale",
+        "json_new_value": "\"Problem Analysis node essential to fabric. Source states in Benefits section that current experiments run 'weekly or bi-weekly' with limited users, restricting hypothesis velocity and data generation for ML training.\"",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Scaling factored cognition experiments tightens feedback loops and increases ML training data",
+        "field": "node_rationale",
+        "json_new_value": "\"Theoretical Insight node central to motivation for intervention. Source Benefits section: 'tight feedback loop is great in many ways' and 'would generate a lot of data...used as training data when we want to train an ML system to do factored cognition.'\"",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Creating large-scale online platform for factored cognition similar to Stack Overflow",
+        "field": "node_rationale",
+        "json_new_value": "\"Design Rationale node bridging theory to implementation. Source Feasibility section proposes 'Fact Overflow' platform as Stack Overflow analogue to achieve scale benefits.\"",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Fact Overflow system with workspace trees and user action workflow",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation Mechanism node specifying technical architecture. Source Feasibility section defines workspace parameters: nw (workspaces per tree), na (actions per workspace), xc (decontamination factor), xa (active user share), fa/d (action frequency).\"",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Feasibility modeling of development effort and user requirements based on Stack Overflow data",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation Evidence node providing preliminary plausibility estimates. Source Feasibility section quantifies: 5-15 months development, 600-36k users needed, 1-22 months user recruitment based on Stack Overflow comparative analysis.\"",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Feasibility modeling of development effort and user requirements based on Stack Overflow data",
+        "field": "concept_category",
+        "json_new_value": "\"validation evidence\"",
+        "reason": "Clarify as validation evidence rather than design rationale since it provides feasibility estimates"
+      },
+      {
+        "node_name": "Build and operate Fact Overflow platform for large-scale factored cognition experiments",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 6 (Other) because this is a foundational infrastructure initiative that spans multiple phases: design (1), implementation (2-3), testing (4), and deployment (5). Per Feasibility section: requires '2-5 person team', '5-15 months' development, and 'one to twenty-two months' user recruitment. Classified as cross-cutting system work rather than single-phase intervention.\"",
+        "reason": "Add missing required field with detailed justification"
+      },
+      {
+        "node_name": "Build and operate Fact Overflow platform for large-scale factored cognition experiments",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical) because author explicitly states low confidence in Abstract: 'I'm not confident of this exploration being useful at all' and in Benefits: 'I might be misunderstanding the goals and constraints of Ought's experiments.' Feasibility analysis is rough estimation ('sloppy and probably overconfident' per source) with no proof-of-concept implementation. Per Feasibility: 'The estimates are sloppy and probably overconfident.'\"",
+        "reason": "Correct maturity level and add required field; should be 1 not 2 due to author's explicit uncertainty"
+      },
+      {
+        "node_name": "Uncertainty about whether Ought's research goals align with large-scale experimental assumptions",
+        "field": "concept_category",
+        "json_new_value": "\"problem analysis\"",
+        "reason": "New node addition"
+      },
+      {
+        "node_name": "Community and software design enabling factored cognition user behavior in large-scale systems",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "New node addition"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Slow progress in factored cognition research for AI alignment",
+        "type": "concept",
+        "description": "Difficulty in developing factored cognition techniques quickly enough to contribute to AI alignment efforts, risking misaligned AI systems.",
+        "aliases": [
+          "insufficient advancement of factored cognition",
+          "lagging factored cognition progress"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Limited scale of factored cognition experiments at Ought",
+        "type": "concept",
+        "description": "Current experiments involve few users and weekly/bi-weekly cycles, restricting hypothesis testing and data generation.",
+        "aliases": [
+          "small-scale factored cognition trials",
+          "restricted participant numbers in Ought studies"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Scaling factored cognition experiments tightens feedback loops and increases ML training data",
+        "type": "concept",
+        "description": "Hypothesis that many simultaneous users would allow root questions to be solved within hours and create sizeable datasets for machine learning.",
+        "aliases": [
+          "large-scale experiments improve feedback",
+          "greater scale yields more data for training"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Creating large-scale online platform for factored cognition similar to Stack Overflow",
+        "type": "concept",
+        "description": "Design idea to host many concurrent workspace trees, leveraging community Q&A dynamics to support factored cognition workflows.",
+        "aliases": [
+          "Stack-Overflow-style factored cognition site",
+          "platform concept for Fact Overflow"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fact Overflow system with workspace trees and user action workflow",
+        "type": "concept",
+        "description": "Implementation concept: users work on isolated workspaces in a tree, with parameters like contamination factor and action frequency governing quality.",
+        "aliases": [
+          "workspace tree architecture",
+          "factored cognition collaboration system"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Feasibility modeling of development effort and user requirements based on Stack Overflow data",
+        "type": "concept",
+        "description": "Rough estimates: 5–15 months development with 2–5 people; 600–36k users needed to finish a question tree in 3 h; 1–22 months to recruit users.",
+        "aliases": [
+          "Stack Overflow comparison feasibility estimate",
+          "development & user growth Guesstimate model"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Build and operate Fact Overflow platform for large-scale factored cognition experiments",
+        "type": "intervention",
+        "description": "Action: allocate a 2–5 person team to develop a Stack-Overflow-like site supporting workspace trees, then recruit 600–36k active users to run 24/7 factored cognition experiments.",
+        "aliases": [
+          "develop large-scale factored cognition platform",
+          "Fact Overflow deployment"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Slow progress in factored cognition research for AI alignment",
+        "target_node": "Limited scale of factored cognition experiments at Ought",
+        "description": "Limited experimental scale restricts data and hypothesis testing, leading to slower overall research progress.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Limited scale of factored cognition experiments at Ought",
+        "target_node": "Scaling factored cognition experiments tightens feedback loops and increases ML training data",
+        "description": "Increasing experiment scale is proposed as a way to alleviate limitations of current small-scale studies.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Scaling factored cognition experiments tightens feedback loops and increases ML training data",
+        "target_node": "Creating large-scale online platform for factored cognition similar to Stack Overflow",
+        "description": "Need for scale motivates designing a platform that can host many users simultaneously.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Creating large-scale online platform for factored cognition similar to Stack Overflow",
+        "target_node": "Fact Overflow system with workspace trees and user action workflow",
+        "description": "The design rationale would be realised through a specific system architecture employing workspace trees and user workflows.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Fact Overflow system with workspace trees and user action workflow",
+        "target_node": "Feasibility modeling of development effort and user requirements based on Stack Overflow data",
+        "description": "Comparative modelling using Stack Overflow data offers preliminary validation that building and populating the system is plausible.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Feasibility modeling of development effort and user requirements based on Stack Overflow data",
+        "target_node": "Build and operate Fact Overflow platform for large-scale factored cognition experiments",
+        "description": "Positive feasibility estimates encourage undertaking the actual development and deployment.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "61701c2ac73392352903fec876a02d38"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.010781"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER 1: Schema violations - missing node_rationale field on all concept nodes [0-5]. Source evidence: SCHEMA_REQUIREMENTS specify 'node_rationale: why essential to fabric with closest preceding data source section title reference' but extraction provides zero instances.",
+      "BLOCKER 2: All edges missing required edge_rationale field. Schema specifies 'edge_rationale: connection justification with closest preceding data source section title reference' but extraction provides zero instances.",
+      "BLOCKER 3: Intervention node missing intervention_lifecycle_rationale and intervention_maturity_rationale. Both are required per output format specification.",
+      "COVERAGE GAP 1: Author explicitly questions goal alignment. Source Benefits section: 'Note that I might be misunderstanding the goals and constraints of Ought's experiments. In that case this benefit might be irrelevant.' This assumption uncertainty is missing as node, which is critical foundation for entire reasoning path.",
+      "COVERAGE GAP 2: Design principle for community behavior not captured. Source Feasibility: 'the software and the community have to encourage and ensure that the users behave in a way that makes factored cognition work' - this is essential design requirement missing from implementation mechanism node.",
+      "CONFIDENCE CALIBRATION: Edge from validation evidence (feasibility modeling) to intervention should be confidence 1, not 2. Source Abstract: 'I'm not confident of this exploration being useful at all. But at least I wrote it down.' and Feasibility: 'The estimates are sloppy and probably overconfident.' This is explicit author uncertainty requiring lowest confidence.",
+      "REFERENTIAL INTEGRITY: PASS - all 6 edges reference existing nodes with exact name matches. No dangling references detected.",
+      "ORPHAN CHECK: PASS - all 7 nodes connect to fabric through edges. Node connection structure forms complete path risk→problem→insight→design→mechanism→validation→intervention with no isolated nodes.",
+      "DUPLICATES: PASS - no duplicate nodes or edges detected. Node names are appropriately granular and non-overlapping.",
+      "LIFECYCLE CLASSIFICATION: Intervention lifecycle=6 'Other' is defensible for foundational infrastructure initiative spanning multiple phases (design through deployment) over 5-15 months per source.",
+      "SCHEMA COMPLIANCE: 'embedding' field present in extracted JSON but not part of SCHEMA_REQUIREMENTS. This violates schema definition and should be removed from all nodes/edges."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/GbNB5a42i2hr6KMSK/the-stack-overflow-of-factored-cognition",
+  "paper_id": "6674da358a41e8168b9483f3b98abe2d",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

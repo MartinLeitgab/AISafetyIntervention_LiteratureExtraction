@@ -1,0 +1,499 @@
+{
+  "nodes": [
+    {
+      "name": "Autonomous vehicle collision risk on single track roads",
+      "aliases": [
+        "single-lane road collision risk for self-driving cars",
+        "narrow-road crash hazard with AVs"
+      ],
+      "type": "concept",
+      "description": "Potential head-on or side collisions when an autonomous vehicle and a human-driven car must share a one-lane road segment that cannot accommodate both simultaneously.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Paper Introduction frames avoidance of devastating accidents on single-track roads as primary motivation."
+    },
+    {
+      "name": "Inaccurate human behavior modeling in single track road RL agents",
+      "aliases": [
+        "faulty human driver model in narrow road scenario",
+        "human-behaviour model error in AV RL"
+      ],
+      "type": "concept",
+      "description": "Autonomous agents relying on limited or ideal-rational models mis-predict human actions, leading to poor decisions.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections I & IV discuss how RL agents assuming rational play perform poorly with real humans."
+    },
+    {
+      "name": "Variability and non-rational human driving behavior",
+      "aliases": [
+        "bounded-rational human actions",
+        "idiosyncratic driver decisions"
+      ],
+      "type": "concept",
+      "description": "Humans deviate from game-theoretic equilibria due to anchoring, inconsistent utilities, and misunderstanding of others.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Cited behavioural-game-theory references in Introduction show unpredictable human strategies."
+    },
+    {
+      "name": "Limited human behavior dataset in single track road scenarios",
+      "aliases": [
+        "small human-driving data sample",
+        "data scarcity for human model"
+      ],
+      "type": "concept",
+      "description": "Only a few hundred human episodes are available, so estimated action probabilities have high variance.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section I emphasises that small datasets hinder accurate modelling."
+    },
+    {
+      "name": "Incorporating human utility into agent objective mitigates modeling errors",
+      "aliases": [
+        "joint-utility optimisation reduces model mismatch",
+        "consider human reward to offset inaccuracies"
+      ],
+      "type": "concept",
+      "description": "Weighting the agent’s optimisation toward human outcomes can reduce harm from behaviour-model mis-specification.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section V argues that optimising a linear combination of rewards better anticipates human deviations."
+    },
+    {
+      "name": "Correlation-based utility weighting balances agent and human goals",
+      "aliases": [
+        "β correlation formula",
+        "reward-correlation weight selection"
+      ],
+      "type": "concept",
+      "description": "A closed-form β = 1 – corr²(RA,RB) sets how much the agent should value human reward, decreasing weight in adversarial games and increasing in cooperative ones.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section V derives the β formula from statistical correlation of historical scores."
+    },
+    {
+      "name": "Socially aware reinforcement learning using linear utility combination",
+      "aliases": [
+        "SARL objective design",
+        "social utility-aware RL"
+      ],
+      "type": "concept",
+      "description": "Design choice to maximise βu(A)+(1-β)u(H) instead of only the agent’s reward, keeping the system selfish yet considerate.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section V presents SARL as the implementation of the joint-utility idea."
+    },
+    {
+      "name": "State representation with velocity for improved human modeling",
+      "aliases": [
+        "position-velocity state encoding",
+        "four-position tuple state"
+      ],
+      "type": "concept",
+      "description": "Augmenting each grid state with both agents’ previous positions encodes velocity, enabling a more predictive human model.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section VI details the velocity-augmented state that slightly increases accuracy."
+    },
+    {
+      "name": "MDP formulation with human model in transition function",
+      "aliases": [
+        "two-agent MDP embedding human",
+        "environment MDP with human actions"
+      ],
+      "type": "concept",
+      "description": "Treat the human as stochastic part of the environment, so the RL agent solves a single-agent MDP including human action probabilities.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section V converts the sequential game into an MDP for planning."
+    },
+    {
+      "name": "Laplace rule of succession for estimating human action probabilities",
+      "aliases": [
+        "add-one smoothing for human actions",
+        "Laplace-smoothed human model"
+      ],
+      "type": "concept",
+      "description": "Uses (count+1)/(N+|A|) to avoid zero-probability actions in small data regimes when estimating P(a|s).",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Equation in Section V describes probability estimation with Laplace smoothing."
+    },
+    {
+      "name": "Value iteration with beta-weighted reward for policy computation",
+      "aliases": [
+        "dynamic-programming SARL planning",
+        "β-reward value iteration"
+      ],
+      "type": "concept",
+      "description": "Runs standard value-iteration over the MDP using the β-weighted reward function to compute the optimal SARL policy.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Sections V–VI specify value-iteration as the planning algorithm."
+    },
+    {
+      "name": "Beta determination via reward correlation formula",
+      "aliases": [
+        "β computation procedure",
+        "correlation-driven beta selection"
+      ],
+      "type": "concept",
+      "description": "Operationalises the correlation insight with a concrete algorithm computing β from historical reward vectors RA and RB.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section V provides the explicit β equation."
+    },
+    {
+      "name": "SARL outperforming baselines in human trials on single track road game",
+      "aliases": [
+        "experimental performance evidence for SARL",
+        "SARL score improvement"
+      ],
+      "type": "concept",
+      "description": "Across 446 human games SARL achieved +15.9 agent score vs ≤-2.3 for others (p<0.01) and highest social welfare.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Section VIII Fig. 2 & Table II report quantitative results."
+    },
+    {
+      "name": "SARL perceived as generous and wise by participants",
+      "aliases": [
+        "subjective survey evidence for SARL",
+        "human perception of SARL"
+      ],
+      "type": "concept",
+      "description": "Likert survey shows SARL lowest aggressiveness (3.30) and highest generosity (5.14) and wisdom (5.01).",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Table IV in Section VIII summarises participant perceptions."
+    },
+    {
+      "name": "Collect human gameplay data to build probabilistic human action model",
+      "aliases": [
+        "gather single-track road human trajectories",
+        "dataset acquisition for human model"
+      ],
+      "type": "intervention",
+      "description": "Recruit human drivers to play the grid game once, record states and actions to estimate P(a|s) with Laplace smoothing.",
+      "concept_category": null,
+      "intervention_lifecycle": "2",
+      "intervention_lifecycle_rationale": "Data is gathered before model training – Section VII Experimental Design.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Prototype dataset of 446 trials collected and used successfully – Section VIII.",
+      "node_rationale": "Addresses data scarcity and enables accurate transition estimates."
+    },
+    {
+      "name": "Determine beta weight using agent-human reward correlation",
+      "aliases": [
+        "apply β correlation formula",
+        "compute utility weight β"
+      ],
+      "type": "intervention",
+      "description": "Compute β = 1 – corr²(RA,RB) from collected score vectors to set social-awareness level (β≈0.13 in study).",
+      "concept_category": null,
+      "intervention_lifecycle": "1",
+      "intervention_lifecycle_rationale": "Parameter selection is part of objective-function design – Section V SARL.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Demonstrated in pilot experiment but not validated across domains.",
+      "node_rationale": "Implements correlation insight to balance utilities."
+    },
+    {
+      "name": "Perform value-iteration training with beta-weighted rewards to produce SARL policy",
+      "aliases": [
+        "train SARL policy via dynamic programming",
+        "compute optimal β-weighted policy"
+      ],
+      "type": "intervention",
+      "description": "Run value-iteration on the velocity-augmented MDP with Laplace-smoothed human transition model and β-weighted rewards to obtain the SARL policy.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Policy optimisation occurs during RL fine-tuning phase – Sections V–VI.",
+      "intervention_maturity": "3",
+      "intervention_maturity_rationale": "Validated in controlled human study but not yet field-deployed.",
+      "node_rationale": "Produces the decision policy that achieved superior results."
+    },
+    {
+      "name": "Deploy SARL policy in autonomous vehicle control on single track roads",
+      "aliases": [
+        "real-world SARL deployment",
+        "field deployment of socially aware AV controller"
+      ],
+      "type": "intervention",
+      "description": "Install the trained SARL controller on an AV to manage encounters on real single-track roads, expecting higher safety and social welfare.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Action occurs at system deployment – Section IX Conclusions & Future Work.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Proposed future work; not yet implemented outside simulation.",
+      "node_rationale": "Ultimate application that the experimental evidence motivates."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Autonomous vehicle collision risk on single track roads",
+      "target_node": "Inaccurate human behavior modeling in single track road RL agents",
+      "description": "Poor modelling makes the AV choose actions that can lead to collisions.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicitly stated in Introduction that mis-modelled humans cause dangerous outcomes.",
+      "edge_rationale": "Direct linkage from risk framing to modelling shortfall."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inaccurate human behavior modeling in single track road RL agents",
+      "target_node": "Variability and non-rational human driving behavior",
+      "description": "Human unpredictability means simple rational models mis-predict actions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Supported by behavioural-game-theory citations but not quantified.",
+      "edge_rationale": "Variability is a root cause of modelling error."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inaccurate human behavior modeling in single track road RL agents",
+      "target_node": "Limited human behavior dataset in single track road scenarios",
+      "description": "Small datasets lead to unreliable probability estimates and hence inaccurate models.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section I notes dataset size limits accuracy; qualitative support.",
+      "edge_rationale": "Data scarcity exacerbates modelling issues."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Inaccurate human behavior modeling in single track road RL agents",
+      "target_node": "Incorporating human utility into agent objective mitigates modeling errors",
+      "description": "Accounting for human reward lessens dependence on perfect behaviour models.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Reasoned argument in Section V; no formal proof.",
+      "edge_rationale": "Strategy proposed to offset modelling inaccuracies."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Incorporating human utility into agent objective mitigates modeling errors",
+      "target_node": "Correlation-based utility weighting balances agent and human goals",
+      "description": "β-correlation formula specifies how to realise utility combination quantitatively.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Mathematical derivation provided in Section V.",
+      "edge_rationale": "Correlation formula refines the general insight."
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Correlation-based utility weighting balances agent and human goals",
+      "target_node": "Socially aware reinforcement learning using linear utility combination",
+      "description": "SARL operationalises the weighting concept within an RL framework.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Design of SARL directly follows correlation insight.",
+      "edge_rationale": "Design rationale realises theoretical insight."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Socially aware reinforcement learning using linear utility combination",
+      "target_node": "MDP formulation with human model in transition function",
+      "description": "Formulating the game as an MDP enables the RL computation of policies with joint rewards.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section V details MDP construction as implementation step.",
+      "edge_rationale": "MDP is concrete implementation of SARL rationale."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "MDP formulation with human model in transition function",
+      "target_node": "State representation with velocity for improved human modeling",
+      "description": "Adding previous positions refines the state space for better predictions.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section VI compares velocity vs non-velocity models; modest effect.",
+      "edge_rationale": "Velocity state is an enhancement of the base MDP."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "MDP formulation with human model in transition function",
+      "target_node": "Laplace rule of succession for estimating human action probabilities",
+      "description": "Laplace smoothing provides concrete transition probabilities in the MDP.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Explicit formula given in Section V.",
+      "edge_rationale": "Probability estimation specifies the transition function."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "MDP formulation with human model in transition function",
+      "target_node": "Value iteration with beta-weighted reward for policy computation",
+      "description": "Value-iteration specifies how to compute optimal policy in the MDP.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Standard RL algorithm explicitly applied in Section V.",
+      "edge_rationale": "Algorithmic specification of planning step."
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Value iteration with beta-weighted reward for policy computation",
+      "target_node": "Beta determination via reward correlation formula",
+      "description": "β value feeds directly into the reward function used during value iteration.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation links β to reward; implementation detail.",
+      "edge_rationale": "Beta computation concretises reward specification."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Value iteration with beta-weighted reward for policy computation",
+      "target_node": "SARL outperforming baselines in human trials on single track road game",
+      "description": "Experimental results confirm effectiveness of value-iteration policy.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Statistically significant human-study results in Section VIII.",
+      "edge_rationale": "Empirical evidence supports algorithm choice."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Socially aware reinforcement learning using linear utility combination",
+      "target_node": "SARL perceived as generous and wise by participants",
+      "description": "Survey results validate social acceptance of SARL design.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Likert survey is qualitative but consistent across participants.",
+      "edge_rationale": "Human perception evidence supports design rationale."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Limited human behavior dataset in single track road scenarios",
+      "target_node": "Collect human gameplay data to build probabilistic human action model",
+      "description": "Collecting additional episodes directly addresses data scarcity.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Logical inference; dataset expansion proposed but not proven.",
+      "edge_rationale": "More data reduces estimation error."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Laplace rule of succession for estimating human action probabilities",
+      "target_node": "Collect human gameplay data to build probabilistic human action model",
+      "description": "Laplace smoothing requires counts from collected data to compute probabilities.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Light inference from statistical requirement.",
+      "edge_rationale": "Data collection provides inputs for Laplace estimation."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Correlation-based utility weighting balances agent and human goals",
+      "target_node": "Determine beta weight using agent-human reward correlation",
+      "description": "Theoretical correlation insight is operationalised by computing β in practice.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Computation step follows directly from formula derivation.",
+      "edge_rationale": "Action implements theoretical idea."
+    },
+    {
+      "type": "required_by",
+      "source_node": "MDP formulation with human model in transition function",
+      "target_node": "Perform value-iteration training with beta-weighted rewards to produce SARL policy",
+      "description": "The value-iteration procedure needs an MDP model to operate on.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Standard RL dependency; explicit in Section V.",
+      "edge_rationale": "MDP is prerequisite for training."
+    },
+    {
+      "type": "required_by",
+      "source_node": "State representation with velocity for improved human modeling",
+      "target_node": "Perform value-iteration training with beta-weighted rewards to produce SARL policy",
+      "description": "Chosen state representation shapes the value-iteration state space.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Section VI compares variants; velocity variant used in training.",
+      "edge_rationale": "Training relies on defined state space."
+    },
+    {
+      "type": "required_by",
+      "source_node": "Laplace rule of succession for estimating human action probabilities",
+      "target_node": "Perform value-iteration training with beta-weighted rewards to produce SARL policy",
+      "description": "Transition probabilities derived with Laplace smoothing feed into value-iteration.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Equation plugged directly into algorithm.",
+      "edge_rationale": "Probability estimates necessary for training."
+    },
+    {
+      "type": "required_by",
+      "source_node": "Socially aware reinforcement learning using linear utility combination",
+      "target_node": "Perform value-iteration training with beta-weighted rewards to produce SARL policy",
+      "description": "Training aims to optimise the socially-aware objective.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Design rationale underpins training goal.",
+      "edge_rationale": "Objective definition prerequisite for training."
+    },
+    {
+      "type": "motivates",
+      "source_node": "SARL outperforming baselines in human trials on single track road game",
+      "target_node": "Deploy SARL policy in autonomous vehicle control on single track roads",
+      "description": "Superior experimental performance provides impetus for real-world deployment.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Section IX cites results as rationale for future field tests.",
+      "edge_rationale": "Validated success drives deployment decision."
+    },
+    {
+      "type": "motivates",
+      "source_node": "SARL perceived as generous and wise by participants",
+      "target_node": "Deploy SARL policy in autonomous vehicle control on single track roads",
+      "description": "Positive human perception indicates social acceptability of deploying SARL.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Survey data suggests public acceptance though limited sample.",
+      "edge_rationale": "Favourable perception reduces deployment barriers."
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2021-09-12T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/2109.05486"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Ido Shapira",
+        "Amos Azaria"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "A Socially Aware Reinforcement Learning Agent for The Single Track Road Problem"
+    }
+  ]
+}

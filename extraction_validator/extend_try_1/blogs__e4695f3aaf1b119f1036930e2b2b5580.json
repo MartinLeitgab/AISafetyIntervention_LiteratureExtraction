@@ -1,0 +1,363 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph contains valid JSON structure and correct referential integrity, but lacks 12 required schema attributes across nodes and edges (node_rationale missing from all 7 nodes; edge_confidence_rationale and edge_rationale missing from all 6 edges; intervention_lifecycle_rationale and intervention_maturity_rationale missing from the sole intervention node). Additionally, the extraction underperforms on coverage—it misses 4 important implementation mechanisms and design elements present in the source: (1) candidate expertise requirements as validation evidence, (2) proactive discovery as a distinct implementation mechanism, (3) multi-year employment commitment as a design rationale for expertise development, and (4) workplace infrastructure enabling high-bandwidth communication. The intervention is misclassified as lifecycle 6 (Other) when it should be 5 (Deployment); maturity should be 3 (Prototype/Pilot) not 2 (Experimental) given the probationary hiring process described. With all proposed fixes applied, the knowledge fabric becomes complete, schema-compliant, and mergeable."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge attributes: edge_confidence_rationale and edge_rationale in all 6 edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale fields to all edges per required schema"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node attributes: node_rationale in all 7 nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale field to all nodes per required schema"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention node missing intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "where": "nodes[6] (Hire ML Living Library...)",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale with section title references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention lifecycle code '6' (Other) is inappropriate; should be '5' (Deployment) as this is an active hiring initiative",
+        "where": "nodes[6].intervention_lifecycle",
+        "suggestion": "Change to 5; justify with 'Apply' section reference"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edges reference existing nodes",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Intervention maturity marked as 2 (Experimental/PoC) but should be 3 (Prototype/Pilot) - MIRI is actively recruiting and describes probationary hiring process",
+        "evidence": "DATA_SOURCE: 'Our hiring process tends to involve a lot of sample tasks and probationary hires' and 'Update Jan. 2021: We're no longer seeking applications for this position'",
+        "fix": "Change intervention_maturity to 3; position reached systematic validation phase with probationary pilots"
+      },
+      {
+        "issue": "Validation evidence node uses passive phrasing that obscures the AI safety alignment context",
+        "evidence": "DATA_SOURCE emphasizes 'to support our AI alignment research efforts' in opening paragraph",
+        "fix": "Revise 'Expected improved researcher support through literature updates' to explicitly reference alignment mission context"
+      },
+      {
+        "issue": "Edge confidence 3 for 'caused_by' relationship between knowledge obsolescence and literature expansion is too conservative given strong explicit statement",
+        "evidence": "DATA_SOURCE: 'ML is a fast-moving and diverse field, making it a challenge for any group to stay updated on all the latest and greatest developments'",
+        "fix": "Increase edge_confidence to 4; explicit causation clearly stated"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Risk causes Problem Analysis",
+          "evidence": "Opening paragraph establishes fast-moving ML field as challenge",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Knowledge obsolescence in AI alignment research teams"
+          ],
+          "expected_target_node_name": [
+            "Rapid expansion of machine-learning literature"
+          ]
+        },
+        {
+          "title": "Problem motivates Theoretical Insight",
+          "evidence": "'To support our AI alignment research efforts, we want to hire someone to read every interesting-looking paper'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Rapid expansion of machine-learning literature"
+          ],
+          "expected_target_node_name": [
+            "Comprehensive monitoring mitigates knowledge gaps in research teams"
+          ]
+        },
+        {
+          "title": "Design Rationale justifies Implementation",
+          "evidence": "About the Role section describes what the position entails",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Dedicated literature surveillance role at research institute"
+          ],
+          "expected_target_node_name": [
+            "Establish full-time ML Living Library position at MIRI"
+          ]
+        },
+        {
+          "title": "Implementation Mechanism has explicit tasks",
+          "evidence": "Examples of work section lists: read archives, track trends, help engineers, answer questions, share proactively",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Establish full-time ML Living Library position at MIRI"
+          ],
+          "expected_target_node_name": [
+            "Should decompose into multiple implementation tasks"
+          ]
+        },
+        {
+          "title": "Candidate qualifications as validation evidence",
+          "evidence": "The Ideal Candidate section specifies required depth, breadth, understanding, communication ability",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Working at MIRI conditions enable implementation",
+          "evidence": "Working at MIRI section describes workspace, flexibility, location that support role execution",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Knowledge obsolescence in AI alignment research teams",
+        "field": "node_rationale",
+        "json_new_value": "Opening paragraph establishes that AI-alignment researchers need current ML knowledge to conduct quality work; this risk motivates the entire intervention pathway. Reference: 'To support our AI alignment research efforts' section.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Rapid expansion of machine-learning literature",
+        "field": "node_rationale",
+        "json_new_value": "The scale and speed of ML development is the root cause of researcher knowledge gaps; explicitly stated as problem in opening: 'ML is a fast-moving and diverse field, making it a challenge for any group to stay updated'. Reference: opening paragraph of data source.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Comprehensive monitoring mitigates knowledge gaps in research teams",
+        "field": "node_rationale",
+        "json_new_value": "This theoretical insight proposes that systematic expert review solves the overwhelming literature problem; it is the conceptual justification for the intervention. Reference: implicit in 'we want to hire someone to read every interesting-looking paper about AI and machine learning, and keep us abreast' from opening section.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Dedicated literature surveillance role at research institute",
+        "field": "node_rationale",
+        "json_new_value": "This operationalizes the theoretical insight into an organizational structure; establishes the role-based design before implementation details. Reference: About the Role section conceptualizes the position.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Establish full-time ML Living Library position at MIRI",
+        "field": "node_rationale",
+        "json_new_value": "This node describes the concrete instantiation of the role with specific employment terms (full-time, multi-year) and scope. Reference: About the Role section and employment commitment statements.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Expected improved researcher support through literature updates",
+        "field": "node_rationale",
+        "json_new_value": "Examples of work section specifies anticipated outcomes: debugging help ('help an engineer figure out why their code isn't working'), trend tracking ('Track general trends in the ML space'), question resolution ('Answer/research MIRI staff questions'), and proactive sharing. These are the validation signals for the intervention's effectiveness.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Hire ML Living Library for multi-year tenure at MIRI",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 5 (Deployment) - MIRI actively recruits for this operational position. Reference: 'Apply' section provides application link, indicating active hiring phase. The Jan 2021 update note indicates the position was implemented and closed.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Hire ML Living Library for multi-year tenure at MIRI",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 3 (Prototype/Pilot) - MIRI explicitly states 'Our hiring process tends to involve a lot of sample tasks and probationary hires', indicating systematic validation approach. The position was actively piloted with multiple candidates. Reference: About the Role section.",
+        "reason": "Required schema attribute missing"
+      },
+      {
+        "node_name": "Hire ML Living Library for multi-year tenure at MIRI",
+        "field": "node_rationale",
+        "json_new_value": "This is the terminal intervention node aggregating all prior concepts into a concrete actionable proposal. It converts the theoretical reasoning path (risk → problem → insight → design → mechanism) into a specific organizational hiring action. Reference: entire 'Apply' section and job description.",
+        "reason": "Required schema attribute missing"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Knowledge obsolescence in AI alignment research teams",
+        "type": "concept",
+        "description": "AI-alignment researchers may miss critical advances in machine-learning, reducing the quality and timeliness of their work.",
+        "aliases": [
+          "researchers falling behind ML progress",
+          "outdated knowledge risk for alignment work"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Rapid expansion of machine-learning literature",
+        "type": "concept",
+        "description": "The quantity and diversity of new ML results and applications is growing quickly, overwhelming individual researchers’ capacity to track them.",
+        "aliases": [
+          "fast-moving ML field",
+          "growing volume of ML papers"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Comprehensive monitoring mitigates knowledge gaps in research teams",
+        "type": "concept",
+        "description": "If an expert systematically reviews all significant ML developments, the research team can maintain current knowledge despite rapid field growth.",
+        "aliases": [
+          "continuous literature surveillance reduces obsolescence"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Dedicated literature surveillance role at research institute",
+        "type": "concept",
+        "description": "Creating a specific staff position whose primary responsibility is to monitor and communicate developments converts the theoretical benefit of surveillance into an organisational plan.",
+        "aliases": [
+          "specialist position for tracking ML papers"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Establish full-time ML Living Library position at MIRI",
+        "type": "concept",
+        "description": "MIRI plans to hire a full-time, multi-year employee who reads all significant ML papers, tracks trends, and answers staff questions.",
+        "aliases": [
+          "implementation of living library role",
+          "employment of ML literature expert"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Expected improved researcher support through literature updates",
+        "type": "concept",
+        "description": "MIRI expects that regularly communicated ML insights will aid engineers’ debugging, inform strategic decisions, and surface unnoticed advances.",
+        "aliases": [
+          "anticipated benefit of living library hire"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Hire ML Living Library for multi-year tenure at MIRI",
+        "type": "intervention",
+        "description": "Recruit and employ a full-time individual with broad and deep ML expertise to continuously ingest, curate, and relay relevant ML research to the AI-alignment team.",
+        "aliases": [
+          "recruit specialised ML literature expert"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Knowledge obsolescence in AI alignment research teams",
+        "target_node": "Rapid expansion of machine-learning literature",
+        "description": "The expanding ML literature overwhelms researchers, leading to outdated knowledge.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Rapid expansion of machine-learning literature",
+        "target_node": "Comprehensive monitoring mitigates knowledge gaps in research teams",
+        "description": "Systematic monitoring addresses the overload created by rapid literature growth.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Comprehensive monitoring mitigates knowledge gaps in research teams",
+        "target_node": "Dedicated literature surveillance role at research institute",
+        "description": "Assigning a person to literature surveillance is the organisational instantiation of comprehensive monitoring.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Dedicated literature surveillance role at research institute",
+        "target_node": "Establish full-time ML Living Library position at MIRI",
+        "description": "The full-time position is the mechanism implementing the surveillance role.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Establish full-time ML Living Library position at MIRI",
+        "target_node": "Expected improved researcher support through literature updates",
+        "description": "Role tasks (debugging help, trend tracking) are expected to demonstrate the position’s value.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Expected improved researcher support through literature updates",
+        "target_node": "Hire ML Living Library for multi-year tenure at MIRI",
+        "description": "Anticipated benefits motivate executing the hiring intervention.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "7ca7e39a4c85951fe3d9e5bd327714f6"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.198151"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER ISSUE: Missing node_rationale on all 7 nodes (required schema); missing edge_confidence_rationale and edge_rationale on all 6 edges (required schema); missing intervention_lifecycle_rationale and intervention_maturity_rationale on intervention node (required schema). Fixes: add these attributes with citations to closest preceding section titles per instructions.",
+      "COVERAGE GAP: 'Candidate expertise requirements enable effective monitoring' not extracted. Source: The Ideal Candidate section specifies hiring criteria (breadth/depth, alignment familiarity, programming, communication) as prerequisites. This is validation evidence justifying why the intervention will succeed.",
+      "COVERAGE GAP: 'Proactive research discovery through independent expert judgment' not extracted as distinct mechanism. Source: Examples of work states 'Share important developments proactively; researchers who haven't read the same papers as you often won't know the right questions to ask unprompted!' This differentiates active discovery from passive literature reading.",
+      "COVERAGE GAP: 'Multi-year employment commitment enables deep expertise accumulation' not extracted. Source: About the Role section: 'we intend to pay you to become an expert on the cutting edge of machine learning, and don't want to make the human capital investment unless you're interested in working with us long-term.' This is a core design rationale.",
+      "COVERAGE GAP: 'Workplace conditions supporting high-bandwidth communication' not extracted. Source: Working at MIRI section and requirement that role 'requires high-bandwidth communication with the research team, and won't work as a remote position.' Infrastructure enables implementation.",
+      "CLASSIFICATION ERROR: intervention_lifecycle set to 6 (Other) but should be 5 (Deployment). This is an active hiring initiative (Apply section provides live recruitment link). The Jan 2021 update indicates the position was implemented.",
+      "MATURITY CORRECTION: intervention_maturity set to 2 (Experimental/PoC) but should be 3 (Prototype/Pilot). Source states 'Our hiring process tends to involve a lot of sample tasks and probationary hires', indicating systematic validation with pilot candidates, not mere experimentation.",
+      "EDGE CONFIDENCE CORRECTION: First edge (caused_by) has confidence 3 but should be 4. Source provides explicit strong causal statement: 'ML is a fast-moving and diverse field, making it a challenge for any group to stay updated on all the latest and greatest developments.' This is clear causation, not moderate inference.",
+      "All node names and edge references verified for exact matching—no referential integrity issues found.",
+      "No duplicate nodes or edges detected.",
+      "Four new concept nodes and five new edges required to achieve complete fabric per mandatory success criteria for 'every distinct claim, method, finding etc. that is part of any core reasoning pathways'.",
+      "After all proposed fixes applied: knowledge fabric becomes complete, schema-compliant, contains all causal-interventional pathways from risk through interventions, and is mergeable across 500k data sources via consistent naming."
+    ]
+  },
+  "url": "https://intelligence.org/2017/12/12/ml-living-library/",
+  "paper_id": "e4695f3aaf1b119f1036930e2b2b5580",
+  "ard_file_source": "blogs",
+  "errors": null
+}

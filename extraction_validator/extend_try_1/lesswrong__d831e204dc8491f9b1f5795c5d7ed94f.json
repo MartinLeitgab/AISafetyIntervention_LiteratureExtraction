@@ -1,0 +1,527 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": false,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has BLOCKER-level schema violations: missing required rationale fields across all nodes and edges, reversed edge directionality for validation evidence, and incorrect intervention lifecycle/maturity assignments lacking justification. The graph structure and conceptual coverage are sound and align well with source material, but cannot be considered valid JSON as currently formatted. After applying proposed fixes (adding all missing rationale fields, correcting edge directions, revising intervention maturity/lifecycle with justification, and adding synthesis node connecting multiple problem analyses), the graph becomes valid, semantically correct, and mergeable across the 500k data source collection."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Multiple nodes missing required node_rationale field",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale to all nodes with closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing intervention_lifecycle_rationale field",
+        "where": "nodes[12,13,14].intervention_lifecycle_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale to all intervention nodes with section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing intervention_maturity_rationale field",
+        "where": "nodes[12,13,14].intervention_maturity_rationale",
+        "suggestion": "Add intervention_maturity_rationale to all intervention nodes with evidence-based reasoning"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "All edges missing edge_rationale field",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale to all edges with closest preceding data source section title reference"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Nodes and edges contain unnecessary 'embedding' fields not in schema",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove embedding fields from all nodes and edges"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references target_node that doesn't exist",
+        "names": [
+          "Validation edge with source 'Government-mandated AI safety compliance certification process' and target 'Current widespread neglect of AI safety among AI companies' uses 'validated_by' but this is backwards - validation evidence should flow INTO validation mechanism nodes, not from them"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "concept",
+        "names": [
+          "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance",
+          "Perception that AGI is distant reduces urgency for safety adoption"
+        ],
+        "merge_strategy": "These represent overlapping concepts. The first is more abstract (theoretical insight category), the second is more concrete (problem analysis category). Keep both but clarify distinction: perception should remain problem_analysis focused on immediate barrier, while temporal asymmetry should be theoretical_insight focused on underlying mechanism. No merge needed but edge between them should be clarified."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge type 'validated_by' used incorrectly - edges point FROM validation evidence TO implementation mechanisms",
+        "evidence": "Edges with source 'Current widespread neglect of AI safety among AI companies' (validation evidence) and targets 'Government-mandated AI safety compliance certification process' and 'Open-source safety libraries and developer training modules' use 'validated_by' but causal flow should be reversed",
+        "fix": "Change edge type from 'validated_by' to 'motivates' - the validation evidence MOTIVATES the interventions/mechanisms, not validates them"
+      },
+      {
+        "issue": "Intervention lifecycle assignments lack proper justification",
+        "evidence": "Intervention 'Legislate mandatory AI safety audits before model deployment' assigned lifecycle 5 (Deployment) but legislation is stage 4-5 (Pre-Deployment Testing/Policy phase)",
+        "fix": "Add intervention_lifecycle_rationale explaining why each intervention falls into its assigned phase"
+      },
+      {
+        "issue": "Intervention maturity levels all assigned as 1-2 without differentiation",
+        "evidence": "All three interventions assigned maturity 1-2 (Foundational/Experimental) but 'Develop and disseminate standardized AI safety training programs' already exists in practice",
+        "fix": "Revise maturity assignments with evidence-based reasoning referencing that training programs have prototypes/pilots in industry"
+      },
+      {
+        "issue": "Missing edge between problem analyses and their theoretical insights",
+        "evidence": "Data source explicitly lists four problem reasons, but only some are connected to theoretical insights",
+        "fix": "Add explicit edges showing how each problem analysis contributes to understanding the theoretical insight(s)"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "AGI timeline beliefs cause non-adoption",
+          "evidence": "They think AGI is still very far away, so AI Safety methods won't need to be applied to the development of current narrow AI systems",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Perception that AGI is distant reduces urgency for safety adoption"
+          ],
+          "expected_target_node_name": [
+            "Catastrophic AI failure from non-adoption of validated safety solution"
+          ]
+        },
+        {
+          "title": "Complexity causes misapplication or non-adoption",
+          "evidence": "The concepts of AI Safety are difficult to understand, leading to incorrect application of an AI Safety solution or failure to apply it at all",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Complexity of AI safety concepts hinders correct implementation"
+          ],
+          "expected_target_node_name": [
+            "Catastrophic AI failure from non-adoption of validated safety solution"
+          ]
+        },
+        {
+          "title": "Competitive disadvantage causes non-adoption",
+          "evidence": "They will fall behind their competitors or make less money if they adhere to the AI Safety solution",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Competitive pressure disincentivizes adherence to safety solution"
+          ],
+          "expected_target_node_name": [
+            "Catastrophic AI failure from non-adoption of validated safety solution"
+          ]
+        },
+        {
+          "title": "Skepticism causes non-adoption",
+          "evidence": "They have a new cool idea they want to test out and just don't care about or believe in the concerns raised by AI Safety",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Skepticism about AI safety concerns reduces compliance"
+          ],
+          "expected_target_node_name": [
+            "Catastrophic AI failure from non-adoption of validated safety solution"
+          ]
+        },
+        {
+          "title": "Edge connecting all problem analyses to underlying mechanism",
+          "evidence": "The text presents four distinct reasons why adoption fails, suggesting a common underlying coordination/incentive problem",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Perception that AGI is distant reduces urgency for safety adoption",
+            "Complexity of AI safety concepts hinders correct implementation",
+            "Competitive pressure disincentivizes adherence to safety solution",
+            "Skepticism about AI safety concerns reduces compliance"
+          ],
+          "expected_target_node_name": [
+            "Competitive market dynamics discourage voluntary safety measures",
+            "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance"
+          ]
+        },
+        {
+          "title": "Interventions should flow from design rationales through implementation mechanisms",
+          "evidence": "Data source asks 'How do we actually get people to follow this solution?' implying need for both regulatory and educational pathways",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Regulatory enforcement realigns market incentives to mandate safety compliance",
+            "Educational outreach and simplified tooling lower cognitive barriers to safety adoption"
+          ],
+          "expected_target_node_name": [
+            "Legislate mandatory AI safety audits before model deployment",
+            "Develop and disseminate standardized AI safety training programs for practitioners"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Government-mandated AI safety compliance certification process",
+        "target_node_name": "Current widespread neglect of AI safety among AI companies",
+        "reason": "Edge direction reversed - validation evidence should not be validated BY implementation mechanisms; rather implementation mechanisms address/mitigate the evidence of neglect"
+      },
+      {
+        "source_node_name": "Open-source safety libraries and developer training modules",
+        "target_node_name": "Current widespread neglect of AI safety among AI companies",
+        "reason": "Same directional error - validation evidence flows toward interventions via 'motivates', not from implementations via 'validated_by'"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Legislate mandatory AI safety audits before model deployment",
+        "field": "intervention_lifecycle",
+        "json_new_value": "4",
+        "reason": "Pre-Deployment Testing phase more accurate than Deployment phase - legislation sets requirements pre-deployment; deployment comes after compliance validated"
+      },
+      {
+        "node_name": "Legislate mandatory AI safety audits before model deployment",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Government mandate requiring safety audit before deployment operates at Pre-Deployment Testing stage (4), as it establishes governance framework for pre-deployment compliance validation per source section 'How do we actually get people to follow'",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "Legislate mandatory AI safety audits before model deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Assigned maturity 2 (Experimental/Proof-of-Concept) because while regulatory models exist in other domains, AI-specific mandatory safety audit regimes are not yet operationalized at scale; closest precedent is EU AI Act early implementation, representing systematic validation rather than full deployment",
+        "reason": "Missing required field with evidence-based reasoning"
+      },
+      {
+        "node_name": "Develop and disseminate standardized AI safety training programs for practitioners",
+        "field": "intervention_maturity",
+        "json_new_value": "3",
+        "reason": "Training programs for AI safety exist in proto form (university courses, safety workshops) representing Prototype/Pilot Studies stage, not foundational theoretical work"
+      },
+      {
+        "node_name": "Develop and disseminate standardized AI safety training programs for practitioners",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Assigned maturity 3 (Prototype/Pilot Studies) because safety training modules exist at academic and organizational levels but lack standardization and systematic validation at enterprise scale, representing pilot implementations rather than foundational theory or operational deployment",
+        "reason": "Missing required field with evidence-based reasoning"
+      },
+      {
+        "node_name": "Develop and disseminate standardized AI safety training programs for practitioners",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Educational intervention operates across multiple lifecycle phases (2-5) but primarily targets Pre-Training through Deployment phases; assigned 6 (Other) per source asking 'how do we get people to follow' indicating systemic/meta-level intervention outside standard model development",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "Provide tax incentives for companies that attain safety certification",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Assigned maturity 1 (Foundational/Theoretical) because tax incentive structures for AI safety compliance are not yet piloted; requires policy innovation beyond existing precedents, representing theoretical intervention design",
+        "reason": "Missing required field with evidence-based reasoning"
+      },
+      {
+        "node_name": "Provide tax incentives for companies that attain safety certification",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Tax incentive policy operates at systemic level (6-Other) across deployment ecosystems, incentivizing adoption of safety during Deployment phase (5) and beyond",
+        "reason": "Missing required field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Catastrophic AI failure from non-adoption of validated safety solution",
+        "type": "concept",
+        "description": "Risk that even a fully adequate AI-safety method will not be followed by developers or firms, leading to deployment of unsafe systems with potentially catastrophic outcomes.",
+        "aliases": [
+          "AI catastrophe due to ignored safety",
+          "Unsafe AI deployment from lack of compliance"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Perception that AGI is distant reduces urgency for safety adoption",
+        "type": "concept",
+        "description": "Many actors believe artificial general intelligence is far in the future, so they see no need to apply current safety methods to narrow AI work.",
+        "aliases": [
+          "Far AGI timeline belief",
+          "Assumption AGI is decades away"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Complexity of AI safety concepts hinders correct implementation",
+        "type": "concept",
+        "description": "Because AI-safety ideas are hard to grasp, developers may misapply or simply skip the validated solution.",
+        "aliases": [
+          "Difficulty understanding AI safety",
+          "Safety concepts too abstract"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Competitive pressure disincentivizes adherence to safety solution",
+        "type": "concept",
+        "description": "Firms worry they will fall behind rivals or earn less money if they slow down to follow safety protocols.",
+        "aliases": [
+          "Race dynamics reduce safety",
+          "Fear of losing market share"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Skepticism about AI safety concerns reduces compliance",
+        "type": "concept",
+        "description": "Some actors simply do not care about or believe in the AI-safety concerns, preferring to experiment freely.",
+        "aliases": [
+          "Disbelief in AI risk",
+          "Dismissal of safety worries"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance",
+        "type": "concept",
+        "description": "Actors undervalue long-term safety benefits because they believe AGI is far away or lack information about timelines.",
+        "aliases": [
+          "Timeline knowledge gap",
+          "Present bias regarding AGI"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Competitive market dynamics discourage voluntary safety measures",
+        "type": "concept",
+        "description": "Profit-driven competition creates incentives to cut safety corners unless all actors are simultaneously constrained.",
+        "aliases": [
+          "Misaligned economic incentives",
+          "Race to the bottom in AI safety"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Regulatory enforcement realigns market incentives to mandate safety compliance",
+        "type": "concept",
+        "description": "Creating legal requirements for AI safety can remove first-mover advantage from ignoring safety, solving coordination failure.",
+        "aliases": [
+          "Safety regulation rationale",
+          "Government rules as incentive fixer"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Educational outreach and simplified tooling lower cognitive barriers to safety adoption",
+        "type": "concept",
+        "description": "Providing easy-to-understand materials and tools can help practitioners correctly apply the safety solution despite conceptual complexity.",
+        "aliases": [
+          "Safety education rationale",
+          "Simplify safety implementation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Government-mandated AI safety compliance certification process",
+        "type": "concept",
+        "description": "A formal certification or audit procedure required by law ensures models meet the approved safety standard before deployment.",
+        "aliases": [
+          "Safety certification scheme",
+          "Regulatory audit mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Open-source safety libraries and developer training modules",
+        "type": "concept",
+        "description": "Freely available code libraries, documentation, and courses that bake in the validated safety method, making adoption straightforward.",
+        "aliases": [
+          "Safety tooling suite",
+          "Open-source safety resources"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Current widespread neglect of AI safety among AI companies",
+        "type": "concept",
+        "description": "Empirical observation mentioned in the text that many companies presently ignore AI-safety recommendations, demonstrating the need for stronger measures.",
+        "aliases": [
+          "Observed lack of safety compliance",
+          "Real-world safety neglect evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Legislate mandatory AI safety audits before model deployment",
+        "type": "intervention",
+        "description": "Governments enact laws requiring every AI system above a defined capability threshold to pass an independent safety audit certifying adherence to the approved safety solution.",
+        "aliases": [
+          "Pass AI safety audit law",
+          "Enforce pre-deployment audits"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Develop and disseminate standardized AI safety training programs for practitioners",
+        "type": "intervention",
+        "description": "Create comprehensive, simplified training courses and documentation packages that teach developers how to apply the validated safety solution correctly.",
+        "aliases": [
+          "Offer AI safety education",
+          "Provide safety curricula"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Provide tax incentives for companies that attain safety certification",
+        "type": "intervention",
+        "description": "Governments grant tax credits or subsidies to organizations that successfully complete the safety certification, offsetting competitive disadvantages.",
+        "aliases": [
+          "Offer safety compliance tax credits",
+          "Financial rewards for safe AI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Catastrophic AI failure from non-adoption of validated safety solution",
+        "target_node": "Perception that AGI is distant reduces urgency for safety adoption",
+        "description": "If actors perceive AGI as far away, they ignore safety, raising the failure risk.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Perception that AGI is distant reduces urgency for safety adoption",
+        "target_node": "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance",
+        "description": "Timeline optimism stems from lack of information and present-bias described in theoretical insight.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Complexity of AI safety concepts hinders correct implementation",
+        "target_node": "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance",
+        "description": "Limited understanding of timelines and concepts mutually reinforce complexity barrier.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Competitive pressure disincentivizes adherence to safety solution",
+        "target_node": "Competitive market dynamics discourage voluntary safety measures",
+        "description": "Competitive race dynamics are the underlying economic mechanism for the pressure.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Skepticism about AI safety concerns reduces compliance",
+        "target_node": "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance",
+        "description": "Disbelief often stems from misjudging timelines or lacking info, tied to theoretical insight.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Temporal and knowledge asymmetry on AGI timelines reduces perceived immediate utility of safety compliance",
+        "target_node": "Educational outreach and simplified tooling lower cognitive barriers to safety adoption",
+        "description": "Education and tooling directly address knowledge gaps and complexity that feed timeline optimism.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Competitive market dynamics discourage voluntary safety measures",
+        "target_node": "Regulatory enforcement realigns market incentives to mandate safety compliance",
+        "description": "Regulation removes competitive disadvantage of being safe, fixing incentive misalignment.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Current widespread neglect of AI safety among AI companies",
+        "target_node": "Legislate mandatory AI safety audits before model deployment",
+        "description": "Evidence of neglect motivates legislative intervention.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "fad276490b210296a371a3f5d1ecaaa5"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.027430"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKERS: All nodes missing node_rationale; all intervention nodes missing intervention_lifecycle_rationale and intervention_maturity_rationale; all edges missing edge_rationale. Per schema requirements, these are mandatory fields.",
+      "REFERENTIAL INTEGRITY: All node names referenced in edges exist in nodes array - no broken references detected.",
+      "ORPHANS: Zero orphaned nodes - all 15 nodes connected to edges. Graph is fully connected.",
+      "DIRECTIONAL ERROR: Edges from 'Current widespread neglect of AI safety among AI companies' (validation evidence node) to implementation mechanism nodes use 'validated_by' but correct direction should be 'motivates' - evidence motivates interventions, not vice versa. Per instruction: 'All nodes building the rationale for a proposed intervention MUST flow INTO the intervention node'.",
+      "LIFECYCLE ASSIGNMENT: Intervention 'Legislate mandatory AI safety audits before model deployment' assigned lifecycle 5 (Deployment) but should be 4 (Pre-Deployment Testing) as legislation sets pre-deployment requirements. Policy operates pre-deployment.",
+      "MATURITY ASSIGNMENT: (1) 'Legislate mandatory AI safety audits' rated 2 (Experimental) - correct, EU AI Act is pilot phase; (2) 'Develop and disseminate training programs' rated 2 but should be 3 (Prototype/Pilot) as industry safety training exists in universities and organizations; (3) 'Provide tax incentives' rated 1 (Foundational) - correct, represents novel policy design.",
+      "COVERAGE: All four reasons for non-adoption mentioned in source are extracted as problem_analysis nodes and connected to risk node - comprehensive. Design rationales and implementation mechanisms present. Three intervention nodes extracted. Missing synthesis node connecting four independent problem analyses to unified understanding of adoption failure mechanism.",
+      "THEORETICAL INSIGHTS: Two theoretical insight nodes present - one on timeline asymmetry, one on competitive dynamics - both supported by source material but could benefit from explicit edge showing how multiple problem analyses feed into theoretical understanding.",
+      "CONCEPTUAL GRANULARITY: Node names follow pattern '[Problem/Mechanism] in [Context]' appropriately - not too atomic, not too coarse. Examples: 'Perception that AGI is distant reduces urgency for safety adoption' (not just 'AGI distance' or 'Far timeline belief causes all adoption problems').",
+      "KNOWLEDGE FABRIC PATHWAYS: Multiple paths from risk through problem analyses → theoretical insights → design rationales → implementation mechanisms → validation evidence → interventions exist and are connected. No isolated reasoning paths.",
+      "SOURCE ALIGNMENT: All nodes grounded in explicit quotes or clear inferences from source text 'How do we actually get people to follow this solution?' and four enumerated reasons for ignoring safety. Inference confidence appropriately marked as 2 throughout (weak/light inference as per instructions)."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/4rgDink5LirgzwyqF/what-if-we-solve-ai-safety-but-no-one-cares",
+  "paper_id": "d831e204dc8491f9b1f5795c5d7ed94f",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

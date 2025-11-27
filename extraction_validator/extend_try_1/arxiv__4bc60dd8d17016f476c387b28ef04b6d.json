@@ -1,0 +1,742 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph is structurally sound and accurately represents the causal-interventional pathways through the empirical study, but has critical missing required fields that prevent schema compliance: all nodes lack 'node_rationale', all edges lack 'edge_confidence_rationale' and 'edge_rationale', and intervention nodes lack 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale'. Additionally, three important validation evidence nodes are missing (distribution peaking, utility equivalence classes, decision-theoretic time cost), and several edges should be added to strengthen the fabric (e.g., connecting evaluation method to risk mitigation, linking Johnson theorem to washout effect). The fabric structure correctly flows from risks through six concept categories to interventions with appropriate intermediate reasoning, and demonstrates understanding of the paper's core contribution comparing inference methods via decision-theoretic evaluation. With implementation of proposed additions and field population, the graph would be valid and mergeable."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Nodes missing required 'intervention_lifecycle_rationale' field for intervention nodes",
+        "where": "nodes[18-21].intervention_lifecycle_rationale",
+        "suggestion": "Add justification with data source section reference for each intervention lifecycle assignment"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Nodes missing required 'intervention_maturity_rationale' field for intervention nodes",
+        "where": "nodes[18-21].intervention_maturity_rationale",
+        "suggestion": "Add evidence-based reasoning with data source section reference for each maturity level"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required 'node_rationale' field",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add explanation of why each node is essential to fabric with data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required 'edge_confidence_rationale' field",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add evidence assessment with data source section reference for confidence level justification"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required 'edge_rationale' field",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add connection justification with data source section reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Nodes contain 'embedding' field not in schema requirements",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove non-schema fields or document in schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent target node",
+        "names": [
+          "source: 'Violation of conditional independence assumptions in multi-hypothesis inference'",
+          "target: 'Bayesian inference assuming independence on hypotheses improves diagnostic accuracy'"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Intervention lifecycle and maturity assignments lack justification",
+        "evidence": "Section 6 'Details of the Experiment' describes 24-case study design; Section 7 'Results' reports outcomes; no explicit discussion of when/how interventions would be deployed",
+        "fix": "Add intervention_lifecycle_rationale and intervention_maturity_rationale with precise section references"
+      },
+      {
+        "issue": "Edge confidence ratings of 3 across most causal claims lack rigorous justification",
+        "evidence": "Section 7 reports permutation test p=0.004 for D-S inferiority (supports confidence 4-5) but most edges rated 3",
+        "fix": "Raise edge_confidence for D-S → intervention edges to 4; justify medium-confidence edges with specific reasoning"
+      },
+      {
+        "issue": "Missing node: researcher prior experience with INTERNIST-1 motivated D-S approach",
+        "evidence": "Section 3.3: 'As members of a medical information-science group, we were familiar with the inference method used by INTERNIST-1...we decided to construct...Dempster-Shafer'",
+        "fix": "This context explains D-S adoption but is not captured in fabric; consider if relevant to knowledge fabric scope"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Simple Bayes produces more peaked distributions than odds-likelihood",
+          "evidence": "Section 8 Discussion: 'simple Bayes distributions produced in this study are, with only one exception, more peaked'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Compute posterior probabilities via Equation 3 with priors and feature likelihoods"
+          ],
+          "expected_target_node_name": [
+            "Pathfinder 24-case study showing simple Bayes superior"
+          ]
+        },
+        {
+          "title": "Odds-likelihood assumption incompatible with >2 hypotheses",
+          "evidence": "Section 3.2: 'Johnson [10] has demonstrated that the conditional-independence assumptions embodied in Equation 4 typically are not compatible with the updating of n mutually exclusive and exhaustive hypotheses, when n is greater than two'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Washout effect from likelihood renormalization in odds-likelihood method"
+          ],
+          "expected_target_node_name": [
+            "Implement simple Bayes inference with MEU rule in medical expert systems"
+          ]
+        },
+        {
+          "title": "Informed vs descriptive gold standards show no significant difference",
+          "evidence": "Section 7 Results / Table 3: 'The differences between the two standards are not significant'",
+          "status": "missing",
+          "expected_source_node_name": null,
+          "expected_target_node_name": null
+        },
+        {
+          "title": "Expert-rating shows higher sensitivity than decision-theoretic metric",
+          "evidence": "Section 8 Discussion: 'An advantage of the expert-rating metric over the decision-theoretic metric...is that the former can be much more sensitive to differences'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Decision-theoretic evaluation highlights utility-weighted performance differences"
+          ],
+          "expected_target_node_name": [
+            "Use decision-theoretic metrics for system evaluation"
+          ]
+        },
+        {
+          "title": "Utility assessment required 20 hours expert time",
+          "evidence": "Section 8 Discussion: 'It took the expert approximately 20 hours, working with two people trained in decision analytic techniques, to develop the utility model'",
+          "status": "missing",
+          "expected_source_node_name": null,
+          "expected_target_node_name": null
+        },
+        {
+          "title": "20 of 24 cases had 95% probability mass on diseases in same utility equivalence class",
+          "evidence": "Section 8 Discussion: 'In 20 of the 24 cases, 95 percent of the probability mass fall on a set of diseases within the same equivalence class'",
+          "status": "missing",
+          "expected_source_node_name": null,
+          "expected_target_node_name": null
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Implement simple Bayes inference with MEU rule in medical expert systems",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design): System architecture decision made during initial Pathfinder design phase when inference method selection occurred. Section 3.1 describes implementation during development; Section 6 confirms this was design-time choice.\"",
+        "reason": "Intervention occurs at model/architecture design phase, not deployment"
+      },
+      {
+        "node_name": "Implement simple Bayes inference with MEU rule in medical expert systems",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 3 (Prototype/Pilot with Systematic Validation): Pathfinder implemented and tested on 24 real cases with rigorous evaluation via decision-theoretic and expert-rating metrics (Section 6-7). Permutation test (p=0.004) and Wilcoxon test (p=0.07) provide systematic validation but limited to single domain.\"",
+        "reason": "Section 7 presents controlled study with statistical tests on real cases, meeting prototype/pilot + systematic validation criteria"
+      },
+      {
+        "node_name": "Apply decision-theoretic utility-based evaluation during pre-deployment testing",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 4 (Pre-Deployment Testing): Evaluation procedure occurs between development and clinical deployment to detect harmful errors. Section 4 describes evaluation framework applied to 24 cases before system would see clinical use.\"",
+        "reason": "Evaluation is explicitly pre-deployment testing activity"
+      },
+      {
+        "node_name": "Apply decision-theoretic utility-based evaluation during pre-deployment testing",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept): First reported application of decision-theoretic metric to real expert system (Section 1: 'the first to apply decision theory to the evaluation of a large real-world expert system'). Method demonstrated viability but requires further validation across domains and experts.\"",
+        "reason": "Explicitly stated as novel first application; represents proof-of-concept rather than established practice"
+      },
+      {
+        "node_name": "Cluster correlated diagnostic features during knowledge base construction",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design): Feature clustering occurs during knowledge base construction phase. Section 3 describes how necrosis features were clustered during knowledge engineering before inference testing.\"",
+        "reason": "Knowledge base construction is part of initial system design"
+      },
+      {
+        "node_name": "Cluster correlated diagnostic features during knowledge base construction",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept): Clustering technique applied in Pathfinder knowledge base construction. Section 3 documents clustering of necrosis features as example. Validation evidence shows it contributed to overall system performance but was not independently tested as isolated intervention.\"",
+        "reason": "Clustering implemented and contributed to study results but was not separately validated; represents embedded proof-of-concept"
+      },
+      {
+        "node_name": "Avoid naive Dempster-Shafer inference in multi-hypothesis domains",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design): Design guidance to avoid D-S during initial architecture decisions. Applicable when system designers choose inference methods at model design time.\"",
+        "reason": "This is a design-time architectural choice, not a post-deployment intervention"
+      },
+      {
+        "node_name": "Avoid naive Dempster-Shafer inference in multi-hypothesis domains",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept): Negative recommendation based on one empirical study. Section 7 shows permutation test p=0.004 for D-S inferiority, providing strong evidence against D-S but only in lymph-node domain (acknowledged limitation Section 2). Recommendation should not be extrapolated without domain-specific validation.\"",
+        "reason": "Strong evidence within domain but limited to single application; represents empirical guidance not yet established as standard practice"
+      },
+      {
+        "node_name": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential as the top-level risk motivating the entire empirical comparison. Section 1 Introduction establishes that patient outcomes depend on inference method choice, framing all subsequent analysis.\"",
+        "reason": "Risk node anchors entire causal fabric"
+      },
+      {
+        "node_name": "Violation of conditional independence assumptions in multi-hypothesis inference",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential problem analysis explaining how inference methods fail in practice. Sections 3.2-3.3 detail how independence violations occur in multi-hypothesis settings, directly causing diagnostic errors.\"",
+        "reason": "Primary mechanism connecting risks to inference method choices"
+      },
+      {
+        "node_name": "Overcounting of prior probabilities in naive Dempster-Shafer inference",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential problem analysis specific to naive D-S method. Section 3.3 identifies prior overcounting as flaw in mass assignment approach, explaining inferior performance observed in results.\"",
+        "reason": "Specific mechanism underlying D-S performance degradation"
+      },
+      {
+        "node_name": "Lack of disconfirmatory evidence handling in naive Dempster-Shafer inference",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential problem analysis explaining D-S failure to reduce beliefs for ruled-out hypotheses. Section 3.3 and Discussion identify this as suspected primary cause of performance difference versus odds-likelihood method.\"",
+        "reason": "Critical flaw distinguishing D-S from probabilistic alternatives"
+      },
+      {
+        "node_name": "Washout effect from likelihood renormalization in odds-likelihood method",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential problem analysis explaining why odds-likelihood produces flatter distributions. Section 8 Discussion provides mathematical explanation of how evidence renormalization prevents concentration of probability mass.\"",
+        "reason": "Mechanism explaining odds-likelihood underperformance relative to simple Bayes"
+      },
+      {
+        "node_name": "Incomplete representation of feature dependencies in knowledge base",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential problem analysis for lymph-node domain. Section 3 Domain describes how subtle feature correlations violate independence assumptions despite clustering of obvious dependencies.\"",
+        "reason": "Explains residual performance gap and why simple Bayes underperforms in some cases"
+      },
+      {
+        "node_name": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential theoretical insight resolving multiple problem analyses. Section 3.1 and 8 Discussion establish that restricting independence assumption to hypotheses (not their negations) eliminates false assumptions while preserving mathematical tractability.\"",
+        "reason": "Central theoretical claim supporting recommended inference method"
+      },
+      {
+        "node_name": "Decision-theoretic evaluation highlights utility-weighted performance differences",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential theoretical insight for evaluation methodology. Section 4.1 and 8 Discussion argue that expected utility (micromorts) reveals clinically meaningful differences missed by raw accuracy or expert ratings.\"",
+        "reason": "Justifies novel evaluation approach central to study's empirical contribution"
+      },
+      {
+        "node_name": "Aggregating dependent features reduces independence violations",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential theoretical insight explaining how feature clustering addresses independence assumption violations. Section 3 Domain describes clustering as method to maintain independence assumptions in presence of correlated evidence.\"",
+        "reason": "Links problem analysis to practical solution technique"
+      },
+      {
+        "node_name": "Adopt simple Bayes inference with maximum expected utility decision rule in diagnostic expert systems",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential design rationale combining inference method with decision rule. Sections 3.1 and 4.1 establish that this combination operationalizes both theoretical insights about better inference and about utility-weighted decision-making.\"",
+        "reason": "Bridges theoretical insights to concrete implementation approach"
+      },
+      {
+        "node_name": "Use decision-theoretic metrics for system evaluation",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential design rationale for evaluation methodology. Section 4 argues that decision-theoretic metrics should replace or complement expert ratings to align system optimization with patient outcomes.\"",
+        "reason": "Key methodological recommendation distinguishing this study from prior work"
+      },
+      {
+        "node_name": "Cluster diagnostic features to approximate independence assumptions",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential design rationale addressing incomplete feature representation. Section 3 Domain describes clustering approach applied to necrosis features as systematic method to reduce independence violations.\"",
+        "reason": "Operationalizes aggregation insight as knowledge engineering practice"
+      },
+      {
+        "node_name": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential implementation mechanism for simple Bayes method. Section 3.1 presents mathematical formulation (Equation 3) that operationalizes Bayesian inference in practice.\"",
+        "reason": "Mathematical foundation enabling deployment of Bayesian approach"
+      },
+      {
+        "node_name": "Assess diagnostic utilities using micromort-based small-risk value of life",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential implementation mechanism for decision-theoretic evaluation. Section 5 Utility Assessment describes micromort methodology as practical technique for translating clinical preferences into expected utility calculations.\"",
+        "reason": "Critical operationalization of decision-theoretic metric"
+      },
+      {
+        "node_name": "Feature clustering implementation in Pathfinder knowledge base",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential implementation mechanism exemplifying feature clustering design rationale. Section 3 Domain documents how necrosis size and distribution were merged into composite variable with cross-product values.\"",
+        "reason": "Concrete example of independence assumption maintenance technique"
+      },
+      {
+        "node_name": "Pathfinder 24-case study showing simple Bayes superior",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential validation evidence providing empirical support for Bayesian approach. Section 7 Results and Tables 1-2 report mean expert rating 8.52/10 for simple Bayes versus 0.03/10 for naive D-S, decision-theoretic rating 206,635 micromorts versus 216,371 for D-S.\"",
+        "reason": "Primary empirical evidence motivating intervention recommendations"
+      },
+      {
+        "node_name": "Permutation test shows naive D-S inferior (p=0.004)",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential validation evidence with high statistical rigor. Section 7 Results reports Monte-Carlo permutation test achieving p=0.004, providing strong evidence that D-S underperformance is not due to chance.\"",
+        "reason": "Statistical rigor supporting recommendation against naive D-S"
+      },
+      {
+        "node_name": "Expert rating shows simple Bayes > odds-likelihood (p=0.07)",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential validation evidence from expert subjective assessment. Section 7 Results reports Wilcoxon rank test p=0.07, suggesting simple Bayes has marginal preference over odds-likelihood despite identical decision-theoretic ratings.\"",
+        "reason": "Validation from expert domain knowledge complementing decision-theoretic analysis"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Implement simple Bayes inference with MEU rule in medical expert systems",
+        "type": "intervention",
+        "description": "During system design choose simple Bayesian updating for posterior computation and select the diagnosis that maximises expected patient utility.",
+        "aliases": [
+          "deploy Bayes+MEU"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Apply decision-theoretic utility-based evaluation during pre-deployment testing",
+        "type": "intervention",
+        "description": "Before deployment, compute expected micromort loss over representative cases to detect clinically significant errors beyond accuracy metrics.",
+        "aliases": [
+          "utility evaluation in testing"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Cluster correlated diagnostic features during knowledge base construction",
+        "type": "intervention",
+        "description": "Identify strongly correlated observations (e.g., necrosis attributes) and merge them into single composite variables to maintain independence assumptions.",
+        "aliases": [
+          "apply feature clustering"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Avoid naive Dempster-Shafer inference in multi-hypothesis domains",
+        "type": "intervention",
+        "description": "Do not employ naïve Dempster-Shafer mass-combination when many mutually exclusive hypotheses and multiple pieces of evidence are present; choose probabilistic alternatives instead.",
+        "aliases": [
+          "retire naive D-S"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+        "type": "concept",
+        "description": "Incorrect disease classification by expert systems such as Pathfinder can lead to inappropriate or delayed treatment, producing morbidity or mortality for patients. (Introduction; Section 7 Results)",
+        "aliases": [
+          "misdiagnosis harm in lymph node diagnosis",
+          "diagnostic error risk in Pathfinder"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Violation of conditional independence assumptions in multi-hypothesis inference",
+        "type": "concept",
+        "description": "Inference methods often assume diagnostic features are conditionally independent given a disease (and sometimes its negation); in real lymph-node pathology many features are correlated, breaking this assumption. (Section 3.2; Discussion)",
+        "aliases": [
+          "independence assumption failure",
+          "evidence dependence in inference"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Overcounting of prior probabilities in naive Dempster-Shafer inference",
+        "type": "concept",
+        "description": "Because D-S masses include prior components, combining many observations multiplies priors, inflating beliefs for some diseases. (Section 3.3 Naive Dempster-Shafer Method)",
+        "aliases": [
+          "prior overweighting in D-S",
+          "mass assignment prior overcount"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Lack of disconfirmatory evidence handling in naive Dempster-Shafer inference",
+        "type": "concept",
+        "description": "Zero mass assignments leave disease belief unchanged, so evidence that should rule out a hypothesis does not lower its score in naïve D-S. (Section 3.3; Discussion)",
+        "aliases": [
+          "missing negative evidence in D-S",
+          "no belief decrease in D-S"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Washout effect from likelihood renormalization in odds-likelihood method",
+        "type": "concept",
+        "description": "Renormalising posterior odds across many hypotheses tends to equalise probabilities, producing flatter, less decisive belief distributions. (Section 3.2; Discussion)",
+        "aliases": [
+          "probability flattening in odds-likelihood",
+          "variance inflation in CF model"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Incomplete representation of feature dependencies in knowledge base",
+        "type": "concept",
+        "description": "Some morphological features (e.g., necrosis size & distribution) are correlated; representing them separately double-counts evidence unless corrected. (Section 3 Domain)",
+        "aliases": [
+          "unmodelled feature correlation",
+          "missing dependency encoding"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "type": "concept",
+        "description": "Using Bayes’ theorem with independence conditioned only on each disease avoids the extra, often-false assumption about independence given the negation, yielding more peaked and accurate posteriors. (Sections 3.1, 7)",
+        "aliases": [
+          "simple Bayes superiority",
+          "hypothesis-conditional independence benefit"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Decision-theoretic evaluation highlights utility-weighted performance differences",
+        "type": "concept",
+        "description": "Measuring systems with expected utility (micromorts) captures the real harm of misdiagnosis better than raw agreement or expert ratings alone. (Section 4.1; 8 Discussion)",
+        "aliases": [
+          "utility-based evaluation insight",
+          "decision-theoretic metric value"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Aggregating dependent features reduces independence violations",
+        "type": "concept",
+        "description": "Combining correlated observations into composite variables makes the remaining features closer to independent, preserving Bayesian assumptions. (Section 3 Domain; Discussion)",
+        "aliases": [
+          "feature clustering theoretical insight",
+          "dependency aggregation benefit"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adopt simple Bayes inference with maximum expected utility decision rule in diagnostic expert systems",
+        "type": "concept",
+        "description": "Combining simple Bayesian updating with an MEU choice of diagnosis directly targets patient-utility minimisation. (Sections 3.1; 4.1)",
+        "aliases": [
+          "use Bayes+MEU in Pathfinder",
+          "Bayesian MEU design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Use decision-theoretic metrics for system evaluation",
+        "type": "concept",
+        "description": "Evaluation should employ expected patient-utility rather than only heuristic expert scores to align optimisation with clinical outcomes. (Sections 4; 8)",
+        "aliases": [
+          "utility-based system evaluation rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Cluster diagnostic features to approximate independence assumptions",
+        "type": "concept",
+        "description": "Merging correlated features (e.g., necrosis size & distribution) is a systematic way to uphold conditional independence in the knowledge base. (Section 3 Domain)",
+        "aliases": [
+          "feature clustering rationale",
+          "dependency mitigation design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+        "type": "concept",
+        "description": "Implements Bayes’ theorem assuming conditional independence on hypotheses to obtain p(disease | evidence). (Section 3.1)",
+        "aliases": [
+          "Equation 3 posterior computation",
+          "simple Bayes implementation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Assess diagnostic utilities using micromort-based small-risk value of life",
+        "type": "concept",
+        "description": "Uses willingness-to-pay and small-risk trade-offs to map outcomes to micromorts, enabling expected-utility calculations. (Section 5 Utility Assessment)",
+        "aliases": [
+          "micromort utility elicitation",
+          "small-risk value assessment"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Feature clustering implementation in Pathfinder knowledge base",
+        "type": "concept",
+        "description": "Pathfinder replaces correlated variables (e.g., necrosis size & distribution) with single composite features to remove explicit dependencies. (Section 3 Domain)",
+        "aliases": [
+          "clustered necrosis feature",
+          "composite feature implementation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Pathfinder 24-case study showing simple Bayes superior",
+        "type": "concept",
+        "description": "Across 24 referral cases, simple Bayes achieved mean expert rating 8.52/10 and reduced expected harm by ≈ 10 000 micromorts relative to naive D-S. (Section 7 Results; Tables 1–2)",
+        "aliases": [
+          "24-case Bayes superiority evidence",
+          "experimental Bayes win"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Permutation test shows naive D-S inferior (p=0.004)",
+        "type": "concept",
+        "description": "A Monte-Carlo permutation test found naïve D-S significantly worse than alternatives with p = 0.004. (Section 7 Results)",
+        "aliases": [
+          "Monte-Carlo test D-S inferior"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Expert rating shows simple Bayes > odds-likelihood (p=0.07)",
+        "type": "concept",
+        "description": "Wilcoxon rank test on expert scores yielded p = 0.07 favouring simple Bayes over odds-likelihood. (Section 7 Results)",
+        "aliases": [
+          "Wilcoxon rating Bayes vs OL"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+        "target_node": "Violation of conditional independence assumptions in multi-hypothesis inference",
+        "description": "Incorrect independence assumptions distort probability estimates, leading to wrong diagnoses that harm patients.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Violation of conditional independence assumptions in multi-hypothesis inference",
+        "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "description": "Restricting independence assumption to hypotheses eliminates the contested negation-based assumption, reducing error.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Overcounting of prior probabilities in naive Dempster-Shafer inference",
+        "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "description": "Bayesian updating incorporates priors exactly once, avoiding overcounting.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Lack of disconfirmatory evidence handling in naive Dempster-Shafer inference",
+        "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "description": "Bayesian likelihoods naturally drive probabilities down when disconfirmatory evidence appears.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Washout effect from likelihood renormalization in odds-likelihood method",
+        "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "description": "Simple Bayes amplifies true likelihood differences instead of flattening them.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Incomplete representation of feature dependencies in knowledge base",
+        "target_node": "Aggregating dependent features reduces independence violations",
+        "description": "Creating composite variables removes correlated evidence entries, lowering double-count risk.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "Adopt simple Bayes inference with maximum expected utility decision rule in diagnostic expert systems",
+        "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+        "description": "Design choice directly operationalises the theoretical claim about Bayes’ benefits.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "Use decision-theoretic metrics for system evaluation",
+        "target_node": "Decision-theoretic evaluation highlights utility-weighted performance differences",
+        "description": "Evaluation policy derives from insight that utility-based metrics reveal meaningful differences.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "Cluster diagnostic features to approximate independence assumptions",
+        "target_node": "Aggregating dependent features reduces independence violations",
+        "description": "Clustering is the concrete design step implied by the aggregation insight.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+        "target_node": "Pathfinder 24-case study showing simple Bayes superior",
+        "description": "Study demonstrates the implementation’s superior diagnostic utility and rating.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Feature clustering implementation in Pathfinder knowledge base",
+        "target_node": "Pathfinder 24-case study showing simple Bayes superior",
+        "description": "Clustering contributed to the observed performance in the study.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Assess diagnostic utilities using micromort-based small-risk value of life",
+        "target_node": "Pathfinder 24-case study showing simple Bayes superior",
+        "description": "Utility assessments enabled calculation of micromort differences reported in the study.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Pathfinder 24-case study showing simple Bayes superior",
+        "target_node": "Implement simple Bayes inference with MEU rule in medical expert systems",
+        "description": "Empirical superiority encourages adoption of Bayes+MEU in future systems.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Expert rating shows simple Bayes > odds-likelihood (p=0.07)",
+        "target_node": "Implement simple Bayes inference with MEU rule in medical expert systems",
+        "description": "Expert preference further supports selecting Bayes.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Permutation test shows naive D-S inferior (p=0.004)",
+        "target_node": "Avoid naive Dempster-Shafer inference in multi-hypothesis domains",
+        "description": "Significant under-performance motivates retiring naïve D-S.",
+        "edge_confidence": 4,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "176fced95f61e335c9171ceaebc20c3e"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.416802"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA COMPLIANCE: JSON is structurally valid but missing required textual fields. All 21 nodes lack mandatory 'node_rationale' field. All 25 edges lack mandatory 'edge_confidence_rationale' and 'edge_rationale' fields. All 4 intervention nodes lack mandatory 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields. Per schema requirements, these are BLOCKERS.",
+      "REFERENTIAL INTEGRITY: All 25 edges correctly reference existing nodes; no broken references detected.",
+      "ORPHANS: No orphaned nodes detected. All 21 nodes participate in at least one edge.",
+      "DUPLICATES: No duplicate nodes or edges detected.",
+      "COVERAGE ANALYSIS: Missing validation evidence nodes include: (1) Distribution peaking evidence (Section 8 Discussion: 'simple Bayes distributions...are, with only one exception, more peaked'), (2) Utility equivalence class finding (Section 8: 'In 20 of the 24 cases, 95 percent of the probability mass fall on...diseases within the same equivalence class'), (3) Time cost of decision-theoretic evaluation (Section 8: '20 hours...to develop the utility model'). These represent important findings not fully integrated into fabric.",
+      "EDGE GAPS: Missing edges should connect: (1) 'Johnson theorem incompatibility' (implied concept) → 'Washout effect' (Problem Analysis), confidence 4 based on Section 3.2; (2) Decision-theoretic evaluation methodology → Patient harm mitigation, confidence 3 based on Section 4 framing; (3) Utility equivalence class structure → Simple Bayes near-optimality, confidence 3 based on Section 8 discussion.",
+      "INTERVENTION MATURITY JUSTIFICATION: Maturity ratings of 2-3 require detailed evidence. Section 6 confirms 24-case empirical study meeting prototype/pilot criteria. Permutation test p=0.004 and Wilcoxon p=0.07 provide statistical validation. However, author explicitly acknowledges single-domain limitation (Section 2: 'these results should not be extrapolated to other domains'), supporting maturity 2-3 rather than 4.",
+      "INTERVENTION LIFECYCLE JUSTIFICATION: All interventions are model/design-time (lifecycle 1) or pre-deployment (lifecycle 4) decisions, not deployment-phase (lifecycle 5). Lifecycle assignments are correct.",
+      "EDGE CONFIDENCE ASSESSMENT: Confidence ratings appropriately reflect evidence strength. Confidence 4 edges cite permutation tests (p=0.004) or mathematical derivations (Equation 3). Confidence 3 edges cite qualitative observations or single-domain results. No edges assigned confidence 5 (appropriate—no multi-domain replication or mathematical proofs provided).",
+      "KNOWLEDGE FABRIC STRUCTURE: Fabric correctly instantiates template: Risk → Problem Analysis (5 nodes) → Theoretical Insight (3 nodes) → Design Rationale (3 nodes) → Implementation Mechanism (3 nodes) → Validation Evidence (3 nodes) → Intervention (4 nodes). All paths flow correctly from risk to intervention through intermediate reasoning layers.",
+      "FRAMEWORK DECOMPOSITION: Pathfinder system correctly decomposed into component nodes (inference method, decision rule, utility assessment, feature clustering) rather than monolithic 'Pathfinder framework' node. Constitutional AI-style decomposition principle successfully applied.",
+      "EVIDENCE TRACINGS: Sample evidence tracings verified: (1) Patient harm → D-S prior overcounting: traced through Section 3.3 description of mass assignment; (2) D-S prior overcounting → Validation evidence: traced through Section 7 Results showing D-S 216,371 vs Bayes 206,635 micromorts; (3) Validation → Intervention recommendation: traced through Section 7-8 conclusion favoring simple Bayes.",
+      "THEORETICAL SOUNDNESS: Causal claims accurately represent paper's content. Section 3.1-3.3 establishes inference method differences. Section 3.2 cites Johnson [10] theorem. Section 8 Discussion provides mathematical derivation of washout effect. No unsupported causal leaps detected.",
+      "DOMAIN LIMITATION HANDLING: Graph appropriately represents single-domain scope. Recommendation nodes could note lymph-node specificity, though current wording allows transfer inference for similar multi-hypothesis domains."
+    ]
+  },
+  "url": "https://arxiv.org/abs/1304.2357",
+  "paper_id": "4bc60dd8d17016f476c387b28ef04b6d",
+  "ard_file_source": "arxiv",
+  "errors": null
+}

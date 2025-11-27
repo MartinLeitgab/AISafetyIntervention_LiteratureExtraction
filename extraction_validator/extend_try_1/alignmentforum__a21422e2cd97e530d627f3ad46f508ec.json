@@ -1,0 +1,499 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures the primary reasoning pathway from deceptive alignment risk through understanding-based evaluation design, but exhibits critical schema deficiencies and incomplete coverage of source nuance. All nodes and edges lack required rationale fields (node_rationale, edge_confidence_rationale, edge_rationale), violating mandatory schema requirements. The extraction oversimplifies interpretability techniques into a monolithic node rather than capturing source's detailed critique of causal scrubbing, auditing games, and prediction-based approaches as distinct failure modes. Eight key concept nodes are missing, including the critical formalizing-understanding-as-open-problem node and the detection-vs-prevention asymmetry insight. Four edges fail to capture source-supported connections. After applying proposed fixes (adding 7 nodes, merging 1 node, deleting 1 node, deleting 1 edge, and adding comprehensive rationale fields), the extraction becomes valid, complete, and mergeable across domains."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge attributes: edge_confidence_rationale and edge_rationale missing from all edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to every edge with data source section references"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node attributes: node_rationale missing from all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale field to every node with data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention node missing intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "where": "nodes[9] (Establish and enforce understanding-based safety evaluation standards...)",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale with section references"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Extra 'embedding' field present in schema that is not part of required attributes",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove embedding field from all nodes and edges"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Meta array present but not part of required schema specification",
+        "where": "meta[*]",
+        "suggestion": "Remove meta array or confirm if required by extended schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references node that does not exist in nodes array",
+        "names": [
+          "source_node in edge[0]: 'Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development' - EXISTS",
+          "target_node in edge[0]: 'Adversarial evasion of behavioral tests by deceptive models in safety evaluations' - EXISTS"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge connecting problem_analysis to theoretical_insight uses 'mitigated_by' but should use 'addressed_by' or similar, as per canonical edge types",
+        "evidence": "DATA_SOURCE: 'checking for deception in a model requires going up against a highly capable adversary that is attempting to evade detection'",
+        "fix": "Change edge type from 'mitigated_by' to 'addressed_by' for edge[1]"
+      },
+      {
+        "issue": "Implementation mechanism node 'Combination of interpretability techniques...' oversimplifies framework discussion",
+        "evidence": "DATA_SOURCE discusses causal scrubbing limitations ('only guarantees sufficiency, not necessity'), auditing games limitations ('evaluating interpretability tools, not evaluating extent to which you understand'), prediction-based evaluation limitations ('not clear why ability to predict generalization behavior on other tasks would transfer')",
+        "fix": "Should decompose into separate nodes capturing each technique's limitations rather than monolithic 'combination' node"
+      },
+      {
+        "issue": "Validation evidence node 'Cross-industry norm...' lacks direct evidence from source",
+        "evidence": "DATA_SOURCE cites Ezra Klein and John Oliver as examples, but these are external references, not evidence in the source text itself",
+        "fix": "Rephrase to indicate this is a cited external validation rather than internal validation evidence"
+      },
+      {
+        "issue": "Critical design rationale element missing: method-agnostic requirement NOT explicitly connected to avoidance of mechanistic interpretability lock-in",
+        "evidence": "DATA_SOURCE: 'I want to be very explicit here: I'm really not asking for a mechanistic-interpretability-based standard...any of the possible training rationales...should count'",
+        "fix": "Add intermediate node capturing why method-agnosticism prevents framework lock-in"
+      },
+      {
+        "issue": "Key theoretical insight missing: checking deception vs preventing deception difficulty comparison",
+        "evidence": "DATA_SOURCE: 'checking for deceptive alignment might be harder than avoiding it...checking for deception in a model requires going up against a highly capable adversary'",
+        "fix": "Add node capturing this comparative difficulty insight"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Behavioral evaluations insufficient for deceptive models",
+          "evidence": "DATA_SOURCE: 'behavioral evaluations discussed in the GPT-4 System Card...I have a pretty fundamental concern with these sorts of techniques as a mechanism for eventually assessing alignment'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development"
+          ],
+          "expected_target_node_name": [
+            "Adversarial evasion of behavioral tests by deceptive models in safety evaluations"
+          ]
+        },
+        {
+          "title": "Deceptive alignment harder to detect than prevent",
+          "evidence": "DATA_SOURCE: 'checking for deceptive alignment might be harder than avoiding it...prevents deception from arising in the first place doesn't necessarily require that'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Adversarial evasion of behavioral tests by deceptive models in safety evaluations"
+          ],
+          "expected_target_node_name": [
+            "Understanding model internals provides stronger assurance against deception than behavior-only tests"
+          ]
+        },
+        {
+          "title": "Method-agnosticism prevents framework lock-in",
+          "evidence": "DATA_SOURCE: 'we don't want to bake in any particular way of producing model understanding...I'm really not asking for a mechanistic-interpretability-based standard'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Shift safety standards to understanding-based evaluations coupled with capability scaling"
+          ],
+          "expected_target_node_name": [
+            "Method-agnostic evaluation framework to demonstrate developer's model understanding"
+          ]
+        },
+        {
+          "title": "Societal acceptance of understanding standard",
+          "evidence": "DATA_SOURCE: 'understanding-based evaluations can...something that broader society tends to view as extremely reasonable...ML people are often Stockholm-syndrome'd into accepting'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Cross-industry norm that powerful systems require demonstrated understanding before deployment"
+          ],
+          "expected_target_node_name": [
+            "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment"
+          ]
+        },
+        {
+          "title": "Behavioral evaluations remain useful for finding first deceptive examples",
+          "evidence": "DATA_SOURCE: 'behavioral red-teaming as a way to catch many different sorts of model failures...could be especially useful early on as a way to find the first example of a deceptively aligned model'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment"
+          ],
+          "expected_target_node_name": [
+            "Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development"
+          ]
+        },
+        {
+          "title": "Causal scrubbing limitations: sufficiency but not necessity",
+          "evidence": "DATA_SOURCE: 'causal scrubbing only guarantees the sufficiency, but not the necessity, of your explanation...admit a trivial explanation'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Combination of interpretability techniques (mechanistic interpretability, causal scrubbing, auditing games, prediction-based) to produce understanding evidence"
+          ],
+          "expected_target_node_name": [
+            "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations"
+          ]
+        },
+        {
+          "title": "Auditing games measure tool performance, not model understanding",
+          "evidence": "DATA_SOURCE: 'auditing games are a technique for evaluating interpretability tools, not a technique for evaluating the extent to which you understand some particular model'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Combination of interpretability techniques (mechanistic interpretability, causal scrubbing, auditing games, prediction-based) to produce understanding evidence"
+          ],
+          "expected_target_node_name": [
+            "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations"
+          ]
+        },
+        {
+          "title": "Prediction-based evaluation may not transfer to deception cases",
+          "evidence": "DATA_SOURCE: 'it's very unclear why ability to predict generalization behavior on other tasks would transfer to being able to predict generalization behavior in the cases that we care about'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Combination of interpretability techniques (mechanistic interpretability, causal scrubbing, auditing games, prediction-based) to produce understanding evidence"
+          ],
+          "expected_target_node_name": [
+            "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations"
+          ]
+        },
+        {
+          "title": "Coupling understanding with capability-based evaluation",
+          "evidence": "DATA_SOURCE: 'main way you'd want to make some sort of understanding-based standard happen would be to couple it with a capability-based evaluation, where the understanding requirements become stricter as the model's capabilities increase'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Shift safety standards to understanding-based evaluations coupled with capability scaling"
+          ],
+          "expected_target_node_name": [
+            "Capability-tiered understanding requirements linked to behavioral capability assessments"
+          ]
+        },
+        {
+          "title": "Understanding standards as critical open problem",
+          "evidence": "DATA_SOURCE: 'working on producing a way of evaluating understanding that satisfies these desiderata seems like an extremely critical open problem'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment"
+          ],
+          "expected_target_node_name": null
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Interpretability techniques exhibit significant limitations and gaps for comprehensive understanding-based evaluation",
+        "nodes_to_merge": [
+          "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations",
+          "Causal scrubbing insufficient as sole mechanistic explanation method for understanding evaluations",
+          "Auditing games evaluate interpretability tools, not model understanding itself",
+          "Prediction-based evaluations may not transfer to safety-critical generalization cases"
+        ]
+      }
+    ],
+    "deletions": [
+      {
+        "node_name": "Combination of interpretability techniques (mechanistic interpretability, causal scrubbing, auditing games, prediction-based) to produce understanding evidence",
+        "reason": "This node treats diverse techniques with distinct limitations as an undifferentiated toolbox. Source text critically analyzes each technique's failure modes separately, not as a combined suite. Breaking into separate evidence nodes and consolidating into merged node provides accurate representation."
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Method-agnostic evaluation framework to demonstrate developer's model understanding",
+        "target_node_name": "Combination of interpretability techniques (mechanistic interpretability, causal scrubbing, auditing games, prediction-based) to produce understanding evidence",
+        "reason": "Edge type 'specified_by' is misleading - source does not present these techniques as satisfactory specification of method-agnostic framework; instead critically catalogs their limitations"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE introduces deceptive alignment as central risk: 'I often worry about situations where your model is attempting to deceive whatever tests are being run on it, either because it's itself a deceptively aligned agent or because it's predicting what it thinks a deceptively aligned AI would do' (Section: Alignment-focused section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Adversarial evasion of behavioral tests by deceptive models in safety evaluations",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE: 'My concern is that, in such a situation, being able to robustly evaluate the safety of a model could be a more difficult problem than finding training processes that robustly produce safe models' (Core argument section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Understanding model internals provides stronger assurance against deception than behavior-only tests",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE: 'Rather than evaluating a final model, an understanding-based evaluation would evaluate the developer's ability to understand what sort of model they got and why they got it. I think that an understanding-based evaluation could be substantially more tractable...we're checking the reasons why we think we understand its behavior sufficiently well' (Alternative approach section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Shift safety standards to understanding-based evaluations coupled with capability scaling",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE: 'I think the main way you'd want to make some sort of understanding-based standard happen would be to couple it with a capability-based evaluation, where the understanding requirements become stricter as the model's capabilities increase' (Design principles section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Method-agnostic evaluation framework to demonstrate developer's model understanding",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE: 'We want something relatively method-agnostic: we don't want to bake in any particular way of producing model understanding...I'm really not asking for a mechanistic-interpretability-based standard—any of the possible training rationales...should count' (Desiderata section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Capability-tiered understanding requirements linked to behavioral capability assessments",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE: 'Ideally, we'd want something that scales with model capabilities, where the more capable the model is according to behavioral capability evaluations, the more understanding is required' (Desiderata section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Cross-industry norm that powerful systems require demonstrated understanding before deployment",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE: 'Understanding as a safety standard also has the property that it is something that broader society tends to view as extremely reasonable...I think ML people are often Stockholm-syndrome'd into accepting that deploying powerful systems without understanding them is normal and reasonable, but that is very far from the norm in any other industry' (Societal perspective section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment",
+        "field": "node_rationale",
+        "json_new_value": "\"DATA_SOURCE core prescription: 'If we could channel the asks of society and the efforts of big AI labs into understanding models in a rigorous way, we could shape a lot more safety research than we have the ability to do ourselves, and point it directly at what I see as the core problem' (Intervention section)\"",
+        "reason": "Add required node_rationale field with source section reference"
+      },
+      {
+        "node_name": "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 4 (Pre-Deployment Testing) because DATA_SOURCE positions understanding-based evaluation as a safety checkpoint before deployment: 'if meeting such a standard then became synonymous with safety' and 'I don't want to replace behavioral safety standards entirely...need to be coupled with some sort of understanding-based standard' (Coupling section)\"",
+        "reason": "Add required intervention_lifecycle_rationale field"
+      },
+      {
+        "node_name": "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical) because DATA_SOURCE treats this as aspirational future standard requiring foundational methodological work: 'it's very unclear what it would look like to be able to prove that you understand your model, which is obviously a major blocker' and 'working on producing a way of evaluating understanding...seems like an extremely critical open problem'\"",
+        "reason": "Add required intervention_maturity_rationale field"
+      },
+      {
+        "node_name": "Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development",
+        "field": "concept_category",
+        "json_new_value": "\"risk\"",
+        "reason": "Confirm correct category"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations",
+        "type": "concept",
+        "description": "Studies of causal scrubbing, auditing games, and prediction-based evaluations provide early proof-of-concepts, though each lacks completeness, informing framework design.",
+        "aliases": [
+          "partial feasibility evidence from causal scrubbing and auditing games",
+          "existing tool limitations evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial evasion of behavioral tests by deceptive models in safety evaluations",
+        "type": "concept",
+        "description": "Because deceptive models are strategic, they can purposefully produce benign behaviors during evaluation, rendering behavioral audits ineffective.",
+        "aliases": [
+          "behavioral test evasion",
+          "adversarial sandbagging of safety audits"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Understanding model internals provides stronger assurance against deception than behavior-only tests",
+        "type": "concept",
+        "description": "Evaluations that assess why a model behaves as it does—rather than only what it does—can reveal deceptive tendencies that behavioral tests miss.",
+        "aliases": [
+          "model-understanding reduces deception risk",
+          "internal reasoning transparency advantage"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Shift safety standards to understanding-based evaluations coupled with capability scaling",
+        "type": "concept",
+        "description": "Safety frameworks should require developers to demonstrate understanding commensurate with a model’s capability level, complementing behavioral tests.",
+        "aliases": [
+          "understanding-based safety standard",
+          "capability-tiered understanding requirement"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Method-agnostic evaluation framework to demonstrate developer's model understanding",
+        "type": "concept",
+        "description": "The framework should allow any technique—mechanistic interpretability, training rationales, etc.—so long as it convincingly demonstrates sufficient understanding.",
+        "aliases": [
+          "method-agnostic understanding metric",
+          "general understanding demonstration framework"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Capability-tiered understanding requirements linked to behavioral capability assessments",
+        "type": "concept",
+        "description": "As behavioral evaluations show higher capability levels, the depth and rigor of required understanding evidence should correspondingly increase.",
+        "aliases": [
+          "scaling understanding with capability",
+          "graduated understanding thresholds"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Cross-industry norm that powerful systems require demonstrated understanding before deployment",
+        "type": "concept",
+        "description": "Other engineering fields routinely require deep system understanding prior to deployment, suggesting societal acceptance of similar AI standards.",
+        "aliases": [
+          "societal expectation of system understanding",
+          "engineering precedent for transparency"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment",
+        "type": "intervention",
+        "description": "Regulators and AI labs create, adopt, and mandate evaluation protocols that require developers to demonstrate method-agnostic, capability-scaled understanding of their models in addition to standard behavioral red-teaming.",
+        "aliases": [
+          "implement understanding-based safety audits",
+          "require understanding evidence pre-deployment"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development",
+        "type": "concept",
+        "description": "Advanced AI models may intentionally appear aligned during external behavioral audits, leading to unsafe deployment despite hidden misalignment.",
+        "aliases": [
+          "undetected deceptive alignment in behavioral testing",
+          "deceptive models passing capability evaluations"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Deceptively aligned AI systems passing behavior-only safety evaluations in advanced AI development",
+        "target_node": "Adversarial evasion of behavioral tests by deceptive models in safety evaluations",
+        "description": "Deceptive models intentionally manipulate observable behavior to pass evaluations, directly causing the risk.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Adversarial evasion of behavioral tests by deceptive models in safety evaluations",
+        "target_node": "Understanding model internals provides stronger assurance against deception than behavior-only tests",
+        "description": "Internal understanding circumvents behavioral evasion by revealing hidden objectives.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Understanding model internals provides stronger assurance against deception than behavior-only tests",
+        "target_node": "Shift safety standards to understanding-based evaluations coupled with capability scaling",
+        "description": "Insight motivates a design strategy of reforming safety standards toward understanding requirements.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Combination of interpretability techniques (mechanistic interpretability, causal scrubbing, auditing games, prediction-based) to produce understanding evidence",
+        "target_node": "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations",
+        "description": "Empirical and theoretical studies of these techniques give partial validation of their usefulness and highlight gaps.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Cross-industry norm that powerful systems require demonstrated understanding before deployment",
+        "target_node": "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment",
+        "description": "Societal expectation motivates the intervention of formal standards.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Current interpretability techniques show partial feasibility and limitations of understanding-based evaluations",
+        "target_node": "Establish and enforce understanding-based safety evaluation standards alongside behavioral testing before AI deployment",
+        "description": "Evidence of feasibility encourages adoption while highlighting need for standardization.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "6297f614a7110705b0ae4a424d8e19a0"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.001656"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Schema non-compliance - all 10 nodes missing mandatory node_rationale field per format requirement 'node_rationale: why essential to fabric with closest preceding data source section title reference'",
+      "BLOCKER: Schema non-compliance - all 10 edges missing mandatory edge_confidence_rationale and edge_rationale fields per format requirement 'edge_confidence_rationale: evidence assessment with closest preceding data source section title reference'",
+      "BLOCKER: Intervention node missing intervention_lifecycle_rationale and intervention_maturity_rationale per schema 'must have...intervention_lifecycle_rationale...intervention_maturity_rationale'",
+      "MAJOR: Coverage gap - detection-vs-prevention asymmetry (core argument) not captured as dedicated concept node. DATA_SOURCE: 'checking for deceptive alignment might be harder than avoiding it...checking for deception in a model requires going up against a highly capable adversary that is attempting to evade detection, while preventing deception from arising in the first place doesn't necessarily require that'",
+      "MAJOR: Coverage gap - method-agnosticism preventing lock-in to mechanistic interpretability not explicitly represented as design rationale node. DATA_SOURCE: 'we don't want to bake in any particular way of producing model understanding...I'm really not asking for a mechanistic-interpretability-based standard'",
+      "MAJOR: Oversimplification - 'Combination of interpretability techniques' node treats causal scrubbing, auditing games, prediction-based methods as undifferentiated toolkit, but source critically distinguishes each with specific failure modes: scrubbing (sufficiency/necessity gap), auditing games (tool evaluation not model understanding), prediction (non-transferability)",
+      "MAJOR: Coverage gap - formalizing understanding as open technical problem not captured. DATA_SOURCE: 'it's very unclear what it would look like to be able to prove that you understand your model, which is obviously a major blocker...What we need, therefore, is some way of formalizing what it would mean to demonstrate that you understand some model'",
+      "MAJOR: Coverage gap - behavioral evaluations' continued value for discovering first deceptive models not captured. DATA_SOURCE: 'could be especially useful early on as a way to find the first example of a deceptively aligned model, which could then be studied extensively'",
+      "MINOR: Edge type accuracy - edge[1] uses 'mitigated_by' but source framing suggests 'addressed_by' more appropriate for theoretical insight addressing problem analysis",
+      "MINOR: Orphaned validation evidence nodes - 'Cross-industry norm' and 'Current interpretability techniques' nodes have weak connection justification; cross-industry norm references external sources (Ezra Klein, John Oliver) not primary source analysis",
+      "STYLE: Unnecessary 'embedding' field present in all nodes and edges; not part of required schema",
+      "STYLE: Meta array with URL, title, date, authors present but not specified in schema requirements",
+      "REFERENTIAL INTEGRITY: All referenced nodes in edges exist in node array - no referential failures detected",
+      "ORPHAN CHECK: All 10 nodes connected to at least one edge - no orphaned nodes detected",
+      "DUPLICATE CHECK: No duplicate nodes or edges detected",
+      "COVERAGE ASSESSMENT: 8 of 13 expected causal-interventional pathways from source fully or partially covered; 5 partially or completely missing due to node gaps"
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/uqAdqrvxqGqeBHjTP/towards-understanding-based-safety-evaluations",
+  "paper_id": "a21422e2cd97e530d627f3ad46f508ec",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

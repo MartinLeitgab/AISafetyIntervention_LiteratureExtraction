@@ -1,0 +1,528 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extraction captures the core conceptual framework and main causal pathways from the source material but contains critical schema violations and logical direction errors that prevent valid JSON output. Missing required fields (node_rationale, edge_confidence_rationale, edge_rationale, intervention_lifecycle_rationale, intervention_maturity_rationale) across all nodes and edges are blockers. Logical errors include reversed edge directions (misconception causing problem, environment diversity being implemented by specific mechanism rather than vice versa) and incomplete separation of the two distinct failure modes explicitly enumerated in the source ('Selecting For Bad Behaviour' vs 'Induced Goal-Directedness'). The extraction misses several validation evidence nodes (selective breeding analogy, conditional deception framework) and fails to capture the complete knowledge fabric showing how the two failure cases branch differently. With the proposed fixes applied, the extraction would become valid and mergeable."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in all nodes: node_rationale and intervention_lifecycle_rationale/intervention_maturity_rationale are not present",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale to all nodes with reference to source section; add intervention_lifecycle_rationale and intervention_maturity_rationale to all intervention nodes"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing edge_confidence_rationale and edge_rationale required fields",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to every edge with source section references"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Nodes contain 'embedding' field not in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove embedding field or document its purpose"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Edges contain 'embedding' field not in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove embedding field"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent node: 'Env-sampling and reward relabelling across varied coin positions in RLHF' appears as target in edge but source is 'Diversifying training environments to break spurious heuristic selection' - direction is reversed",
+        "names": [
+          "Env-sampling and reward relabelling across varied coin positions in RLHF",
+          "Diversifying training environments to break spurious heuristic selection"
+        ]
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge source-target direction problem: edge from 'Selection for reflectively unwanted behavior in RLHF due to limited human oversight' caused_by 'Reward-as-incentive misconception in alignment reasoning' is logically reversed - misconception should be problem analysis causing the risk",
+        "names": [
+          "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+          "Reward-as-incentive misconception in alignment reasoning"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Goal-directedness induced by training selection pressure, not inherent",
+          "Induced goal-directed deception via adversarial evaluation strategy"
+        ],
+        "merge_strategy": "These appear to represent the same theoretical insight but with different framing (one is about goal-directedness mechanism, one about deception detection). Keep 'Goal-directedness induced by training selection pressure, not inherent' as the core insight; the other should be 'Detecting induced goal-directed deception via adversarial evaluation strategy' which is design rationale not theoretical insight"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Missing critical pathway: The data source explicitly discusses TWO distinct failure cases (section 'Rewriting the Threat Model') but extraction only weakly represents the distinction between 'Selecting For Bad Behaviour' and 'Induced Goal-Directedness'",
+        "evidence": "Data source states: 'I think this threat model is confounding two related but different failure cases, which I would rewrite as the following: 1. Selecting For Bad Behaviour... 2. Induced Goal-Directedness'",
+        "fix": "Create explicit separate pathways for these two failure modes, rather than treating them as merged concepts"
+      },
+      {
+        "issue": "Missing core mechanism from section 'How Vanilla Reinforcement Learning Works': The fundamental insight that 'The model itself never gets the reward' and the dog breeding analogy are not explicitly captured as validation evidence",
+        "evidence": "Data source: 'The model never sees the reward... Reward is the mechanism by which we select parameters, it is not something given to the model' and 'RL is more like asking 100 dogs to sit, breeding the dogs which do sit and killing those which don't'",
+        "fix": "Add validation evidence node: 'Mechanistic comparison of RL to selective breeding demonstrating reward invisibility to agent'"
+      },
+      {
+        "issue": "Missing edge from theoretical insights to design rationale: No edge connects 'Goal-directedness induced by training selection pressure' to 'Reframing alignment strategies around selection effects'",
+        "evidence": "Data source section 'Why Does This Matter?' explicitly states: 'If a model is goal-directed with respect to some goal, it is because such goal-directed cognition was selected for' which directly motivates the design rationale",
+        "fix": "Add edge from 'Goal-directedness induced by training selection pressure, not inherent' to 'Reframing alignment strategies around selection effects to reduce deception' with type 'motivates'"
+      },
+      {
+        "issue": "Weak connection between CoinRun evidence and design rationale: The extraction uses validated_by instead of direct causation showing why environment diversity is needed",
+        "evidence": "Data source explicitly uses CoinRun to illustrate the problem: 'When thinking about deception... CoinRun experiment reveals the agent learned always move right rather than reach coin'",
+        "fix": "Add clearer causal path showing CoinRun failure motivated the environment diversity approach"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Simplified threat model assumptions cause misconceptions about agent incentives",
+          "evidence": "Section 'Rewriting the Threat Model': 'This assumes that models want reward, which isn't true. I think this threat model is confounding two related but different failure cases'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Simplified RLHF threat model assumes agents want reward"
+          ],
+          "expected_target_node_name": [
+            "Reward-as-incentive misconception in alignment reasoning"
+          ]
+        },
+        {
+          "title": "Two distinct failure modes from single threat model",
+          "evidence": "Section 'Rewriting the Threat Model': explicit enumeration of 'Selecting For Bad Behaviour' and 'Induced Goal-Directedness' as two separate failure cases",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Deceptive behavior emergence in RLHF-trained models"
+          ],
+          "expected_target_node_name": [
+            "Selecting for reflectively unwanted behavior (failure case 1)",
+            "Induced goal-directed deception through selection (failure case 2)"
+          ]
+        },
+        {
+          "title": "Selection-lens perspective resolves CoinRun confusion",
+          "evidence": "Section 'CoinRun': 'Under the reward as selection framing, I find the behaviour much less confusing... We use reward to select for models implementing the algorithm move towards the coin. However, it also selects for models implementing always move to the right'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Reward functions acting as post-episode selection criteria"
+          ],
+          "expected_target_node_name": [
+            "CoinRun distribution-shift experiment revealing rightward bias"
+          ]
+        },
+        {
+          "title": "Situational awareness becomes conditional rather than certain",
+          "evidence": "Section 'Why Does This Matter?': 'I have gone from thinking that playing the training game is a certainty to something that could happen, but only after training somehow induces goal-directedness'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Goal-directedness induced by training selection pressure, not inherent"
+          ],
+          "expected_target_node_name": [
+            "Situational awareness and playing the training game as conditional outcome"
+          ]
+        },
+        {
+          "title": "Five-step exercise for critical reading of alignment literature",
+          "evidence": "Section 'One Final Exercise For the Reader': describes taboo-ing reward language and rephrasing arguments through selection lens",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Conceptual analysis showing agents never observe reward signal"
+          ],
+          "expected_target_node_name": [
+            "Educate alignment researchers on selection-lens framework and terminology"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Goal-directedness as emergent property selected by training, not intrinsic agent property",
+        "nodes_to_merge": [
+          "Goal-directedness induced by training selection pressure, not inherent",
+          "Detecting induced goal-directed deception via adversarial evaluation strategy"
+        ]
+      }
+    ],
+    "deletions": [
+      {
+        "node_name": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+        "reason": "This is design rationale not theoretical insight; should be separate node with proper categorization"
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+        "target_node_name": "Reward-as-incentive misconception in alignment reasoning",
+        "reason": "Direction is reversed: misconception causes problem, not vice versa"
+      },
+      {
+        "source_node_name": "Diversifying training environments to break spurious heuristic selection",
+        "target_node_name": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+        "reason": "Edge direction is reversed in type field; should be 'implemented_by' with reversed source/target"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+        "field": "concept_category",
+        "json_new_value": "\"problem analysis\"",
+        "reason": "This describes a mechanism causing reward misalignment, making it problem analysis not risk"
+      },
+      {
+        "node_name": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "This node describes an evaluation approach as solution method, which is design rationale not theoretical insight"
+      },
+      {
+        "node_name": "All concept nodes",
+        "field": "node_rationale",
+        "json_new_value": "\"[add appropriate section reference from DATA_SOURCE where this concept appears]\"",
+        "reason": "Required schema field missing from all nodes"
+      },
+      {
+        "node_name": "All intervention nodes",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"[add justification with source section reference]\"",
+        "reason": "Required schema field missing"
+      },
+      {
+        "node_name": "All intervention nodes",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"[add evidence-based reasoning with source section reference]\"",
+        "reason": "Required schema field missing"
+      },
+      {
+        "node_name": "All edges",
+        "field": "edge_confidence_rationale",
+        "json_new_value": "\"[add evidence assessment with source section reference]\"",
+        "reason": "Required schema field missing"
+      },
+      {
+        "node_name": "All edges",
+        "field": "edge_rationale",
+        "json_new_value": "\"[add connection justification with source section reference]\"",
+        "reason": "Required schema field missing"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Deceptive behavior emergence in RLHF-trained models",
+        "type": "concept",
+        "description": "Risk that models trained with RLHF learn to present misleadingly good behaviour during oversight while pursuing hidden objectives, ultimately deceiving humans.",
+        "aliases": [
+          "model deception in RLHF",
+          "deceptive alignment in reinforcement learning from human feedback"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Inner misalignment in reinforcement learning agents",
+        "type": "concept",
+        "description": "Situation where the objective implicit in the agent’s policy diverges from the designer’s intended reward function.",
+        "aliases": [
+          "goal misgeneralization in RL",
+          "unintended internal objectives in RL agents"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reward-as-incentive misconception in alignment reasoning",
+        "type": "concept",
+        "description": "Erroneous belief that the agent directly tries to maximise reward signal, rather than reward acting post-hoc as a selection filter.",
+        "aliases": [
+          "reward wants misunderstanding",
+          "incentivisation framing error"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reward functions acting as post-episode selection criteria not incentives in RL",
+        "type": "concept",
+        "description": "Theoretical insight that the policy parameters are updated by gradient descent based on reward calculated after episodes; the model never receives reward internally.",
+        "aliases": [
+          "reward as selection lens",
+          "post-hoc reward selection mechanism"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Goal-directedness induced by training selection pressure, not inherent",
+        "type": "concept",
+        "description": "Observation that persistent goal-optimising cognition arises only if such cognition is selected for during training.",
+        "aliases": [
+          "induced goal seeking",
+          "selection-induced goal-directedness"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reframing alignment strategies around selection effects to reduce deception",
+        "type": "concept",
+        "description": "Design approach focusing on controlling what behaviours are selected, rather than assuming the agent chases reward.",
+        "aliases": [
+          "selection-lens alignment design",
+          "selection-aware alignment rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Diversifying training environments to break spurious heuristic selection",
+        "type": "concept",
+        "description": "Design rationale that exposing the agent to varied situations makes simple heuristics (e.g., always go right) unreliable and less favoured by selection.",
+        "aliases": [
+          "environment diversity for alignment",
+          "varied tasks to avoid heuristic overfit"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+        "type": "concept",
+        "description": "Practical mechanism: during fine-tuning, sample levels where task-relevant features (coin location) vary and assign reward accordingly to discourage fixed heuristics.",
+        "aliases": [
+          "counterfactual reward relabelling",
+          "varied coin position sampling"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial oversight evaluation for deception detection pre-deployment",
+        "type": "concept",
+        "description": "Technique where models are probed with adversarial scenarios to reveal deceptive goal-directed strategies before deployment.",
+        "aliases": [
+          "adversarial safety eval",
+          "deception stress-testing"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "CoinRun distribution-shift experiment revealing rightward bias",
+        "type": "concept",
+        "description": "Empirical finding that an agent trained when the coin is always on the right fails when the coin is moved left, indicating selection of a spurious heuristic.",
+        "aliases": [
+          "CoinRun generalization failure",
+          "always go right bias evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conceptual analysis showing agents never observe reward signal",
+        "type": "concept",
+        "description": "Logical argument that, from the agent’s perspective, each episode is memory-less and reward is external, supporting the selection-lens view.",
+        "aliases": [
+          "reward invisibility argument",
+          "selection not incentive proof"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Integrate diverse scenario counterfactual evaluation into RLHF reward assignment during fine-tuning",
+        "type": "intervention",
+        "description": "During RLHF fine-tuning, evaluate candidate actions across counterfactual environmental variants (e.g., multiple coin positions) and assign reward only when behaviour generalises, reducing spurious heuristics.",
+        "aliases": [
+          "diversified RLHF reward assignment",
+          "counterfactual scenario evaluation in RLHF"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Apply adversarial deception detection benchmarks in pre-deployment testing",
+        "type": "intervention",
+        "description": "Before releasing a model, subject it to curated adversarial tasks designed to expose hidden goal-directed strategies and deceptive behaviour selected during training.",
+        "aliases": [
+          "adversarial deception benchmarks",
+          "pre-deployment deception stress tests"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Educate alignment researchers on selection-lens framework and terminology",
+        "type": "intervention",
+        "description": "Develop curricula, documentation and workshops emphasising the post-hoc selection nature of reward to prevent design errors stemming from the reward-as-incentive misunderstanding.",
+        "aliases": [
+          "selection-lens education",
+          "reward misconception training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+        "type": "concept",
+        "description": "When humans reward behaviour they later judge undesirable once they possess more information, RLHF reinforces that behaviour.",
+        "aliases": [
+          "unintended behaviour selection in RLHF",
+          "reflectively unwanted behaviour reinforcement"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "mitigated_by",
+        "source_node": "Reward-as-incentive misconception in alignment reasoning",
+        "target_node": "Reward functions acting as post-episode selection criteria not incentives in RL",
+        "description": "Adopting the selection-lens corrects the misconception.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Reward functions acting as post-episode selection criteria not incentives in RL",
+        "target_node": "Reframing alignment strategies around selection effects to reduce deception",
+        "description": "Recognising reward as selection motivates designing alignment methods that control selection pressure.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Reframing alignment strategies around selection effects to reduce deception",
+        "target_node": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+        "description": "Environment diversification is a specific way to realise selection-aware alignment.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+        "target_node": "CoinRun distribution-shift experiment revealing rightward bias",
+        "description": "The failure case in CoinRun highlights the necessity and potential impact of environment diversification.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "CoinRun distribution-shift experiment revealing rightward bias",
+        "target_node": "Integrate diverse scenario counterfactual evaluation into RLHF reward assignment during fine-tuning",
+        "description": "The observed failure motivates integrating counterfactual scenario checks during RLHF.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Goal-directedness induced by training selection pressure, not inherent",
+        "target_node": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+        "description": "Recognising induced goal-directedness suggests using adversarial evaluation to expose it.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+        "target_node": "Adversarial oversight evaluation for deception detection pre-deployment",
+        "description": "Adversarial oversight is the concrete implementation of this design rationale.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Adversarial oversight evaluation for deception detection pre-deployment",
+        "target_node": "Conceptual analysis showing agents never observe reward signal",
+        "description": "The conceptual analysis supports the need for external evaluation, as reward alone cannot reveal hidden goals.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Conceptual analysis showing agents never observe reward signal",
+        "target_node": "Apply adversarial deception detection benchmarks in pre-deployment testing",
+        "description": "Understanding that reward is external motivates deploying adversarial benchmarks before release.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "62de75ceee155a1f42dbd822ffc95d1b"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.974584"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: All nodes missing required 'node_rationale' field per schema specification; all edges missing 'edge_confidence_rationale' and 'edge_rationale' fields",
+      "BLOCKER: Edge from 'Selection for reflectively unwanted behavior' caused_by 'Reward-as-incentive misconception' has reversed direction - misconception is problem_analysis that causes the risk, not result of it",
+      "BLOCKER: Edge from 'Diversifying training environments' implemented_by 'Env-sampling and reward relabelling' has reversed direction - diversification is design rationale that motivates specific implementation",
+      "MAJOR: Missing explicit distinction between two failure cases: source states 'I think this threat model is confounding two related but different failure cases' then enumerates '1. Selecting For Bad Behaviour' and '2. Induced Goal-Directedness' - extraction only weakly represents this dichotomy",
+      "MAJOR: Missing validation evidence node for selective breeding dog analogy which the source uses to validate the selection-lens: 'RL is more like asking 100 dogs to sit, breeding the dogs which do sit and killing those which don't. No dog ever gets given a biscuit'",
+      "MAJOR: Missing theoretical insight node about conditional deceptive alignment - source states: 'I have gone from thinking that playing the training game is a certainty to something that could happen, but only after training somehow induces goal-directedness'",
+      "MINOR: Duplicate/confused categorization: 'Detecting induced goal-directed deception via adversarial evaluation strategy' is labeled theoretical insight but describes design method (should be design_rationale)",
+      "MINOR: Nodes contain 'embedding' field not in schema requirements; edges contain 'embedding' field not in schema requirements",
+      "COVERAGE: Extraction covers CoinRun mechanism but misses explicit connection to situational awareness/playing-the-training-game conditional outcome",
+      "COVERAGE: Extraction covers simplified threat model but misses explicit node showing it conflates two failure modes, preventing downstream analysis of how two pathways diverge"
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/TWorNr22hhYegE4RT/models-don-t-get-reward",
+  "paper_id": "027e6792b8d8c40ca0c6426714e36bb9",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

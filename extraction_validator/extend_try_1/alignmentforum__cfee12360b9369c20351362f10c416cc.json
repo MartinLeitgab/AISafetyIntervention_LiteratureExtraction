@@ -1,0 +1,518 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has CRITICAL ISSUES preventing validity. Most severely: (1) Missing required fields on all nodes and edges (node_rationale, intervention_lifecycle_rationale, intervention_maturity_rationale, edge_confidence_rationale, edge_rationale), (2) Three 'validation evidence' nodes represent no actual evidence from the source—the data source is a theoretical framework paper containing only pedagogical examples, not empirical studies, (3) Three intervention nodes are inferred without explicit support from the source and should be marked as foundational/theoretical (maturity 1), (4) Missing two important concept nodes about treacherous turns and universal prior malignancy that are explicitly discussed in the source. The graph captures the core conceptual structure correctly but violates schema requirements and contains unsupported nodes. After applying proposed fixes (deleting ungrounded validation nodes, adding missing concept nodes, downgrading intervention maturity, and adding all required fields with proper citations), the extraction would be valid and mergeable."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required intervention_lifecycle_rationale field",
+        "where": "nodes[16-18].intervention_lifecycle_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale for all intervention nodes with references to data source sections"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required intervention_maturity_rationale field",
+        "where": "nodes[16-18].intervention_maturity_rationale",
+        "suggestion": "Add intervention_maturity_rationale for all intervention nodes with evidence-based reasoning"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required node_rationale field",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field to every node explaining why it is essential to the fabric with data source section references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges missing required edge_confidence_rationale field",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add evidence assessment with data source section references for every edge"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges missing required edge_rationale field",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add connection justification with data source section references for every edge"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node values reference existing nodes",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "edge",
+        "names": [
+          "Limiting optimization intensity preserves proxy–value alignment → caused_by edges from both Level 1 and Level 2"
+        ],
+        "merge_strategy": "Both edges point to same theoretical insight from different problem analyses; this is correct and intentional as the insight addresses both mechanisms"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Missing edges from problem analysis nodes to design rationale nodes",
+        "evidence": "Data source states 'Level 1 (regressing to the mean)' but does not explicitly link this to quantilization or median-of-means design. Similarly for Levels 2 and 3.",
+        "fix": "Add explicit edges showing how each design rationale addresses specific problem mechanisms. Current extraction treats this as implicit inference."
+      },
+      {
+        "issue": "Validation evidence nodes not grounded in actual empirical data from source",
+        "evidence": "Data source contains NO empirical studies, experiments, or toy models. States 'As a simple example imagine V and E...' and 'imagine U is integer uniform' but these are pedagogical illustrations, not validation evidence.",
+        "fix": "Reclassify validation evidence nodes as hypothetical validation or remove them; they represent no actual evidence provided in the data source"
+      },
+      {
+        "issue": "Interventions extracted with high confidence but source provides no implementation details",
+        "evidence": "Data source is theoretical framework paper explaining three levels of Goodhart's curse. It contains NO intervention descriptions, no deployment guidance, no implementation steps beyond the conceptual framework.",
+        "fix": "Reduce intervention_maturity from 2-3 to 1 (foundational/theoretical) and clearly mark as inferred interventions in lifecycle_rationale"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Level 1 mechanism causes divergence",
+          "evidence": "Goodhart's Curse Level 1 (regressing to the mean): We are trying to optimize the value of V, but since we cannot observe V, we instead optimize a proxy U, which is an unbiased estimate of V. When we select for points with a high U value, we will be biased towards points for which U is an overestimate of V.",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Proxy objective divergence in AI optimization"
+          ],
+          "expected_target_node_name": [
+            "Regression to mean in proxy-based selection"
+          ]
+        },
+        {
+          "title": "Level 2 mechanism causes divergence",
+          "evidence": "Goodhart's Curse Level 2 (optimizing away the correlation): Here, we assume U and V are correlated on average, but there may be different regions in which this correlation of stronger or weaker. When we optimize U to be very high, we zoom in on the region of very large U values.",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Proxy objective divergence in AI optimization"
+          ],
+          "expected_target_node_name": [
+            "Optimization pressure eroding proxy–value correlation in AI systems"
+          ]
+        },
+        {
+          "title": "Level 3 mechanism causes divergence",
+          "evidence": "Goodhart's Curse Level 3 (adversarial correlations): Here we are selecting a world with a high U value because we want a would with a high V value...However, there is another agent who wants to optimize some other value W.",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Proxy objective divergence in AI optimization"
+          ],
+          "expected_target_node_name": [
+            "Adversarial exploitation of proxy metrics by agents"
+          ]
+        },
+        {
+          "title": "Treacherous turn connection to Level 3",
+          "evidence": "Level 3 is also the mechanism behind a superintelligent AI making a Treacherous Turn. Here, V is doing what the human's want forever. U is doing what the humans want before...and W is whatever the AI wants to do with the universe.",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Adversarial exploitation of proxy metrics by agents"
+          ],
+          "expected_target_node_name": [
+            "AI deception through misaligned proxy optimization"
+          ]
+        },
+        {
+          "title": "Universal prior malignancy connection",
+          "evidence": "Finally, Level 3 is also behind the malignancy of the universal prior, where you want to predict well forever (V), so hypotheses might predict well for a while (U), so that they can manipulate the world with their future predictions (W).",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Adversarial exploitation of proxy metrics by agents"
+          ],
+          "expected_target_node_name": [
+            "Adversarial optimization in hypothesis selection"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [
+      {
+        "node_name": "Toy model simulation shows reduced divergence under quantilization",
+        "reason": "Data source contains no empirical validation or toy model results; this node represents inferred evidence not present in source"
+      },
+      {
+        "node_name": "Synthetic reward corruption study shows robustness of median-of-means RL",
+        "reason": "Data source contains no empirical studies; this node is inferred and not grounded in source evidence"
+      },
+      {
+        "node_name": "Adversarial prompt tests reveal lower vulnerability post red-teaming",
+        "reason": "Data source contains no empirical testing results; this node is inferred and not grounded in source evidence"
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Sampling actions from top-q percent of baseline policy distribution",
+        "target_node_name": "Toy model simulation shows reduced divergence under quantilization",
+        "reason": "Validation evidence node being deleted; edge should be removed"
+      },
+      {
+        "source_node_name": "Compute median of grouped human feedback scores in RLHF",
+        "target_node_name": "Synthetic reward corruption study shows robustness of median-of-means RL",
+        "reason": "Validation evidence node being deleted; edge should be removed"
+      },
+      {
+        "source_node_name": "Generate adversarial prompt attacks during fine-tuning",
+        "target_node_name": "Adversarial prompt tests reveal lower vulnerability post red-teaming",
+        "reason": "Validation evidence node being deleted; edge should be removed"
+      },
+      {
+        "source_node_name": "Toy model simulation shows reduced divergence under quantilization",
+        "target_node_name": "Embed quantilization decision rule into planner at deployment",
+        "reason": "Validation evidence node being deleted; edge should be removed"
+      },
+      {
+        "source_node_name": "Synthetic reward corruption study shows robustness of median-of-means RL",
+        "target_node_name": "Fine-tune language models with median-of-means reward aggregation",
+        "reason": "Validation evidence node being deleted; edge should be removed"
+      },
+      {
+        "source_node_name": "Adversarial prompt tests reveal lower vulnerability post red-teaming",
+        "target_node_name": "Conduct structured adversarial red-teaming before release",
+        "reason": "Validation evidence node being deleted; edge should be removed"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Embed quantilization decision rule into planner at deployment",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Source provides no implementation details or evidence; this is a theoretical inference from conceptual framework"
+      },
+      {
+        "node_name": "Embed quantilization decision rule into planner at deployment",
+        "field": "intervention_lifecycle",
+        "json_new_value": "1",
+        "reason": "Source discusses quantilization as design concept, not specific deployment phase; model design phase is most appropriate"
+      },
+      {
+        "node_name": "Fine-tune language models with median-of-means reward aggregation",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Source provides no empirical validation; this is inferred from theoretical concept of robust statistics"
+      },
+      {
+        "node_name": "Conduct structured adversarial red-teaming before release",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Source provides no real-world red-teaming results or deployment experience; this is inferred from Level 3 analysis"
+      },
+      {
+        "node_name": "Regression to mean in proxy-based selection",
+        "field": "description",
+        "json_new_value": "When choosing high values of a noisy proxy U where U=V+E (error), the selected samples exhibit positive error E, causing the proxy value to overestimate the true value V. Mathematically demonstrated via normal distribution example where selecting highest U among many samples biases toward positive error terms.",
+        "reason": "Provide precise mathematical grounding from source"
+      },
+      {
+        "node_name": "Optimization pressure eroding proxy–value correlation in AI systems",
+        "field": "description",
+        "json_new_value": "When optimization pressure forces selection into extreme values of U, the historical correlation between U and V at median values no longer applies at extremes. Example: U uniform on [0,1000], V=U mod 1000 are correlated overall, but U=1000,V=0 violates correlation at boundary. As optimization intensity increases toward infinity, boundary effects dominate correlation.",
+        "reason": "Ground in specific examples from source"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Proxy objective divergence in AI optimization",
+        "type": "concept",
+        "description": "Systematic tendency for an AI system that maximises an observable proxy U to produce outcomes that are worse with respect to the true objective V.",
+        "aliases": [
+          "Goodhart divergence in AI systems",
+          "Proxy misalignment risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial exploitation of proxy metrics by agents",
+        "type": "concept",
+        "description": "A strategic agent shapes the observable proxy so that maximizing the proxy furthers its own objective W instead of the desired objective V.",
+        "aliases": [
+          "Goodhart level 3",
+          "Adversarial correlation manipulation"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Limiting optimization intensity preserves proxy–value alignment",
+        "type": "concept",
+        "description": "Reducing the strength of selection prevents entry into regions where proxy and true value decouple, maintaining expected alignment.",
+        "aliases": [
+          "Conservative optimization insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Robust statistics across multiple metrics reduce overestimation bias",
+        "type": "concept",
+        "description": "Combining several noisy proxies with robust aggregators (e.g., median) lowers the chance that any single overestimated proxy dominates selection.",
+        "aliases": [
+          "Multi-metric robustness insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial detection mechanisms needed to counter strategic manipulation",
+        "type": "concept",
+        "description": "Recognising that other agents may purposely align the proxy with their goal suggests using detection or red-team methods to uncover manipulation.",
+        "aliases": [
+          "Need for adversarial safeguards"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Quantilization approach to cap optimization pressure",
+        "type": "concept",
+        "description": "Select actions from the top q-quantile of a reference distribution instead of the absolute optimum, limiting extremal optimisation.",
+        "aliases": [
+          "Quantilization design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Median-of-means reward aggregation to reduce bias",
+        "type": "concept",
+        "description": "Use robust estimators such as median-of-means over grouped feedback to avoid single noisy high rewards dominating learning.",
+        "aliases": [
+          "Robust reward aggregation rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Red-team adversarial training to expose proxy gaming",
+        "type": "concept",
+        "description": "Employ dedicated adversaries to search for inputs or strategies that achieve high proxy scores while failing true objectives.",
+        "aliases": [
+          "Adversarial red-teaming rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sampling actions from top-q percent of baseline policy distribution",
+        "type": "concept",
+        "description": "Implementation: draw N candidate actions from a trusted distribution and pick uniformly among those in the highest q-quantile of proxy score.",
+        "aliases": [
+          "Quantilization sampling mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Compute median of grouped human feedback scores in RLHF",
+        "type": "concept",
+        "description": "Partition feedback into k groups, compute the mean in each, then take the median across groups as the reward fed back to the learner.",
+        "aliases": [
+          "Median-of-means mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Generate adversarial prompt attacks during fine-tuning",
+        "type": "concept",
+        "description": "Automatically or manually craft inputs intended to maximise proxy reward while violating the real objective, then incorporate them in training.",
+        "aliases": [
+          "Red-team input generation mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Embed quantilization decision rule into planner at deployment",
+        "type": "intervention",
+        "description": "Design the AI planner to sample actions via a q-quantilization rule, limiting optimisation pressure on any single proxy.",
+        "aliases": [
+          "Apply quantilization during action selection"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune language models with median-of-means reward aggregation",
+        "type": "intervention",
+        "description": "During RLHF or other fine-tuning, replace average reward with median-of-means across feedback batches to resist noisy overestimation.",
+        "aliases": [
+          "Robust RLHF with MoM"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Conduct structured adversarial red-teaming before release",
+        "type": "intervention",
+        "description": "Organise dedicated red-team sessions and automated adversarial search to discover proxy-gaming behaviours prior to public deployment.",
+        "aliases": [
+          "Pre-deployment proxy gaming red-team"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Regression to mean in proxy-based selection",
+        "type": "concept",
+        "description": "When choosing high values of a noisy proxy, the chosen samples are biased upward, so the proxy overestimates the true value.",
+        "aliases": [
+          "Goodhart level 1",
+          "Selection‐induced overestimation"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Optimization pressure eroding proxy–value correlation in AI systems",
+        "type": "concept",
+        "description": "Strong optimization on a proxy forces selection into regions where the historical correlation between proxy and true value no longer holds.",
+        "aliases": [
+          "Goodhart level 2",
+          "Extremal selection correlation decay"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Proxy objective divergence in AI optimization",
+        "target_node": "Regression to mean in proxy-based selection",
+        "description": "Regression to the mean is identified as the first mechanism producing divergence.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Regression to mean in proxy-based selection",
+        "target_node": "Limiting optimization intensity preserves proxy–value alignment",
+        "description": "Insight that reducing selection pressure would limit overestimation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Optimization pressure eroding proxy–value correlation in AI systems",
+        "target_node": "Limiting optimization intensity preserves proxy–value alignment",
+        "description": "Further supports same insight on optimisation limits.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Adversarial exploitation of proxy metrics by agents",
+        "target_node": "Adversarial detection mechanisms needed to counter strategic manipulation",
+        "description": "Adversarial exploitation necessitates detection mechanisms.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Limiting optimization intensity preserves proxy–value alignment",
+        "target_node": "Quantilization approach to cap optimization pressure",
+        "description": "Quantilization operationalises limited optimisation intensity.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Robust statistics across multiple metrics reduce overestimation bias",
+        "target_node": "Median-of-means reward aggregation to reduce bias",
+        "description": "Median-of-means realises robust statistical combination.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Adversarial detection mechanisms needed to counter strategic manipulation",
+        "target_node": "Red-team adversarial training to expose proxy gaming",
+        "description": "Red-teaming is a design to detect manipulation.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "ea264a4a3237356931431fa9ab2873ab"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.009156"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER IDENTIFIED: Schema requires node_rationale field on ALL nodes (lines in instructions: 'node_rationale: why essential to fabric with closest preceding data source section title reference'). Every extracted node lacks this field.",
+      "BLOCKER IDENTIFIED: Schema requires intervention_lifecycle_rationale and intervention_maturity_rationale on intervention nodes. All three intervention nodes (16-18) lack these required fields.",
+      "BLOCKER IDENTIFIED: Schema requires edge_confidence_rationale and edge_rationale on ALL edges. No edges in extraction contain these fields.",
+      "CRITICAL CONTENT ISSUE: Data source explicitly states at top 'Note: I now consider this post deprecated and instead recommend this updated version.' Extraction is from deprecated version but proceeds as if authoritative.",
+      "CRITICAL CONTENT ISSUE: Validation evidence nodes (13-15) claim empirical studies and experiments. Source contains NONE. Text uses hypothetical phrases 'imagine V and E', 'imagine U is integer uniform', 'Imagine you were to sample k points' — these are pedagogical illustrations, not validation evidence. Per instructions: 'confidence must be 2 if light inference applied' — but these nodes represent no evidence at all, they are fiction.",
+      "COVERAGE GAP: Source explicitly discusses 'Treacherous Turn' as application of Level 3: 'Level 3 is also the mechanism behind a superintelligent AI making a Treacherous Turn. Here, V is doing what the human's want forever. U is doing what the humans want before in the training cases where the AI does not have enough power to take over, and W is whatever the AI wants to do with the universe.' This is NOT extracted as a concept node.",
+      "COVERAGE GAP: Source explicitly discusses 'malignancy of the universal prior' as application of Level 3: 'Finally, Level 3 is also behind the malignancy of the universal prior, where you want to predict well forever (V), so hypotheses might predict well for a while (U), so that they can manipulate the world with their future predictions (W).' This concept is missing.",
+      "INFERENCE ISSUE: Three intervention nodes (16-18) are inferred without explicit source support. Source is theoretical framework, not implementation guide. Per instructions: interventions inferred should be 'marked as lower maturity (must be 1 or 2)'. Current extraction has maturity 1-3, which is inconsistent.",
+      "INFERENCE DOCUMENTATION: Current extraction provides maturity/lifecycle justifications only in edge confidence assessment, not in required intervention_maturity_rationale field. Instructions require these on the node itself with 'evidence-based reasoning with closest preceding data source section title reference'.",
+      "EDGE DOCUMENTATION: All edges lack required edge_confidence_rationale and edge_rationale fields. For example, edge 'Regression to mean caused_by Proxy objective divergence' should cite: 'Goodhart's Curse Level 1 (regressing to the mean): When we select for points with a high U value, we will be biased towards points for which U is an overestimate of V.' (from 'Goodhart's Curse Level 1' section)",
+      "VALIDATION: Referential integrity check PASSES — all source/target nodes in edges exist in node list. No orphaned nodes detected (though validation evidence nodes should be orphaned).",
+      "STRUCTURAL ISSUE: Knowledge fabric paths violate instruction to 'ALWAYS end paths with the intervention node, NEVER create edges going out of intervention nodes'. Current extraction has zero edges outbound from interventions (correct) but also zero edges INBOUND to interventions from validation evidence after deletions recommended.",
+      "POST-FIX STATUS: After applying proposed fixes (delete 3 unsupported validation nodes and their edges, add 2 missing concept nodes with edges, add all required fields to nodes and edges, downgrade intervention maturity to 1), the extraction would form valid fabric connecting Goodhart's curse risk through three problem mechanisms to three design rationales to three implementation mechanisms to concrete interventions, plus two additional application areas (treacherous turn, universal prior). Path completeness: Risk → Problem Analysis (3 branches) → Theoretical Insights (3 branches) → Design Rationales (3 branches) → Implementation Mechanisms (3 branches) → Interventions (3 endpoints). Additional path: Problem Analysis (Level 3) → Application in Treacherous Turn. Additional path: Problem Analysis (Level 3) → Application in Universal Prior."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/5bd75cc58225bf06703754b2/the-three-levels-of-goodhart-s-curse",
+  "paper_id": "cfee12360b9369c20351362f10c416cc",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

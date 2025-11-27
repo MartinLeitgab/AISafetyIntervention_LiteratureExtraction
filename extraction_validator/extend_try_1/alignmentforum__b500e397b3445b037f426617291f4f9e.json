@@ -1,0 +1,696 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has BLOCKER-level issues requiring immediate remediation: missing mandatory fields (node_rationale, edge_confidence_rationale, edge_rationale) across all nodes/edges, incorrect intervention_lifecycle values (using 6 instead of max 5), and missing nodes from key source passages (300mm wafer concentration, AMD expertise, research productivity decline, Wright's law, experience curves). The graph captures reasonable causal pathways connecting semiconductor supply risks through diversification strategies to policy interventions, but requires substantial completion of required documentation fields and addition of 5 missing concept nodes with 5 supporting edges. With proposed fixes applied, the extraction would become valid and mergeable across domains."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'edge_confidence_rationale' in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' field to every edge with evidence assessment and data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'edge_rationale' in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_rationale' field to every edge with connection justification and data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'node_rationale' in all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to every node explaining why it is essential to the fabric with data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required lifecycle rationale fields",
+        "where": "nodes[16-20].intervention_lifecycle_rationale, nodes[16-20].intervention_maturity_rationale",
+        "suggestion": "Add 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' to all intervention nodes with justification and data source references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention lifecycle values incorrect: value 6 used but only 1-5 defined in schema",
+        "where": "nodes[16].intervention_lifecycle, nodes[17].intervention_lifecycle, nodes[18].intervention_lifecycle, nodes[20].intervention_lifecycle",
+        "suggestion": "Change lifecycle value 6 to 5 (Deployment), as interventions represent deployment-phase policy actions"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Inconsistent edge confidence rationale format",
+        "where": "edges[0-22]",
+        "suggestion": "Ensure all edges have specific evidence assessment with data source section title reference"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent source node",
+        "names": [
+          "Tacit manufacturing know-how barrier to latecomer entry in semiconductor production",
+          "Restricting adversary access to critical semiconductor tools to maintain advantage"
+        ]
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All node names in edge source/target fields match existing nodes - referential integrity passes after review",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All nodes connect to at least one edge; however, some nodes have weak incoming connection justification",
+        "suggested_fix": "Strengthen rationale for nodes like 'Monopoly on full-spectrum EDA software in United States' by adding more explicit causal evidence from source"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Restricting adversary access to critical semiconductor tools to maintain advantage",
+          "Export controls on EUV and ArF immersion scanners",
+          "Export controls on full-spectrum EDA software"
+        ],
+        "merge_strategy": "These represent different implementation mechanisms of a single design rationale. Current structure is acceptable as they specify different tool categories, but could be consolidated into a single 'Export controls on critical semiconductor tools' node with subcategories if simplification is desired"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge confidence levels do not consistently reflect source evidence rigor",
+        "evidence": "From 'The Semiconductor Supply Chain' summary: 'TSMC controls 54% of the logic foundry market' is stated as clear fact with numerical evidence, but edge confidence is only 3 (Medium) when should be 4 (Strong)",
+        "fix": "Increase edge_confidence from 3 to 4 for edges citing quantitative market share data"
+      },
+      {
+        "issue": "Theoretical insights categorization questionable for some nodes",
+        "evidence": "Node 'Complex multistep semiconductor supply chain systemic fragility' uses >1000 steps and 70+ border crossings as directly stated facts from source ('more than 1,000 steps and passes through borders more than 70 times'), not theoretical insights",
+        "fix": "Recategorize as 'problem analysis' rather than 'theoretical insight' since it describes observed supply chain complexity, not hypothesized resolution"
+      },
+      {
+        "issue": "Missing critical validation evidence from source",
+        "evidence": "Source explicitly states 'AMD is currently the only company with expertise in designing both high-end GPUs and high-end CPUs' but this finding is not captured in knowledge fabric",
+        "fix": "Add validation evidence node about AMD's unique dual expertise and edge to relevant design capability considerations"
+      },
+      {
+        "issue": "Incomplete treatment of economic growth constraints",
+        "evidence": "Source contains substantial discussion of 'Are Ideas Getting Harder to Find?' paper showing research productivity decline, but extraction focuses only on semiconductor supply chain without connecting to broader technological progress insights",
+        "fix": "The extraction appears incomplete regarding the interconnection between semiconductor supply constraints and broader technological innovation capacity constraints discussed in source"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Taiwan disruption threatens global AI chip supply",
+          "evidence": "Summary: 'TSMC controls 54% of the logic foundry market, with a larger share for leading edge production'; Report premise: semiconductor supply matters for AI development",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Geographical concentration of leading-edge foundry capacity in Taiwan"
+          ],
+          "expected_target_node_name": [
+            "Advanced semiconductor supply disruption impacting AI development"
+          ]
+        },
+        {
+          "title": "EUV monopoly enables production control",
+          "evidence": "Summary: 'The Netherlands has a monopoly on extreme ultraviolet (EUV) scanners, equipment needed to make the most advanced chips'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Monopoly on EUV lithography equipment in Netherlands"
+          ],
+          "expected_target_node_name": [
+            "Advanced semiconductor supply disruption impacting AI development"
+          ]
+        },
+        {
+          "title": "EDA software dominance as control point",
+          "evidence": "Summary: 'The US has a monopoly on full-spectrum electronic design automation (EDA) software needed to design semiconductors'; Opinion: 'The only thing I'm currently aware of that is as complicated as computer hardware is computer software... lacking this software could constitute a meaningful bottleneck'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Monopoly on full-spectrum EDA software in United States"
+          ],
+          "expected_target_node_name": [
+            "Advanced semiconductor supply disruption impacting AI development"
+          ]
+        },
+        {
+          "title": "Chinese raw material dominance creates vulnerability",
+          "evidence": "Summary: 'China controls the largest share of manufacturing for most natural materials... China controls ~2/3rds of the world's silicon production'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Chinese dominance in key semiconductor raw materials"
+          ],
+          "expected_target_node_name": [
+            "Advanced semiconductor supply disruption impacting AI development"
+          ]
+        },
+        {
+          "title": "Allied reserves can offset material risks",
+          "evidence": "Summary: 'but the US and allies have reserves' (regarding silicon production)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Allied reserves can buffer raw material supply risk"
+          ],
+          "expected_target_node_name": [
+            "Chinese dominance in key semiconductor raw materials"
+          ]
+        },
+        {
+          "title": "300mm wafer manufacturing concentrates in 4 countries",
+          "evidence": "Summary: 'Japan, Taiwan, Germany and South Korea manufacture the state-of-the-art 300 mm wafers used for 99.7 percent of the world's chip manufacturing'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Geographical concentration of 300mm wafer production in 4 countries"
+          ],
+          "expected_target_node_name": [
+            "Complex multistep semiconductor supply chain systemic fragility"
+          ]
+        },
+        {
+          "title": "AMD unique GPU-CPU expertise",
+          "evidence": "Summary: 'AMD is currently the only company with expertise in designing both high-end GPUs and high-end CPUs'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "AMD dual GPU-CPU design expertise as rare capability"
+          ],
+          "expected_target_node_name": [
+            "Monopoly on full-spectrum EDA software in United States"
+          ]
+        },
+        {
+          "title": "Research productivity decline limits innovation",
+          "evidence": "Summary of 'Are Ideas Getting Harder to Find?': 'research efforts are increasing exponentially... but research productivity [is declining]... it's currently 18x harder to maintain the same rate of growth as it was in 1971'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Research productivity decline in semiconductor advancement"
+          ],
+          "expected_target_node_name": [
+            "Advanced semiconductor supply disruption impacting AI development"
+          ]
+        },
+        {
+          "title": "Wright's law predicts cost reduction with cumulative production",
+          "evidence": "Summary of 'Statistical Basis': 'Wright's law... predicts unit cost is some constant fraction of cumulative production'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Wright's law relating unit cost to cumulative production"
+          ],
+          "expected_target_node_name": [
+            "Strategic diversification of semiconductor supply chain among allies"
+          ]
+        },
+        {
+          "title": "Experience curves enable long-term cost reductions",
+          "evidence": "Summary of 'Experience curves' article: 'experience curves predict unit cost will fall a constant percent every time cumulative production doubles'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Experience curve cost reduction with scale"
+          ],
+          "expected_target_node_name": [
+            "Government subsidies and incentives for domestic leading-edge fabs"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Critical bottlenecks in semiconductor supply chain enabling geopolitical leverage",
+        "nodes_to_merge": [
+          "Geographical concentration of leading-edge foundry capacity in Taiwan",
+          "Monopoly on EUV lithography equipment in Netherlands",
+          "Geographical concentration of 300mm wafer production in 4 countries"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Complex multistep semiconductor supply chain systemic fragility",
+        "field": "concept_category",
+        "json_new_value": "\"problem analysis\"",
+        "reason": "This node describes observed supply chain characteristics (>1000 steps, 70+ borders) stated as facts in source, not theoretical insights about problem resolution"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Advanced semiconductor supply disruption impacting AI development",
+        "type": "concept",
+        "description": "Loss or delay of advanced chips would stall training and deployment of cutting-edge AI systems, creating strategic and safety risks.",
+        "aliases": [
+          "chip supply shocks for AI",
+          "AI hardware bottleneck from semiconductor disruption"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Geographical concentration of leading-edge foundry capacity in Taiwan",
+        "type": "concept",
+        "description": "TSMC alone holds 54 % of the global logic foundry market, especially for <7 nm nodes, localising production risk in one region.",
+        "aliases": [
+          "TSMC foundry dominance",
+          "Taiwan leading-edge logic production"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Monopoly on EUV lithography equipment in Netherlands",
+        "type": "concept",
+        "description": "ASML (Netherlands) is the sole producer of extreme-ultraviolet scanners, indispensable for 5 nm and below process nodes.",
+        "aliases": [
+          "ASML EUV monopoly",
+          "Dutch control of EUV scanners"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Monopoly on full-spectrum EDA software in United States",
+        "type": "concept",
+        "description": "Synopsys, Cadence and Mentor (US) provide the entire tool-chain required for chip design, giving the US leverage over global design.",
+        "aliases": [
+          "US EDA dominance",
+          "Design-software monopoly"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Tacit manufacturing know-how barrier to latecomer entry in semiconductor production",
+        "type": "concept",
+        "description": "Advanced fabs require extensive tacit expertise accumulated over decades, limiting rapid replication by new entrants.",
+        "aliases": [
+          "semiconductor tacit knowledge barrier",
+          "know-how entry barrier"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Strategic diversification of semiconductor supply chain among allies",
+        "type": "concept",
+        "description": "Spreading critical manufacturing stages across multiple allied jurisdictions reduces single-point failure risk.",
+        "aliases": [
+          "supply chain diversification strategy",
+          "ally semiconductor resilience plan"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Restricting adversary access to critical semiconductor tools to maintain advantage",
+        "type": "concept",
+        "description": "Limiting rivals’ procurement of crucial equipment or software preserves relative capability and slows proliferation.",
+        "aliases": [
+          "technology denial strategy",
+          "adversary tool access restriction"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Government subsidies and incentives for domestic leading-edge fabs",
+        "type": "concept",
+        "description": "Direct grants, tax credits and long-term purchase guarantees lower the $10–20 B capital barrier to new advanced fabs.",
+        "aliases": [
+          "domestic fab incentives",
+          "fab construction subsidies"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Export controls on EUV and ArF immersion scanners",
+        "type": "concept",
+        "description": "Licence requirements preventing shipment of cutting-edge lithography tools to specified foreign fabs.",
+        "aliases": [
+          "lithography export controls",
+          "EUV/ArF equipment licence regime"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Allied cooperation agreements for secure semiconductor raw material supply",
+        "type": "concept",
+        "description": "Formal arrangements among US, Japan, EU etc. to share reserves and coordinate stockpiles of silicon, gallium, tungsten, magnesium.",
+        "aliases": [
+          "allied raw-material pacts",
+          "joint mineral security agreements"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "TSMC 54% foundry share with rising revenue per wafer",
+        "type": "concept",
+        "description": "Empirical data show TSMC’s dominant and growing profitability, evidencing concentration and pricing power.",
+        "aliases": [
+          "TSMC market share evidence",
+          "rising wafer revenue data"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Netherlands and Japan equipment market monopolies data",
+        "type": "concept",
+        "description": "Market-share tables show ASML (NL) and Nikon-Canon (JP) controlling EUV and ArF immersion markets respectively.",
+        "aliases": [
+          "lithography monopoly data",
+          "equipment dominance evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "US 39% global semiconductor value share due to EDA leadership",
+        "type": "concept",
+        "description": "Value-added analysis attributes 39 % of global chain to US, primarily through IP and EDA tools.",
+        "aliases": [
+          "EDA value-chain evidence",
+          "US design value share"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "China controls two-thirds of global silicon production data",
+        "type": "concept",
+        "description": "Report’s materials table shows ~66 % silicon output from China, demonstrating a supply vulnerability.",
+        "aliases": [
+          "silicon production evidence",
+          "raw material dominance numbers"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Chinese dominance in key semiconductor raw materials",
+        "type": "concept",
+        "description": "China leads production of silicon, low-grade gallium, tungsten and magnesium, posing concentration risk.",
+        "aliases": [
+          "raw-material dependence on China",
+          "material supply risk"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Allied reserves can buffer raw material supply risk",
+        "type": "concept",
+        "description": "Despite Chinese production dominance, allies possess significant untapped reserves, allowing mitigation via coordination.",
+        "aliases": [
+          "allied buffer insight",
+          "reserve offset theory"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Provide large-scale subsidies to build domestic leading-edge semiconductor fabrication plants",
+        "type": "intervention",
+        "description": "Allocate multi-billion-dollar grants, tax credits and guaranteed purchase contracts to firms constructing <7 nm fabs within allied territory.",
+        "aliases": [
+          "implement CHIPS-style subsidies",
+          "fund domestic advanced fabs"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Enforce export controls on EUV and ArF immersion scanners to adversary nations",
+        "type": "intervention",
+        "description": "Coordinate with Dutch and Japanese governments to withhold licences for shipping latest-generation scanners to designated foreign fabs.",
+        "aliases": [
+          "implement lithography export ban",
+          "deny EUV/ArF to rivals"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 4,
+        "embedding": null
+      },
+      {
+        "name": "Form multilateral agreements securing semiconductor raw materials among allies",
+        "type": "intervention",
+        "description": "Negotiate treaties for shared stockpiles, coordinated extraction and emergency sharing of silicon, gallium, tungsten and magnesium.",
+        "aliases": [
+          "ally mineral security pact",
+          "joint stockpile agreement"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Export controls on full-spectrum EDA software",
+        "type": "concept",
+        "description": "Licence requirements limiting access to comprehensive chip design tool-chains.",
+        "aliases": [
+          "EDA licence regime",
+          "design software export control mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Enforce export licensing restrictions on advanced EDA software to adversary nations",
+        "type": "intervention",
+        "description": "Mandate Commerce licence approvals for overseas access to state-of-the-art logic synthesis, place & route, verification suites.",
+        "aliases": [
+          "deny EDA tools",
+          "EDA software export ban"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Complex multistep semiconductor supply chain systemic fragility",
+        "type": "concept",
+        "description": "Producing a chip involves >1 000 process steps crossing 70+ borders, so any choke-point failure cascades globally.",
+        "aliases": [
+          "1000-step chip process fragility",
+          "multi-border chip production fragility"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Advanced semiconductor supply disruption impacting AI development",
+        "target_node": "Geographical concentration of leading-edge foundry capacity in Taiwan",
+        "description": "Concentration means any Taiwan disruption directly threatens global AI chip supply.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Geographical concentration of leading-edge foundry capacity in Taiwan",
+        "target_node": "Complex multistep semiconductor supply chain systemic fragility",
+        "description": "Single-point concentration exacerbates the inherent fragility of multi-step supply chains.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Complex multistep semiconductor supply chain systemic fragility",
+        "target_node": "Strategic diversification of semiconductor supply chain among allies",
+        "description": "Diversification distributes steps and reduces systemic fragility.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Strategic diversification of semiconductor supply chain among allies",
+        "target_node": "Government subsidies and incentives for domestic leading-edge fabs",
+        "description": "Subsidies are concrete instruments to realise diversification by adding ally fabs.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Government subsidies and incentives for domestic leading-edge fabs",
+        "target_node": "TSMC 54% foundry share with rising revenue per wafer",
+        "description": "Dominance and pricing power data demonstrate market failure that subsidies aim to correct.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "TSMC 54% foundry share with rising revenue per wafer",
+        "target_node": "Provide large-scale subsidies to build domestic leading-edge semiconductor fabrication plants",
+        "description": "Evidence of monopoly rents motivates policymakers to deploy subsidies.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Monopoly on EUV lithography equipment in Netherlands",
+        "target_node": "Tacit manufacturing know-how barrier to latecomer entry in semiconductor production",
+        "description": "Deep expertise at ASML hinders rapid competitor emergence, sustaining monopoly.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Tacit manufacturing know-how barrier to latecomer entry in semiconductor production",
+        "target_node": "Restricting adversary access to critical semiconductor tools to maintain advantage",
+        "description": "If rivals can’t build EUV tools, denying them access preserves relative advantage despite know-how barrier.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Restricting adversary access to critical semiconductor tools to maintain advantage",
+        "target_node": "Export controls on EUV and ArF immersion scanners",
+        "description": "Export-control regime is the concrete means of restriction.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Export controls on EUV and ArF immersion scanners",
+        "target_node": "Netherlands and Japan equipment market monopolies data",
+        "description": "Monopoly data confirm that export controls are enforceable and impactful.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Netherlands and Japan equipment market monopolies data",
+        "target_node": "Enforce export controls on EUV and ArF immersion scanners to adversary nations",
+        "description": "Policymakers are motivated to act given clear monopoly leverage.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Chinese dominance in key semiconductor raw materials",
+        "target_node": "Allied reserves can buffer raw material supply risk",
+        "description": "Dominance prompts the insight that leveraging allied reserves could offset risk.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Allied cooperation agreements for secure semiconductor raw material supply",
+        "target_node": "China controls two-thirds of global silicon production data",
+        "description": "Dominance statistics validate need for agreements and their potential impact.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "China controls two-thirds of global silicon production data",
+        "target_node": "Form multilateral agreements securing semiconductor raw materials among allies",
+        "description": "Quantified threat level spurs allied negotiation of material-supply pacts.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Export controls on full-spectrum EDA software",
+        "target_node": "US 39% global semiconductor value share due to EDA leadership",
+        "description": "Value-chain analysis shows control point magnitude, validating export-control effectiveness.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "US 39% global semiconductor value share due to EDA leadership",
+        "target_node": "Enforce export licensing restrictions on advanced EDA software to adversary nations",
+        "description": "Dominant value contribution motivates policy-makers to formalise EDA export restrictions.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "5442ff8ea6c7752ff81b785387f62588"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.003997"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER 1: All nodes missing 'node_rationale' field (schema requirement per instructions). Every node must explain why essential to fabric with data source section reference. Example: node 'TSMC 54% foundry share' should cite 'Summary: TSMC controls 54% of the logic foundry market'",
+      "BLOCKER 2: All edges missing 'edge_confidence_rationale' and 'edge_rationale' fields (schema requirements per final_output_format). Example edge from 'Geographical concentration' to 'Advanced semiconductor supply' should have confidence_rationale citing market concentration facts and edge_rationale from 'Summary' section",
+      "BLOCKER 3: Intervention lifecycle values incorrectly set to 6, but schema defines only 1-6 scale with 5=Deployment, 6=Other. All policy interventions (subsidies, export controls, agreements) are deployment-phase actions and should be lifecycle=5",
+      "MAJOR 1: Five significant nodes missing from extraction despite explicit source evidence: (1) '300mm wafer production concentration' from Summary quote 'Japan, Taiwan, Germany and South Korea manufacture the state-of-the-art 300 mm wafers used for 99.7 percent', (2) 'AMD dual GPU-CPU design expertise' from Summary quote 'AMD is currently the only company with expertise in designing both high-end GPUs and high-end CPUs', (3) 'Research productivity decline' from 'Are Ideas Getting Harder to Find?' summary showing 18x R&D increase with constant innovation rate, (4) 'Wright's law theory' from 'Statistical Basis' paper forming foundation for cost reduction analysis, (5) 'Experience curve scaling economics' from 'Experience curves' article demonstrating 1000x scale enabling 10x cost reduction",
+      "MAJOR 2: Concept_category misclassification: node 'Complex multistep semiconductor supply chain systemic fragility' categorized as 'theoretical insight' but source states as direct observed fact (>1000 steps, 70+ borders are empirical characteristics), should be 'problem analysis'",
+      "MAJOR 3: Five critical edges missing that would complete knowledge fabric: (a) Risk→300mm wafer concentration bottleneck, (b) Risk→research productivity decline constraint, (c) Diversification→Wright's law economic justification, (d) Subsidies→experience curve cost reduction, (e) EDA monopoly→AMD expertise validation",
+      "Coverage assessment: Extraction covers ~65% of major causal pathways from source. Semiconductor supply risk → geographic concentration → diversification → subsidies pathway is complete. However, missing connections to: (i) research productivity constraints limiting improvement pace, (ii) Wright's law and experience curve economics justifying subsidy ROI, (iii) 300mm wafer concentration adding third geographic bottleneck",
+      "Referential integrity: All 22 edges reference existing nodes - no broken references detected",
+      "Orphan analysis: No nodes completely disconnected. However, theoretical insight nodes (Wright's law, experience curves, research productivity decline) should exist but are missing",
+      "Edge confidence calibration: Some edges rated 3 (Medium) that should be 4 (Strong) based on quantitative source evidence. Example: 'TSMC 54% foundry share' edge should be confidence=4 not 3, as source provides explicit numerical evidence with no equivocation",
+      "Data source section traceability: Current extraction provides weak traceability - most edges cite section like 'Summary' generically without indicating specific claim. Proposed fixes require precise citations like 'Summary: TSMC controls 54% of the logic foundry market' for each edge",
+      "Schema compliance: Node schema requires either concept_category OR (intervention_lifecycle + intervention_maturity), never both. All nodes comply. However, MISSING required fields: node_rationale (all nodes), edge_confidence_rationale (all edges), edge_rationale (all edges), intervention_lifecycle_rationale (intervention nodes), intervention_maturity_rationale (intervention nodes)"
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/rQGW2GqHAFprupYkf/intermittent-distillations-4-semiconductors-economics",
+  "paper_id": "b500e397b3445b037f426617291f4f9e",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

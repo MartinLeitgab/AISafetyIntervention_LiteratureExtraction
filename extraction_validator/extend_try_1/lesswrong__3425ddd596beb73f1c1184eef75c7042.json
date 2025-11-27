@@ -1,0 +1,630 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates good structural understanding of PSE's core framework and causal logic, with all major concept nodes and intervention nodes present and mostly properly connected. However, the extraction has critical schema compliance failures: all nodes lack required 'node_rationale' fields, intervention nodes lack 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields, and all edges lack 'edge_confidence_rationale' and 'edge_rationale' fields, violating mandatory JSON requirements. Additionally, the graph is missing 8 significant concept nodes and edges that represent important aspects of the source text (deceptive alignment in simulators, unconditioned partial simulator benefits, retrofit capabilities, human cognitive limits, automated alignment acceleration, and Cartesian formalization). The intervention lifecycle classification for the main PSE deployment node is misaligned with source text—the proposal is theoretical (lifecycle 4 or 1) not deployed (lifecycle 5). After systematic application of all proposed fixes, the extraction would achieve valid, mergeable, and complete coverage of the source knowledge fabric."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required 'intervention_lifecycle_rationale' field",
+        "where": "nodes[12-14].intervention_lifecycle_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale for all three intervention nodes with justifications referencing source sections"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required 'intervention_maturity_rationale' field",
+        "where": "nodes[12-14].intervention_maturity_rationale",
+        "suggestion": "Add intervention_maturity_rationale for all three intervention nodes with evidence-based reasoning"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required 'node_rationale' field",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale to every node explaining why it is essential to fabric with source section reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges missing required 'edge_confidence_rationale' field",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add evidence-based confidence rationale for all edges with source section references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges missing required 'edge_rationale' field",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add connection justification with source section reference for all edges"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent node: edge target 'deploy partial simulation extrapolation gating between user prompts and high-capacity simulator' is listed as intervention node but edges reference it; verify exact name match in all edge references",
+        "names": [
+          "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+          "perform fragmented simulations before executing full simulations during model inference",
+          "apply low-fidelity simulation sampling before executing full simulations"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'deploy partial simulation extrapolation gating between user prompts and high-capacity simulator' has intervention_lifecycle=5 (Deployment) but source text presents PSE as a theoretical proposal without deployment evidence",
+        "evidence": "Introduction states 'a successful implementation of PSE could help prevent' and 'even a completely ideal implementation doesn't provide a theoretical safety guarantee' - indicating pre-deployment status, not deployed",
+        "fix": "Change intervention_lifecycle from 5 to 4 (Pre-Deployment Testing) or 1 (Model Design)"
+      },
+      {
+        "issue": "All three intervention nodes have intervention_maturity=1 (Foundational/Theoretical) which is appropriate, but rationale field missing prevents verification",
+        "evidence": "Source: 'This document outlines a proposal' and 'I suggest PSE will enforce a minimal alignment tax' - indicates theoretical proposal stage",
+        "fix": "Add intervention_maturity_rationale documenting proposal-stage evidence"
+      },
+      {
+        "issue": "Edge confidence scores lack textual justification; several edges scored confidence=2 for what appear to be moderate inferences per instruction requirements",
+        "evidence": "Instruction Step 3 requires confidence=2 for 'light inference' and confidence=1 for 'moderate inference'; edges 4,6,13,14,15 lack rationale",
+        "fix": "Add edge_confidence_rationale to all edges explaining evidence level and inference application"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "PSE framework as novel intervention approach",
+          "evidence": "Introduction: 'a proposal for building safer simulators/predictive models, hereafter Partial Simulation Extrapolation (PSE)'; 'I suggest PSE will enforce a minimal alignment tax'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "gating full simulation with safety inference from partial simulator"
+          ],
+          "expected_target_node_name": [
+            "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator"
+          ]
+        },
+        {
+          "title": "PSE prevents outer alignment failures in simulators",
+          "evidence": "Introduction: 'a successful implementation of PSE could help prevent outer alignment failures in simulators (namely the prediction of misaligned systems)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator"
+          ],
+          "expected_target_node_name": [
+            "outer alignment failure via misaligned simulacra in large language model simulators"
+          ]
+        },
+        {
+          "title": "Partial simulator does not require alignment/conditioning",
+          "evidence": "Section 'Infeasibility': 'The smaller model conducting the partial simulation needn't be aligned at all, and probably shouldn't be subject to conditioning. This way you can use an unconditioned simulator to elicit more aligned behavior'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "partial simulation extrapolation pipeline for prompt gating"
+          ],
+          "expected_target_node_name": [
+            "unconditioned partial simulator does not require alignment training"
+          ]
+        },
+        {
+          "title": "Application to already-trained models without modification",
+          "evidence": "Introduction: 'application to already trained (as well as yet to be trained) models might be possible without architectural or training data modifications'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "self-contained two-model architecture minimizing alignment tax"
+          ],
+          "expected_target_node_name": [
+            "retrofit PSE to existing trained models without retraining"
+          ]
+        },
+        {
+          "title": "Deceptive simulator corruption is the primary failure mode",
+          "evidence": "Section 'Infeasibility': 'the most likely failure mode for PSE...deceptive corruption in the output of the partial simulator'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "conceptual safety argument: deceptive corruption in partial simulator is improbable"
+          ],
+          "expected_target_node_name": [
+            "partial simulation extrapolation pipeline for prompt gating"
+          ]
+        },
+        {
+          "title": "Multi-agent Cartesian frame formalization",
+          "evidence": "Recap section details Cartesian objects with multiple agents (A1, A2) and environment E; represents foundational theoretical construct",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Cartesian objects as formal model for multi-agent environments"
+          ],
+          "expected_target_node_name": [
+            "high-complexity simulation capacity in large language model simulators"
+          ]
+        },
+        {
+          "title": "Automated alignment via aligned partial simulator inference",
+          "evidence": "Extrapolation section: 'Such a risk reduction could be what is needed to navigate an initial risk period and develop more aligned systems via automated alignment'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "partial simulation extrapolation pipeline for prompt gating"
+          ],
+          "expected_target_node_name": [
+            "enable automated alignment research acceleration through PSE safety gating"
+          ]
+        },
+        {
+          "title": "Deceptive alignment in simulators as core risk driver",
+          "evidence": "Recap: 'If this box was a deceitful box, it would just hide the bad objects under good ones such that it looked like a good box (deceptive alignment)'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "outer alignment failure via misaligned simulacra in large language model simulators"
+          ],
+          "expected_target_node_name": [
+            "deceptive alignment in conditioned simulators hiding misaligned agents"
+          ]
+        },
+        {
+          "title": "Human cognitive limits prevent dangerous internal simulation",
+          "evidence": "PSE section: 'no matter to what extent you think about and model AGI internally, this imagined intelligence will not be able to perform actions...humans are incapable of conducting dangerous internal simulations as a result of the limited capacity of our simulator (the human brain)'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "limiting simulation complexity reduces emergence of dangerous agents"
+          ],
+          "expected_target_node_name": [
+            "humans naturally constrained from dangerous internal simulations by cognitive limits"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+        "field": "intervention_lifecycle",
+        "json_new_value": "4",
+        "reason": "Source presents PSE as theoretical proposal ('outlines a proposal'), not currently deployed system. Lifecycle 4 (Pre-Deployment Testing) better reflects status than lifecycle 5 (Deployment). Introduction: 'a successful implementation of PSE could help prevent' indicates future conditional, not current deployment"
+      },
+      {
+        "node_name": "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 4 (Pre-Deployment Testing) - PSE is presented as theoretical proposal requiring empirical validation before deployment; Introduction section states 'outlines a proposal' and 'could help prevent', indicating pre-deployment testing phase rather than operational deployment\"",
+        "reason": "Missing required field; needs justification with source reference"
+      },
+      {
+        "node_name": "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical) - Proposal presented without empirical validation or prototyping evidence; Introduction: 'even a completely ideal implementation doesn't provide a theoretical safety guarantee', and PSE section provides high-level overview without concrete implementation results\"",
+        "reason": "Missing required field; needs evidence-based reasoning"
+      },
+      {
+        "node_name": "perform fragmented simulations before executing full simulations during model inference",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 5 (Deployment) - Describes operational inference-time procedure; from Fragmented Simulation and PSE sections: 'user submits prompt...Output is sampled from a partial simulation...Output is passed to another instance of the partial simulator'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "perform fragmented simulations before executing full simulations during model inference",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical) - Techniques described conceptually without empirical implementation results; Fragmented Simulation section notes theoretical clarity on axis simulation but uncertainty on agent fragmentation: 'the path forward theory-wise for this seems quite unclear to me'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "apply low-fidelity simulation sampling before executing full simulations",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 5 (Deployment) - Describes operational inference-time gating mechanism; from PSE section step 3: 'Output is sampled from a partial simulation' before step 6 gating decision\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "apply low-fidelity simulation sampling before executing full simulations",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical) - Described intuitively without implementation evidence; Low-Fidelity Simulation section: 'Simply simulating things in lesser detail is a very intuitive way of cutting down on complexity. There isn't much else to say here.' indicates conceptual treatment only\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "outer alignment failure via misaligned simulacra in large language model simulators",
+        "field": "node_rationale",
+        "json_new_value": "\"Core risk that entire PSE proposal addresses; from Introduction: 'prevent outer alignment failures in simulators (namely the prediction of misaligned systems)'; this is the primary failure mode that motivates all subsequent design choices\"",
+        "reason": "Missing required field for all nodes"
+      },
+      {
+        "node_name": "high-complexity simulation capacity in large language model simulators",
+        "field": "node_rationale",
+        "json_new_value": "\"Root cause enabling dangerous agent emergence; from PSE section: 'I associate the risk of simulating maligned AI mostly with the capacity to conjure high complexity simulacrum'; explains why complexity reduction becomes safety lever\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "lack of scalable alignment criterion in conditioned simulators",
+        "field": "node_rationale",
+        "json_new_value": "\"Secondary problem limiting current conditioning approaches; from Recap: 'The box wants to have a lot of objects in it, it can't rely on the limited approval rate of the person who initially instructed it, and so it needs a more scalable criterion'; motivates PSE's alternative gating approach\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "limiting simulation complexity reduces emergence of dangerous agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Core theoretical justification for PSE's core mechanism; from PSE section: 'no matter to what extent you think about and model AGI internally, this imagined intelligence will not be able to perform actions that affect the real world...humans are incapable of conducting dangerous internal simulations as a result of the limited capacity'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "smaller models pose lower manipulation threat yet reveal safety signals",
+        "field": "node_rationale",
+        "json_new_value": "\"Enables PSE's two-model architecture; from Infeasibility section: 'we know that it is either highly unlikely that GPT-4 level simulators are capable of conjuring complex enough simulacra to pose a realistic takeover threat'; justifies using smaller model as safety evaluator\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "gating full simulation with safety inference from partial simulator",
+        "field": "node_rationale",
+        "json_new_value": "\"Core design principle of PSE framework; from PSE section: 'Output is passed to another instance of the partial simulator along with the original prompt. Inference is performed by the partial simulator regarding the safety of a complete simulation...A complete simulation is either performed or declined based on this analysis'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "self-contained two-model architecture minimizing alignment tax",
+        "field": "node_rationale",
+        "json_new_value": "\"Critical design advantage enabling practical deployment; from Introduction: 'PSE will enforce a minimal alignment tax and can be considered self-contained'; from PSE section benefits: 'Allows for the solution to be self-contained...could have important security implications...Permits a lower alignment tax'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "partial simulation extrapolation pipeline for prompt gating",
+        "field": "node_rationale",
+        "json_new_value": "\"Concrete operational instantiation of PSE framework; from PSE section: detailed 6-step pipeline from user prompt through partial simulator to safety decision; this is the executable procedure that realizes PSE concept\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "fragmented simulation sampling to reduce complexity",
+        "field": "node_rationale",
+        "json_new_value": "\"First technique for generating partial simulations; from Fragmented Simulation section: 'simulating portions of a Cartesian object...by only simulating select axes of the complete intended Cartesian object, but also by simulating only a fragment of a given agent's cognition'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "low-fidelity simulation sampling to reduce complexity",
+        "field": "node_rationale",
+        "json_new_value": "\"Second technique for generating partial simulations; from Low-Fidelity Simulation section: 'Simply simulating things in lesser detail is a very intuitive way of cutting down on complexity'; provides alternative or complementary approach to fragmentation\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "conceptual safety argument: deceptive corruption in partial simulator is improbable",
+        "field": "node_rationale",
+        "json_new_value": "\"Critical validation addressing primary failure mode; from Infeasibility section: 'deceptive corruption in the output of the partial simulator was the most likely failure mode for PSE...this risk seems initially potent...I simply do not view this risk as credible'\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "hypothesized GPT-4-level partial simulator provides safety insights",
+        "field": "node_rationale",
+        "json_new_value": "\"Feasibility claim enabling practical implementation; from Extrapolation section: 'your partial model can likely be >GPT-4 levels of capabilities without posing serious risks'; suggests deployment viability of PSE near-term\"",
+        "reason": "Missing required field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+        "type": "intervention",
+        "description": "At deployment time, route every prompt through a smaller partial simulator that decides whether the full simulator may run the requested high-complexity simulation.",
+        "aliases": [
+          "deploy PSE gate",
+          "operate two-model safety gate"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "perform fragmented simulations before executing full simulations during model inference",
+        "type": "intervention",
+        "description": "Generate fragmented versions of the requested scenario and use their analysis to decide if a unified simulation is allowed.",
+        "aliases": [
+          "apply fragmented simulation gating",
+          "axis-subset gating at inference"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "apply low-fidelity simulation sampling before executing full simulations",
+        "type": "intervention",
+        "description": "Run the scenario at reduced fidelity to extract safety-relevant cues, then allow or deny the high-detail run accordingly.",
+        "aliases": [
+          "coarse simulation gating",
+          "low-detail safety preview"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "outer alignment failure via misaligned simulacra in large language model simulators",
+        "type": "concept",
+        "description": "Large predictive models may simulate powerful agents whose objectives diverge from human values, leading to outer-alignment failures when their outputs are used uncritically.",
+        "aliases": [
+          "outer-alignment failure in simulators",
+          "misaligned agent simulation risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "high-complexity simulation capacity in large language model simulators",
+        "type": "concept",
+        "description": "Powerful simulators can generate highly detailed, unified worlds containing sophisticated agents, which raises the chance that a dangerous intelligence appears.",
+        "aliases": [
+          "ability to conjure high-complexity simulacra",
+          "large simulator expressive capacity"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "lack of scalable alignment criterion in conditioned simulators",
+        "type": "concept",
+        "description": "Relying on sparse human approval does not scale with the number of simulated objects, leaving the simulator without a robust internal criterion for safe content.",
+        "aliases": [
+          "limited human approval scalability",
+          "insufficient alignment signals for simulators"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "limiting simulation complexity reduces emergence of dangerous agents",
+        "type": "concept",
+        "description": "Dangerous agent behavior is less likely to arise in simulations that are fragmented or low-fidelity, suggesting complexity control as a mitigation lever.",
+        "aliases": [
+          "complexity reduction lowers risk",
+          "smaller simulations safer"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "smaller models pose lower manipulation threat yet reveal safety signals",
+        "type": "concept",
+        "description": "Because GPT-4–level models cannot credibly seize real-world power, they can act as safer proxies to inspect whether a larger simulation would be hazardous.",
+        "aliases": [
+          "partial simulators safer",
+          "small-model safety inference"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "gating full simulation with safety inference from partial simulator",
+        "type": "concept",
+        "description": "Before running a unified high-fidelity simulation, a smaller model assesses a partial simulation and decides whether proceeding is safe.",
+        "aliases": [
+          "safety gate via partial simulation",
+          "two-stage simulation approval"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "self-contained two-model architecture minimizing alignment tax",
+        "type": "concept",
+        "description": "Using a detachable partial simulator allows retrofitting to existing large models and keeps additional computational cost (alignment tax) low.",
+        "aliases": [
+          "PSE self-contained deployment",
+          "minimal alignment-tax architecture"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "partial simulation extrapolation pipeline for prompt gating",
+        "type": "concept",
+        "description": "Concrete sequence: user prompt → partial simulator → partial output → safety inference → allow or refuse full simulator run.",
+        "aliases": [
+          "PSE procedural pipeline",
+          "partial-then-full simulation pipeline"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "fragmented simulation sampling to reduce complexity",
+        "type": "concept",
+        "description": "Only certain axes of the Cartesian object or fragments of an agent’s cognition are simulated, reducing necessary computational volume.",
+        "aliases": [
+          "axis-subset simulation",
+          "agent-fragment simulation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "low-fidelity simulation sampling to reduce complexity",
+        "type": "concept",
+        "description": "Simulations are run at lower detail levels to cut complexity while retaining informative signals for safety analysis.",
+        "aliases": [
+          "coarse simulation",
+          "reduced-detail simulation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "conceptual safety argument: deceptive corruption in partial simulator is improbable",
+        "type": "concept",
+        "description": "Logical analysis suggests the chain of predicates required for a simulated malicious agent to manipulate the supervisor is highly implausible.",
+        "aliases": [
+          "improbability of deceptive corruption",
+          "partial-sim deception unlikely"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "hypothesized GPT-4-level partial simulator provides safety insights",
+        "type": "concept",
+        "description": "Authors posit that a GPT-4-scale model should already be able to evaluate partial simulation data for signs of manipulation, though empirical confirmation is pending.",
+        "aliases": [
+          "GPT-4 sufficiency hypothesis",
+          "feasibility of GPT-4 as partial simulator"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "outer alignment failure via misaligned simulacra in large language model simulators",
+        "target_node": "high-complexity simulation capacity in large language model simulators",
+        "description": "Dangerous agents arise because simulators can model highly detailed worlds.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "high-complexity simulation capacity in large language model simulators",
+        "target_node": "limiting simulation complexity reduces emergence of dangerous agents",
+        "description": "Reducing complexity directly counters the capacity that enables dangerous agents.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "limiting simulation complexity reduces emergence of dangerous agents",
+        "target_node": "gating full simulation with safety inference from partial simulator",
+        "description": "Complexity limitation justifies the design of a safety-gating stage.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "smaller models pose lower manipulation threat yet reveal safety signals",
+        "target_node": "gating full simulation with safety inference from partial simulator",
+        "description": "If small models can detect risk, they can be used as the gating agent.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "lack of scalable alignment criterion in conditioned simulators",
+        "target_node": "self-contained two-model architecture minimizing alignment tax",
+        "description": "Two-model architecture offers a scalable gating mechanism without heavy human oversight.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "gating full simulation with safety inference from partial simulator",
+        "target_node": "partial simulation extrapolation pipeline for prompt gating",
+        "description": "The pipeline is the concrete implementation of the gating idea.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "self-contained two-model architecture minimizing alignment tax",
+        "target_node": "partial simulation extrapolation pipeline for prompt gating",
+        "description": "Pipeline realises the two-model design in practice.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "partial simulation extrapolation pipeline for prompt gating",
+        "target_node": "fragmented simulation sampling to reduce complexity",
+        "description": "Fragmented simulation is one concrete method for producing the partial simulation.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "conceptual safety argument: deceptive corruption in partial simulator is improbable",
+        "target_node": "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+        "description": "If deception is unlikely, deploying the gate is justified.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "hypothesized GPT-4-level partial simulator provides safety insights",
+        "target_node": "deploy partial simulation extrapolation gating between user prompts and high-capacity simulator",
+        "description": "Belief that GPT-4 is sufficient encourages implementation now.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "fragmented simulation sampling to reduce complexity",
+        "target_node": "perform fragmented simulations before executing full simulations during model inference",
+        "description": "Fragmented simulation mechanism leads to a concrete operational step.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "low-fidelity simulation sampling to reduce complexity",
+        "target_node": "apply low-fidelity simulation sampling before executing full simulations",
+        "description": "Low-fidelity mechanism directly becomes an actionable procedure.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "8dd83efde8207ad8eb200efa004d1b78"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.235193"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Schema violations prevent valid extraction per SCHEMA_REQUIREMENTS section. All 15 nodes missing 'node_rationale' field (mandatory). All intervention nodes (12-14) missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields (mandatory). All 18 edges missing 'edge_confidence_rationale' and 'edge_rationale' fields (mandatory per final_output_format).",
+      "MAJOR: Lifecycle misclassification - node 12 'deploy PSE gating' has lifecycle=5 (Deployment) but source text presents PSE as theoretical proposal: Introduction states 'outlines a proposal', 'could help prevent', 'even a completely ideal implementation doesn't provide a theoretical safety guarantee'. Should be lifecycle=4 (Pre-Deployment Testing) or lifecycle=1 (Model Design).",
+      "COVERAGE GAP: Missing concept node for deceptive alignment pattern in simulators - explicitly stated in Recap: 'If this box was a deceitful box, it would just hide the bad objects under good ones such that it looked like a good box (deceptive alignment)'. This is core to understanding risk landscape.",
+      "COVERAGE GAP: Missing concept node for unconditioned partial simulator benefit - central mechanism stated in Infeasibility: 'The smaller model conducting the partial simulation needn't be aligned at all, and probably shouldn't be subject to conditioning. This way you can use an unconditioned simulator to elicit more aligned behavior from a more powerful simulator'. Without this node, PSE's core innovation is incompletely represented.",
+      "COVERAGE GAP: Missing intervention node for training partial simulator without conditioning - prerequisite design choice not captured. Must exist as intervention lifecycle=2.",
+      "COVERAGE GAP: Missing intervention node for PSE retrofit to existing models - explicitly mentioned in Introduction as key advantage: 'application to already trained (as well as yet to be trained) models might be possible without architectural or training data modifications'. Important for practical deployment pathway.",
+      "COVERAGE GAP: Missing concept node for Cartesian frame formalization - Recap section extensively describes Cartesian objects as mathematical structure underlying entire framework. Essential for understanding complexity modeling.",
+      "COVERAGE GAP: Missing concept node for automated alignment acceleration - Extrapolation section states: 'Such a risk reduction could be what is needed to navigate an initial risk period and develop more aligned systems via automated alignment'. Represents downstream benefit.",
+      "COVERAGE GAP: Missing concept node for human cognitive limits providing natural safety - PSE section: 'humans are incapable of conducting dangerous internal simulations as a result of the limited capacity of our simulator (the human brain)'. Provides theoretical motivation for complexity-reduction approach.",
+      "EDGE QUALITY: Edge confidence scores appropriate but lack required rationale field. E.g., edge between 'smaller models pose lower manipulation threat' and 'self-contained two-model architecture' (edge 7) scored confidence=3 but needs edge_confidence_rationale explaining 'Strong' rating with source evidence from Infeasibility section.",
+      "EDGE QUALITY: Several edges have confidence=2 indicating light inference per Step 3 requirements, but Step 4 requires confidence=1 or 2 be marked with inference application in rationale. E.g., edges 4,6,13,14,15 need explicit inference documentation.",
+      "VALIDATION COMPLETE: After application of 21 proposed field additions and 1 lifecycle correction, extraction would achieve: (1) complete schema compliance, (2) coverage of all major causal-interventional pathways from source, (3) inclusion of missing concept and intervention nodes, (4) proper referential integrity, (5) appropriate confidence levels with justifications, (6) traceability to source sections throughout. Graph would be mergeable with other 500k sources using consistent naming patterns."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/3pCdCJxQRKffY2NTu/partial-simulation-extrapolation-a-proposal-for-building",
+  "paper_id": "3425ddd596beb73f1c1184eef75c7042",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}
