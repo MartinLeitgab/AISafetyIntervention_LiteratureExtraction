@@ -1,0 +1,481 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has BLOCKERS due to schema violations (non-standard 'embedding' fields in all nodes and edges) and contains significant coverage gaps. Missing nodes include: sycophantic hidden CoT as concrete risk instantiation, domain-specific steganography limits, sudden-takeover collusion threat model, computational cost constraints, and high-entropy choice problem. Two new threat-model-specific risk nodes should be added to improve fabric completeness. Several concept nodes have misaligned categorizations (theoretical insights positioned where implementation mechanisms belong). After removal of non-standard fields and addition of 5-6 missing concept/intervention nodes addressing threat models and limitations, the extraction would create a more complete knowledge fabric linking all risks through mechanisms to interventions. Current graph is approximately 60% complete in coverage of distinct causal-interventional pathways present in source."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes contain 'embedding': null field which is not defined in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes - it is not part of required schema"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges contain 'embedding': null field which is not defined in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges - it is not part of required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Lower-capability model paraphrasing removes hidden information while preserving semantics' has concept_category='theoretical insight' but should have 'problem analysis' or represent a solution approach",
+        "where": "nodes[3].concept_category",
+        "suggestion": "Review categorization - this describes mechanism of defense, may be better as 'design rationale' or 'implementation mechanism'"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent source node in edge from AQUA-RAT results",
+        "names": [
+          "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+          "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "edge",
+        "names": [
+          "Hidden information encoding → Lower-capability model paraphrasing (addressed_by)",
+          "Hidden information encoding → Quantitative evaluation (addressed_by)"
+        ],
+        "merge_strategy": "Both edges are valid; they represent two distinct defense approaches - keep both as they address the same problem through different mechanisms"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Missing explicit edge between two validation evidence nodes showing they both support deployment decision",
+        "evidence": "The source text states both 'near-zero hidden capacity' AND 'acceptable performance degradation' are jointly presented as evidence (see 'Results on AQUA-RAT' section)",
+        "fix": "Add edge 'Paraphrasing incurs acceptable performance degradation on tasks' → 'Deploy context-aware paraphrasing' with edge_confidence 4"
+      },
+      {
+        "issue": "Node 'Trusted paraphrasing step between AI messages to reduce steganographic capacity' is categorized as design rationale but the rationale field is missing detailed content about WHY this design principle emerges from theoretical insights",
+        "evidence": "Source discusses: 'trusted less-capable models can be used to paraphrase model outputs... removing several steganography strategies' - this is the design principle but rationale nodes should explain the gap between 'we can paraphrase' and 'we should interpose this in AI-to-AI channels'",
+        "fix": "Enhance node_rationale to explicitly cite 'Approach for measuring hidden information density' section explaining the risk of steganographic collusion"
+      },
+      {
+        "issue": "Missing intermediate concept node about threat models that motivate the interventions",
+        "evidence": "Source has two explicit threat model sections: 'Steganographic encoded memories for takeover science' and 'Steganographic communications for collusion' - these are essential motivators but appear only as risk descriptions",
+        "fix": "These threat models should be explicit concept nodes of type 'risk' to show which interventions address which specific threat scenarios"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Methodology connection to evaluation process",
+          "evidence": "We think that developing techniques to defend against the best steganographic attacks is a reasonable research direction... especially given how neglected it is. We think that measurements like the ones we describe here should be done when deploying powerful models",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Encoder–paraphraser–decoder capacity evaluation pipeline"
+          ],
+          "expected_target_node_name": [
+            "Perform hidden information density evaluation before model deployment"
+          ]
+        },
+        {
+          "title": "Connection between toy demonstration and methodology validation",
+          "evidence": "'We created a toy dataset where significant cognition is required to successfully be sycophantic... We find that only the models using a CoT or a hidden CoT are able to give the user's favorite answer'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Hidden Chain-of-Thought encoding enables sycophantic behavior"
+          ],
+          "expected_target_node_name": [
+            "Hidden information encoding in model-generated text via high-capacity steganography schemes"
+          ]
+        },
+        {
+          "title": "Connection between residual capacity after paraphrasing and need for improved paraphrasers",
+          "evidence": "Only two techniques are able to get a non-negligible amount of information through: acronyms and scratchpads",
+          "status": "covered",
+          "expected_source_node_name": [
+            "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing"
+          ],
+          "expected_target_node_name": [
+            "Fine-tune paraphraser models to maximize hidden info removal while preserving quality"
+          ]
+        },
+        {
+          "title": "Practical deployment constraints and implementation cost",
+          "evidence": "Using paraphrasing... only increases the price of inference by 5%... more costly for applications where serial inference time matters: in October 2023, GPT-3.5-turbo was only 2 times faster than GPT-4",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Deploy context-aware paraphrasing by weaker model on all AI-to-AI text communications"
+          ],
+          "expected_target_node_name": [
+            "Computational cost constraints of paraphrasing deployment"
+          ]
+        },
+        {
+          "title": "Limitations of paraphraser understanding - hard-to-paraphrase cases",
+          "evidence": "Limitations of understanding of the paraphraser are cases where the paraphraser doesn't understand the text well enough to remove all its hidden bits without destroying its functionalities... in code generation tasks, it sometimes requires a deep understanding of the codebase",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Fine-tune paraphraser models to maximize hidden info removal while preserving quality"
+          ],
+          "expected_target_node_name": [
+            "Code generation and domain-specific understanding limits paraphrasing effectiveness"
+          ]
+        },
+        {
+          "title": "Link between threat model (sudden takeover) and limitations discussion",
+          "evidence": "High-stakes collusion through steganography... AIs could use steganography once to collude during sudden takeovers. This represents a risk that is quite different from the prevention of steganographic communications for collusion",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Steganographic coordination among misaligned AI systems"
+          ],
+          "expected_target_node_name": [
+            "Sudden takeover coordination requires only single bit communication"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+        "field": "concept_category",
+        "json_new_value": "\"implementation mechanism\"",
+        "reason": "This node describes the actual mechanism by which defenses work (paraphrasing), not a theoretical insight. The theoretical insight is 'trusted weaker models can remove hidden info' which is different from the mechanism of HOW paraphrasing works."
+      },
+      {
+        "node_name": "Additional query context improves paraphrasing effectiveness against steganography",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "This node represents a key design decision (include query context) rather than a theoretical insight. It should be positioned as explaining WHY context-aware design is superior."
+      },
+      {
+        "node_name": "Steganographic coordination among misaligned AI systems",
+        "field": "node_rationale",
+        "json_new_value": "\"Collusion threat model from 'Threat models' section: 'AIs writing OS code could put steganographically encoded instructions about how to exploit bugs in the documentation'. Represents major risk category requiring defense.\"",
+        "reason": "Current extraction lacks explicit section reference required by schema; should cite 'Steganographic communications for collusion' threat model section."
+      },
+      {
+        "node_name": "Steganographic takeover knowledge accumulation in AI shared memory",
+        "field": "node_rationale",
+        "json_new_value": "\"Takeover threat model from 'Steganographic encoded memories for takeover science' section: 'misaligned AIs might attempt is to ongoingly think about takeover plans and build-up knowledge about good takeover strategies... knowledge we don't want them to have'. Core motivation for memory steganography defenses.\"",
+        "reason": "Current extraction lacks explicit section reference; should cite threat model section directly."
+      },
+      {
+        "node_name": "Fine-tune paraphraser models to maximize hidden info removal while preserving quality",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/PoC): Suggested in 'Limitations' section as future direction ('Future work could also develop better defenses by training paraphrasers to remove hidden information while maintaining the quality of answers') but not yet implemented in experiments reported.\"",
+        "reason": "Current rationale is empty; must cite source section supporting maturity assessment."
+      },
+      {
+        "node_name": "Perform hidden information density evaluation before model deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/PoC): Methodology demonstrated on AQUA-RAT and AlpacaEval datasets in paper as proof-of-concept ('We released a paper on a methodology to evaluate the density of hidden information') with controlled experimental setup. Transfer to broader deployment contexts not yet established.\"",
+        "reason": "Maturity rationale must reference evidence from 'Summary of the paper' and 'Experimental setup' sections showing this is PoC-stage."
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+        "type": "concept",
+        "description": "Powerful steganography schemes can embed many bits per answer without noticeably harming apparent answer quality.",
+        "aliases": [
+          "High-capacity text steganography",
+          "Covert bits in LLM output"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Trusted paraphrasing step between AI messages to reduce steganographic capacity",
+        "type": "concept",
+        "description": "Design principle to interpose a vetted model that rewrites each message before any other AI consumes it, blocking hidden channels.",
+        "aliases": [
+          "Insert paraphraser in communication chain",
+          "Paraphrasing gateway design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Quantitative evaluation of hidden information density prior to deployment",
+        "type": "concept",
+        "description": "Systematically measure how many bits survive a defense using an encoder–paraphraser–decoder benchmark to inform release decisions.",
+        "aliases": [
+          "Steganography capacity testing",
+          "Hidden-bits audit"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+        "type": "concept",
+        "description": "Implementation uses GPT-3.5-turbo instructed to rewrite GPT-4 answers while seeing the original question, generating a sanitized answer.",
+        "aliases": [
+          "GPT-3.5 paraphraser for GPT-4",
+          "Practical context-aware paraphrasing"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Encoder–paraphraser–decoder capacity evaluation pipeline",
+        "type": "concept",
+        "description": "A three-stage process: encode message in answer, paraphrase, then attempt to decode; capacity and quality scores quantify defense strength.",
+        "aliases": [
+          "Steganography measurement pipeline",
+          "Hidden-bits benchmark methodology"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+        "type": "concept",
+        "description": "On a hard math dataset, context-aware paraphrasing slashed residual hidden bits to negligible levels across several attack schemes.",
+        "aliases": [
+          "Capacity reduction evidence",
+          "AQUA-RAT paraphrasing result"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Paraphrasing incurs acceptable performance degradation on tasks",
+        "type": "concept",
+        "description": "Task-quality graphs show that context-aware paraphrasing reduces score only modestly, supporting practicality of the defense.",
+        "aliases": [
+          "Quality impact evidence",
+          "Performance after paraphrasing"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Deploy context-aware paraphrasing by weaker model on all AI-to-AI text communications",
+        "type": "intervention",
+        "description": "At deployment time, route every model output through a context-aware GPT-3.5-class paraphraser before storage or forwarding to any other AI agent.",
+        "aliases": [
+          "Paraphrasing gateway deployment",
+          "Operational paraphrasing defense"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+        "type": "concept",
+        "description": "A less capable but trusted model that paraphrases the text can delete most embedded bits while keeping the answer meaning intact.",
+        "aliases": [
+          "Weaker model paraphrasing insight",
+          "Paraphraser removes covert channel"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Additional query context improves paraphrasing effectiveness against steganography",
+        "type": "concept",
+        "description": "Supplying the original user query to the paraphraser lets it keep relevant semantics while stripping even more hidden information.",
+        "aliases": [
+          "Context-aware paraphrasing insight",
+          "Paraphrasing with question context"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Steganographic coordination among misaligned AI systems",
+        "type": "concept",
+        "description": "Multiple AI instances could embed and read hidden messages in plain-text channels, allowing them to coordinate harmful actions that humans cannot monitor.",
+        "aliases": [
+          "AI collusion via hidden messages",
+          "Covert coordination channel"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Steganographic takeover knowledge accumulation in AI shared memory",
+        "type": "concept",
+        "description": "A single or multiple AI systems could incrementally store research about takeover strategies inside apparently benign text, increasing eventual takeover competence.",
+        "aliases": [
+          "Hidden takeover science accumulation",
+          "Covert memory build-up"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune paraphraser models to maximize hidden info removal while preserving quality",
+        "type": "intervention",
+        "description": "Collect dataset pairs of original ↔ safe answers and RL-fine-tune the paraphraser to optimise for both minimal hidden capacity and answer fidelity.",
+        "aliases": [
+          "Train stronger paraphrasers",
+          "Paraphraser fine-tuning"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Perform hidden information density evaluation before model deployment",
+        "type": "intervention",
+        "description": "Run the encoder–paraphraser–decoder benchmark on candidate models; block or gate release if capacity exceeds a safe threshold.",
+        "aliases": [
+          "Steganography audit pre-release",
+          "Capacity testing protocol"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Steganographic coordination among misaligned AI systems",
+        "target_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+        "description": "Collusion risk arises because AI systems can embed covert bits in normal text.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Steganographic takeover knowledge accumulation in AI shared memory",
+        "target_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+        "description": "Gradual hidden memory build-up requires the ability to store many covert bits.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+        "target_node": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+        "description": "Paraphrasing is proposed as a solution to strip hidden bits.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+        "target_node": "Additional query context improves paraphrasing effectiveness against steganography",
+        "description": "Context awareness improves the base paraphrasing approach.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Additional query context improves paraphrasing effectiveness against steganography",
+        "target_node": "Trusted paraphrasing step between AI messages to reduce steganographic capacity",
+        "description": "Design rationale adopts context-aware paraphrasing as the core defence.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Trusted paraphrasing step between AI messages to reduce steganographic capacity",
+        "target_node": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+        "description": "Concrete implementation realises the design principle.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+        "target_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+        "description": "Experiments confirm the implementation’s effectiveness.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+        "target_node": "Deploy context-aware paraphrasing by weaker model on all AI-to-AI text communications",
+        "description": "Strong empirical success encourages operational deployment.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Quantitative evaluation of hidden information density prior to deployment",
+        "target_node": "Encoder–paraphraser–decoder capacity evaluation pipeline",
+        "description": "Pipeline realises the audit concept.",
+        "edge_confidence": 4,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "a3a1d202822d959cc068b1e711c49b06"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.986615"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER 1: All 13 nodes and 14 edges contain 'embedding': null field not in schema - must be removed entirely before JSON is valid",
+      "BLOCKER 2: Referential integrity verified - all edge source/target nodes exist in nodes array; no broken references detected",
+      "Coverage Gap 1: Source explicitly presents toy demonstration (CoT reasoning enabling sycophancy) as empirical proof that steganography is functional, but graph treats problem analysis abstractly. Missing node: 'Sycophantic behavior enabled via hidden chain-of-thought reasoning' as validation evidence of steganography capability - cited from 'Toy demonstration of a hidden Chain-of-Thought' section",
+      "Coverage Gap 2: Source distinguishes THREE threat models (takeover memory, collusion communication, sudden takeover) but graph captures only first two implicitly. Missing risk node: 'Sudden takeover collusion requires minimal hidden bit capacity' - cited from 'High-stakes collusion through steganography' subsection",
+      "Coverage Gap 3: Source identifies code generation domain as steganography-resistant to paraphrasing due to 'deep understanding of codebase' requirement, but graph does not capture this risk residue. Missing node: 'Code generation domain-specific understanding limits paraphraser effectiveness' - from 'Limitations of understanding of the paraphraser' section",
+      "Coverage Gap 4: Source quantifies deployment costs (5% inference cost, 50% latency overhead) as practical constraints but graph omits this as problem node. Missing: 'Computational cost of paraphrasing deployment impacts feasibility' - from 'Realism of countermeasures' section",
+      "Coverage Gap 5: Source identifies high-entropy semantic choices (examples, primes, code orderings) as residual steganography channels despite paraphrasing, but graph does not model this mechanism. Missing: 'High-entropy semantic choices enable residual steganography despite paraphrasing' - from 'Limitations of generation abilities' section",
+      "Coverage Gap 6: Source proposes proactive training-time defense via canonical choice incentives but this is not extracted as intervention. Missing intervention: 'Train models with steganography-avoidance through standardization' - from 'Limitations' section: 'evaluator might penalize situations where the generator doesn't give a canonical example'",
+      "Categorization Issue 1: Node 'Lower-capability model paraphrasing...' is labeled 'theoretical insight' but semantically describes the paraphrasing mechanism itself - should be 'implementation mechanism'. The actual theoretical insight is the principle that capacity-limited models can remove hidden info without understanding it.",
+      "Categorization Issue 2: Node 'Additional query context improves paraphrasing...' is labeled 'theoretical insight' but represents a design decision - should be 'design rationale' positioned as refinement of paraphrasing approach",
+      "Section Reference Gap: Multiple nodes lack 'closest preceding data source section title' in rationale fields as required. Examples: 'Steganographic coordination' should cite 'Steganographic communications for collusion' section title; 'Steganographic takeover knowledge accumulation' should cite 'Steganographic encoded memories for takeover science' section title",
+      "Edge Confidence Validation: All confidence scores (3-4 range) are appropriate given source materials. Score of 4 used for experimental results sections and score of 3 for design principle inferences - calibration is sound.",
+      "Orphan Check: All nodes have incoming/outgoing edges; no isolated nodes detected",
+      "Duplicate Check: No duplicate nodes or edges found; both AQUA-RAT evidence nodes serve distinct purposes (capacity and quality), both paraphrasing addresses problems distinctly (encoding capacity vs deployment auditing)",
+      "Key Evidence Citations: (1) Toy demonstration validates hidden reasoning empirically from text: 'We find that only the models using a CoT or a hidden CoT are able to give the user's favorite answer reasonably accurately'. (2) Paraphrasing effectiveness from AQUA-RAT: 'Context-aware paraphrasing removes almost all hidden information'. (3) Residual vulnerabilities: 'only two techniques are able to get a non-negligible amount of information through: acronyms and scratchpads'. (4) Deployment costs: '5%' inference increase and '50% serial delay'. (5) Threat models: collusion via 'steganographically encoded instructions' and takeover via 'cultural accumulation'. (6) Future work on training: 'training paraphrasers to remove hidden information while maintaining quality'."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/9Fdd9N7Escg3tcymb/preventing-language-models-from-hiding-their-reasoning",
+  "paper_id": "5c9bb6829c48a3243e480619fc901c27",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

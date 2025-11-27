@@ -1,0 +1,362 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has critical schema compliance issues (missing required fields: node_rationale, edge_confidence_rationale, edge_rationale on all edges; missing intervention_lifecycle_rationale and intervention_maturity_rationale on intervention node; spurious 'embedding' fields). The causal logic contains one significant error (edge from problem analysis to theoretical insight using 'addressed_by' when it should be 'caused_by'). Additionally, the graph applies moderate inference to construct the implementation mechanism and intervention nodes without explicit source support, which requires lower confidence ratings (1-2) and must be documented in rationale fields. The graph is missing one important node for theoretical completeness (competing hypotheses about utility function viability) and two supporting edges that establish the rationalist assumption context. After proposed fixes are applied, the graph would represent a valid, well-supported knowledge fabric covering the AI safety relevance of human preference incomparability."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge attributes in all edges: 'edge_confidence_rationale' and 'edge_rationale' are required per schema but not present",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' fields to all edge objects with evidence-based reasoning and source section references"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node attributes in all nodes: 'node_rationale' is required per schema but not present in any node",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to all nodes explaining why essential to fabric with source section title references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention node missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields required per schema",
+        "where": "nodes[6]",
+        "suggestion": "Add both rationale fields with evidence-based reasoning referencing source section titles"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All nodes contain null 'embedding' field not defined in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes as it is not part of required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges contain null 'embedding' field not defined in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges as it is not part of required schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "MINOR",
+        "issue": "All edge references use exact node names; referential integrity confirmed",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'addressed_by' between problem analysis and theoretical insight may misrepresent the causal direction",
+        "evidence": "Source states: 'I must say this experiment ended up in a failure - thinking \"If I had X, would I take Y instead\"... very often resulted in a pair of \"No\"s. Even thinking about multiple Xs/Ys for one Y/X usually led me to deciding they're really incomparable. Outcomes related to similar subject were relatively comparable, those in different areas in life were usually not.' This shows incomparability as an empirical observation, not a solution addressing the problem.",
+        "fix": "Change edge type from 'addressed_by' to 'caused_by' - the incomparability IS the problem manifesting, not a solution addressing it. Alternatively, restructure to show theoretical insight as explaining WHY cardinal utility failed."
+      },
+      {
+        "issue": "Validation evidence node describes author's failure, but confidence level and interpretation are inconsistent",
+        "evidence": "Source states: 'I finally decided on some vague numbers and evaluated the results two months later. My success on some fields was really big, on other fields not at all, and the only thing that was clear was that numbers I assigned were completely wrong.' This is a single personal anecdote with mixed results, not strong validation.",
+        "fix": "Edge confidence from implementation mechanism to validation should be 1 or 2, not 3, given this is a single case study with acknowledged vagueness in the process."
+      },
+      {
+        "issue": "Design rationale may conflate design principle with empirical finding",
+        "evidence": "Source poses this as an open question: 'I finally decided on two possible conclusions: I don't know how to draw utility functions, but they are a good model of my preferences, and I could learn how to do it. [OR] Utility functions are really bad match for human preferences...' The pairwise/contextual modeling is not explicitly proposed in source, but rather one possible direction mentioned implicitly.",
+        "fix": "Lower edge confidence from design rationale to implementation mechanism to 1-2 and explicitly note moderate inference in edge_confidence_rationale, as source does not explicitly propose this design."
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Rationalist assumption of well-defined utility functions enables AI optimization but may be flawed",
+          "evidence": "Source opens: 'A lot of rationalist thinking about ethics and economy assumes we have very well defined utility functions - knowing exactly our preferences between states and events... Because everyone wants more money, you should theoretically even be able to assign exact numerical values to positive outcomes in your life.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Rationalist theoretical framework assumes precise scalar utilities"
+          ],
+          "expected_target_node_name": [
+            "Value misalignment in AI systems from inaccurate utility modelling of human preferences"
+          ]
+        },
+        {
+          "title": "Empirical failures in utility assignment demonstrate practical limitation",
+          "evidence": "Source: 'thinking \"If I had X, would I take Y instead\", and \"If I had Y, would I take X instead\" very often resulted in a pair of \"No\"s... Outcomes related to similar subject were relatively comparable, those in different areas in life were usually not.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Cardinal utility representation failure for diverse human preferences"
+          ],
+          "expected_target_node_name": [
+            "Anecdotal self-experiment revealing inconsistent numeric valuations"
+          ]
+        },
+        {
+          "title": "Open question about whether utility functions are learnable vs fundamentally mismatched to human preferences",
+          "evidence": "Source: 'I finally decided on some vague numbers and evaluated the results two months later... This leads me to two possible conclusions: [1] I don't know how to draw utility functions, but they are a good model... [2] Utility functions are really bad match for human preferences...'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Anecdotal self-experiment revealing inconsistent numeric valuations"
+          ],
+          "expected_target_node_name": [
+            "Two competing theoretical hypotheses about utility function viability"
+          ]
+        },
+        {
+          "title": "Call for community experience sharing on utility function assignment",
+          "evidence": "Source concludes: 'Anybody else tried assigning numeric values to different outcomes outside very narrow subject matter? Have you succeeded and want to share some pointers? Or failed and want to share some thought on that?'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Cardinal utility representation failure for diverse human preferences",
+        "target_node_name": "Human preferences exhibit incomparability and context dependence",
+        "reason": "Current 'addressed_by' edge creates incorrect causal flow. The incomparability IS the manifestation of the problem, not a solution. Should be restructured as causal chain or removed with redesign."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Model preferences via pairwise comparisons and contextual factors",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "Already correct, but rationale needs strengthening: this is INFERRED from source discussion, not explicitly proposed. Mark inference level in node_rationale."
+      },
+      {
+        "node_name": "Train preference learning algorithms on partial-order data with context features",
+        "field": "concept_category",
+        "json_new_value": "\"implementation mechanism\"",
+        "reason": "Already correct. Add detailed node_rationale explaining this is moderate inference from the design rationale."
+      },
+      {
+        "node_name": "Anecdotal self-experiment revealing inconsistent numeric valuations",
+        "field": "description",
+        "json_new_value": "\"Validation evidence consisting of the author's two-month follow-up showing assigned numerical utilities were 'completely wrong' across life domains. Results were mixed - 'success on some fields was really big, on other fields not at all' - providing single case study evidence against strict numeric utility assignment outside narrow domains.\"",
+        "reason": "Current description omits the mixed results detail which is essential for proper confidence calibration of downstream edges"
+      },
+      {
+        "node_name": "Integrate partial-order preference learning into reward model training to align AI with human preferences",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity level 2 (Experimental/PoC) because the source provides only conceptual discussion and a single personal experiment, not systematic validation, controlled experiments, or deployed systems. Per 'Small experiment' section, the evidence is preliminary and exploratory.\"",
+        "reason": "Currently missing; required by schema. This is moderate inference applied to proposal, so maturity cannot exceed 2."
+      },
+      {
+        "node_name": "Integrate partial-order preference learning into reward model training to align AI with human preferences",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 3 (Fine-Tuning/RL) because preference learning and reward modeling occur during RLHF-stage training where human feedback signals are collected and reward models are trained. Conceptually applicable at stage 3 based on standard AI safety training pipelines.\"",
+        "reason": "Currently missing; required by schema. Standard RLHF occurs at stage 3."
+      },
+      {
+        "node_name": "Anecdotal self-experiment revealing inconsistent numeric valuations",
+        "field": "node_rationale",
+        "json_new_value": "\"Essential validation evidence node showing empirical failure of cardinal utility assignment in practice, motivating the intervention. Provides concrete grounding for theoretical concerns about utility functions per 'Small experiment' section.\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "Value misalignment in AI systems from inaccurate utility modelling of human preferences",
+        "field": "node_rationale",
+        "json_new_value": "\"Top-level risk node establishing the AI safety concern motivating this entire knowledge fabric. Directly connected to reward model design in AI training per opening section discussing rationalist assumptions in ethics/economy applications.\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "Cardinal utility representation failure for diverse human preferences",
+        "field": "node_rationale",
+        "json_new_value": "\"Problem analysis node explaining the mechanism causing misalignment: human preferences cannot be collapsed to single scalar utilities. Supported by author's experimental findings per 'Small experiment' section showing incomparability across life domains.\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "Human preferences exhibit incomparability and context dependence",
+        "field": "node_rationale",
+        "json_new_value": "\"Theoretical insight explaining why cardinal utilities fail: human preferences are structured as partial orders with context-dependence, not total orders. Explains experimental failures showing 'No' to both pairwise comparisons per 'Small experiment' section.\"",
+        "reason": "Missing required field"
+      },
+      {
+        "node_name": "Model preferences via pairwise comparisons and contextual factors",
+        "field": "node_rationale",
+        "json_new_value": "\"Design rationale proposing alternative to cardinal utilities. Moderate inference from source discussion of preference incomparability; source does not explicitly propose this but raises it as plausible direction in 'Conclusions' section through implicit contrast.\"",
+        "reason": "Missing required field; must note inference"
+      },
+      {
+        "node_name": "Train preference learning algorithms on partial-order data with context features",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation mechanism operationalizing the pairwise preference design. Moderate inference from design rationale; source does not explicitly describe ML algorithms but implies preference learning methods could address the identified problem per 'Conclusions' section.\"",
+        "reason": "Missing required field; must note inference"
+      },
+      {
+        "node_name": "Integrate partial-order preference learning into reward model training to align AI with human preferences",
+        "field": "node_rationale",
+        "json_new_value": "\"Intervention node translating implementation mechanism into actionable AI safety practice. Moderate inference connecting academic utility function discussion to RLHF/reward modeling in AI training; source does not explicitly propose AI interventions per instruction guidelines for inferring AI-safety-relevant interventions.\"",
+        "reason": "Missing required field; must note inference"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Anecdotal self-experiment revealing inconsistent numeric valuations",
+        "type": "concept",
+        "description": "Validation evidence consisting of the author's two-month follow-up showing assigned numerical utilities were 'completely wrong' across life domains. Results were mixed - 'success on some fields was really big, on other fields not at all' - providing single case study evidence against strict numeric utility assignment outside narrow domains.",
+        "aliases": [
+          "author’s failed utility elicitation experiment",
+          "personal utility assignment failure evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Value misalignment in AI systems from inaccurate utility modelling of human preferences",
+        "type": "concept",
+        "description": "Risk that AI systems optimized against a mis-specified scalar utility function will pursue goals that diverge from genuine human values because the utility model fails to reflect real human preferences.",
+        "aliases": [
+          "utility function misalignment in AI",
+          "incorrect scalar utility for humans in AI alignment"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Cardinal utility representation failure for diverse human preferences",
+        "type": "concept",
+        "description": "Problem that many human outcomes across life domains cannot be placed on a single cardinal utility scale, producing incomparabilities and intransitivities.",
+        "aliases": [
+          "difficulty assigning numeric utilities",
+          "failure of precise utility numbers for varied outcomes"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Human preferences exhibit incomparability and context dependence",
+        "type": "concept",
+        "description": "Theoretical insight that people often cannot rank dissimilar outcomes or maintain consistent trade-offs; preferences change with perspective and available information.",
+        "aliases": [
+          "intransitive human preferences",
+          "context-dependent preference structures"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Model preferences via pairwise comparisons and contextual factors",
+        "type": "concept",
+        "description": "Design rationale proposing that instead of cardinal utilities, systems should learn from pairwise preference data augmented with context, better matching actual preference structure.",
+        "aliases": [
+          "pairwise preference modelling",
+          "context-aware preference design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Train preference learning algorithms on partial-order data with context features",
+        "type": "concept",
+        "description": "Implementation mechanism in which machine-learning models are trained on user-supplied pairwise comparisons, learning a partial order that can vary across contexts rather than a single scalar utility.",
+        "aliases": [
+          "partial-order preference learning",
+          "contextual preference learning mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Integrate partial-order preference learning into reward model training to align AI with human preferences",
+        "type": "intervention",
+        "description": "During the RLHF or similar fine-tuning stage, collect human pairwise comparisons (possibly contextual) and train the reward model to represent a partial order rather than a single utility scalar, thereby reducing misalignment from inaccurate cardinal utilities.",
+        "aliases": [
+          "apply partial-order preference learning in RLHF",
+          "use pairwise preference signals for alignment"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "mitigated_by",
+        "source_node": "Human preferences exhibit incomparability and context dependence",
+        "target_node": "Model preferences via pairwise comparisons and contextual factors",
+        "description": "Using pairwise and context-aware modeling mitigates the issues caused by incomparability in human preferences.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Model preferences via pairwise comparisons and contextual factors",
+        "target_node": "Train preference learning algorithms on partial-order data with context features",
+        "description": "Preference-learning algorithms operationalize the design rationale by learning from partial-order data.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Train preference learning algorithms on partial-order data with context features",
+        "target_node": "Anecdotal self-experiment revealing inconsistent numeric valuations",
+        "description": "The experiment’s failure to produce consistent numbers serves as preliminary validation for abandoning strict numeric utilities in favor of alternative learning methods.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Anecdotal self-experiment revealing inconsistent numeric valuations",
+        "target_node": "Integrate partial-order preference learning into reward model training to align AI with human preferences",
+        "description": "The observed inconsistency motivates adopting partial-order preference learning during AI reward-model training.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "beece2f9bb52f6e1ad1b6ee6466e0ae4"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.240854"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER 1 - Schema Compliance: Missing 'node_rationale' field on all 7 nodes violates schema requirement. Missing 'edge_confidence_rationale' and 'edge_rationale' on all 6 edges violates schema requirements. These must be added with evidence-based reasoning citing source sections.",
+      "BLOCKER 2 - Intervention Node Completeness: Node 6 lacks required 'intervention_lifecycle_rationale' and 'intervention_mationale_rationale' fields. Lifecycle 3 (Fine-Tuning/RL) appropriate per standard RLHF stage. Maturity 2 appropriate per source showing only single exploratory experiment, not systematic validation.",
+      "MAJOR 1 - Causal Logic Error: Edge between 'Cardinal utility representation failure' and 'Human preferences exhibit incomparability' uses 'addressed_by' which reverses causality. Source directly shows incomparability patterns in failed experiments ('I had X, would I take Y instead... resulted in a pair of No's'). Incomparability CAUSES the failure, not addresses it. Should be 'caused_by' with confidence 4.",
+      "MAJOR 2 - Moderate Inference Not Documented: Design rationale node (pairwise comparisons) and implementation mechanism node (preference learning algorithms) apply moderate inference - source does not explicitly propose these but implies them through discussion of alternatives. Per instructions, confidence on edges from implementation mechanism to validation MUST be 1-2 and must document inference in rationale fields. Current extraction uses confidence 3 and lacks inference notation.",
+      "MAJOR 3 - Missing Theoretical Node: Source explicitly states 'two possible conclusions' in conclusions section about whether utilities are learnable or fundamentally mismatched. This competing hypotheses node is theoretically important for understanding the knowledge fabric's two divergent paths and should be explicitly represented.",
+      "MINOR 1 - Spurious Fields: All nodes and edges contain 'embedding' field set to null, which is not in schema requirements. Should be removed per schema specification.",
+      "MINOR 2 - Incomplete Evidence Description: Validation evidence node omits that results were mixed ('success on some fields was really big, on other fields not at all'). This context is essential for proper confidence calibration in downstream edges and should be included in description.",
+      "MINOR 3 - Missing Supporting Edges: No edge connects the foundational 'Rationalist assumption' to the risk node or to the problem analysis. This context-setting edge is important for mergeable fabric across 500k sources and helps explain why this risk manifests in AI systems.",
+      "Coverage Gap: Source concludes with call for community experience ('Anybody else tried assigning numeric values...?') which is outside AI safety scope but shows the discussion's broader context. Not required to extract but shows the social-science research community aspect.",
+      "Inference Strategy Justification: Per instruction guidelines, moderate inference applied to design rationale and implementation mechanism because source raises preference incomparability problem but does not explicitly propose specific technical solutions. The preference learning inference is sound per AI safety domain knowledge (partial orders are recognized alternative to scalar utilities) but must be marked as inference with confidence 1-2 per guidance.",
+      "Evidence for Edges - edge_confidence_rationale must cite: (1) 'caused_by' from rational assumption to problem: confidence 3 from multiple experimental failures showing consistent incomparability pattern; (2) 'caused_by' from incomparability to failure: confidence 4 from direct logical causality and source evidence; (3) 'mitigated_by' pairwise modeling: confidence 2 from light inference; (4) 'implemented_by' algorithms: confidence 3 from logical implementation chain but note inference; (5) 'validated_by' experiment: confidence 1-2 from single exploratory case study with mixed results and acknowledged vagueness; (6) 'motivates' intervention: confidence 2 from plausible but not explicit inference."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/MvwdPfYLX866vazFJ/post-your-utility-function",
+  "paper_id": "4eff454bda809e5b14059e0f270e2d81",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

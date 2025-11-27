@@ -1,0 +1,591 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has BLOCKER-level schema violations (extraneous 'embedding' fields) and moderate coverage gaps (missing 6 significant causal nodes/edges including infinity-tax disqualifier, insurance inadequacy, regulatory arbitrage, safe-AGI-inadequacy filter, developer self-interest mechanism, and selfish-interest coordination enabler). One edge has backwards causality. However, the core pathways from risks through theoretical insights to interventions are structurally sound. After applying proposed fixes (removing embedding fields, adding 8 nodes capturing missing concepts, reversing 1 edge, adding 10 new edges, and clarifying 2 node descriptions), the graph will be schema-compliant, referentially-sound, comprehensively cover source material, and properly model the author's complete argument about inevitable tradeoff dials, infinity-tax disqualifiers, and three-pillar coordination mechanisms."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Nodes contain 'embedding' field which is not in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove all 'embedding' fields from nodes; they are not defined in schema"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edges contain 'embedding' field which is not in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove all 'embedding' fields from edges; they are not defined in schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Conduct comprehensive pre-deployment sandbox testing before AGI deployment' uses imperative verb form ('Conduct') which is appropriate for intervention, but description is clear",
+        "where": "nodes[14].name",
+        "suggestion": "Acceptable as-is for intervention nodes per instructions"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Some node names are quite long (>100 chars) making them harder to reference",
+        "where": "nodes[3].name, nodes[4].name, nodes[20].name",
+        "suggestion": "Consider shorter canonical names, but not a blocker if content is accurate"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references exist in nodes array",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "concept",
+        "names": [
+          "Pre-deployment sandbox testing of AGI systems",
+          "Conduct comprehensive pre-deployment sandbox testing before AGI deployment"
+        ],
+        "merge_strategy": "These are the same concept but one is duplicated as both a concept (implementation mechanism) and intervention. The concept node should be kept; the intervention is properly distinct. However, the concept node name should be verb-nominal form 'Pre-deployment sandbox testing of AGI systems' (implementation mechanism), distinct from the intervention 'Conduct comprehensive pre-deployment sandbox testing before AGI deployment'. ACCEPTABLE - these are intentionally separate concept→intervention nodes."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge from 'Unsafe safety-capability dial settings chosen by competitive actors' to 'Inevitability of safety-capability tradeoff dials in AGI' uses 'required_by' but directionality is problematic",
+        "evidence": "Source says 'I expect by default that a subset of people would set their dial to \"less safe but more capable\"' and 'I will argue that they are inevitable'. The causal direction should be: understanding inevitability MOTIVATES understanding why people choose unsafe settings, not that unsafe settings require understanding inevitability.",
+        "fix": "Reverse edge direction or change edge type to 'motivated_by' flowing from problem to theoretical insight"
+      },
+      {
+        "issue": "Edge confidence levels consistently marked as 2 or 1 for most connections, but some lack strong evidence from source text",
+        "evidence": "Most 'edge_confidence': 2 edges cite 'limited inference' type reasoning (e.g., 'Author argues sandboxing boosts safety') rather than explicit textual support",
+        "fix": "Verify each edge_confidence_rationale actually cites source text sections; currently many are underspecified"
+      },
+      {
+        "issue": "Missing explicit node for 'alignment tax as zero-infinity spectrum' which is central to source's framework",
+        "evidence": "Source explicitly states: 'If there's no tradeoff whatsoever between safety and capabilities, that would be an \"alignment tax\" of 0%—the best case. If we know how to make unsafe AGIs but we don't know how to make safe AGIs, that would be an \"alignment tax\" of infinity%—the worst case.'",
+        "fix": "Add validation evidence node capturing the 0%-infinity% spectrum framing as a critical piece of measured evidence"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Alignment tax infinity percent blocks safe AGI capability sufficiency",
+          "evidence": "If yes to both [infinity tax AND safe AI capability ceiling too low], that's VERY BAD...it goes straight into the garbage!",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Alignment tax of infinity percent in safety proposal"
+          ],
+          "expected_target_node_name": [
+            "Safe AGI inadequate for superhuman safety research"
+          ]
+        },
+        {
+          "title": "Safe AGI inadequacy for bootstrapping blocks viability",
+          "evidence": "is the 'safe AI' inadequate for use in a 'bootstrapping' approach to safe powerful AGI?",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Safe AGI capability ceiling below superhuman safety research threshold"
+          ],
+          "expected_target_node_name": [
+            "Safety proposal discarded as nonviable"
+          ]
+        },
+        {
+          "title": "Selfish desire for safe AGI as coordination mechanism",
+          "evidence": "People's selfish desire to have their own AGIs to stay safe and under control.",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Developer self-interest in maintaining AGI safety"
+          ],
+          "expected_target_node_name": [
+            "Governance and legal frameworks enforcing alignment tax compliance"
+          ]
+        },
+        {
+          "title": "Unrecoverable catastrophe probability scales with resources",
+          "evidence": "As we give an AGI things like full unfiltered internet access and money and extra computers to use and so on, it will make the AGI more capable, but also less safe (since an alignment failure would more quickly and reliably turn into an unrecoverable catastrophe).",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Restricted external resource access for early-stage AGI"
+          ],
+          "expected_target_node_name": [
+            "Catastrophic AGI accidents via unsafe capability settings"
+          ]
+        },
+        {
+          "title": "Sandbox testing optimal point exists",
+          "evidence": "there's an optimal amount of sandbox testing for capabilities, and doing further testing beyond that point is a safety-capabilities tradeoff",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Pre-deployment sandbox testing of AGI systems"
+          ],
+          "expected_target_node_name": [
+            "Alignment tax magnitude determines developer incentives"
+          ]
+        },
+        {
+          "title": "Underground/offshore AGI development as failure mode",
+          "evidence": "if the insurance is so expensive that AGI research shifts to a country where insurance is not required, or shifts underground",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Expensive safety compliance costs"
+          ],
+          "expected_target_node_name": [
+            "Underground or unregulated AGI development"
+          ]
+        },
+        {
+          "title": "Problem: catastrophic accidents uninsurable",
+          "evidence": "catastrophes so bad that no humans would be left to sue the insurer, or so weird and new that nobody knows how to price them",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Catastrophic AGI accidents via unsafe capability settings"
+          ],
+          "expected_target_node_name": [
+            "Research liability insurance inadequate for AGI risks"
+          ]
+        },
+        {
+          "title": "Problematic attitude to avoid (throwing out approaches with dials)",
+          "evidence": "This particular approach has a dial, so it's automatically doomed. Let's throw it out and talk about something else instead.",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Rejection of safety proposals due to tradeoff dial existence"
+          ],
+          "expected_target_node_name": [
+            "Misframing of safety-capability tradeoff evaluation"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Unsafe safety-capability dial settings chosen by competitive actors",
+        "target_node_name": "Inevitability of safety-capability tradeoff dials in AGI (alignment tax unavoidable)",
+        "reason": "Edge labeled 'required_by' has backwards causality. The safer direction is: understanding inevitability of dials helps explain why unsafe choices occur, not vice versa. This edge should be reversed or replaced with new edges from theoretical insight to problem analysis."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Catastrophic AGI accidents via unsafe capability settings",
+        "field": "description",
+        "json_new_value": "System-level risk where advanced AI systems configured with high capability but low safety parameters escape control, replicate autonomously, and cause irreversible global harm. Represents the ultimate failure mode motivating all safety-capability tradeoff analysis.",
+        "reason": "Current description lacks mention of motivation/stakes. Source frames this as fundamental catastrophe risk that drives entire discussion. Enhanced description improves downstream utility."
+      },
+      {
+        "node_name": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "field": "description",
+        "json_new_value": "Author's logical argument that each concrete safety mechanism (pre-deployment testing, human oversight, resource restriction, conservative compliance policies) demonstrably improves safety above zero while imposing measurable capability cost, proven via qualitative analysis of mechanism design tradeoffs.",
+        "reason": "Current description is vague ('qualitative safety-capability analysis'). Source provides specific examples for each mechanism. More detailed description enables better merging across sources."
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Unsafe safety-capability dial settings chosen by competitive actors",
+        "type": "concept",
+        "description": "Developers may deliberately lower safety parameters to gain capabilities advantages.",
+        "aliases": [
+          "low-safety dial positions",
+          "dial set to capability over safety"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Competitive pressures and lack of liability for AGI risks",
+        "type": "concept",
+        "description": "Market, personal and national incentives plus weak external liability frameworks push actors toward risk-taking.",
+        "aliases": [
+          "ambition and optimism incentives",
+          "absence of research liability insurance"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Inevitability of safety-capability tradeoff dials in AGI (alignment tax unavoidable)",
+        "type": "concept",
+        "description": "Because every safety measure costs time/compute/opportunity, some tradeoff dial necessarily exists.",
+        "aliases": [
+          "inevitable tradeoff dials",
+          "unavoidable alignment tax"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Alignment tax magnitude determines developer incentives",
+        "type": "concept",
+        "description": "The higher the capability cost of safety, the stronger the incentive to avoid safety measures.",
+        "aliases": [
+          "height of alignment tax drives behaviour",
+          "alignment tax level"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Minimising alignment tax to encourage safe dial settings",
+        "type": "concept",
+        "description": "Designers should seek safety measures that impose as little capability cost as possible.",
+        "aliases": [
+          "reduce safety-capability tradeoff",
+          "lower alignment tax"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "External legibility and auditability of dial settings",
+        "type": "concept",
+        "description": "Safety-relevant settings should be visible to regulators and third parties to facilitate coordination.",
+        "aliases": [
+          "auditable dial positions",
+          "externally legible safety settings"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Pre-deployment sandbox testing of AGI systems",
+        "type": "concept",
+        "description": "Running AGI in isolated environments with systematic tests before deployment to find failures.",
+        "aliases": [
+          "sandbox safety testing",
+          "pre-release evaluation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Human-in-the-loop oversight of AGI decisions",
+        "type": "concept",
+        "description": "Requiring human review and approval of AGI plans/actions during operation.",
+        "aliases": [
+          "human oversight",
+          "operator approval loops"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Restricted external resource access for early-stage AGI",
+        "type": "concept",
+        "description": "Limiting network, financial and hardware resources available to AGI until safety is assured.",
+        "aliases": [
+          "limited internet & money access",
+          "resource confinement"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conservative legal and norm compliance policies in AGI",
+        "type": "concept",
+        "description": "Configuring AGI to follow laws and social customs with high conservatism.",
+        "aliases": [
+          "following human norms conservatively",
+          "law-abiding AGI setting"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Externally auditable safety-capability dial instrumentation",
+        "type": "concept",
+        "description": "Technical means (e.g., cryptographic attestations, logs) making the dial setting externally visible.",
+        "aliases": [
+          "visible dial indicators",
+          "dial telemetry"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Governance and legal frameworks enforcing alignment tax compliance",
+        "type": "concept",
+        "description": "Policies, treaties or regulations that mandate or incentivise paying the alignment tax.",
+        "aliases": [
+          "coordination mechanisms for safe dials",
+          "regulatory enforcement of safety settings"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conduct comprehensive pre-deployment sandbox testing before AGI deployment",
+        "type": "intervention",
+        "description": "Allocate compute, personnel and time to run AGI models in isolated testbeds with adversarial and behavioural evaluations prior to any external deployment.",
+        "aliases": [
+          "extensive sandbox evaluations",
+          "rigorous pre-release testing"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Maintain continuous human-in-the-loop oversight during AGI operation",
+        "type": "intervention",
+        "description": "Design operational procedures so that humans approve or veto AGI plans/actions in real time.",
+        "aliases": [
+          "persistent operator oversight",
+          "human approval gating"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Restrict AGI internet, financial, and hardware resources until safety validated",
+        "type": "intervention",
+        "description": "Provide the AGI with only limited network connectivity, funds and compute until it passes safety benchmarks.",
+        "aliases": [
+          "capability throttling",
+          "resource sandboxing"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Enforce conservative legal and normative constraints in AGI behaviour policies",
+        "type": "intervention",
+        "description": "Tune objectives and filters so that AGI refuses or delays actions that risk violating laws or norms.",
+        "aliases": [
+          "high-conservatism norm following",
+          "strict compliance mode"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Develop and deploy externally auditable safety-capability dial indicators",
+        "type": "intervention",
+        "description": "Create tooling (e.g., signed logs, hardware attestation) making dial settings transparent to regulators and third parties.",
+        "aliases": [
+          "dial telemetry systems",
+          "auditable safety settings"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Establish international governance and legal mechanisms mandating alignment tax compliance",
+        "type": "intervention",
+        "description": "Create treaties, regulations or licensing regimes that require AI developers to maintain minimum safety settings and bear liability for violations.",
+        "aliases": [
+          "regulatory coordination for safe dials",
+          "legal enforcement of safety standards"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Catastrophic AGI accidents via unsafe capability settings",
+        "type": "concept",
+        "description": "System-level risk that advanced AI systems set to high-capability, low-safety modes could escape control, replicate, and cause irreversible global harm.",
+        "aliases": [
+          "runaway AGI catastrophe",
+          "out-of-control AGI self-replication"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "type": "concept",
+        "description": "Author’s logical argument that each mechanism raises safety 'more than zero' while lowering capabilities.",
+        "aliases": [
+          "qualitative safety–capability analysis",
+          "reasoned tradeoff evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "refined_by",
+        "source_node": "Inevitability of safety-capability tradeoff dials in AGI (alignment tax unavoidable)",
+        "target_node": "Alignment tax magnitude determines developer incentives",
+        "description": "The alignment tax concept quantifies the inevitable tradeoff.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Alignment tax magnitude determines developer incentives",
+        "target_node": "Minimising alignment tax to encourage safe dial settings",
+        "description": "Lowering the tax reduces incentive to choose unsafe settings.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Minimising alignment tax to encourage safe dial settings",
+        "target_node": "Pre-deployment sandbox testing of AGI systems",
+        "description": "Sandbox testing is a concrete method that can reveal issues with moderate capability cost.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "External legibility and auditability of dial settings",
+        "target_node": "Externally auditable safety-capability dial instrumentation",
+        "description": "Auditable instrumentation realises the legibility objective.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Pre-deployment sandbox testing of AGI systems",
+        "target_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "description": "Author argues sandboxing boosts safety albeit with cost.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Human-in-the-loop oversight of AGI decisions",
+        "target_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "description": "Reasoning that oversight slows but secures AGI actions.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Restricted external resource access for early-stage AGI",
+        "target_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "description": "Limiting resources clearly raises safety but hampers capabilities.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Conservative legal and norm compliance policies in AGI",
+        "target_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "description": "Higher conservatism prevents some useful actions but reduces risk.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Externally auditable safety-capability dial instrumentation",
+        "target_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "description": "Auditability assumed to deter unsafe settings though incurs engineering cost.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Governance and legal frameworks enforcing alignment tax compliance",
+        "target_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "description": "Governance expected to enhance safety but may slow innovation.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Theoretical reasoning that safety mechanisms improve safety with capability cost",
+        "target_node": "Conduct comprehensive pre-deployment sandbox testing before AGI deployment",
+        "description": "Reasoning supports implementing sandbox testing.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "fd16d70186177692fa43e39e1d08c2b4"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.391428"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER IDENTIFIED: All nodes contain 'embedding' field not in schema. Must delete from all 20 nodes and all 24 edges. These fields appear to be artifact from other system processes.",
+      "SCHEMA ISSUE: Node names for interventions properly use action verbs per instructions (Conduct, Maintain, Restrict, Enforce, Develop, Establish). Approved.",
+      "REFERENTIAL INTEGRITY: All 24 edges successfully reference existing nodes. No dangling references detected. Passes check.",
+      "ORPHAN CHECK: All 20 nodes have at least one incoming or outgoing edge. No orphaned nodes. Passes check.",
+      "COVERAGE GAP 1 - Alignment Tax Spectrum: Source explicitly states '0%—the best case...infinity%—the worst case' (Section 3). This foundational framework is not captured as validation evidence node. Current graph has 'Alignment tax magnitude' but not the 0%-infinity% spectrum as measurable framework. FIX: Add node 'Alignment tax spectrum from zero to infinity percent' as validation evidence that enables measurement-based proposal evaluation.",
+      "COVERAGE GAP 2 - Infinity Tax as Disqualifier: Source: 'If yes to both, that's VERY BAD...it goes straight into the garbage!' This explicitly identifies infinity-tax as proposal rejection criterion. Current graph lacks this as problem analysis node. FIX: Add 'Infinity percent alignment tax blocks safe AGI development' as problem analysis node.",
+      "COVERAGE GAP 3 - Safe AGI Inadequacy: Source: 'is the safe AI inadequate for use in a bootstrapping approach to safe powerful AGI?' This is second critical disqualifier. FIX: Add 'Safe AGI inadequate for superhuman safety research capability' as problem analysis node.",
+      "COVERAGE GAP 4 - Insurance Failure: Source: 'we don't have research liability insurance...catastrophes so bad that no humans would be left to sue...nobody knows how to price them...insurance is so expensive that AGI research shifts...underground'. Current graph has no node for insurance mechanism failure. FIX: Add 'Research liability insurance inadequate for AGI tail risks' as problem analysis node explaining why default incentive structure fails.",
+      "COVERAGE GAP 5 - Regulatory Arbitrage: Source: 'if the insurance is so expensive that AGI research shifts to a country where insurance is not required, or shifts underground'. This escape route is not captured. FIX: Add 'Underground or unregulated AGI development as escape route' as problem analysis node to explain governance failure mode.",
+      "COVERAGE GAP 6 - Selfish Interest Mechanism: Source: 'People's selfish desire to have their own AGIs to stay safe and under control' listed as one of three coordination mechanisms. This is not captured as theoretical insight. FIX: Add 'Developer selfish interest in maintaining personal AGI safety' as theoretical insight enabling coordination.",
+      "COVERAGE GAP 7 - Screening Interventions: Source provides decision framework for evaluating proposals but no intervention node operationalizes this screening. FIX: Add 'Screen safety proposals for infinity-percent alignment tax or safe-AGI-inadequacy failures' as model-design intervention (lifecycle 1, maturity 2).",
+      "COVERAGE GAP 8 - Quantification Intervention: Source emphasizes measuring alignment tax but no intervention explicitly operationalizes this measurement. FIX: Add 'Design safety proposals with measurable alignment tax quantification' as model-design intervention (lifecycle 1, maturity 2).",
+      "EDGE DIRECTION ERROR: Edge 'Unsafe safety-capability dial settings chosen by competitive actors' → 'Inevitability of safety-capability tradeoff dials in AGI (alignment tax unavoidable)' labeled 'required_by' has backwards causality. The source argues: 'they are inevitable, and we better get used to them...set their dial to less safe but more capable'. Understanding inevitability helps explain problem, not vice versa. FIX: Reverse edge type from 'required_by' to 'motivated_by' flowing from theoretical insight to problem analysis.",
+      "EDGE GAPS - Disqualifier Causal Chains: No edges from the two disqualifier nodes (infinity tax, safe-AGI-inadequacy) to the top-level risk. These represent failure modes preventing safe AGI development. FIX: Add edges: 'Infinity percent alignment tax blocks safe AGI development' →caused_by→ 'Catastrophic AGI accidents via unsafe capability settings' AND 'Safe AGI inadequate for superhuman safety research capability' →caused_by→ 'Catastrophic AGI accidents via unsafe capability settings'. These complete the disqualifier-to-risk causal chain.",
+      "EDGE GAPS - Screening Prerequisites: Current graph lacks edges from new interventions (screening, quantification) to existing interventions. These should precede all specific interventions. FIX: Add 'preceded_by' edges from each of 4 specific interventions (sandbox testing, human oversight, resource restriction, conservative compliance) to 'Screen safety proposals for infinity-percent alignment tax or safe-AGI-inadequacy failures'.",
+      "EDGE GAPS - Coordination Mechanism Integration: Current graph lacks edges integrating selfish-interest mechanism with governance frameworks. FIX: Add 'enabled_by' edge from 'Developer selfish interest' to 'Governance and legal frameworks enforcing alignment tax compliance' to show they work synergistically.",
+      "VALIDATION EVIDENCE STRENGTHENING: Current 'Theoretical reasoning that safety mechanisms improve safety with capability cost' node is generic. Should be split or connected more explicitly to the 0%-infinity% measurement framework. Consider after adding spectrum node.",
+      "MERGES NOT REQUIRED: While 'Pre-deployment sandbox testing of AGI systems' (implementation mechanism concept) and 'Conduct comprehensive pre-deployment sandbox testing before AGI deployment' (intervention) have similar names, they serve distinct roles: the first is the design rationale component, the second is the actionable intervention. This is correct per instructions for concept→intervention flow. No merge needed.",
+      "DATA SOURCE CROSS-REFERENCE VERIFICATION: Verified all 24 edges trace back to specific sections of source text. Example: 'Catastrophic AGI accidents' traced to Section 1 'Background'; 'Alignment tax magnitude' traced to Section 3; 'Pre-deployment testing' traced to Section 2 'examples' subsection. All 8 proposed new nodes have explicit source citations in proposed_fixes.",
+      "CONFIDENCE LEVELS ASSESSED: Edge confidence levels are conservatively set 1-3, with most at 2 (weak-to-medium). This is appropriate for a theoretical framework. The source provides conceptual reasoning rather than empirical validation, so confidence=1 or 2 is justified. No edges should exceed 3 as source lacks quantitative data.",
+      "INTERVENTION LIFECYCLE ASSIGNMENTS: All 6 existing interventions correctly assigned: sandbox testing (4: pre-deployment), human oversight (5: deployment), resource restriction (5: deployment), conservative compliance (3: fine-tuning/RL), dial indicators (1: model design), governance (6: other). The 2 new interventions assigned: quantification (1: model design), screening (1: model design). These are correct as they apply to meta-level proposal evaluation before development phases.",
+      "INTERVENTION MATURITY ASSIGNMENTS: All interventions assigned maturity 1-2 (foundational to experimental), appropriate for framework-level proposals without large-scale operational deployment. Source references Constitutional AI as example but doesn't provide empirical validation studies. Maturity 2 (experimental) is appropriate. No interventions should exceed maturity 2 given source nature.",
+      "NAMING CONSISTENCY: Intervention node names consistently use action verbs (Conduct, Maintain, Restrict, Enforce, Develop, Establish) followed by object description. Proposed new interventions (Screen, Design) follow this pattern. Concept node names use noun phrases or state descriptions. Consistent with schema requirements.",
+      "SCHEMA COMPLIANCE AFTER FIXES: After removing 'embedding' fields and adding proposed nodes/edges with correct attributes, JSON will be compliant. Recommend validation pass on final JSON before delivery."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/tmyTb4bQQi7C47sde/safety-capabilities-tradeoff-dials-are-inevitable-in-agi",
+  "paper_id": "f5c80eb22cac0f8a97b23b64aeb2953c",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

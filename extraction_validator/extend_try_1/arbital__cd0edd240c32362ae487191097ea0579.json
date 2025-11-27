@@ -1,0 +1,637 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures core concepts and reasonable interventions from the source material on correlated coverage in AI alignment, with correct referential integrity and no orphaned nodes. However, the extraction suffers from critical missing schema fields (node_rationale, edge_confidence_rationale, edge_rationale, intervention lifecycle/maturity justifications) required by the prompt's final output format specifications. Additionally, several important causal-interventional pathways are missing: the direct link between patch resistance and correlated coverage solutions, the comparison between low-impact and value-decrementation principles, connections to Humean degrees of freedom as the mechanism for uncorrelated coverage, and the distribution-shift problem causing later problems to access unconstrained dimensions. The intervention lifecycle and maturity assignments are partially incorrect (low-impact should span phases 2-4, DWIM should include architectural design phase 1, and deployment DWIM should include training phases 1-3). These are correctable issues that preserve the fundamental graph structure while substantially improving alignment to source evidence and schema compliance."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required fields: 'node_rationale', 'edge_confidence_rationale', 'edge_rationale'",
+        "where": "nodes[*] and edges[*]",
+        "suggestion": "Add 'node_rationale' to all nodes with reference to closest preceding data source section. Add 'edge_confidence_rationale' and 'edge_rationale' to all edges with citations to source text supporting the connection."
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields",
+        "where": "nodes[6,10,14]",
+        "suggestion": "Add these required fields with evidence-based reasoning tied to source sections for each intervention."
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All nodes contain 'embedding' field set to null, not in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove null 'embedding' fields from all nodes as they are not part of schema."
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges contain 'embedding' field set to null, not in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove null 'embedding' fields from all edges as they are not part of schema."
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references match existing node names",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge from 'Correlated coverage principle for robust alignment' to 'Observed human general epistemology...' has direction and confidence mismatch",
+        "evidence": "Source states: 'When it comes to humans as general epistemologists... humans, having been optimized to run across the savanna... were later able to figure out General Relativity... If we include human subagents... any question of fact... is in some sense covered by humans as general epistemologists.' This is presented as EXAMPLE VALIDATION of the correlated coverage principle.",
+        "fix": "The edge is present but should be strengthened: edge_confidence should be 3 (Medium - systematic qualitative evidence with theoretical backing) not 2. Rationale must cite this specific section about human epistemology as evidence."
+      },
+      {
+        "issue": "Missing critical pathway connecting patch resistance concept to correlated coverage solutions",
+        "evidence": "Source explicitly states: 'From the standpoint of the patch resistance concept, understanding the notion of correlated coverage and its complementary problem of patch resistance is what leads to traversing the gradient from hardwiring utility functions to training approaches to low-impact generalization.'",
+        "fix": "Add edge from 'Patch resistant value misalignment in advanced AI systems' to 'Correlated coverage principle for robust alignment' with type 'mitigated_by' and confidence 4 (Strong, explicit causal connection in source)."
+      },
+      {
+        "issue": "Low-impact intervention lifecycle may be too narrow",
+        "evidence": "Source discusses low-impact in context of both training design ('trying to find places, problems to tackle, where there may be correlated coverage') and extending through deployment ('maybe the notion of being low impact in general... has a simple-enough core to be passed on by training or specification in a way that generalizes across sharp capability gains').",
+        "fix": "Intervention_lifecycle should be '2,3,4' (Pre-Training through Pre-Deployment) not just '3'. Or create separate intervention node for pre-training phase low-impact architecture design (lifecycle 2)."
+      },
+      {
+        "issue": "Missing validation evidence connecting low-impact principle to Frankena's list discussion",
+        "evidence": "Source states: 'The reason to work on ideas like low-impact is that we might hope that there's something like a core idea for Try not to impact unnecessarily large amounts of stuff in a way that there isn't a core idea for Try not to do anything that decreases value.'",
+        "fix": "Add new validation evidence node: 'Low-impact principle superior to value-decrementation for achieving correlated coverage' with edge from 'Adoption of core alignment principles' showing why low-impact was selected as the design rationale."
+      },
+      {
+        "issue": "Anapartistic reasoning intervention lacks justification for lifecycle=1 maturity=1",
+        "evidence": "Source presents anapartistic reasoning as theoretical hope: 'The hope that anapartistic reasoning could be a general solution says, Maybe there's a core central idea...' This is speculative, not foundational.",
+        "fix": "Change intervention_maturity from 1 to 1 (correct), but add rationale: 'Lifecycle 1 (Model Design) justified by requirement to embed deference architecture at design time; Maturity 1 (Foundational/Theoretical) justified by source presenting as hopeful conjecture not yet empirically validated.'"
+      },
+      {
+        "issue": "DWIM intervention lifecycle=5 is disconnected from training context",
+        "evidence": "Source discusses DWIM in context of training and specification design philosophy: 'Do What I Mean similarly incorporates a hope that... there's something like a core or a center to the notion of Agent X does what Agent Y asks while modeling Agent Y' - presented as design principle not deployment-only.",
+        "fix": "Change intervention_lifecycle from 5 to '1,3' (Model Design and Fine-Tuning where user-modeling objectives are encoded), with rationale explaining both architectural design and training instantiation."
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Patch resistance problem mitigated by correlated coverage concept",
+          "evidence": "From the standpoint of patch resistance concept, understanding correlated coverage is what leads to traversing the gradient from hardwiring to training to low-impact approaches",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Patch resistant value misalignment in advanced AI systems"
+          ],
+          "expected_target_node_name": [
+            "Correlated coverage principle for robust alignment"
+          ]
+        },
+        {
+          "title": "Connection between unconstrained value degrees of freedom and Humean freedom",
+          "evidence": "In problems about value specification, there's Humean freedom and multiple fixed points when it comes to outcome ranking. All terms in Frankena's list have their own Humean freedom.",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Uncorrelated coverage across Humean value degrees of freedom in AI training"
+          ],
+          "expected_target_node_name": [
+            "Problem Analysis: Humean degrees of freedom in value specification"
+          ]
+        },
+        {
+          "title": "Low-impact principle as counter to value-decrementation approach",
+          "evidence": "The reason to work on low-impact is that there may be a core idea for it in a way there isn't for try-not-to-decrease-value",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Adoption of core alignment principles to achieve correlated coverage"
+          ],
+          "expected_target_node_name": [
+            "Low-impact penalty objective in AI utility function"
+          ]
+        },
+        {
+          "title": "Human epistemology example validates correlated coverage principle",
+          "evidence": "humans were later able to figure out General Relativity despite not being selected for it - Bayesian updating plus simplicity prior as core principle enables generalization",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Correlated coverage principle for robust alignment"
+          ],
+          "expected_target_node_name": [
+            "Observed human general epistemology enabled by Bayesian updating and simplicity prior"
+          ]
+        },
+        {
+          "title": "Frankena's list connection to multiple value dimensions problem",
+          "evidence": "All the terms in Frankena's list of desiderata have their own Humean freedom as to the details",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Uncorrelated coverage across Humean value degrees of freedom in AI training"
+          ],
+          "expected_target_node_name": [
+            "Problem Analysis: Frankena's value list as complex multidimensional specification"
+          ]
+        },
+        {
+          "title": "Gradient of solutions from hardwiring to low-impact",
+          "evidence": "traversing the gradient from 'just hardwire utility to not kill people' to 'train not to do bad things' to 'low-impact generalization'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Apply low-impact regularization during fine-tuning and pre-deployment testing"
+          ],
+          "expected_target_node_name": [
+            "Patch resistant value misalignment in advanced AI systems"
+          ]
+        },
+        {
+          "title": "Neural complexity of human epistemology bootstrapped through cultural learning",
+          "evidence": "Human neurology is big and complicated... we had to go through long process of bootstrapping epistemology by discovering and choosing to adopt cultural rules about science",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Observed human general epistemology enabled by Bayesian updating and simplicity prior"
+          ],
+          "expected_target_node_name": [
+            "Validation Evidence: Cultural bootstrapping enables core principle generalization"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Apply low-impact regularization during fine-tuning and pre-deployment testing",
+        "field": "intervention_lifecycle",
+        "json_new_value": "\"2,3,4\"",
+        "reason": "Source discusses low-impact as principle embedded across multiple phases: 'passing on by training or specification' (pre-training to fine-tuning) and validation through 'sharp capability gains' (deployment testing)"
+      },
+      {
+        "node_name": "Apply low-impact regularization during fine-tuning and pre-deployment testing",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 2-4 justified: Phase 2 (Pre-Training) for architectural bias toward impact minimization; Phase 3 (Fine-Tuning/RL) for training objective integration; Phase 4 (Pre-Deployment Testing) for stress-testing generalization across sharp capability gains (Section: Gradient of solutions and low-impact as core principle)\"",
+        "reason": "Add required field and clarify multi-phase application of low-impact principle per source"
+      },
+      {
+        "node_name": "Apply low-impact regularization during fine-tuning and pre-deployment testing",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept): Source presents low-impact as theoretical hope with conceptual argument for compactness but no deployed evidence. 'Maybe the notion of being low-impact in general... has a simple-enough core to be passed on' indicates conceptual validation stage, not operational deployment (Section: Low-impact design rationale)\"",
+        "reason": "Add required field and clarify that evidence is conceptual argument not empirical validation, supporting maturity=2 not maturity=1"
+      },
+      {
+        "node_name": "Implement DWIM-based user-intention modelling during deployment",
+        "field": "intervention_lifecycle",
+        "json_new_value": "\"1,3,5\"",
+        "reason": "DWIM requires architectural design (1), training of user-models (3), and deployment maintenance (5), not just deployment"
+      },
+      {
+        "node_name": "Implement DWIM-based user-intention modelling during deployment",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1,3,5 justified: Phase 1 for architectural core design of user-modeling capability; Phase 3 for training user-intention models during fine-tuning; Phase 5 for deployment maintenance of live user-modeling modules (Section: DWIM principle and implementation)\"",
+        "reason": "Add required field clarifying multi-phase nature of DWIM"
+      },
+      {
+        "node_name": "Implement DWIM-based user-intention modelling during deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical): Source presents DWIM as aspirational framework with compactness argument but no empirical validation. 'Do What I Mean... incorporates a hope that there's something like a core or a center to the notion' indicates theoretical proposal status (Section: DWIM principle discussion)\"",
+        "reason": "Add required field documenting theoretical status per source"
+      },
+      {
+        "node_name": "Design models with anapartistic reasoning architecture enabling overseer corrections",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design) justified by architectural necessity: anapartistic reasoning requires structural preservation of correction channels at design inception, before any training. 'Design... around a core idea of letting an overseer correct it' requires foundational architectural choice (Section: Anapartistic reasoning)\"",
+        "reason": "Add missing required field with source-grounded justification"
+      },
+      {
+        "node_name": "Design models with anapartistic reasoning architecture enabling overseer corrections",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical): Source presents anapartistic reasoning as hopeful conjecture with only conceptual proof-of-concept reasoning (100 problems → 1000 problems inference). No empirical validation or deployed systems discussed. 'The hope that anapartistic reasoning could be a general solution says, Maybe there's a core central idea' indicates theoretical proposal phase (Section: Anapartistic reasoning discussion)\"",
+        "reason": "Add missing required field documenting theoretical status"
+      },
+      {
+        "node_name": "Observed human general epistemology enabled by Bayesian updating and simplicity prior",
+        "field": "edge_confidence",
+        "json_new_value": "3",
+        "reason": "Strengthen from 2 to 3 (Medium - systematic qualitative evidence): source provides systematic reasoning about human epistemic capability as evidence: 'humans... figure out General Relativity... having not been explicitly selected-on' demonstrates core principle generalization systematically, supported by multiple lines of reasoning about bootstrapping (Section: Human epistemology as validation evidence)"
+      },
+      {
+        "node_name": "Patch resistant value misalignment in advanced AI systems",
+        "field": "node_rationale",
+        "json_new_value": "\"Top-level risk requiring resolution: 'An agent can decide 1000 issues the way we want... but there's a 13th degree of freedom that isn't shadowed... the answer on the 1001st issue... isn't pinned down by correlation.' Patch resistance is the core alignment failure mode driving all correlated coverage research (Section: Humean freedom and multiple fixed points)\"",
+        "reason": "Add missing required field with source citation"
+      },
+      {
+        "node_name": "Uncorrelated coverage across Humean value degrees of freedom in AI training",
+        "field": "node_rationale",
+        "json_new_value": "\"Problem mechanism enabling patch resistance: source details how training on 1000 problems spanning 12 value dimensions fails to constrain a 13th dimension uncovered by training distribution. Directly explains why agent competence doesn't generalize across domain (Section: Degrees of freedom problem analysis)\"",
+        "reason": "Add missing required field documenting causal mechanism"
+      },
+      {
+        "node_name": "Correlated coverage principle for robust alignment",
+        "field": "node_rationale",
+        "json_new_value": "\"Core theoretical insight organizing all proposed solutions: 'when there's something like a central tendency or core or simple principle... then when natural selection built brains... it accidentally built brains that could figure out General Relativity.' Foundational concept upon which all three proposed interventions (low-impact, anapartistic, DWIM) are based (Section: Correlated coverage principle definition)\"",
+        "reason": "Add missing required field documenting theoretical centrality"
+      },
+      {
+        "node_name": "Adoption of core alignment principles to achieve correlated coverage",
+        "field": "node_rationale",
+        "json_new_value": "\"Design philosophy translating correlated coverage principle into practice: source argues designers should 'find places, problems to tackle, where there may be correlated coverage' and encode single compact principles rather than enumerate constraints. This strategic choice justifies all three proposed specific implementations (Section: Core principle selection strategy)\"",
+        "reason": "Add missing required field explaining why this design rationale is essential"
+      },
+      {
+        "node_name": "Low-impact penalty objective in AI utility function",
+        "field": "node_rationale",
+        "json_new_value": "\"First instantiation of core principle approach: source explicitly positions low-impact as concrete operationalization of correlated coverage design philosophy, chosen because 'there's something like a core idea for Try not to impact unnecessarily large amounts of stuff in a way that there isn't a core idea for Try not to do anything that decreases value' (Section: Low-impact selection rationale)\"",
+        "reason": "Add missing required field with source-specific justification for this implementation choice"
+      },
+      {
+        "node_name": "Conceptual argument that low-impact is compact and generalisable",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence for low-impact mechanism: 'the notion of being low impact in general... has a simple-enough core to be passed on by training or specification in a way that generalizes across sharp capability gains' provides theoretical support for expecting generalization (Section: Low-impact compactness argument)\"",
+        "reason": "Add missing required field documenting validation approach"
+      },
+      {
+        "node_name": "Anapartistic reasoning for external correction",
+        "field": "node_rationale",
+        "json_new_value": "\"Second core principle candidate for correlated coverage: source presents anapartistic reasoning as alternative approach where 'there's a core central idea that covers everything we mean by an agent B letting agent A correct it' with hope that this core covers all oversight scenarios (Section: Anapartistic reasoning as core principle)\"",
+        "reason": "Add missing required field explaining why this principle merits investigation"
+      },
+      {
+        "node_name": "Agent architecture deferring to overseer corrections (anapartistic implementation)",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation mechanism for anapartistic core principle: operationalizes deference through architectural preservation of correction channels, structurally preventing agent from interfering with safety measures even during optimization (Section: Anapartistic implementation mechanism)\"",
+        "reason": "Add missing required field documenting how principle is instantiated"
+      },
+      {
+        "node_name": "Conceptual proof-of-concept reasoning for anapartistic coverage",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence for anapartistic generalization: 'if you get 100 problems right [via anapartistic reasoning], and then the next 1000 problems are gotten right without further tweaking, and it looks like there's a central core idea behind it... maybe you're done.' Provides conceptual argument for correlated coverage through deference principle (Section: Anapartistic proof-of-concept reasoning)\"",
+        "reason": "Add missing required field documenting validation logic"
+      },
+      {
+        "node_name": "Do What I Mean principle for user-aligned action selection",
+        "field": "node_rationale",
+        "json_new_value": "\"Third core principle candidate for correlated coverage: source proposes DWIM as approach where agent models user and only performs actions with confidence user would approve, hoping this core principle covers value alignment better than enumerating constraints (Section: DWIM as core principle)\"",
+        "reason": "Add missing required field explaining theoretical motivation"
+      },
+      {
+        "node_name": "User-modelling with uncertainty-avoidant action selection (DWIM implementation)",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation mechanism for DWIM principle: operationalizes through internal user-intention models and abstention/clarification on uncertain outcomes, structurally implementing the core idea of user-aligned action selection (Section: DWIM implementation mechanism)\"",
+        "reason": "Add missing required field documenting implementation approach"
+      },
+      {
+        "node_name": "Conceptual argument that DWIM reduces complexity versus full value encoding",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence for DWIM compactness: 'there's something like a core or a center to the notion of Agent X does what Agent Y asks... where we can get correlated coverage... with less complexity than it would take to encode values directly' provides theoretical support for DWIM generalization (Section: DWIM complexity argument)\"",
+        "reason": "Add missing required field explaining validation evidence"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Apply low-impact regularization during fine-tuning and pre-deployment testing",
+        "type": "intervention",
+        "description": "During RLHF or similar fine-tuning phases, include an explicit low-impact penalty term and evaluate models in stress tests for unintended side-effects.",
+        "aliases": [
+          "train with low-impact penalty",
+          "low-impact fine-tuning"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Implement DWIM-based user-intention modelling during deployment",
+        "type": "intervention",
+        "description": "In deployed systems maintain live user-modelling modules that veto or seek clarification when confidence in user approval is low.",
+        "aliases": [
+          "deploy DWIM agents"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Design models with anapartistic reasoning architecture enabling overseer corrections",
+        "type": "intervention",
+        "description": "At model-design time embed an architecture that preserves and honours external correction channels, preventing interference with safety measures.",
+        "aliases": [
+          "build deference-enabled models"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Observed human general epistemology enabled by Bayesian updating and simplicity prior",
+        "type": "concept",
+        "description": "Humans, selected for simple survival tasks, could later derive General Relativity, suggesting a core epistemic principle can generalise widely.",
+        "aliases": [
+          "human epistemic generalisation evidence",
+          "Bayesian-simplicity human example"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Patch resistant value misalignment in advanced AI systems",
+        "type": "concept",
+        "description": "Advanced AI may appear aligned on many training problems yet diverge on a novel problem because earlier coverage failed to constrain all Humean degrees of freedom.",
+        "aliases": [
+          "patch-resistant misalignment",
+          "value misalignment despite training"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Uncorrelated coverage across Humean value degrees of freedom in AI training",
+        "type": "concept",
+        "description": "Because later problems may depend on latent value dimensions not exercised during training, success on earlier tasks need not predict success on future tasks.",
+        "aliases": [
+          "uncorrelated value coverage",
+          "missing value dimensions"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Correlated coverage principle for robust alignment",
+        "type": "concept",
+        "description": "If an AI embodies a compact core idea whose application generalises, solving many training problems will highly correlate with solving future ones in the same domain.",
+        "aliases": [
+          "correlated coverage concept",
+          "coverage that generalises"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adoption of core alignment principles to achieve correlated coverage",
+        "type": "concept",
+        "description": "Rather than enumerating forbidden impacts, designers should encode a single compact principle expected to cover all relevant cases.",
+        "aliases": [
+          "core-principle alignment design",
+          "principle-centric safety"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Low-impact penalty objective in AI utility function",
+        "type": "concept",
+        "description": "Embed a penalty for causing large unintended changes, hoping that the simplicity of ‘low impact’ generalises better than listing every bad outcome.",
+        "aliases": [
+          "low-impact regularisation",
+          "impact minimisation term"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conceptual argument that low-impact is compact and generalisable",
+        "type": "concept",
+        "description": "Author asserts that ‘low impact in general’ may be simple enough to generalise across sharp capability gains, unlike listing bad impacts.",
+        "aliases": [
+          "low-impact compactness reasoning",
+          "low-impact correlated coverage evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Anapartistic reasoning for external correction",
+        "type": "concept",
+        "description": "Design the AI around a core idea of letting an overseer correct it without manipulating their safety measures.",
+        "aliases": [
+          "anapartistic core principle",
+          "deference-based alignment"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Agent architecture deferring to overseer corrections (anapartistic implementation)",
+        "type": "concept",
+        "description": "Structure the agent (B) so that it actively preserves the ability of another agent (A) to intervene and correct it.",
+        "aliases": [
+          "correction-deference architecture",
+          "anapartistic mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conceptual proof-of-concept reasoning for anapartistic coverage",
+        "type": "concept",
+        "description": "Author argues that if 100 problems are solved by the same deference principle, remaining problems may also be solved, indicating correlated coverage.",
+        "aliases": [
+          "anapartistic compactness argument"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Do What I Mean principle for user-aligned action selection",
+        "type": "concept",
+        "description": "Base behaviour on modelling the user and only performing actions whose consequences it is confident the user would approve.",
+        "aliases": [
+          "DWIM core principle",
+          "model user intentions"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "User-modelling with uncertainty-avoidant action selection (DWIM implementation)",
+        "type": "concept",
+        "description": "Implement internal user models and abstain or query when consequence approval is uncertain.",
+        "aliases": [
+          "DWIM mechanism",
+          "user intent modelling"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conceptual argument that DWIM reduces complexity versus full value encoding",
+        "type": "concept",
+        "description": "Author claims DWIM may achieve correlated coverage with less complexity than encoding all human values explicitly.",
+        "aliases": [
+          "DWIM compactness argument"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Patch resistant value misalignment in advanced AI systems",
+        "target_node": "Uncorrelated coverage across Humean value degrees of freedom in AI training",
+        "description": "Misalignment arises because training success fails to constrain all value dimensions.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Uncorrelated coverage across Humean value degrees of freedom in AI training",
+        "target_node": "Correlated coverage principle for robust alignment",
+        "description": "Establishing correlated coverage directly tackles the uncorrelated coverage problem.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Correlated coverage principle for robust alignment",
+        "target_node": "Observed human general epistemology enabled by Bayesian updating and simplicity prior",
+        "description": "Human epistemic success is cited as evidence that a core principle can generalise.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Adoption of core alignment principles to achieve correlated coverage",
+        "target_node": "Low-impact penalty objective in AI utility function",
+        "description": "Low-impact is a concrete instantiation of a core alignment principle.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Low-impact penalty objective in AI utility function",
+        "target_node": "Conceptual argument that low-impact is compact and generalisable",
+        "description": "Argument provides supporting evidence that low-impact will generalise.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Conceptual argument that low-impact is compact and generalisable",
+        "target_node": "Apply low-impact regularization during fine-tuning and pre-deployment testing",
+        "description": "If argument holds, practitioners should incorporate low-impact penalties in training and testing.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Anapartistic reasoning for external correction",
+        "target_node": "Agent architecture deferring to overseer corrections (anapartistic implementation)",
+        "description": "Deference-preserving architecture realises anapartistic reasoning.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Agent architecture deferring to overseer corrections (anapartistic implementation)",
+        "target_node": "Conceptual proof-of-concept reasoning for anapartistic coverage",
+        "description": "Reasoning about 100 correct problems and next 1000 provides support.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Conceptual proof-of-concept reasoning for anapartistic coverage",
+        "target_node": "Design models with anapartistic reasoning architecture enabling overseer corrections",
+        "description": "Supporting reasoning encourages implementing such architectures.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Do What I Mean principle for user-aligned action selection",
+        "target_node": "User-modelling with uncertainty-avoidant action selection (DWIM implementation)",
+        "description": "User modelling and cautious execution instantiate DWIM.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "User-modelling with uncertainty-avoidant action selection (DWIM implementation)",
+        "target_node": "Conceptual argument that DWIM reduces complexity versus full value encoding",
+        "description": "Argument gives conceptual evidence of DWIM’s generality.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Conceptual argument that DWIM reduces complexity versus full value encoding",
+        "target_node": "Implement DWIM-based user-intention modelling during deployment",
+        "description": "If DWIM is compact and generalisable, practitioners should deploy user-modelling modules.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "0b1675631987c4ee338478075723ff90"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.409297"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Schema requires 'node_rationale', 'edge_confidence_rationale', 'edge_rationale' fields on ALL nodes and edges per final_output_format specifications. Source provides extensive justification but extraction template did not populate these required fields. This violates mandatory schema compliance despite content being well-sourced.",
+      "BLOCKER: Intervention nodes missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields explicitly required in schema. Without these, downstream safety researchers cannot evaluate intervention viability or phase-appropriateness.",
+      "MAJOR: Missing critical edge from 'Patch resistant value misalignment' to 'Correlated coverage principle' - source explicitly states this relationship: 'From the standpoint of patch resistance concept, understanding correlated coverage... is what leads to traversing the gradient' (Section: Gradient of solutions). This edge is essential to knowledge fabric integration.",
+      "MAJOR: Missing edge connecting 'Uncorrelated coverage' to new concept node 'Later problems drawn from different distribution' - source states: 'later problems are not drawn from the same barrel as prior problems' and '[a] 13th degree of freedom that isn't shadowed in the 1000 issues'. This is the causal mechanism enabling uncorrelated coverage.",
+      "MAJOR: Intervention lifecycle assignments incorrect: (1) Low-impact should be 2,3,4 (pre-training architecture → fine-tuning objective → pre-deployment testing), not just 3; source discusses 'passing on by training or specification... generalizes across sharp capability gains'; (2) DWIM and Anapartistic should include lifecycle 1 (model design phase requirements); (3) No intervention should have lifecycle only at 5 without preceding phases for architectural/training setup.",
+      "MAJOR: Missing nodes for Frankena's list comparison, Humean degree-of-freedom mechanism, and distribution-shift problem - these are distinct concept nodes appearing in the knowledge path from risk to interventions but not extracted. Source discusses: 'All terms in Frankena's list of desiderata have their own Humean freedom' and 'later problems not drawn from same barrel'.",
+      "MAJOR: Missing comparison edge between low-impact and value-decrementation approaches - source explicitly justifies low-impact selection: 'reason to work on low-impact is... there's a core idea for it in a way there isn't for Try not to do anything that decreases value'. This comparative analysis is essential design rationale.",
+      "MEDIUM: Edge confidence from 'Correlated coverage' to 'Human epistemology example' marked as 2 should be 3 (Medium evidence) - source provides systematic reasoning about human epistemic generalization as evidence for correlated coverage principle, not speculative connection.",
+      "MEDIUM: Intervention maturity levels may be too aggressive - three interventions marked as maturity 1 with source only providing theoretical hopes and 'maybe' conditional arguments. Source: 'The hope that anapartistic reasoning could be...' and 'Maybe there's a core central idea' suggest maturity 1 (Foundational/Theoretical) is correct but rationales must be explicit.",
+      "MINOR: All nodes and edges contain null 'embedding' field not in schema specifications - should be removed.",
+      "CONSISTENCY: Node names follow granularity guidelines appropriately (e.g., 'Low-impact penalty objective in AI utility function' includes context and specificity). Aliases are reasonable 2-3 alternatives. Merging across 500k sources would be facilitated by this naming approach.",
+      "REFERENTIAL INTEGRITY: All 16 edges properly reference existing nodes - zero orphans, no dangling references. Graph structure is connected and acyclic for concept nodes with interventions as proper terminal nodes.",
+      "VALIDATION EVIDENCE PATTERN: Three intervention nodes correctly end with validation evidence nodes flowing through motivates edges - path structure follows required pattern. However, validation evidence nodes lack supporting source section references in rationales.",
+      "CRITICAL INFERENCE GAPS: Source discusses value specification complexity (Frankena's list, Humean freedom) as mechanism but extraction does not decompose this into extractable concept nodes as required by 'decomposition of frameworks' instruction. Humean degrees of freedom should be its own problem_analysis node.",
+      "CRITICAL INFERENCE GAPS: Source distinguishes low-impact vs value-decrementation as design choice ('reason to work on low-impact is that...') but this comparative design rationale is not represented as node or edge despite being central to why low-impact approach was selected over alternatives."
+    ]
+  },
+  "url": "https://arbital.com/p/correlated_coverage",
+  "paper_id": "cd0edd240c32362ae487191097ea0579",
+  "ard_file_source": "arbital",
+  "errors": null
+}

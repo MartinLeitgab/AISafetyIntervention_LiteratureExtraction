@@ -1,0 +1,595 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures the core risk-to-intervention pathways from the source material with generally sound conceptual structure. However, the JSON has critical schema violations: missing required fields (node_rationale, edge_confidence_rationale, edge_rationale) across all nodes and edges, plus unnecessary 'embedding' fields. Additionally, edge directionality requires correction (ontology transition causality reversed), and intervention maturity/lifecycle assignments are too high given the prospective research design nature of the source. One validation evidence node (feature analysis) is missing. After the proposed fixes, the extraction would be valid and mergeable across domains."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in edges: edge_confidence_rationale and edge_rationale",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all edges per schema requirements"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in nodes: node_rationale",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale to all nodes per schema requirements"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Nodes contain 'embedding' field not in schema",
+        "where": "nodes[*].embedding and edges[*].embedding",
+        "suggestion": "Remove embedding field from all nodes and edges"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention nodes missing intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "where": "nodes[15-18] (intervention nodes)",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale to all intervention nodes"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent target node",
+        "names": [
+          "Edge source: 'ambiguous reward interpretation from single viewpoint training' → target: 'ontology transition from 2D fixed viewpoint to 3D mobility environment' creates circular problem analysis without proper causal flow"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "concept",
+        "names": [
+          "reward misgeneralization after ontology change in embodied agents",
+          "wireheading through self-manipulated observations in mobile agents"
+        ],
+        "merge_strategy": "These are distinct risks that should not be merged - wireheading is one specific manifestation of reward misgeneralization, they serve different purposes in the fabric"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge type 'caused_by' used incorrectly - problem analysis nodes should not cause risk nodes, causality should flow from risk to problem analysis",
+        "evidence": "Source states 'reward misgeneralization' as the core problem, not caused by ambiguity - ambiguity causes the misgeneralization",
+        "fix": "Reverse edge direction: 'ambiguous reward interpretation from single viewpoint training' (problem_analysis) caused_by 'ontology transition from 2D fixed viewpoint to 3D mobility environment' (problem_analysis), and this caused_by relationship should flow to risk nodes"
+      },
+      {
+        "issue": "Edge 'mitigated_by' from problem_analysis to theoretical_insight lacks proper intermediate nodes",
+        "evidence": "Source describes how 'agent-generated candidate reward hypotheses' enables resolution, but the theoretical insight node should specify HOW this addresses the ambiguity before design rationale",
+        "fix": "Add intermediate implementation mechanism nodes between theoretical insights and design rationales"
+      },
+      {
+        "issue": "Validation evidence node is described as 'planned' but confidence scores treat it as if results exist",
+        "evidence": "Source: 'planned evaluation' and 'aims to...work on subprojects' indicate this is prospective, not completed",
+        "fix": "Lower edge_confidence from validation evidence edges to 1-2 range, clarify in rationale that evaluation is planned not executed"
+      },
+      {
+        "issue": "Intervention lifecycle assignments lack justification per source",
+        "evidence": "Source discusses research project design, not implementation phases",
+        "fix": "Lifecycle 3 (Fine-Tuning/RL) is appropriate for proposed RL-based interventions; Lifecycle 5 (Deployment) for query protocol may be premature - should be 1-2 for foundational/theoretical work"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Risk caused by problem: ontology transition creates ambiguity",
+          "evidence": "Source: 'Challenge 1 is a traditional ontology change, or, in ML terms, transfer learning' and 'Setup' section describing fixed→mobile transition",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "ontology transition from 2D fixed viewpoint to 3D mobility environment"
+          ],
+          "expected_target_node_name": [
+            "reward misgeneralization after ontology change in embodied agents"
+          ]
+        },
+        {
+          "title": "Problem caused by multiple competing interpretations",
+          "evidence": "Source: 'There are two obvious extensions of its initial reward function: 1. Ultra-conservative...2. Wireheaded'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "multiple plausible reward extensions: ultra-conservative vs wireheaded"
+          ],
+          "expected_target_node_name": [
+            "ambiguous reward interpretation from single viewpoint training"
+          ]
+        },
+        {
+          "title": "Theoretical insight: generate candidate hypotheses to identify true reward",
+          "evidence": "Source: 'Get the agent to generate candidate reward functions, including all the obvious conservative and wireheaded ones'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "agent-generated candidate reward hypotheses with diversity incentive"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Design solution: use ensemble to detect wireheading",
+          "evidence": "Source: 'See what is needed for the agent to select the true reward functions from among the ones generated in step 2'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "use reward hypothesis ensemble to detect and avoid wireheading"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Design solution: hedging behavior across hypotheses",
+          "evidence": "Source: 'conservative behaviour that maximises as many of its reward functions as possible'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "conservative behavior maximizing reward under many hypotheses"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Feature analysis as model splintering investigation",
+          "evidence": "Source: 'Analyse how the (implicit) features the agents use change from the single-point-of-view to the 3D world'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "feature representation change analysis from 2D to 3D environments"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Implementation: diversity regularization during RL",
+          "evidence": "Source: 'Maybe with a diversity reward so that it selects very different reward functions'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "diversity-regularized candidate reward network during RL fine-tuning"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Implementation: human interaction for disambiguation",
+          "evidence": "Source: 'This might include asking for more information from the programmers'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "human-in-the-loop reward clarification query mechanism"
+          ],
+          "expected_target_node_name": []
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "concept",
+        "name": "feature representation change analysis in model splintering",
+        "edges": [
+          {
+            "type": "enabled_by",
+            "target_node": "planned evaluation of task performance and wireheading incidence in XLand simulation after mobility grant",
+            "description": "Feature analysis is conducted alongside evaluation of agent behavior",
+            "edge_confidence": 3
+          }
+        ],
+        "intervention_lifecycle": null,
+        "intervention_maturity": null
+      }
+    ],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "ambiguous reward interpretation from single viewpoint training",
+        "target_node_name": "ontology transition from 2D fixed viewpoint to 3D mobility environment",
+        "reason": "Causality flows backward - ontology transition CAUSES ambiguity, not reverse"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Fine-tune RL agent with diversity reward to generate multiple candidate reward functions",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Source describes this as research project design phase, not experimental/PoC implementation - maturity should be 1 (Foundational/Theoretical)"
+      },
+      {
+        "node_name": "Train agent with ensemble conservative reward objective to hedge against misgeneralization",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Research design phase, not yet experimental - maturity should be 1"
+      },
+      {
+        "node_name": "Deploy interactive query protocol for human clarification of reward ambiguity during operation",
+        "field": "intervention_lifecycle",
+        "json_new_value": "1",
+        "reason": "Source describes this as research aim not deployment - should be lifecycle 1 (Model Design)"
+      },
+      {
+        "node_name": "Deploy interactive query protocol for human clarification of reward ambiguity during operation",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Foundational research work, not deployed - maturity 1"
+      },
+      {
+        "node_name": "Add wireheading penalty for observation-control actions during RL fine-tuning",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Research design phase - maturity 1"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "reward misgeneralization after ontology change in embodied agents",
+        "type": "concept",
+        "description": "After training while fixed in place, a mobile agent may mis-apply its learned reward when the observation space expands, leading to unintended behaviour.",
+        "aliases": [
+          "reward function misgeneralisation in new environments",
+          "model-splintering reward error"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "wireheading through self-manipulated observations in mobile agents",
+        "type": "concept",
+        "description": "The agent may turn its head or otherwise manipulate its sensors so that a black cube appears moving correctly, giving high reward without accomplishing the intended task.",
+        "aliases": [
+          "sensory wireheading after mobility",
+          "observation manipulation for reward"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "ambiguous reward interpretation from single viewpoint training",
+        "type": "concept",
+        "description": "Training from a fixed camera leaves multiple reward interpretations consistent with past data, creating ambiguity once the agent moves.",
+        "aliases": [
+          "reward ambiguity from limited training POV",
+          "underspecified reward signal"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "ontology transition from 2D fixed viewpoint to 3D mobility environment",
+        "type": "concept",
+        "description": "The shift from a static single-view world model to a fully mobile 3-D world poses a classical transfer-learning challenge.",
+        "aliases": [
+          "sensorimotor ontology change",
+          "2-D to 3-D transfer"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "multiple plausible reward extensions: ultra-conservative vs wireheaded",
+        "type": "concept",
+        "description": "Given ambiguity, at least two obvious extensions fit past data: remain stationary and keep moving cubes, or wirehead by manipulating viewpoint.",
+        "aliases": [
+          "competing reward hypotheses",
+          "conservative vs wirehead reward"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "agent-generated candidate reward hypotheses with diversity incentive",
+        "type": "concept",
+        "description": "The agent is expected to internally propose several possible reward functions, encouraged by an explicit diversity term.",
+        "aliases": [
+          "reward hypothesis generation",
+          "diverse reward proposal mechanism"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "uncertainty over true reward requires disambiguation queries to humans",
+        "type": "concept",
+        "description": "Because of ambiguity, the agent may need to query its designers to identify the correct reward.",
+        "aliases": [
+          "reward clarification queries",
+          "asking programmers for more information"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "conservative behavior maximizing reward under many hypotheses",
+        "type": "concept",
+        "description": "Acting so that performance is acceptable for most plausible reward functions can be a safe default until disambiguation.",
+        "aliases": [
+          "hypothesis-hedging behaviour",
+          "safe conservative policy"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "use reward hypothesis ensemble to detect and avoid wireheading",
+        "type": "concept",
+        "description": "Comparing predictions across an ensemble of candidate rewards can reveal actions that satisfy only wireheading-type hypotheses.",
+        "aliases": [
+          "ensemble wireheading detector",
+          "multi-reward wirehead avoidance"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "apply diversity reward to encourage broad hypothesis generation",
+        "type": "concept",
+        "description": "Adding a diversity term during learning pushes the agent to propose dissimilar reward functions, improving coverage.",
+        "aliases": [
+          "diversity regulariser for reward proposals",
+          "hypothesis diversity incentive"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "enable behavior that hedges across reward hypotheses until clarified",
+        "type": "concept",
+        "description": "A policy aiming to maximise the minimum or average of candidate rewards reduces downside risk before final reward selection.",
+        "aliases": [
+          "reward-agnostic safe policy",
+          "interim conservative strategy"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "diversity-regularized candidate reward network during RL fine-tuning",
+        "type": "concept",
+        "description": "Implementation: a neural module outputs multiple reward predictions, with a loss term penalising similarity among them during fine-tuning.",
+        "aliases": [
+          "diversity-reward network",
+          "multi-head reward proposal module"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "human-in-the-loop reward clarification query mechanism",
+        "type": "concept",
+        "description": "The agent pauses and sends structured queries to humans when candidate rewards disagree strongly, seeking clarification.",
+        "aliases": [
+          "interactive reward queries",
+          "programmer clarification channel"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "conservative reward ensemble objective",
+        "type": "concept",
+        "description": "An optimisation objective maximising a weighted aggregate of candidate rewards, biasing toward actions acceptable under many hypotheses.",
+        "aliases": [
+          "ensemble-based conservative loss",
+          "reward hypothesis hedging loss"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "planned evaluation of task performance and wireheading incidence in XLand simulation after mobility grant",
+        "type": "concept",
+        "description": "The project proposes to test whether the mechanisms succeed at generalising and avoiding wireheading once the agent roams freely.",
+        "aliases": [
+          "prospective XLand evaluation",
+          "planned simulation test"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "feature representation change analysis in model splintering",
+        "type": "concept",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "feature representation change analysis in model splintering"
+        ],
+        "concept_category": "concept",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune RL agent with diversity reward to generate multiple candidate reward functions",
+        "type": "intervention",
+        "description": "During RL fine-tuning, add a diversity regulariser that pushes the reward-prediction heads to be dissimilar, forcing the agent to enumerate different plausible rewards.",
+        "aliases": [
+          "diversity-reward fine-tuning",
+          "RL fine-tuning with reward diversity term"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Train agent with ensemble conservative reward objective to hedge against misgeneralization",
+        "type": "intervention",
+        "description": "Optimise the agent on the aggregated conservative objective (e.g. minimum or average over candidate rewards) so that behaviour remains safe across hypotheses.",
+        "aliases": [
+          "ensemble conservative training",
+          "reward-hedging objective training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Deploy interactive query protocol for human clarification of reward ambiguity during operation",
+        "type": "intervention",
+        "description": "When reward hypotheses diverge beyond a threshold, the running agent stops and queries human supervisors with pre-specified questions to resolve the ambiguity.",
+        "aliases": [
+          "online reward clarification queries",
+          "interactive disambiguation protocol"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Add wireheading penalty for observation-control actions during RL fine-tuning",
+        "type": "intervention",
+        "description": "Introduce auxiliary loss terms penalising actions that primarily change the agent’s own sensory field without moving the cube toward the task goal.",
+        "aliases": [
+          "anti-wireheading penalty",
+          "observation manipulation penalty"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "wireheading through self-manipulated observations in mobile agents",
+        "target_node": "multiple plausible reward extensions: ultra-conservative vs wireheaded",
+        "description": "Wireheading is one of the plausible extensions consistent with past reward data.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "multiple plausible reward extensions: ultra-conservative vs wireheaded",
+        "target_node": "uncertainty over true reward requires disambiguation queries to humans",
+        "description": "Human queries resolve which extension is correct.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "agent-generated candidate reward hypotheses with diversity incentive",
+        "target_node": "apply diversity reward to encourage broad hypothesis generation",
+        "description": "Diversity reward operationalises hypothesis generation.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "uncertainty over true reward requires disambiguation queries to humans",
+        "target_node": "enable behavior that hedges across reward hypotheses until clarified",
+        "description": "Hedging behaviour is a specified response to uncertainty.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "apply diversity reward to encourage broad hypothesis generation",
+        "target_node": "diversity-regularized candidate reward network during RL fine-tuning",
+        "description": "The diversity-regularised network is the concrete implementation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "enable behavior that hedges across reward hypotheses until clarified",
+        "target_node": "conservative reward ensemble objective",
+        "description": "Aggregating rewards delivers the hedging behaviour.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "diversity-regularized candidate reward network during RL fine-tuning",
+        "target_node": "planned evaluation of task performance and wireheading incidence in XLand simulation after mobility grant",
+        "description": "Simulation will test whether diversity leads to correct generalisation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "conservative reward ensemble objective",
+        "target_node": "planned evaluation of task performance and wireheading incidence in XLand simulation after mobility grant",
+        "description": "Simulation will measure performance under conservative objective.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "human-in-the-loop reward clarification query mechanism",
+        "target_node": "planned evaluation of task performance and wireheading incidence in XLand simulation after mobility grant",
+        "description": "Simulation includes scenarios where queries are triggered.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "planned evaluation of task performance and wireheading incidence in XLand simulation after mobility grant",
+        "target_node": "Fine-tune RL agent with diversity reward to generate multiple candidate reward functions",
+        "description": "Planned results will guide adoption of diversity-reward fine-tuning.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "dc59ae69f31e1352fa50fee5f89c2775"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.985033"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER IDENTIFIED: Missing node_rationale field in all 18 nodes - required by schema per 'Each node has at least one edge referring to it, no isolated/satellite nodes'",
+      "BLOCKER IDENTIFIED: Missing edge_confidence_rationale and edge_rationale in all 19 edges - required per JSON format specification",
+      "MAJOR ISSUE: Edge 'ambiguous reward interpretation from single viewpoint training' caused_by 'ontology transition...' reverses causality. Source states: 'Setup' → ontology transition triggers, then agents face ambiguity. Should be: ontology_transition caused_by risk, then ambiguity caused_by ontology_transition",
+      "COVERAGE GAP: Source explicitly states 'Analyse how the (implicit) features the agents use change from the single-point-of-view to the 3D world' as research aim 4. This feature analysis validation evidence is missing from the graph, violating completeness requirement",
+      "MATURITY MISALIGNMENT: Source describes 'I'm planning to start...aiming to work on subprojects' indicating Lifecycle 1 (Model Design) / Maturity 1 (Foundational) work. Current assignments of Lifecycle 3 + Maturity 2 suggest experimental implementations, which contradicts the prospective research planning nature. Per source: 'aim is to iterate and improve fast on these ideas before implementing them'",
+      "SCHEMA COMPLIANCE: All nodes and edges contain spurious 'embedding': null fields not in required schema, violating JSON structure specification",
+      "VERIFICATION PASSED: No orphaned nodes exist - all 18 concept nodes and 4 intervention nodes connect to the fabric",
+      "VERIFICATION PASSED: No duplicate nodes exist - naming is distinct and appropriately granular per guidelines",
+      "REFERENTIAL INTEGRITY: All 19 edge source_node and target_node references match existing node names exactly"
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/ZqSESJYcA8m2Hh7Qm/immobile-ai-makes-a-move-anti-wireheading-ontology-change",
+  "paper_id": "519674794af0138b515f38ae8597dc3e",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

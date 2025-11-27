@@ -1,0 +1,367 @@
+{
+  "nodes": [
+    {
+      "name": "Mode collapse (low output entropy) in large language models",
+      "aliases": [
+        "output entropy collapse in LLMs",
+        "overconfident low-diversity LLM outputs"
+      ],
+      "type": "concept",
+      "description": "Risk that a language model’s probability mass concentrates on few tokens, yielding repetitive, over-confident answers and poor calibration.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Introduced in Background and throughout post as central phenomenon needing mitigation."
+    },
+    {
+      "name": "Supervised fine-tuning without KL regularization reduces output entropy in LLMs",
+      "aliases": [
+        "finetuning-induced entropy reduction",
+        "mode collapse mechanism in text-davinci-002"
+      ],
+      "type": "concept",
+      "description": "Experiments show text-davinci-002 (finetuned on highly-rated samples) has markedly lower entropy than both the base model and RLHF model, indicating that unregularised finetuning can drive mode collapse.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Discussed under Results as the identified mechanism causing the risk."
+    },
+    {
+      "name": "KL divergence penalty in RLHF constrains entropy shift in LLMs",
+      "aliases": [
+        "KL regularization preserves entropy",
+        "entropy bounding via KL in RLHF"
+      ],
+      "type": "concept",
+      "description": "Theoretical point that the KL term used during RLHF keeps the learned policy close to the base model, mathematically bounding the change in entropy and hence limiting mode collapse.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Explained in Interpretation section as core theoretical explanation for observations."
+    },
+    {
+      "name": "Add regularization mechanisms to maintain entropy during fine-tuning",
+      "aliases": [
+        "entropy-preserving training design",
+        "regularized fine-tuning strategy"
+      ],
+      "type": "concept",
+      "description": "Design principle that KL or explicit entropy regularization should be added to training objectives to prevent over-confident, low-entropy policies.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Proposed in Interpretation as practical takeaway for alignment researchers."
+    },
+    {
+      "name": "RLHF training pipeline with KL divergence penalty to base model",
+      "aliases": [
+        "KL-regularised RLHF",
+        "policy-in-KL-ball RLHF"
+      ],
+      "type": "concept",
+      "description": "Implementation mechanism where PPO (or similar) optimisation includes a KL penalty term that discourages large divergence from the pre-trained model, implicitly stabilising entropy.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Referenced as existing practice explaining text-davinci-003 behaviour."
+    },
+    {
+      "name": "Direct entropy regularization methods (e.g., SAC) in RL training for LLMs",
+      "aliases": [
+        "entropy-regularized RL for LLMs",
+        "soft-actor-critic style entropy bonus"
+      ],
+      "type": "concept",
+      "description": "Technique where an explicit entropy bonus is added to the RL objective, encouraging high-entropy output distributions beyond what a KL term provides.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Mentioned in footnote on connections to regularising entropy (footnote 3)."
+    },
+    {
+      "name": "Empirical entropy comparison across davinci, text-davinci-002, text-davinci-003",
+      "aliases": [
+        "entropy measurements across OpenAI models",
+        "mode collapse reproduction study"
+      ],
+      "type": "concept",
+      "description": "Validation experiment showing RLHF model maintains or increases entropy relative to base, while supervised finetuned model collapses, across several prompts.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Main Results section provides plotted entropy values substantiating theory."
+    },
+    {
+      "name": "Prompt-based detection of mode collapse in text-davinci-002",
+      "aliases": [
+        "97-output phenomenon",
+        "low-entropy integer prompt evidence"
+      ],
+      "type": "concept",
+      "description": "Specific prompts (e.g., \"Tell me a random integer ...\") reliably elicit deterministic or repetitive answers from text-davinci-002, serving as concrete evidence of collapse.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Detailed under Reproducing the qualitative examples; forms the empirical basis for detection strategy."
+    },
+    {
+      "name": "Prompt-based entropy measurement enables early detection of mode collapse",
+      "aliases": [
+        "entropy diagnostics via prompts",
+        "prompt-suite detection insight"
+      ],
+      "type": "concept",
+      "description": "Insight that measuring Shannon entropy on curated prompts can reveal emerging mode collapse before deployment, providing a practical diagnostic.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Inferred from combination of experimental evidence and authors’ recommendation for further testing."
+    },
+    {
+      "name": "Integrate entropy calibration testing before deployment of LLMs",
+      "aliases": [
+        "entropy QA design",
+        "mode collapse testing strategy"
+      ],
+      "type": "concept",
+      "description": "Design rationale to embed entropy-based quality-assurance gates into release pipelines to ensure deployed models remain well-calibrated and diverse.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Suggested in Additional note promoting further systematic testing."
+    },
+    {
+      "name": "Prompt suite measuring entropy across random integer and conversation prompts",
+      "aliases": [
+        "entropy benchmark suite",
+        "mode collapse test harness"
+      ],
+      "type": "concept",
+      "description": "Implementation mechanism: run a fixed battery of prompts (random-integer, greentext, code snippets) and compute output entropy, flagging abnormally low values.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Derived from prompts listed in Prompts section and their use in experiments."
+    },
+    {
+      "name": "Fine-tune LLMs with KL-divergence penalty to preserve entropy",
+      "aliases": [
+        "KL-regularized supervised fine-tuning",
+        "FeedME with KL term"
+      ],
+      "type": "intervention",
+      "description": "During supervised fine-tuning, add a KL penalty against base model logits so updates cannot overly sharpen the output distribution, thereby preventing mode collapse.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Addresses fine-tuning phase where mode collapse arises (Interpretation).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Supported by early empirical evidence but not yet systematically validated beyond this study (Results).",
+      "node_rationale": "Direct actionable step implied by theoretical explanation and validation evidence."
+    },
+    {
+      "name": "Incorporate explicit entropy regularization term during RLHF optimization",
+      "aliases": [
+        "entropy-bonus RLHF",
+        "SAC-style entropy RLHF"
+      ],
+      "type": "intervention",
+      "description": "Add an entropy bonus (e.g., as in Soft Actor-Critic) to the RLHF objective to actively encourage high-entropy policies in addition to the KL term.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Executed during RLHF fine-tuning loop (footnote 3 discussion).",
+      "intervention_maturity": "1",
+      "intervention_maturity_rationale": "Proposed theoretically; no published experiments in this source.",
+      "node_rationale": "Extends implementation mechanisms to further guard against mode collapse."
+    },
+    {
+      "name": "Perform pre-deployment prompt-based entropy calibration tests to identify mode collapse",
+      "aliases": [
+        "entropy QA testing",
+        "mode collapse detection suite"
+      ],
+      "type": "intervention",
+      "description": "Before releasing a model, run the prompt-suite entropy benchmark and block or retrain models that exhibit statistically significant entropy reduction.",
+      "concept_category": null,
+      "intervention_lifecycle": "4",
+      "intervention_lifecycle_rationale": "Applies after training but before public release (Additional note).",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Technique demonstrated informally here; systematic tooling not yet standard.",
+      "node_rationale": "Provides actionable detection safeguard derived from experimental evidence."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Mode collapse (low output entropy) in large language models",
+      "target_node": "Supervised fine-tuning without KL regularization reduces output entropy in LLMs",
+      "description": "Mode collapse is observed chiefly in models that underwent unregularised supervised fine-tuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Multiple prompts show collapse only for text-davinci-002 (Results).",
+      "edge_rationale": "Connects empirical risk to identified training mechanism."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Supervised fine-tuning without KL regularization reduces output entropy in LLMs",
+      "target_node": "KL divergence penalty in RLHF constrains entropy shift in LLMs",
+      "description": "Adding a KL penalty is posited to alleviate the entropy reduction caused by plain supervised fine-tuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Theoretical argument plus supporting empirical contrast with RLHF model (Interpretation).",
+      "edge_rationale": "Shows how theoretical insight counters the identified problem."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "KL divergence penalty in RLHF constrains entropy shift in LLMs",
+      "target_node": "Add regularization mechanisms to maintain entropy during fine-tuning",
+      "description": "Insight informs the design choice to embed regularisation in training objectives.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Interpretation section explicitly links KL argument to training recommendations.",
+      "edge_rationale": "Moves from theory to design principle."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Add regularization mechanisms to maintain entropy during fine-tuning",
+      "target_node": "RLHF training pipeline with KL divergence penalty to base model",
+      "description": "KL-regularised RLHF is a concrete implementation of the regularisation design principle.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "OpenAI RLHF details and empirical behaviour of text-davinci-003 support this link (Results).",
+      "edge_rationale": "Maps high-level design into specific mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RLHF training pipeline with KL divergence penalty to base model",
+      "target_node": "Empirical entropy comparison across davinci, text-davinci-002, text-davinci-003",
+      "description": "Experiments show that the KL-regularised RLHF model maintains high entropy, validating the mechanism.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Direct empirical measurement across prompts (Results figure).",
+      "edge_rationale": "Evidence confirms mechanism’s effectiveness."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical entropy comparison across davinci, text-davinci-002, text-davinci-003",
+      "target_node": "Fine-tune LLMs with KL-divergence penalty to preserve entropy",
+      "description": "Evidence that KL preserves entropy motivates applying KL during future finetuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Observed success of KL-regularised model provides practical impetus.",
+      "edge_rationale": "Links validation to actionable intervention."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Add regularization mechanisms to maintain entropy during fine-tuning",
+      "target_node": "Direct entropy regularization methods (e.g., SAC) in RL training for LLMs",
+      "description": "Entropy-bonus RL is an alternative concrete mechanism embodying the regularisation design.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Footnote discusses possibility; no direct experiment here.",
+      "edge_rationale": "Expands design rationale into second implementation path."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Direct entropy regularization methods (e.g., SAC) in RL training for LLMs",
+      "target_node": "Empirical entropy comparison across davinci, text-davinci-002, text-davinci-003",
+      "description": "Existing entropy measurements suggest high-entropy policies are feasible, indirectly supporting entropy-bonus approaches.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Inference based on similarity; not directly tested.",
+      "edge_rationale": "Connects inferred mechanism to available evidence."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical entropy comparison across davinci, text-davinci-002, text-davinci-003",
+      "target_node": "Incorporate explicit entropy regularization term during RLHF optimization",
+      "description": "Empirical success of higher-entropy models encourages adding explicit entropy bonuses in RLHF.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Logical extension; not explicitly proposed by authors.",
+      "edge_rationale": "Evidence inspires additional intervention idea."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Supervised fine-tuning without KL regularization reduces output entropy in LLMs",
+      "target_node": "Prompt-based entropy measurement enables early detection of mode collapse",
+      "description": "Observation of collapse during finetuning motivates seeking diagnostic methods.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Implied causal reasoning; not formally stated.",
+      "edge_rationale": "Problem drives need for detection insight."
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Prompt-based entropy measurement enables early detection of mode collapse",
+      "target_node": "Integrate entropy calibration testing before deployment of LLMs",
+      "description": "Insight supports the design decision to embed entropy QA in release workflows.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Logical step from diagnostic capability to QA design.",
+      "edge_rationale": "Theory informs design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrate entropy calibration testing before deployment of LLMs",
+      "target_node": "Prompt suite measuring entropy across random integer and conversation prompts",
+      "description": "Prompt suite provides concrete mechanism to realise calibration testing.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Prompts explicitly listed and used for measurement (Prompts section).",
+      "edge_rationale": "Maps design to mechanism."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Prompt suite measuring entropy across random integer and conversation prompts",
+      "target_node": "Prompt-based detection of mode collapse in text-davinci-002",
+      "description": "Running the suite reproduced low-entropy outputs in text-davinci-002, validating the test harness.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Qualitative reproductions shown under Reproducing the qualitative examples.",
+      "edge_rationale": "Evidence confirms detection mechanism works."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Prompt-based detection of mode collapse in text-davinci-002",
+      "target_node": "Perform pre-deployment prompt-based entropy calibration tests to identify mode collapse",
+      "description": "Successful detection illustrates the value of making such tests mandatory before deployment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Concrete example drove recommendation for wider testing (Additional note).",
+      "edge_rationale": "Connects validation evidence to final intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.lesswrong.com/posts/pjesEx526ngE6dnmr/rlhf-does-not-appear-to-differentially-cause-mode-collapse"
+    },
+    {
+      "key": "title",
+      "value": "RLHF does not appear to differentially cause mode-collapse"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-03-20T15:39:45Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Arthur Conmy",
+        "beren"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "lesswrong"
+    }
+  ]
+}

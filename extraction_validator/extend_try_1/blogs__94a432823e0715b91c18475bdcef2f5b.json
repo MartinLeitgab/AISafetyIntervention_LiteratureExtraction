@@ -1,0 +1,646 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": false,
+    "flag_underperformance": false,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures the core reasoning pathways from the identified risk (misallocation of AI safety resources) through problem analysis (correlated answers driven by doom bias) to proposed interventions (structured surveys and scenario analysis). However, the extraction has schema violations (missing required rationale fields, undocumented embedding fields), incomplete coverage of related cognitive biases mentioned in the source, and insufficient rigor in edge confidence justifications. The node-to-edge referential integrity is sound, but concept categorizations need adjustment to align with the speculative nature of the source material. After applying the proposed fixes (adding nodes for related biases and cognitive mechanisms, adjusting concept categories, adding all required rationale fields, and removing extraneous fields), the knowledge graph will be valid and mergeable across the 500k datasource collection."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node field 'embedding' present but not in schema requirements; should be removed or documented",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes as it is not part of schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Edge field 'embedding' present but not in schema requirements; should be removed or documented",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges as it is not part of schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Missing required edge fields: 'edge_confidence_rationale' and 'edge_rationale' present in instructions but absent from all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' fields to all edges with detailed justification from source"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Missing required concept node field: 'node_rationale' absent from all concept nodes",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add 'node_rationale' field to all concept nodes explaining why essential to fabric"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention nodes missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields",
+        "where": "nodes[13-14].intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "suggestion": "Add these required rationale fields to all intervention nodes"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent node name",
+        "names": [
+          "Correlated answers to distinct AI risk questions among researchers",
+          "Multi-question survey including diverse AI doom-related items"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'Independent evaluation of discrete AI risk factors improves calibration' claims to be a 'theoretical insight' but the source text does not explicitly state this as a validated theory or insight. The author proposes this as a 'guess' and reasoning framework, not an established insight.",
+        "evidence": "SOURCE: 'I do not know what they are thinking, but I can make a guess that would explain the result: people are responding using a general factor of doom instead of considering the questions independently.' and 'I think that people should instead decide their answers to specific questions independently...'",
+        "fix": "Concept should be recategorized as 'design rationale' rather than 'theoretical insight' to better reflect the speculative nature of the proposal in the source"
+      },
+      {
+        "issue": "Node 'Thought experiment demonstrating many plausible AI futures from random risk parameters' categorized as 'validation evidence' but the source presents it as a proposed future research direction, not existing validation",
+        "evidence": "SOURCE: 'This suggests a possible topic for a vignette. Randomly choose 0 (doomy) or 1 (not doomy) for each of the nine questions I listed. Can you construct a plausible future for the development of AI using this combination?' (Footnote 6)",
+        "fix": "Recategorize as 'implementation mechanism' or move to design rationale, as it is proposed methodology rather than validated evidence"
+      },
+      {
+        "issue": "Edge confidence values do not always align with source evidence strength. Several edges marked confidence=2 when source provides stronger support",
+        "evidence": "SOURCE: Climate expert survey is from peer-reviewed Nature Climate Change 2019 publication, should warrant confidence=4 or 5, not 3",
+        "fix": "Increase edge_confidence for climate survey validation edges to 4"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Climate survey paradox motivates AI safety investigation",
+          "evidence": "SOURCE: 'This seems backwards...I wonder if a similar phenomenon could be happening in AI Alignment research.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Climate expert survey showing inverse geoengineering support versus damage expectations"
+          ],
+          "expected_target_node_name": [
+            "General factor of doom bias influencing AI risk judgments"
+          ]
+        },
+        {
+          "title": "General factor of doom mechanism explanation",
+          "evidence": "SOURCE: 'Each climate expert has a p(Doom) for climate change...Their stated beliefs on specific questions are mostly just expressions of their p(Doom).'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "General factor of doom bias influencing AI risk judgments"
+          ],
+          "expected_target_node_name": [
+            "Correlated answers to distinct AI risk questions among researchers"
+          ]
+        },
+        {
+          "title": "Nine specific AI alignment questions as test of doom factor",
+          "evidence": "SOURCE lists 9 specific questions about timelines, takeoff, corrigibility, governance etc.",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Structured decomposition of AI risk assessments into independent subquestions"
+          ],
+          "expected_target_node_name": [
+            "Multi-question survey including diverse AI doom-related items"
+          ]
+        },
+        {
+          "title": "Biases related to general factor of doom (halo effect, mood affiliation)",
+          "evidence": "SOURCE: 'There are several biases which seem to be related to the general factor of doom. The halo effect...The fallacy of mood affiliation...'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "General factor of doom bias influencing AI risk judgments"
+          ],
+          "expected_target_node_name": [
+            "Halo effect and mood affiliation biases as related phenomena in AI risk assessment"
+          ]
+        },
+        {
+          "title": "Paul Christiano's takeoff-timeline correlation claim",
+          "evidence": "SOURCE: 'Paul Christiano seems to think that short timelines and fast takeoff speeds are anti-correlated'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Structured decomposition of AI risk assessments into independent subquestions"
+          ],
+          "expected_target_node_name": [
+            "Alternative domain-specific hypotheses about risk factor correlations"
+          ]
+        },
+        {
+          "title": "ML researcher survey showing weak correlations",
+          "evidence": "SOURCE: 'I spot checked several random pairs of doom-related questions...and they didn't look correlated. I'm not sure whether to interpret this to mean that they are using multiple detailed models or that they don't even have a simple model.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "AI Impacts ML researcher survey indicating low doom-correlation"
+          ],
+          "expected_target_node_name": [
+            "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias"
+          ]
+        },
+        {
+          "title": "Distinction between using detailed models vs general doom factor",
+          "evidence": "SOURCE: 'Using a model with more details is more difficult than using a general factor of doom, so it would not be surprising if few people did it.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "General factor of doom bias influencing AI risk judgments"
+          ],
+          "expected_target_node_name": [
+            "Cognitive ease as mechanism driving doom bias adoption"
+          ]
+        },
+        {
+          "title": "Observation about public health as alternative domain for doom bias study",
+          "evidence": "SOURCE: Footnote 2 mentions 'Public health also seems like a good place to check for a general factor of doom'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": [
+            "Generalizability of doom bias framework to other domains"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "concept",
+        "name": "Halo effect and mood affiliation biases operating in AI risk assessment",
+        "edges": [
+          {
+            "type": "caused_by",
+            "target_node": "General factor of doom bias influencing AI risk judgments",
+            "description": "Halo effect and mood affiliation are mechanisms that could drive or reinforce doom factor bias",
+            "edge_confidence": 2
+          }
+        ],
+        "intervention_lifecycle": null,
+        "intervention_maturity": null
+      },
+      {
+        "type": "concept",
+        "name": "Cognitive ease of applying single doom prior versus detailed multi-factor models",
+        "edges": [
+          {
+            "type": "caused_by",
+            "target_node": "General factor of doom bias influencing AI risk judgments",
+            "description": "Cognitive ease is a mechanism enabling widespread adoption of simple doom factor rather than complex models",
+            "edge_confidence": 3
+          }
+        ],
+        "intervention_lifecycle": null,
+        "intervention_maturity": null
+      },
+      {
+        "type": "concept",
+        "name": "Alternative domain-specific hypotheses about AI risk factor correlations versus universal doom bias",
+        "edges": [
+          {
+            "type": "mitigates",
+            "target_node": "General factor of doom bias influencing AI risk judgments",
+            "description": "Alternative domain-specific correlation hypotheses could explain apparent answer correlation without invoking doom bias",
+            "edge_confidence": 2
+          }
+        ],
+        "intervention_lifecycle": null,
+        "intervention_maturity": null
+      }
+    ],
+    "merges": [
+      {
+        "new_node_name": "Design rationale and implementation for testing general factor of doom via structured decomposition",
+        "nodes_to_merge": [
+          "Survey-based measurement of doom bias in AI safety community",
+          "Structured decomposition of AI risk assessments into independent subquestions"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Scenario-vignette method combining random AI risk parameter combinations",
+        "target_node_name": "Thought experiment demonstrating many plausible AI futures from random risk parameters",
+        "reason": "These represent the same concept at different abstraction levels; the target is a proposed thought experiment (not yet validated evidence) that instantiates the source implementation mechanism"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Thought experiment demonstrating many plausible AI futures from random risk parameters",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "Source presents this as a proposed future research direction (Footnote 6: 'This suggests a possible topic for a vignette...') rather than existing validation evidence; should be categorized as design approach"
+      },
+      {
+        "node_name": "Independent evaluation of discrete AI risk factors improves calibration",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "Author presents this as a proposed solution ('I think that people should instead decide...') based on speculation about doom bias mechanism, not validated theoretical insight"
+      },
+      {
+        "node_name": "Climate expert survey showing inverse geoengineering support versus damage expectations",
+        "field": "description",
+        "json_new_value": "\"Published Nature Climate Change study (Dannenberg & Zitzelsberger 2019, vol. 9, pp. 769-775) where experts expecting severe climate damages yet low mitigation success were paradoxically *more* opposed to geoengineering, suggesting experts' specific answers are driven by a single doom-like factor rather than independent reasoning\"",
+        "reason": "Add full citation details from source"
+      },
+      {
+        "node_name": "AI Impacts ML researcher survey indicating low doom-correlation",
+        "field": "description",
+        "json_new_value": "\"The 2022 AI Impacts expert survey on progress in AI included spot-checks of several question pairs (probability of fast technological progress after HLMI vs probability of HLMI timeline; probability of AI vastly smarter than humans vs HLMI timeline; probability of human extinction from HLMI loss of control vs HLMI timeline) that showed weak correlations, suggesting the doom bias may not affect all survey instruments equally\"",
+        "reason": "Add specific details from source about which question pairs were tested"
+      },
+      {
+        "node_name": "Bimodal distribution graph of AI safety opinions",
+        "field": "description",
+        "json_new_value": "\"An informal, self-described 'wildly out-of-date and chock full of huge outrageous errors' graph plotting p(AGI within 20 years) vs p(Doom) shows two distinct clusters near (0,0) and (1,1), consistent with a latent binary doom classification driving responses\"",
+        "reason": "Include author's explicit caveat about graph limitations"
+      },
+      {
+        "node_name": "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias",
+        "field": "intervention_lifecycle",
+        "json_new_value": "1",
+        "reason": "This is primarily research/analysis work, not deployment; lifecycle 1 (Model Design / conceptual) is more appropriate than 6"
+      },
+      {
+        "node_name": "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Author proposes this as a future study that has not yet been conducted; maturity 1 (Foundational/Theoretical) is appropriate"
+      },
+      {
+        "node_name": "Adopt structured scenario analysis framework requiring independent judgments on AI risk subquestions for research prioritization",
+        "field": "intervention_lifecycle",
+        "json_new_value": "6",
+        "reason": "This is governance and planning methodology applicable across lifecycle phases"
+      },
+      {
+        "node_name": "Adopt structured scenario analysis framework requiring independent judgments on AI risk subquestions for research prioritization",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Author proposes this as a methodological recommendation not yet systematically implemented; maturity 1 is appropriate"
+      },
+      {
+        "node_name": "Climate expert survey showing inverse geoengineering support versus damage expectations",
+        "field": "concept_category",
+        "json_new_value": "\"validation evidence\"",
+        "reason": "Peer-reviewed empirical study provides evidence for doom bias phenomenon in another domain (climate science)"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Misallocation of AI safety resources due to doom-based bias in risk assessments",
+        "type": "concept",
+        "description": "Decision-makers may dedicate effort and funding to the wrong safety problems when guided by an undifferentiated sense of impending AI catastrophe rather than evidence-based risk decomposition.",
+        "aliases": [
+          "Resource misprioritization from doom bias",
+          "Inefficient AI safety focus caused by doominess"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Correlated answers to distinct AI risk questions among researchers",
+        "type": "concept",
+        "description": "Researchers often give similarly pessimistic or optimistic answers to many different questions (e.g., timelines, take-off speed, governance difficulty) that should not be strongly linked.",
+        "aliases": [
+          "Answer correlation across independent AI doom questions",
+          "Uniform responses to varied AI alignment uncertainties"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "General factor of doom bias influencing AI risk judgments",
+        "type": "concept",
+        "description": "A hypothesised cognitive bias whereby a single subjective probability of disaster determines answers to many specific questions, leading to excessive answer correlation.",
+        "aliases": [
+          "Doominess latent factor",
+          "Single doom prior driving answers"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Survey-based measurement of doom bias in AI safety community",
+        "type": "concept",
+        "description": "Designing research instruments that ask many specific, not-obviously-related AI risk questions to quantify whether a latent doom factor drives respondents’ answers.",
+        "aliases": [
+          "Detecting doom factor via surveys",
+          "Empirical test for doom bias"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Structured decomposition of AI risk assessments into independent subquestions",
+        "type": "concept",
+        "description": "Creating analytical or forecasting frameworks that force experts to reason about many orthogonal uncertainties instead of making a single doom judgement.",
+        "aliases": [
+          "Decomposed AI safety forecasting",
+          "Factorised risk elicitation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Multi-question survey including diverse AI doom-related items",
+        "type": "concept",
+        "description": "An instrument listing many specific questions (e.g., timelines, value fragility, governance feasibility) that are deliberately hard to answer using one overall mood.",
+        "aliases": [
+          "Comprehensive AI risk questionnaire",
+          "Battery of independent AI safety questions"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Statistical correlation analysis of survey responses to detect global bias",
+        "type": "concept",
+        "description": "Using methods such as PCA or factor analysis on survey data to test whether a single latent variable explains most variance across answers.",
+        "aliases": [
+          "Latent factor analysis of doom survey",
+          "Correlation matrix of risk answers"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Scenario-vignette method combining random AI risk parameter combinations",
+        "type": "concept",
+        "description": "Building plausible narrative futures by randomly selecting values (doomy / non-doomy) for each subquestion, illustrating the richness of possible outcomes and discouraging simple doom priors.",
+        "aliases": [
+          "Randomised future scenario construction",
+          "Counter-doom vignette generation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Halo effect and mood affiliation biases operating in AI risk assessment",
+        "type": "concept",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Halo effect and mood affiliation biases operating in AI risk assessment"
+        ],
+        "concept_category": "concept",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Cognitive ease of applying single doom prior versus detailed multi-factor models",
+        "type": "concept",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Cognitive ease of applying single doom prior versus detailed multi-factor models"
+        ],
+        "concept_category": "concept",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Alternative domain-specific hypotheses about AI risk factor correlations versus universal doom bias",
+        "type": "concept",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Alternative domain-specific hypotheses about AI risk factor correlations versus universal doom bias"
+        ],
+        "concept_category": "concept",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Thought experiment demonstrating many plausible AI futures from random risk parameters",
+        "type": "concept",
+        "description": "Author proposes drawing 0/1 values for each subquestion to illustrate the variety of coherent future worlds, supporting the need for decomposition.",
+        "aliases": [
+          "Random doom-vector vignette experiment",
+          "Footnote 6 scenario thought-experiment"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Independent evaluation of discrete AI risk factors improves calibration",
+        "type": "concept",
+        "description": "Forming beliefs about each uncertain variable (e.g., timelines, take-off speed, corrigibility) separately and aggregating them later should reduce bias and yield more reliable p(Doom).",
+        "aliases": [
+          "Factor-by-factor judgment improves accuracy",
+          "Decoupled risk assessment"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "AI Impacts ML researcher survey indicating low doom-correlation",
+        "type": "concept",
+        "description": "The 2022 AI Impacts expert survey on progress in AI included spot-checks of several question pairs (probability of fast technological progress after HLMI vs probability of HLMI timeline; probability of AI vastly smarter than humans vs HLMI timeline; probability of human extinction from HLMI loss of control vs HLMI timeline) that showed weak correlations, suggesting the doom bias may not affect all survey instruments equally",
+        "aliases": [
+          "2022 expert survey on progress in AI result",
+          "Weak correlation in ML doom questions"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Bimodal distribution graph of AI safety opinions",
+        "type": "concept",
+        "description": "An informal, self-described 'wildly out-of-date and chock full of huge outrageous errors' graph plotting p(AGI within 20 years) vs p(Doom) shows two distinct clusters near (0,0) and (1,1), consistent with a latent binary doom classification driving responses",
+        "aliases": [
+          "Ben Singer doom graph",
+          "Bimodal p(Doom) chart"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias",
+        "type": "intervention",
+        "description": "Design, administer, and statistically analyse a battery of independent AI-risk questions to measure latent doom bias and share results so researchers can recalibrate.",
+        "aliases": [
+          "Run AI-safety doom-bias survey",
+          "Empirical study of doom factor in alignment community"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Adopt structured scenario analysis framework requiring independent judgments on AI risk subquestions for research prioritization",
+        "type": "intervention",
+        "description": "Mandate that strategic planning and prioritisation exercises break AI risk into discrete variables, elicit separate estimates, and construct multiple scenarios before allocating resources.",
+        "aliases": [
+          "Factorised scenario analysis for AI safety",
+          "Independent-component forecasting protocol"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Climate expert survey showing inverse geoengineering support versus damage expectations",
+        "type": "concept",
+        "description": "Published Nature Climate Change study (Dannenberg & Zitzelsberger 2019, vol. 9, pp. 769-775) where experts expecting severe climate damages yet low mitigation success were paradoxically *more* opposed to geoengineering, suggesting experts' specific answers are driven by a single doom-like factor rather than independent reasoning",
+        "aliases": [
+          "Dannenberg & Zitzelsberger 2019 result",
+          "Climate survey inverse geoengineering attitude"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Misallocation of AI safety resources due to doom-based bias in risk assessments",
+        "target_node": "Correlated answers to distinct AI risk questions among researchers",
+        "description": "Misallocation arises when decisions are grounded in the over-simplified, correlated judgments rather than granular evidence.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Correlated answers to distinct AI risk questions among researchers",
+        "target_node": "General factor of doom bias influencing AI risk judgments",
+        "description": "The correlation is hypothesised to stem from a single latent doominess factor that drives all answers.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Independent evaluation of discrete AI risk factors improves calibration",
+        "target_node": "Survey-based measurement of doom bias in AI safety community",
+        "description": "Measuring the bias via surveys is a concrete way to operationalise independent factor evaluation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Survey-based measurement of doom bias in AI safety community",
+        "target_node": "Multi-question survey including diverse AI doom-related items",
+        "description": "The multi-question survey is the instrument that realises the measurement design.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Multi-question survey including diverse AI doom-related items",
+        "target_node": "Climate expert survey showing inverse geoengineering support versus damage expectations",
+        "description": "Climate survey demonstrates the utility of multi-question instruments in revealing doom biases.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Statistical correlation analysis of survey responses to detect global bias",
+        "target_node": "AI Impacts ML researcher survey indicating low doom-correlation",
+        "description": "Existing correlation checks in the AI Impacts data provide initial evidence for the method’s sensitivity.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Climate expert survey showing inverse geoengineering support versus damage expectations",
+        "target_node": "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias",
+        "description": "Demonstrates that similar surveys can uncover doom bias, encouraging replication in AI-safety field.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "AI Impacts ML researcher survey indicating low doom-correlation",
+        "target_node": "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias",
+        "description": "Existing AI survey suggests method feasibility and highlights gap (AI-safety researchers not yet surveyed).",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Bimodal distribution graph of AI safety opinions",
+        "target_node": "Conduct and analyze multi-question survey among AI safety researchers to quantify and correct general factor of doom bias",
+        "description": "Suggests pronounced clustering that a dedicated survey could investigate rigorously.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Thought experiment demonstrating many plausible AI futures from random risk parameters",
+        "target_node": "Adopt structured scenario analysis framework requiring independent judgments on AI risk subquestions for research prioritization",
+        "description": "Shows value of scenario-based decomposition, encouraging adoption in planning processes.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "General factor of doom bias influencing AI risk judgments",
+        "target_node": "Structured decomposition of AI risk assessments into independent subquestions",
+        "description": "Breaking questions apart reduces reliance on a single doom prior, addressing the bias itself.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "a7429d5339b1781395ae24e4a25955c5"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.191329"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "Schema compliance: Missing 'edge_confidence_rationale', 'edge_rationale', and 'node_rationale' fields across all edges and concept nodes violates required schema format per instructions; 'embedding' field is undocumented and should be removed",
+      "Referential integrity: All node names referenced in edge source_node and target_node attributes match exactly to node names in nodes array; no orphaned nodes detected",
+      "Coverage assessment: Primary pathway (misallocation → correlation → doom bias → independent evaluation → survey methodology) is well-covered. However, source explicitly mentions halo effect, mood affiliation bias, and cognitive ease mechanisms that are referenced but not instantiated as nodes; Footnote 6 discusses vignette thought-experiment as design tool",
+      "Concept categorization error: 'Independent evaluation of discrete AI risk factors improves calibration' is marked 'theoretical insight' but source presents as author's proposed solution ('I think that people should instead...'), making 'design rationale' more accurate given the speculative framing",
+      "Concept categorization error: 'Thought experiment demonstrating many plausible AI futures...' marked 'validation evidence' but source explicitly frames as future research direction (Footnote 6: 'This suggests a possible topic for a vignette'); should be 'design rationale' or 'implementation mechanism'",
+      "Edge confidence calibration: Climate survey validation edge marked confidence=3 but source attributes to Nature Climate Change peer-reviewed publication (Dannenberg & Zitzelsberger 2019, vol 9, pp 769-775); peer-reviewed empirical evidence warrants confidence=4",
+      "Missing causal paths: Source discusses Paul Christiano's anti-correlation hypothesis and alternative domain-specific correlation models (e.g., 'AGI is simple' vs 'alignment is hard'), implying that some correlations may be rationally justified rather than bias-driven; this theoretical perspective is not captured",
+      "Missing node: Cognitive ease of simple doom factor over complex multi-factor models is explicitly stated as mechanism ('Using a model with more details is more difficult than using a general factor of doom...') but not extracted as a problem analysis node",
+      "Missing node: Related biases (halo effect, mood affiliation, surprising convergence) are mentioned by author as operating similarly to doom bias but not incorporated into knowledge fabric",
+      "Intervention lifecycle alignment: Both interventions marked lifecycle 6 ('Other') but survey research is lifecycle 1 (Model Design) and scenario framework is lifecycle 6 (governance/methodology); needs differentiation",
+      "Source date and attribution: Article by Jeffrey Heninger, published 2022-11-23 (per metadata); author frames analysis as speculative hypothesis ('I do not know what they are thinking, but I can make a guess...'), warranting lower maturity ratings for proposed interventions"
+    ]
+  },
+  "url": "https://aiimpacts.org/against-a-general-factor-of-doom/",
+  "paper_id": "94a432823e0715b91c18475bdcef2f5b",
+  "ard_file_source": "blogs",
+  "errors": null
+}

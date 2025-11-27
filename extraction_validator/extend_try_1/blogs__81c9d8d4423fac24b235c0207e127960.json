@@ -1,0 +1,398 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures a valid linear causal-interventional pathway from risk through five intermediate concept nodes to an intervention node, with correct JSON structure and referential integrity. However, the extraction is significantly incomplete and contains four BLOCKER-level schema violations (missing required node_rationale fields on all nodes; missing edge_confidence_rationale and edge_rationale on all edges; invalid intervention_lifecycle and unsupported intervention_maturity assignments) and three MAJOR content issues (understated risk node claim, overstated theoretical insight claim, and underjustified maturity classification). More critically, the fabric captures only 1 of 5 explicitly stated project purposes, missing four major validation evidence nodes and their motivating edges that connect to intervention justification. The extraction requires substantial additions (4 new validation evidence nodes, multiple new edges) to achieve mandatory coverage of all causal pathways from risks through outcomes to interventions. After proposed fixes are applied, the graph would be valid and mergeable across sources."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in edges: edge_confidence_rationale and edge_rationale are required per output format specification but absent in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all edges with evidence assessment and connection justification"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in nodes: node_rationale is required per output format specification but absent in all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale to all nodes explaining why essential to fabric with data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention node has invalid intervention_lifecycle value: lifecycle=6 'Other' is inappropriate for a core methodological intervention that should be lifecycle 1 (Model Design/Research Methodology) or 4 (Pre-Deployment Testing)",
+        "where": "nodes[6].intervention_lifecycle",
+        "suggestion": "Change intervention_lifecycle to 4 (Pre-Deployment Testing) as workshops are pre-deployment scenario testing methodology"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention node has intervention_maturity=2 (Experimental/Proof-of-Concept) but data source explicitly states 'two small workshops' with realism critiques that 'subside', indicating only preliminary/foundational evidence",
+        "where": "nodes[6].intervention_maturity",
+        "suggestion": "Verify if maturity=2 is justified or should be maturity=1 (Foundational/Theoretical); current evidence supports only maturity=1"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Missing intervention_lifecycle_rationale and intervention_maturity_rationale fields required by output format specification for intervention node",
+        "where": "nodes[6]",
+        "suggestion": "Add both rationale fields with evidence from 'Work so far' section of DATA_SOURCE"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Node aliases incomplete: only 2 aliases provided for several nodes when 2-3 are requested in format specification",
+        "where": "nodes[*].aliases",
+        "suggestion": "Expand to 3 aliases per node where possible for better cross-source merging"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All node names referenced in edges exactly match node definitions",
+        "names": [
+          "Inaccurate assessment of AI existential risk due to abstract scenario reasoning",
+          "Lack of concrete plausible AI future instantiations in discourse",
+          "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting",
+          "Collaborative development and critique of AI vignettes to improve realism",
+          "Iterative workshop-based vignette writing and feedback cycle",
+          "Feedback-induced realism improvements observed in two AI Impacts workshops",
+          "Organize iterative AI vignette workshops to refine future AI scenarios"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": null,
+        "reason": "All 7 nodes are connected in a linear path with edges; intervention node is endpoint (allowed)",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": null,
+        "names": null,
+        "merge_strategy": null
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Risk node name overstates causality: 'Inaccurate assessment of AI existential risk due to abstract scenario reasoning' implies abstract reasoning necessarily causes inaccuracy, but DATA_SOURCE only states abstract reasoning 'may lead to overlooking crucial details'",
+        "evidence": "DATA_SOURCE Purpose 1: 'Check that abstract views about the future of AI have plausible concrete instantiations. (Especially, hypothesized extinction scenarios, and proposed safe scenarios.)' - this is checking/validating, not treating as definitively inaccurate",
+        "fix": "Rename to 'Potential inaccuracy in AI risk assessment from abstract-only reasoning' or 'Unvalidated abstract AI risk assessments'"
+      },
+      {
+        "issue": "Theoretical insight node claim is not explicitly stated in DATA_SOURCE: 'Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting' is inferred but not directly claimed",
+        "evidence": "DATA_SOURCE states purposes: 'Check that abstract views...have plausible concrete instantiations' and 'Develop better intuitions' and 'Notice recurring themes' - but does not explicitly state vignettes 'reveal hidden assumptions' or how",
+        "fix": "Rename to more conservative framing: 'Concrete scenario development enables validation and refinement of abstract AI forecasting' or cite inference confidence appropriately"
+      },
+      {
+        "issue": "Intervention maturity assessment unsupported: maturity=2 (Experimental/Proof-of-Concept) requires 'controlled experiments' or 'consistent observations across different systems', but DATA_SOURCE only mentions 'two small workshops'",
+        "evidence": "DATA_SOURCE Methods section: 'We run two small workshops where participants wrote AI vignettes' - singular past tense, no mention of systematic validation or controlled comparison",
+        "fix": "Change intervention_maturity to 1 (Foundational/Theoretical) with rationale: 'Only two small pilot workshops completed; insufficient systematic validation for PoC classification'"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Five explicit purposes motivate the project",
+          "evidence": "DATA_SOURCE Purposes section lists 5 purposes from 'Check that abstract views...' through 'Keep a collection of AI vignettes...'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Inaccurate assessment of AI existential risk due to abstract scenario reasoning",
+            "Unvalidated abstract AI risk assessments"
+          ],
+          "expected_target_node_name": [
+            "Organize iterative AI vignette workshops to refine future AI scenarios"
+          ]
+        },
+        {
+          "title": "Methods section describes 4-step iterative process",
+          "evidence": "DATA_SOURCE Methods: '1. Write draft vignettes...2. Request comments...3. Modify according to comments...4. Repeat 2-3 until realism critiques subside'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Collaborative development and critique of AI vignettes to improve realism"
+          ],
+          "expected_target_node_name": [
+            "Iterative workshop-based vignette writing and feedback cycle"
+          ]
+        },
+        {
+          "title": "Vignette collection exists as tangible output",
+          "evidence": "DATA_SOURCE: 'This is a subset of vignettes arising from this project, or similar.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Iterative workshop-based vignette writing and feedback cycle"
+          ],
+          "expected_target_node_name": [
+            "AI vignette collection for future scenario exploration"
+          ]
+        },
+        {
+          "title": "Concrete instantiation benefit stated for extinction scenarios",
+          "evidence": "DATA_SOURCE Purposes: 'Check that abstract views about the future of AI have plausible concrete instantiations. (Especially, hypothesized extinction scenarios, and proposed safe scenarios.)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Inaccurate assessment of AI existential risk due to abstract scenario reasoning"
+          ],
+          "expected_target_node_name": [
+            "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting"
+          ]
+        },
+        {
+          "title": "Filling out scenario space to reduce bias",
+          "evidence": "DATA_SOURCE Purpose 4: 'Fill out the space of plausible feasible scenarios with concrete illustrations, to decrease bias in thinking about the future.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting"
+          ],
+          "expected_target_node_name": [
+            "Reduced bias in AI future forecasting through systematic scenario coverage"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Inaccurate assessment of AI existential risk due to abstract scenario reasoning",
+        "field": "name",
+        "json_new_value": "Unvalidated abstract reasoning in AI risk assessment",
+        "reason": "Original name overstates causality ('due to causes' implies necessity); DATA_SOURCE frames this as potential validation problem not definite inaccuracy. More precise to risk presented in Purposes section."
+      },
+      {
+        "node_name": "Inaccurate assessment of AI existential risk due to abstract scenario reasoning",
+        "field": "description",
+        "json_new_value": "Abstract-only discussions of AI futures lack concrete grounding and validation against specific implementation details, potentially resulting in inaccurate or incomplete risk scenarios. This is particularly concerning for extinction-level scenarios where concrete feasibility assessment is critical.",
+        "reason": "DATA_SOURCE explicitly emphasizes 'especially, hypothesized extinction scenarios' in Purposes section; description should reflect this specificity"
+      },
+      {
+        "node_name": "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting",
+        "field": "name",
+        "json_new_value": "Concrete AI scenario vignettes enable validation of abstract frameworks and identification of implicit assumptions",
+        "reason": "Current name claims vignettes 'reveal' without explicit evidence; more conservative framing aligns with DATA_SOURCE PURPOSE: 'Check that abstract views...have plausible concrete instantiations' which is validation not revelation"
+      },
+      {
+        "node_name": "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting",
+        "field": "concept_category",
+        "json_new_value": "design rationale",
+        "reason": "Currently classified as theoretical insight but serves as design rationale - it justifies why vignette-writing (design approach) should address the problem of unvalidated abstract reasoning"
+      },
+      {
+        "node_name": "Organize iterative AI vignette workshops to refine future AI scenarios",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 4 (Pre-Deployment Testing): vignette workshops serve as scenario validation methodology applied before deploying AI systems and safety policies. DATA_SOURCE Methods section describes iterative testing cycle: 'Write draft vignettes...Request comments...Modify according to comments...Repeat until realism critiques subside', which is characteristic of pre-deployment validation testing.",
+        "reason": "Required field missing; add with DATA_SOURCE section reference"
+      },
+      {
+        "node_name": "Organize iterative AI vignette workshops to refine future AI scenarios",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical): DATA_SOURCE reports only 'two small workshops' as pilot efforts with preliminary evidence that 'realism critiques subside' after iteration. No systematic validation, controlled comparison, or large-scale replication reported. Insufficient evidence for higher maturity classifications per Instructions definitions (PoC requires controlled experiments; Prototype requires systematic validation; Operational requires large-scale validation).",
+        "reason": "Required field missing; add with DATA_SOURCE section reference and confidence rationale"
+      },
+      {
+        "node_name": "Organize iterative AI vignette workshops to refine future AI scenarios",
+        "field": "description",
+        "json_new_value": "Design and execute iterative workshop cycles where participants collaboratively draft plausible AI future histories (vignettes), gather structured feedback on realism and completeness, and refine scenarios through multiple rounds until realism critiques subside. Maintain collection of validated vignettes for community use in AI safety research, forecasting, and policy development.",
+        "reason": "Current description lacks implementation detail required per Instructions for intervention nodes; add specifics from DATA_SOURCE Methods section about workshop process and collection maintenance"
+      },
+      {
+        "node_name": "Feedback-induced realism improvements observed in two AI Impacts workshops",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence for the iterative workshop methodology; DATA_SOURCE Work so far section reports: 'AI Impacts has run two small workshops where participants wrote AI vignettes' with methods stating 'Repeat 2-3 until realism critiques subside', indicating observed effectiveness. Essential to demonstrate intervention has some empirical support before proposing wider adoption.",
+        "reason": "Required field missing from all nodes per output format specification"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Lack of concrete plausible AI future instantiations in discourse",
+        "type": "concept",
+        "description": "Discussions often lack specific, plausible stories of how AI might develop and interact with society, leaving important mechanisms unexamined.",
+        "aliases": [
+          "absence of concrete scenarios",
+          "scarcity of detailed AI futures"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Collaborative development and critique of AI vignettes to improve realism",
+        "type": "concept",
+        "description": "Using group processes to draft, comment on, and iteratively refine scenarios ensures multiple perspectives and identifies realism gaps.",
+        "aliases": [
+          "collective vignette authorship",
+          "peer-reviewed vignette creation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Iterative workshop-based vignette writing and feedback cycle",
+        "type": "concept",
+        "description": "Small workshops produce initial stories, gather feedback, and repeat until critiques subside, yielding more realistic and varied scenarios.",
+        "aliases": [
+          "workshop cycle for vignettes",
+          "step-wise vignette refinement process"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Inaccurate assessment of AI existential risk due to abstract scenario reasoning",
+        "type": "concept",
+        "description": "High-level, purely abstract discussions of future AI can lead to overlooking crucial details, resulting in incorrect estimates of catastrophic or extinction-level risks.",
+        "aliases": [
+          "misguided AI risk estimates from abstraction",
+          "poor AI safety planning from abstract thinking"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting",
+        "type": "concept",
+        "description": "Creating detailed stories makes implicit beliefs explicit, enabling critique and adjustment, thus potentially improving foresight accuracy.",
+        "aliases": [
+          "vignettes surface hidden assumptions",
+          "stories expose biases"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Organize iterative AI vignette workshops to refine future AI scenarios",
+        "type": "intervention",
+        "description": "Schedule and facilitate recurring small workshops where participants draft AI future histories, solicit critiques, and revise until realism critiques subside.",
+        "aliases": [
+          "conduct vignette workshops",
+          "run scenario-writing workshops"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Feedback-induced realism improvements observed in two AI Impacts workshops",
+        "type": "concept",
+        "description": "The project reports that realism critiques decreased after multiple feedback rounds in two pilot workshops, indicating the method’s promising effectiveness.",
+        "aliases": [
+          "observed vignette realism gains",
+          "workshop feedback evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Inaccurate assessment of AI existential risk due to abstract scenario reasoning",
+        "target_node": "Lack of concrete plausible AI future instantiations in discourse",
+        "description": "When discourse lacks concrete instantiations, assessments rely on abstractions that can mislead risk estimates.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Lack of concrete plausible AI future instantiations in discourse",
+        "target_node": "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting",
+        "description": "Detailed vignettes provide missing concreteness, making assumptions visible and addressing the problem.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Concrete scenario vignettes reveal hidden assumptions and biases in AI forecasting",
+        "target_node": "Collaborative development and critique of AI vignettes to improve realism",
+        "description": "Collaborative creation and critique is the practical method to generate such vignettes.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Collaborative development and critique of AI vignettes to improve realism",
+        "target_node": "Iterative workshop-based vignette writing and feedback cycle",
+        "description": "Workshops operationalize collaboration and iterative critique.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Iterative workshop-based vignette writing and feedback cycle",
+        "target_node": "Feedback-induced realism improvements observed in two AI Impacts workshops",
+        "description": "Observed reduction in realism critiques provides preliminary validation of the workshop cycle.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Feedback-induced realism improvements observed in two AI Impacts workshops",
+        "target_node": "Organize iterative AI vignette workshops to refine future AI scenarios",
+        "description": "Positive preliminary evidence encourages scaling and formalizing the workshop intervention.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "f66ee1f8b57088578f9373a4e0e39fc0"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.188423"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: All 7 nodes missing 'node_rationale' field required per output format specification section 'JSON Structure Required'. Nodes must justify why essential to fabric with data source section reference.",
+      "BLOCKER: All 6 edges missing 'edge_confidence_rationale' and 'edge_rationale' fields required per output format specification. Each edge must include evidence assessment and connection justification with data source section reference.",
+      "BLOCKER: Intervention node intervention_lifecycle=6 'Other' is invalid classification. Vignette workshops are pre-deployment scenario testing methodology (lifecycle 4) not miscellaneous activity. DATA_SOURCE Methods section describes testing/validation cycle characteristic of lifecycle 4.",
+      "MAJOR: Intervention node intervention_maturity=2 (Experimental/PoC) lacks sufficient empirical support. Instructions define PoC as 'controlled experiments' or 'consistent observations across different systems'. DATA_SOURCE reports only 'two small workshops' - single pilot efforts insufficient for PoC classification. Should be maturity 1 (Foundational/Theoretical) per Instructions.",
+      "MAJOR: Risk node name 'Inaccurate assessment of AI existential risk due to abstract scenario reasoning' overstates causality. DATA_SOURCE PURPOSE 1 states 'Check that abstract views about the future of AI have plausible concrete instantiations' which is validation objective, not assertion that abstract reasoning causes inaccuracy. Name implies necessity but DATA_SOURCE frames as potential problem to validate. Recommend reframing to 'Unvalidated abstract reasoning in AI risk assessment'.",
+      "MAJOR: Theoretical insight node 'Concrete scenario vignettes reveal hidden assumptions and biases' is inferred not explicitly claimed. DATA_SOURCE PURPOSE 1 frames vignettes as validation tool ('Check that abstract views...have plausible concrete instantiations') not assumption-revelation tool. Should be reframed as design rationale: 'Concrete scenario vignettes enable validation of abstract frameworks' per causal flow logic.",
+      "COVERAGE GAP: DATA_SOURCE lists 5 explicit purposes (Purposes section) but extraction captures only Purpose 1 (checking abstract views). Missing coverage: PURPOSE 2 'Develop better intuitions about possible scenarios by thinking through them concretely' (missing node: intuition improvement outcome); PURPOSE 3 'Notice recurring themes in concrete stories' (missing node: theme identification outcome); PURPOSE 4 'Fill out the space of plausible feasible scenarios with concrete illustrations, to decrease bias in thinking about the future' (missing node: bias reduction outcome); PURPOSE 5 'Keep a collection of AI vignettes for others to use' (missing node: vignette collection as tangible output). These four purposes represent 4 of 5 stated project objectives and must be captured as validation evidence nodes with edges to intervention for complete fabric representing project rationale.",
+      "COVERAGE GAP: DATA_SOURCE explicitly describes tangible vignette collection: 'Vignette collection: This is a subset of vignettes arising from this project, or similar.' This collection is key output/outcome representing validation evidence that methodology produces usable research artifact. Missing node and edge in current extraction. Per Instructions mandatory success criteria: 'All paths show appropriate interconnections to other paths' - this collection represents interconnection point across multiple purposes and outcomes.",
+      "VALIDATION: All 6 edges have valid source and target nodes matching node definitions exactly; no referential integrity violations detected.",
+      "VALIDATION: No duplicate nodes or edges detected; each concept has distinct category and role in pathway.",
+      "VALIDATION: All nodes connected in linear chain; no orphaned nodes per connectivity check.",
+      "INFERENCE STRATEGY: Extraction applies light-to-moderate inference in three places: (1) Inferring that lack of concrete instantiations 'causes' inaccurate assessment (confidence 3 per medium systematic evidence from Purposes section); (2) Inferring that validation approach 'reveals' assumptions vs. 'enables checking of' assumptions (confidence 3); (3) Inferring that preliminary workshop success 'motivates' formalizing intervention (confidence 2 per moderate inference, though PURPOSE 5 on collection use suggests scaling intent). All inferences marked appropriately in edge confidence per Instructions.",
+      "SCHEMA COMPLIANCE POST-FIX: After applying proposed changes, all required fields present, all intervention nodes have lifecycle 1-6 and maturity 1-4, all concept nodes have concept_category, no category type mixing, all referenced nodes exist, all edges have 1-5 confidence scores. JSON structure valid and schema-compliant.",
+      "CROSS-SOURCE MERGEABILITY: Node names follow granularity guidelines after proposed fixes: 'Iterative workshop-based vignette writing and feedback cycle' (good specificity for merging); 'Systematic coverage of plausible AI futures reduces forecasting bias' (specific outcome, mergeable); 'Reusable vignette collection for AI safety community reference' (specific artifact, mergeable across sources). Names avoid both over-atomization ('workshops', 'feedback') and over-coarseness ('AI project'). Aliases (2-3 per node) enable synonym matching across 500k sources.",
+      "MANDATORY VERIFICATION - CHECK 1: No direct risk→intervention edges exist. All edges flow through intermediate concept nodes. PASS.",
+      "MANDATORY VERIFICATION - CHECK 2: All pathways interconnected; no isolated reasoning paths. After fixes adding 4 new validation evidence nodes and 4 new edges, all pathways connect through shared intervention node. PASS post-fix.",
+      "MANDATORY VERIFICATION - CHECK 3: Each node has ≥1 edge reference; no isolated/duplicate nodes. Current extraction has all 7 nodes connected. Proposed additions also connect. PASS post-fix.",
+      "MANDATORY VERIFICATION - CHECK 4: Framework decomposition check N/A - no new frameworks introduced only methodology project description.",
+      "MANDATORY VERIFICATION - CHECK 5: Node name granularity valid after fixes per templates: 'Concrete AI scenario vignettes enable validation' (correct level vs. atomic 'vignettes' or coarse 'vignette project'); 'Iterative workshop cycle' (correct vs. atomic 'feedback' or coarse 'research methodology'). PASS post-fix."
+    ]
+  },
+  "url": "https://aiimpacts.org/ai-vignettes-project/",
+  "paper_id": "81c9d8d4423fac24b235c0207e127960",
+  "ard_file_source": "blogs",
+  "errors": null
+}

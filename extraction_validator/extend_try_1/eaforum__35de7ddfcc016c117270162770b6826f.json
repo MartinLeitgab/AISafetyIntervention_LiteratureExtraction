@@ -1,0 +1,885 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures core causal pathways from AI takeover and stagnation risks through probability frameworks to alignment research interventions, but suffers from critical schema violations: all nodes lack required node_rationale fields, all edges lack required edge_confidence_rationale and edge_rationale fields, and several concept nodes are orphaned or improperly connected. Additionally, important validation evidence nodes (Soares/Kokotajlo reviews, measurement bias in TFP) and secondary risk nodes (value lock-in, catastrophe-loop stagnation) are missing entirely. The edge direction for Carlsmith validation is inverted. After applying proposed fixes (adding 9 concept nodes, 1 intervention node, correcting edge directions, merging duplicates, and populating all required fields with section references), the knowledge fabric will properly interconnect AI risk pathways, stagnation mechanisms, and outreach interventions while maintaining referential integrity and supporting downstream effectiveness analysis."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required 'node_rationale' field per schema spec",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field to every node with justification and data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required 'edge_confidence_rationale' field per schema spec",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add edge_confidence_rationale to every edge with evidence assessment and data source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required 'edge_rationale' field per schema spec",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale to every edge with connection justification and data source section reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention lifecycle/maturity rationales missing section title references",
+        "where": "nodes[*].intervention_lifecycle_rationale, nodes[*].intervention_maturity_rationale",
+        "suggestion": "Add closest preceding data source section title references to all intervention rationale fields"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent target node",
+        "names": [
+          "Edge source: 'Carlsmith probability decomposition of power-seeking AI catastrophe' targets non-existent node in refined_by edge"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "use non-APS AI to automate alignment research",
+        "reason": "Node has no incoming or outgoing edges connecting it to the knowledge fabric",
+        "suggested_fix": "Add edges: 'addressed_by' from 'alignment difficulty of APS-AI systems' and 'implemented_by' to intervention 'leverage existing language models to automate alignment research tasks'"
+      },
+      {
+        "node_name": "integrate adversarial training and red-teaming to detect power-seeking behaviour",
+        "reason": "Node has no incoming or outgoing edges",
+        "suggested_fix": "Connect as implementation of 'prioritise technical AI alignment research ahead of capabilities' design rationale"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "fine-tune models with RLHF plus adversarial red-teaming",
+          "integrate adversarial training and red-teaming to detect power-seeking behaviour"
+        ],
+        "merge_strategy": "These represent the same concept at different abstraction levels (implementation mechanism vs design rationale). Merge into single implementation mechanism node 'integrate adversarial training with RLHF to detect power-seeking behaviour' and retarget all edges"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'short AI timelines with 80 % chance of TAI by 2100' lacks direct source evidence",
+        "evidence": "Author states '~80% barring pre-TAI catastrophe' and 'My credence in Transformative AI (TAI) by 2100 is ~80%' in 'Treatment of timelines' section",
+        "fix": "Update node description to specify 'barring pre-TAI catastrophe' caveat and cite 'Treatment of timelines' section"
+      },
+      {
+        "issue": "Edge confidence for 'Carlsmith decomposition' refined_by edges not well justified",
+        "evidence": "Author discusses Carlsmith model extensively and updates probabilities, but disagrees substantially with 3% figure",
+        "fix": "Lower edge confidence to 3 for decomposition edges and note disagreement in rationale"
+      },
+      {
+        "issue": "Node 'paradigm shifts regenerate low-hanging fruit' lacks direct validation from source",
+        "evidence": "Author mentions 'paradigm shifts' and deep learning example in 'Overestimating rate of decline in research productivity' section but does not empirically validate this claim",
+        "fix": "Lower edge confidence from 3 to 2 for edges connecting to this node, noting it is inference rather than direct validation"
+      },
+      {
+        "issue": "Stagnation risk nodes under-represented in fabric",
+        "evidence": "Author dedicates major section 'Overestimating risk from stagnation' with detailed probability arguments (5% vs MacAskill's 35%), but only 2 problem analysis nodes capture stagnation pathway",
+        "fix": "Add intermediate nodes for non-AI tech availability and population decline mechanisms as distinct problem analysis nodes"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "AI timelines impact on stagnation risk",
+          "evidence": "Author: 'MacAskill gives 35% to stagnation this century and ~33% to TAI this century, implying 35/67 = ~52% chance of stagnation in non-TAI worlds. I give 5/20 = 25% to stagnation in non-TAI worlds' and 'Significantly shorter AI timelines dramatically increase the importance of reducing AI risk relative to other interventions'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "short AI timelines with 80 % chance of TAI by 2100"
+          ],
+          "expected_target_node_name": [
+            "prolonged technological stagnation extending time of perils"
+          ]
+        },
+        {
+          "title": "Bait-and-switch as measurement of outreach problem",
+          "evidence": "Author: 'I'm worried people will feel bait-and-switched if they get into EA via WWOTF then do an 80,000 Hours call...I predict ~25% of people will feel bait-and-switched'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "community reports of bait-and-switch reactions to WWOTF"
+          ],
+          "expected_target_node_name": [
+            "bulk distribute The Precipice in EA university outreach"
+          ]
+        },
+        {
+          "title": "Soares and Kokotajlo review evidence for AI risk",
+          "evidence": "Author cites specific reviewers: 'They have p(AI doom by 2070) at >77% and 65% respectively' - Soares and Kokotajlo reviews not captured as validation evidence nodes",
+          "status": "missing",
+          "expected_source_node_name": [
+            "validation evidence"
+          ],
+          "expected_target_node_name": [
+            "misaligned AI takeover causing human disempowerment"
+          ]
+        },
+        {
+          "title": "Non-AI tech (cloning, genetic enhancement) as stagnation mitigation",
+          "evidence": "Author: 'It seems like there's other tech that's already feasible or close that could get us out of stagnation, which are mainly not applied due to taboos: in particular human cloning and genetic enhancement'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "genetic enhancement and controlled cloning to expand high-ability population"
+          ],
+          "expected_target_node_name": [
+            "prolonged technological stagnation extending time of perils"
+          ]
+        },
+        {
+          "title": "Value lock-in concerns with aligned AI",
+          "evidence": "Author: 'I did appreciate the discussion of value lock-in possibilities even when it's aligned...I think this has been discussed for a while among AI safety researchers, e.g. the idea of Coherent Extrapolated Volition'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "risk"
+          ],
+          "expected_target_node_name": [
+            "intervention"
+          ]
+        },
+        {
+          "title": "Measurement issues in TFP as limitation on stagnation evidence",
+          "evidence": "Author: 'How much can we trust statistics like TFP and even GDP to capture research productivity in the Internet age? My current take is that they're useful, but we should take them with a huge grain of salt...lack of capturing the most talented people's output...lags between research productivity and impact on GDP'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "validation evidence"
+          ],
+          "expected_target_node_name": [
+            "declining research productivity in mature scientific paradigms"
+          ]
+        },
+        {
+          "title": "Disempowerment narrow vs broad capability target concern",
+          "evidence": "Author: 'Seems like a narrow \"capabilities target\" to get something that causes a high-impact failure but doesn't disempower us...But I have some hope for a huge warning shot that wakes people up'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "theoretical insight"
+          ],
+          "expected_target_node_name": [
+            "design rationale"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "intervention",
+        "name": "fund research into value discovery and preference elicitation before AGI deployment",
+        "edges": [
+          {
+            "type": "addresses",
+            "target_node": "value lock-in risk from aligned but narrow AI objectives",
+            "description": "Direct intervention to mitigate value lock-in during development phase",
+            "edge_confidence": 2
+          }
+        ],
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1
+      }
+    ],
+    "merges": [
+      {
+        "new_node_name": "integrate adversarial training and red-teaming into RLHF to detect power-seeking behaviour",
+        "nodes_to_merge": [
+          "fine-tune models with RLHF plus adversarial red-teaming",
+          "integrate adversarial training and red-teaming to detect power-seeking behaviour"
+        ]
+      }
+    ],
+    "deletions": [
+      {
+        "node_name": "use non-APS AI to automate alignment research",
+        "reason": "Redundant with 'deploy AI-assisted research tools for alignment discovery' which better captures implementation detail and is properly connected to fabric"
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Carlsmith probability decomposition of power-seeking AI catastrophe",
+        "target_node_name": "prioritise technical AI alignment research ahead of capabilities",
+        "reason": "Incorrect edge type 'refined_by' - should flow from decomposition to risk understanding, not design rationale selection"
+      },
+      {
+        "source_node_name": "fine-tune models with RLHF plus adversarial red-teaming",
+        "target_node_name": "Carlsmith report empirical estimates above 10 % AI catastrophe",
+        "reason": "Incorrect edge direction; validation should flow backward from evidence to concept node being validated, not forward to implementation"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "misaligned AI takeover causing human disempowerment",
+        "field": "node_rationale",
+        "json_new_value": "Central risk driving longtermist AI safety priorities; author allocates 35% credence based on Carlsmith decomposition framework refined by expert reviews in Power-seeking AI report and Treatment of alignment sections",
+        "reason": "Add required node_rationale field with section references"
+      },
+      {
+        "node_name": "prolonged technological stagnation extending time of perils",
+        "field": "node_rationale",
+        "json_new_value": "Secondary existential risk that extends time of perils; author critically assesses at ~5% (vs MacAskill's 35%) based on AI timeline disagreements and paradigm shift mechanisms in Overestimating risk from stagnation section",
+        "reason": "Add required node_rationale field with section references"
+      },
+      {
+        "node_name": "short AI timelines with 80 % chance of TAI by 2100",
+        "field": "description",
+        "json_new_value": "Combining bio-anchors analysis (50% TAI by 2100 conservative bound), tool-chain improvements, and expert surveys suggests transformative AI is highly probable this century, barring pre-TAI catastrophe.",
+        "reason": "Add critical caveat 'barring pre-TAI catastrophe' that author explicitly includes in Treatment of timelines section"
+      },
+      {
+        "node_name": "Carlsmith probability decomposition of power-seeking AI catastrophe",
+        "field": "description",
+        "json_new_value": "Analytical framework assigning probabilities to six conditional steps (Timelines, Incentives, Alignment difficulty, High-impact failures, Disempowerment, Catastrophe) from APS-AI feasibility to existential catastrophe. Carlsmith initially estimated 5%, updated to >10%; author independently estimates 35% with similar framework.",
+        "reason": "Clarify that Carlsmith updated his own estimate and author uses framework while disagreeing with specific probabilities"
+      },
+      {
+        "node_name": "fund dedicated AI alignment research programmes",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 1 (Model Design) - funding allocation shapes research direction before and during model development; motivated by elevated AI takeover probabilities in Power-seeking AI report section",
+        "reason": "Add required intervention_lifecycle_rationale field with section reference"
+      },
+      {
+        "node_name": "fund dedicated AI alignment research programmes",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 2 (Experimental/Proof-of-Concept) - author identifies that alignment research is currently sub-scale relative to capabilities work, with experimental technical approaches (adversarial training, interpretability) already underway but lacking sufficient resources, as discussed in alignment difficulty section",
+        "reason": "Add required intervention_maturity_rationale field with section reference"
+      },
+      {
+        "node_name": "apply adversarial red-teaming during RLHF fine-tuning of language models",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 3 (Fine-Tuning/RL) - adversarial red-teaming is integrated into fine-tuning pipeline after pre-training; motivated by alignment difficulty in Power-seeking AI report section",
+        "reason": "Add required intervention_lifecycle_rationale field with section reference"
+      },
+      {
+        "node_name": "apply adversarial red-teaming during RLHF fine-tuning of language models",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 2 (Experimental/Proof-of-Concept) - adversarial training and red-teaming approaches are experimental; author cites DeepMind alignment team discussions noting these are active research areas in alignment difficulty section",
+        "reason": "Add required intervention_maturity_rationale field"
+      },
+      {
+        "node_name": "leverage existing language models to automate alignment research tasks",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 1 (Model Design) - accelerating alignment research itself using existing sub-AGI tools to discover better alignment methods before APS-AI deployment; author presents in Treatment of timelines section",
+        "reason": "Add required intervention_lifecycle_rationale field with section reference"
+      },
+      {
+        "node_name": "leverage existing language models to automate alignment research tasks",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical) - author notes 'I'm not sure how much mileage we can get with this' regarding using non-APS AI for alignment research, indicating foundational uncertainty despite concrete examples (code completion) in Treatment of timelines section",
+        "reason": "Add required intervention_maturity_rationale field noting author's uncertainty"
+      },
+      {
+        "node_name": "implement policy moratorium on deploying APS-AI until safety certification",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 5 (Deployment) - regulatory policy prevents APS-AI field deployment until safety verification; directly motivated by alignment difficulty in Power-seeking AI report section",
+        "reason": "Add required intervention_lifecycle_rationale field with section reference"
+      },
+      {
+        "node_name": "implement policy moratorium on deploying APS-AI until safety certification",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 2 (Experimental/Pilot Studies) - no existing policy moratorium exists; proposal represents policy innovation drawing on AI governance discourse without prior large-scale implementation",
+        "reason": "Add required intervention_maturity_rationale field"
+      },
+      {
+        "node_name": "authorise regulated genetic enhancement programmes for increased innovation",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other) - policy and legal reform to enable genetic enhancement; addressed in Overestimating length of stagnation section as mechanism to increase innovation capacity",
+        "reason": "Add required intervention_lifecycle_rationale field with section reference"
+      },
+      {
+        "node_name": "authorise regulated genetic enhancement programmes for increased innovation",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical) - author notes technical feasibility from expert statement but notes enhancement remains highly speculative policy area; discussed in Overestimating length of stagnation and Non-AI tech sections",
+        "reason": "Add required intervention_maturity_rationale field noting speculative nature"
+      },
+      {
+        "node_name": "bulk distribute The Precipice in EA university outreach",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other) - outreach and communication intervention to reach potential longtermist direct workers; proposed in Why I prefer The Precipice for potential longtermist direct workers section",
+        "reason": "Add required intervention_lifecycle_rationale field with section reference"
+      },
+      {
+        "node_name": "bulk distribute The Precipice in EA university outreach",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 2 (Experimental/Pilot Studies) - The Precipice has been published and recommended, but bulk university distribution program is not yet systematically implemented; author proposes as corrective measure in Why I prefer The Precipice section",
+        "reason": "Add required intervention_maturity_rationale field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "misallocation of longtermist efforts away from AI safety",
+        "type": "concept",
+        "description": "Resources and talent focus on lower-impact areas because leading texts under-emphasise AI risk, potentially worsening all existential risks.",
+        "aliases": [
+          "poor prioritisation",
+          "longtermist priority confusion"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "alignment difficulty of APS-AI systems",
+        "type": "concept",
+        "description": "Creating advanced systems with agentic planning & strategic awareness that reliably pursue intended goals is substantially harder than building superficially useful but power-seeking systems.",
+        "aliases": [
+          "hardness of aligning agentic planning systems",
+          "difficulty controlling APS"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "strong incentives to deploy APS-AI regardless of alignment",
+        "type": "concept",
+        "description": "Economic and strategic advantages drive actors to field powerful agentic systems even when misalignment risks remain.",
+        "aliases": [
+          "capabilities race pressure",
+          "utility of agentic AI"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "declining research productivity in mature scientific paradigms",
+        "type": "concept",
+        "description": "Historical data suggest 500× more researchers now produce similar growth rates, indicating decreasing marginal returns to R&D.",
+        "aliases": [
+          "low-hanging fruit exhausted",
+          "idea production slowdown"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "global cultural homogenisation reducing innovation diversity",
+        "type": "concept",
+        "description": "Increasingly uniform global norms may collectively oppose risky research and thus inhibit breakthrough innovation.",
+        "aliases": [
+          "loss of cultural variation",
+          "worldwide conformity"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "lack of clarity in longtermist communication about AI prioritisation",
+        "type": "concept",
+        "description": "Current public-facing materials under-state AI risk probabilities, leaving newcomers unaware of top priorities.",
+        "aliases": [
+          "WWOTF messaging gap",
+          "confusing outreach"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "paradigm shifts regenerate low-hanging fruit in research",
+        "type": "concept",
+        "description": "Emergence of novel approaches (e.g. deep learning) creates fresh opportunities, contradicting indefinite productivity decline.",
+        "aliases": [
+          "new scientific paradigms reset diminishing returns"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "prioritisation mindset improves resource allocation toward biggest risks",
+        "type": "concept",
+        "description": "Using explicit probabilities and expected value enables better selection of interventions, focusing effort where impact is greatest (e.g. AI safety).",
+        "aliases": [
+          "numerical cause prioritisation"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "prioritise technical AI alignment research ahead of capabilities",
+        "type": "concept",
+        "description": "Strategic decision that the most effective way to mitigate AI takeover is to devote substantial R&D specifically to alignment methods before deploying APS systems.",
+        "aliases": [
+          "alignment-first approach",
+          "safety-before-scale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "integrate adversarial training and red-teaming to detect power-seeking behaviour",
+        "type": "concept",
+        "description": "Subject models to adversarial probes during RLHF or similar processes to expose deceptive or power-seeking policies.",
+        "aliases": [
+          "safety-red-teaming",
+          "adversarial finetuning"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "promote technological innovation and researcher capacity to avoid stagnation",
+        "type": "concept",
+        "description": "Actively pursue policies and technologies that raise effective research productivity and keep progress robust.",
+        "aliases": [
+          "innovation-boost strategy"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "transparent communication highlighting AI risk in outreach materials",
+        "type": "concept",
+        "description": "Ensure introductory texts and events explicitly quantify AI x-risk to align newcomers’ priorities with expert consensus.",
+        "aliases": [
+          "AI-risk-focused outreach"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "fine-tune models with RLHF plus adversarial red-teaming",
+        "type": "concept",
+        "description": "Combine human feedback with adversarially generated test cases during fine-tuning to shape safer model policies.",
+        "aliases": [
+          "robust RLHF pipeline",
+          "safety-augmented RLHF"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "deploy AI-assisted research tools for alignment discovery",
+        "type": "concept",
+        "description": "Use language-model code completion, automated theorem search, and data-collection assistants to speed alignment experiments.",
+        "aliases": [
+          "LM code assistants for alignment",
+          "AI-for-AI-safety tooling"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "genetic enhancement and controlled cloning to expand high-ability population",
+        "type": "concept",
+        "description": "Lift innovation ceilings by ethically applying embryo selection, polygenic scores, or cloning to increase numbers of top researchers.",
+        "aliases": [
+          "bio-boosted R&D capacity",
+          "human cloning for talent"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "distribute The Precipice to potential longtermist direct workers",
+        "type": "concept",
+        "description": "Provide more technically accurate material emphasising AI x-risk to students and professionals entering EA.",
+        "aliases": [
+          "AI-focused book outreach",
+          "Precipice mass giveaway"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Carlsmith report empirical estimates above 10 % AI catastrophe",
+        "type": "concept",
+        "description": "Author’s own update from 5 % to >10 % plus detailed quantitative model provide medium-strength evidence for high AI risk.",
+        "aliases": [
+          "Carlsmith updated >10 %",
+          "report evidence on AI-risk"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Samotsvety aggregate forecast 25 % misaligned AI takeover",
+        "type": "concept",
+        "description": "Independent forecasting group gives 25 % chance of takeover by 2100, supporting elevated risk estimates.",
+        "aliases": [
+          "Samotsvety forecast 25 % AI doom"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "historical 500× researcher effort with stagnant TFP data",
+        "type": "concept",
+        "description": "Quantitative evidence that research input has multiplied yet growth rates flat, supporting stagnation problem analysis.",
+        "aliases": [
+          "Bloom et al. productivity finding"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "expert statement that no technical barrier to human cloning exists",
+        "type": "concept",
+        "description": "Public comment by leading scientist that human cloning is already technically feasible underpins feasibility of genetic enhancement path.",
+        "aliases": [
+          "Mu-Ming Poo cloning comment"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "community reports of bait-and-switch reactions to WWOTF",
+        "type": "concept",
+        "description": "Anecdotal feedback that newcomers feel misled when learning actual EA priorities, signalling communication problems.",
+        "aliases": [
+          "outreach confusion evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "fund research into value discovery and preference elicitation before AGI deployment",
+        "type": "intervention",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "fund research into value discovery and preference elicitation before AGI deployment"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "misaligned AI takeover causing human disempowerment",
+        "type": "concept",
+        "description": "Scenario where advanced power-seeking AI systems permanently seize control from humanity, eliminating or nullifying human agency and value.",
+        "aliases": [
+          "AI doom",
+          "AI existential catastrophe"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "prolonged technological stagnation extending time of perils",
+        "type": "concept",
+        "description": "Multi-century slowdown of growth and innovation that keeps humanity vulnerable to catastrophes for far longer.",
+        "aliases": [
+          "secular stagnation",
+          "long-term economic slowdown"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "short AI timelines with 80 % chance of TAI by 2100",
+        "type": "concept",
+        "description": "Combining bio-anchors analysis, tool-chain improvements and expert surveys suggests transformative AI is highly probable this century.",
+        "aliases": [
+          "near-term transformative AI",
+          "80 % TAI by 2100"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Carlsmith probability decomposition of power-seeking AI catastrophe",
+        "type": "concept",
+        "description": "Analytical framework assigning probabilities to six conditional steps from APS feasibility to existential catastrophe, yielding 5-35 % risk by 2100.",
+        "aliases": [
+          "Carlsmith six-step model"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "fund dedicated AI alignment research programmes",
+        "type": "intervention",
+        "description": "Allocate grants and institutional support specifically for developing alignment methods before APS-AI capability deployment.",
+        "aliases": [
+          "increase alignment R&D budget"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "apply adversarial red-teaming during RLHF fine-tuning of language models",
+        "type": "intervention",
+        "description": "Embed systematic adversarial example generation and red-team audits inside RLHF pipelines to surface hidden power-seeking behaviours.",
+        "aliases": [
+          "RLHF-plus-red-team"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "leverage existing language models to automate alignment research tasks",
+        "type": "intervention",
+        "description": "Use code-completion, data-labelling and literature-search LMs to accelerate hypothesis testing and safety tooling development.",
+        "aliases": [
+          "AI-assisted safety research"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "implement policy moratorium on deploying APS-AI until safety certification",
+        "type": "intervention",
+        "description": "Regulatory requirement that agentic planning systems obtain independent safety verification before large-scale deployment.",
+        "aliases": [
+          "APS-AI deployment pause"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "authorise regulated genetic enhancement programmes for increased innovation",
+        "type": "intervention",
+        "description": "Legal reforms and funding to enable ethical embryo selection or cloning aimed at expanding high-ability research population.",
+        "aliases": [
+          "controlled embryo selection for IQ"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "bulk distribute The Precipice in EA university outreach",
+        "type": "intervention",
+        "description": "Provide the more AI-risk-focused book to students to set accurate expectations and priorities.",
+        "aliases": [
+          "Precipice giveaways"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "misaligned AI takeover causing human disempowerment",
+        "target_node": "alignment difficulty of APS-AI systems",
+        "description": "Hard-to-align APS systems create pathways to takeover.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "prioritise technical AI alignment research ahead of capabilities",
+        "target_node": "deploy AI-assisted research tools for alignment discovery",
+        "description": "Tooling accelerates alignment-first agenda.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Carlsmith report empirical estimates above 10 % AI catastrophe",
+        "target_node": "apply adversarial red-teaming during RLHF fine-tuning of language models",
+        "description": "Quantified high risk drives adoption of adversarial fine-tuning intervention.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "prolonged technological stagnation extending time of perils",
+        "target_node": "declining research productivity in mature scientific paradigms",
+        "description": "Lower marginal returns on research can halt growth.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "declining research productivity in mature scientific paradigms",
+        "target_node": "historical 500× researcher effort with stagnant TFP data",
+        "description": "Productivity statistics substantiate decline claim.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "paradigm shifts regenerate low-hanging fruit in research",
+        "target_node": "promote technological innovation and researcher capacity to avoid stagnation",
+        "description": "Design strategy aims to trigger paradigm shifts and higher capacity.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "promote technological innovation and researcher capacity to avoid stagnation",
+        "target_node": "genetic enhancement and controlled cloning to expand high-ability population",
+        "description": "Bio-enhancement directly increases researcher talent pool.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "genetic enhancement and controlled cloning to expand high-ability population",
+        "target_node": "expert statement that no technical barrier to human cloning exists",
+        "description": "Expert testimony indicates mechanism is technically feasible.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "expert statement that no technical barrier to human cloning exists",
+        "target_node": "authorise regulated genetic enhancement programmes for increased innovation",
+        "description": "Feasibility evidence suggests policy action worthwhile.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "misallocation of longtermist efforts away from AI safety",
+        "target_node": "lack of clarity in longtermist communication about AI prioritisation",
+        "description": "Messaging gap leads to resource misallocation.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "lack of clarity in longtermist communication about AI prioritisation",
+        "target_node": "community reports of bait-and-switch reactions to WWOTF",
+        "description": "Reports confirm communication problem.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "prioritisation mindset improves resource allocation toward biggest risks",
+        "target_node": "transparent communication highlighting AI risk in outreach materials",
+        "description": "Design principle converts mindset into outreach practice.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "transparent communication highlighting AI risk in outreach materials",
+        "target_node": "distribute The Precipice to potential longtermist direct workers",
+        "description": "Book giveaway embodies transparent communication.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "distribute The Precipice to potential longtermist direct workers",
+        "target_node": "community reports of bait-and-switch reactions to WWOTF",
+        "description": "Reports highlight need and thus validate mechanism choice.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "community reports of bait-and-switch reactions to WWOTF",
+        "target_node": "bulk distribute The Precipice in EA university outreach",
+        "description": "Observed confusion drives intervention to correct communication.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addresses",
+        "source_node": "fund research into value discovery and preference elicitation before AGI deployment",
+        "target_node": "value lock-in risk from aligned but narrow AI objectives",
+        "description": "Direct intervention to mitigate value lock-in during development phase",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "bafbeb6fc6b0c8d6efe60955408f7542"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.205166"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER 1 - Missing node_rationale fields: All 30 nodes lack this required field. Examples from source: author provides explicit reasoning for each risk/mechanism in sections 'Underestimating risk of misaligned AI takeover', 'Overestimating risk from stagnation', and 'Lack of clarity on longtermist communication' which should populate node_rationale with section citations.",
+      "BLOCKER 2 - Missing edge_confidence_rationale: Author explicitly justifies probability estimates throughout; e.g., 'I put that possibility [of misaligned AI takeover] at around 3 percent this century is too low, with 90% confidence' in Power-seeking AI report section should explain edge confidence.",
+      "BLOCKER 3 - Missing edge_rationale: Author provides extensive causal reasoning, e.g., 'MacAskill gives 35% to stagnation...implying 35/67 = ~52% chance of stagnation in non-TAI worlds' to justify risk decomposition edges.",
+      "MAJOR - Orphaned nodes: 'use non-APS AI to automate alignment research' and 'integrate adversarial training and red-teaming' lack any connecting edges. Author discusses automated alignment research as: 'My current biggest hope is that we can use non-APS AIs in various ways to help automate alignment research' (alignment difficulty section) which should connect to design rationale and implementation nodes.",
+      "MAJOR - Soares/Kokotajlo validation evidence missing: Author states 'I've read all of the reviews and found the ones from Nate Soares...and Daniel Kokotajlo...to be the most compelling. They have p(AI doom by 2070) at >77% and 65% respectively' - these expert reassessments should be validation evidence nodes supporting AI risk.",
+      "MAJOR - Value lock-in risk node missing: Author explicitly praises MacAskill's treatment 'I did appreciate the discussion of value lock-in possibilities' and notes 'this has been discussed for a while among AI safety researchers' - represents distinct existential risk not captured in current graph.",
+      "MAJOR - TFP measurement bias node missing: Author dedicates substantial reasoning to GDP/TFP measurement issues: 'How much can we trust statistics like TFP...My current take is that they're useful, but we should take them with a huge grain of salt' (Overestimating rate of decline in research productivity section) - key theoretical insight mitigating stagnation risk.",
+      "MAJOR - Edge direction error: Edge 'Carlsmith decomposition' -> 'prioritise technical AI alignment' uses incorrect 'mitigated_by' type; decomposition should cause understanding of alignment difficulty, not be mitigated by prioritization.",
+      "MINOR - Duplicate nodes: 'fine-tune models with RLHF plus adversarial red-teaming' and 'integrate adversarial training and red-teaming to detect power-seeking behaviour' represent same concept at different abstraction; should merge into single implementation mechanism node.",
+      "COVERAGE - Missing edges from source: Author discusses how AI timelines reduce stagnation probability ('My TAI timelines put an upper bound of 20% on stagnation this century') but no edge connects TAI timeline node to stagnation risk node.",
+      "COVERAGE - Missing edges from source: Author provides concrete examples of AI-for-AI-progress (NVIDIA GPU optimization, Google accelerator optimization) in Treatment of timelines section that should validate 'deploy AI-assisted research tools' implementation mechanism node.",
+      "COVERAGE - Stagnation length mechanisms under-captured: Author discusses population decline ('the bar for an outlier culture to restart...is much higher') and catastrophe loops ('recurrent global catastrophes') as distinct problem analyses but current graph has only generic cultural homogenization mechanism.",
+      "SCHEMA - Intervention maturity estimates: Current maturity levels appear conservative; author explicitly discusses concrete deployment examples (NVIDIA, Google) suggesting 'AI-assisted research tools' could be Maturity 3 rather than 1.",
+      "SCHEMA - Section title references mandatory: All proposed node/edge rationale fields must cite 'closest preceding data source section title' per instructions; extracted graph lacks these citations entirely, preventing downstream traceability."
+    ]
+  },
+  "url": "https://forum.effectivealtruism.org/posts/9Y6Y6qoAigRC7A8eX/my-take-on-what-we-owe-the-future",
+  "paper_id": "35de7ddfcc016c117270162770b6826f",
+  "ard_file_source": "eaforum",
+  "errors": null
+}

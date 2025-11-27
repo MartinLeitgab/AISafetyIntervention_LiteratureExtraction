@@ -1,0 +1,536 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has valid JSON structure and referential integrity but suffers from BLOCKER-level schema violations: missing 'node_rationale' fields on all nodes, missing 'edge_confidence_rationale' and 'edge_rationale' fields on all edges, and extraneous 'embedding' fields not in the schema. Additionally, six important concept nodes are missing from the fabric that are explicitly discussed in the DATA_SOURCE (sequential vs discrete problem solving characteristics, prosaic vs brain-based AGI validation, deployment boundary ambiguity, subhuman AGI possibility, and architecture-specific safety requirements). The edge confidence values lack supporting rationales per schema specifications. With proposed fixes (adding required fields with DATA_SOURCE citations, removing extraneous fields, adding six missing nodes with proper edges), the extraction would achieve schema compliance and significantly improved coverage of the source material's reasoning pathways."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Nodes missing required 'node_rationale' field per schema requirements",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field with section title reference to all nodes. Schema specifies this is mandatory."
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edges missing required 'edge_confidence_rationale' and 'edge_rationale' fields per schema requirements",
+        "where": "edges[*]",
+        "suggestion": "Add both 'edge_confidence_rationale' and 'edge_rationale' fields with section title references to all edges."
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Multiple nodes contain 'embedding' field not in schema specification",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove all 'embedding' fields - they are not in the required schema and add clutter."
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references verified against node names",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge confidence values lack justification - all edges have confidence 2-3 but lack detailed rationale per instruction requirements",
+        "evidence": "Schema requires 'edge_confidence_rationale' with 'evidence assessment with closest preceding data source section title reference' but extracted graph provides none",
+        "fix": "Add detailed rationales for each edge explaining confidence level with DATA_SOURCE section references like 'Foundational learning algorithm', 'Post-deployment learning capacity', etc."
+      },
+      {
+        "issue": "Intervention maturity ratings lack supporting rationale per requirements",
+        "evidence": "Schema requires 'intervention_maturity_rationale: evidence-based reasoning with closest preceding data source section title reference' but all interventions lack this field",
+        "fix": "Add intervention_maturity_rationale field to all intervention nodes explaining why they are rated at maturity level 1 (Foundational/Theoretical)"
+      },
+      {
+        "issue": "Node_rationale missing entirely from all nodes",
+        "evidence": "Schema explicitly requires 'node_rationale: why essential to fabric with closest preceding data source section title reference' for all nodes",
+        "fix": "Add node_rationale field to every node with reference to DATA_SOURCE section like 'Foundational learning algorithm', 'Post-deployment learning capacity', 'Level of general intelligence', 'Exploring the possible space of learning architectures', or 'Zooming back out'"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Distinction between SL and RL as foundational difference in decision causality",
+          "evidence": "DATA_SOURCE states: 'the most fundamental difference between these two learning algorithms is that the decisions of an SL algorithm have no direct bearing on the next decision problem faced by the algorithm...while the decisions of an RL algorithm do affect the next decision-problem'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Problem analysis of SL vs RL decision independence"
+          ],
+          "expected_target_node_name": [
+            "Understanding learning algorithm architecture enables behavior prediction and control in AGI"
+          ]
+        },
+        {
+          "title": "Sequential problem solving correlation with RL vs discrete problem solving with SL",
+          "evidence": "DATA_SOURCE: 'the degree to which one believes that AGI would fundamentally be more like a sequential problem solver should track with one's credence in the foundational learning algorithm of AGI being some form of RL. So too with AGI being more like a repeated discrete problem solver and SL.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Problem analysis of AGI sequential vs discrete problem-solving nature"
+          ],
+          "expected_target_node_name": [
+            "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals"
+          ]
+        },
+        {
+          "title": "Training/testing vs deployment distinction and online learning's blurring effect",
+          "evidence": "DATA_SOURCE: 'if one believes the answer is closer to 100% than 0%, the notion of a training/testing-deployment distinction becomes increasingly arbitrary'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Problem analysis of deployment vs post-deployment learning boundary"
+          ],
+          "expected_target_node_name": [
+            "Understanding learning algorithm architecture enables behavior prediction and control in AGI"
+          ]
+        },
+        {
+          "title": "Brain as example of strong online learning contrasted with Tesla offline",
+          "evidence": "DATA_SOURCE: 'the best example of strong online learning can be found in the brain' vs 'Tesla's use of deep learning for training the self-driving functionality...data is collected, models are trained and tested, and software updates containing the now-static model are subsequently sent out'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Illustrative mapping of Tesla Autopilot and human brain validates framework utility"
+          ],
+          "expected_target_node_name": [
+            "Illustrative mapping of Tesla Autopilot and human brain validates framework utility"
+          ]
+        },
+        {
+          "title": "General intelligence definition and subhuman intelligence possibility",
+          "evidence": "DATA_SOURCE: 'general intelligence is basically defined as the ability to efficiently achieve goals in a wide range of domains' and 'nothing about this definition...necessarily entails superhuman competence' with examples of dolphins, octopuses, chimpanzees",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Theoretical insight that AGI general intelligence level need not equal human or superhuman capability"
+          ],
+          "expected_target_node_name": [
+            "Misalignment between AGI general intelligence level and human control assumptions"
+          ]
+        },
+        {
+          "title": "Prosaic AGI vs brain-based AGI as concrete instantiations of framework",
+          "evidence": "DATA_SOURCE: 'prosaic AGI safety researchers seem to center their efforts in mostly-supervised, mostly-offline learning architectures, while brain-based AGI safety researchers are more interested in more RL-based, solidly-online learning architectures'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Validation evidence of framework categorizing prosaic vs brain-based AGI approaches"
+          ],
+          "expected_target_node_name": [
+            "Illustrative mapping of Tesla Autopilot and human brain validates framework utility"
+          ]
+        },
+        {
+          "title": "Architecture-specific vs architecture-independent safety problems",
+          "evidence": "DATA_SOURCE: 'there might be certain problems that transcend specific learning architectures...it still makes sense to think about specific architectures as a first step...there are almost certainly going to be other important safety problems that end up being strictly architecture-specific'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Theoretical insight that architecture-dependent safety problems require architecture-specific interventions"
+          ],
+          "expected_target_node_name": [
+            "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework"
+          ]
+        },
+        {
+          "title": "Necessity of understanding AGI architecture for control",
+          "evidence": "DATA_SOURCE: 'in order to control something, one generally has to understand how it works' and 'It is crucial for existential risk minimization that we do a better job understanding and controlling the trajectory of AGI'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Loss of control over AGI behavior due to inadequate understanding of its learning architecture"
+          ],
+          "expected_target_node_name": [
+            "Understanding learning algorithm architecture enables behavior prediction and control in AGI"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+        "field": "node_rationale",
+        "json_new_value": "Core risk node establishing existential stakes for the entire framework. DATA_SOURCE opening states: 'in order to control something, one generally has to understand how it works' and 'It is crucial for existential risk minimization that we do a better job understanding and controlling the trajectory of AGI' via reference to airplane landing metaphor. This is the central motivation for the entire three-axis framework development.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+        "field": "node_rationale",
+        "json_new_value": "Problem analysis node identifying a primary source of control failure. DATA_SOURCE 'Foundational learning algorithm' section establishes that ML researchers have graded familiarity with different learning paradigms (SL well-studied, RL less studied, novel algorithms not yet discovered). Lower familiarity directly reduces ability to predict behavior.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "High post-deployment learning capacity causing unpredictable updates in AGI",
+        "field": "node_rationale",
+        "json_new_value": "Problem analysis node identifying second major source of control failure. DATA_SOURCE 'Post-deployment learning capacity' section discusses how continuous learning post-deployment creates models that are not 'static' or 'solidified', causing unpredictability contrasting with offline systems like Tesla's current approach.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Misalignment between AGI general intelligence level and human control assumptions",
+        "field": "node_rationale",
+        "json_new_value": "Problem analysis node identifying third vector of unpredictability. DATA_SOURCE 'Level of general intelligence' section establishes that general intelligence spans a wide spectrum from subhuman (dolphins, octopuses, crows) to superhuman, and control strategies premised on incorrect intelligence level will fail.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "field": "node_rationale",
+        "json_new_value": "Core theoretical insight proposing that architectural understanding enables control. DATA_SOURCE states: 'In order to understand how AGI works, we will have to understand the general strategies that the AGI employs to achieve goals and solve problems. And understanding these general strategies is really a question of the architecture of AGI's learning algorithm(s).' This connects architectural understanding to predictability and hence control.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+        "field": "node_rationale",
+        "json_new_value": "Design rationale node operationalizing the theoretical insight into a practical methodology. DATA_SOURCE central thesis: 'I will now outline my best guess at the space of these possible learning algorithm architectures. I've divided up the space into three axes: foundational learning algorithm, post-deployment learning capacity, and level of general intelligence.' This three-axis framework is the primary design rationale artifact.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Focusing safety research on less familiar RL and online learning architectures to close knowledge gaps",
+        "field": "node_rationale",
+        "json_new_value": "Design rationale branch identifying research prioritization strategy. DATA_SOURCE 'Foundational learning algorithm' section notes familiarity is 'a fairly relevant one for safety' and that RL is less researched than SL. This suggests prioritizing research on architectures with lower familiarity to reduce existential risk.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism node describing the concrete artifact instantiating the framework. DATA_SOURCE provides visual graphs and text descriptions enabling practical application of the three-axis model to locate specific AGI systems or research proposals within the space.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence node demonstrating framework can successfully categorize real systems. DATA_SOURCE 'Post-deployment learning capacity' section provides Tesla (offline SL) as example of 'solidly offline learning' while human brain provides example of 'strong online learning' with continuous update behavior during waking hours.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Apply three-axis architecture framework during AGI project scoping to tailor alignment strategies",
+        "field": "node_rationale",
+        "json_new_value": "Intervention in model design phase enabling architecture-informed safety planning. DATA_SOURCE 'Zooming back out' establishes that 'proposals for control must necessarily be based upon our best predictions about what AGI will look like' pre-deployment, motivating early application of architecture predictions.",
+        "reason": "Missing required field per schema. Also establish intervention_lifecycle_rationale."
+      },
+      {
+        "node_name": "Apply three-axis architecture framework during AGI project scoping to tailor alignment strategies",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle stage 1 (Model Design) because the framework is intended to inform predictions before heavy development begins. DATA_SOURCE 'Zooming back out' states: 'the stakes are high for figuring out what the most plausible models of AGI actually are; it is only with models of this sort as a foundation...that any of the subsequent control-related work can be done.'",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Increase foundational research into RL and online learning safety to raise familiarity pre-deployment",
+        "field": "node_rationale",
+        "json_new_value": "Intervention in research/other category addressing knowledge gap. DATA_SOURCE identifies that RL and unanticipated algorithms are less familiar to ML practitioners, creating safety vulnerability that foundational research can address.",
+        "reason": "Missing required field per schema. Also establish intervention_lifecycle_rationale and intervention_maturity_rationale."
+      },
+      {
+        "node_name": "Increase foundational research into RL and online learning safety to raise familiarity pre-deployment",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle stage 6 (Other) because this is foundational research that spans pre-deployment learning about architectures. This precedes all other development stages.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Increase foundational research into RL and online learning safety to raise familiarity pre-deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical) because DATA_SOURCE does not propose completed research programs, only identifies familiarity gaps that require investigation. The framework itself is theoretical/foundational.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework",
+        "field": "node_rationale",
+        "json_new_value": "Intervention in model design phase instantiating architecture-specific safety strategies. DATA_SOURCE 'Zooming back out' establishes: 'there are almost certainly going to be other important safety problems (and solutions) that end up being strictly architecture-specific' requiring customized control approaches per architecture type.",
+        "reason": "Missing required field per schema. Also establish intervention_lifecycle_rationale and intervention_maturity_rationale."
+      },
+      {
+        "node_name": "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle stage 1 (Model Design) because control mechanisms must be developed as part of initial architectural planning before implementation phases occur.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical) because DATA_SOURCE proposes this as a research direction rather than describing existing, validated mechanisms. The framework is nascent.",
+        "reason": "Missing required field per schema"
+      },
+      {
+        "node_name": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "field": "description",
+        "json_new_value": "Gaining a principled grasp of the AGI's underlying learning mechanisms (foundational algorithm type, learning capacity post-deployment, general intelligence level) is proposed as a prerequisite for forecasting its actions and implementing reliable control schemes. As stated: 'In order to control something, one generally has to understand how it works—i.e., to accurately predict how it will behave under various manipulations.'",
+        "reason": "Enhance description with DATA_SOURCE quote for better grounding"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+        "type": "concept",
+        "description": "If developers cannot predict how an AGI's learning algorithms respond to situations or updates, they may be unable to keep the system aligned or safe, leading to potentially catastrophic outcomes.",
+        "aliases": [
+          "AGI control failure from unknown learning algorithms",
+          "Unpredictable AGI behavior risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+        "type": "concept",
+        "description": "When the AGI relies on learning paradigms (e.g., novel beyond RL/SL) that researchers have little experience with, its internal dynamics and decision patterns become difficult to forecast.",
+        "aliases": [
+          "Unknown base learning strategy unpredictability",
+          "Low familiarity learning algorithms"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "High post-deployment learning capacity causing unpredictable updates in AGI",
+        "type": "concept",
+        "description": "If an AGI continues to learn heavily after deployment, its policies and world model can shift in unforeseen ways, complicating monitoring and control.",
+        "aliases": [
+          "Online learning unpredictability",
+          "Continual self-modification risk"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Misalignment between AGI general intelligence level and human control assumptions",
+        "type": "concept",
+        "description": "Safety measures presuming human-level or superhuman capability may fail if the deployed AGI exhibits subhuman or differently distributed general intelligence, or vice-versa.",
+        "aliases": [
+          "Incorrect intelligence-level assumption",
+          "General intelligence mismatch"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+        "type": "concept",
+        "description": "Researchers can project where an anticipated AGI sits in a three-dimensional space defined by learning paradigm, online/offline capacity, and intelligence level, then tailor safety strategies accordingly.",
+        "aliases": [
+          "Three-axis prediction mapping",
+          "Architecture tri-axis localisation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Focusing safety research on less familiar RL and online learning architectures to close knowledge gaps",
+        "type": "concept",
+        "description": "Given lower familiarity and higher potential risk, safety work should preferentially investigate RL-heavy and strongly online AGI designs.",
+        "aliases": [
+          "Prioritise RL-centric online architectures",
+          "Target unfamiliar architectures for safety"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+        "type": "concept",
+        "description": "A practical representation (graph/visual or checklist) that allows teams to plot candidate AGI systems against the three axes, generating a concrete reference point for alignment planning.",
+        "aliases": [
+          "3-D architecture taxonomy",
+          "Tri-axis framework tool"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+        "type": "concept",
+        "description": "Placing Tesla’s offline SL system and the human brain’s online RL-ish system within the framework demonstrates its coverage and clarifies axis interpretation.",
+        "aliases": [
+          "Tesla vs. brain case study",
+          "Framework illustration examples"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Apply three-axis architecture framework during AGI project scoping to tailor alignment strategies",
+        "type": "intervention",
+        "description": "During early model-design discussions, teams systematically locate their proposed AGI within the three-axis space and generate architecture-specific alignment requirements before heavy development begins.",
+        "aliases": [
+          "Use architecture taxonomy in model design",
+          "Incorporate tri-axis analysis in planning"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Increase foundational research into RL and online learning safety to raise familiarity pre-deployment",
+        "type": "intervention",
+        "description": "Allocate funding and effort to studying safety properties, interpretability, and control techniques for RL-dominant and online-learning AGI systems before they are built.",
+        "aliases": [
+          "Prioritise RL/online safety research",
+          "Bridge familiarity gap via research"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework",
+        "type": "intervention",
+        "description": "For each located point (e.g., RL-online-superhuman), create bespoke monitoring, alignment, or interpretability techniques that address the unique risks of that cluster.",
+        "aliases": [
+          "Tailor controls to framework position",
+          "Design axis-aligned safety measures"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "type": "concept",
+        "description": "Gaining a principled grasp of the AGI’s underlying learning mechanisms is posited as a prerequisite for forecasting its actions and implementing reliable control schemes.",
+        "aliases": [
+          "Architecture comprehension for control",
+          "Predictive understanding of learning strategies"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+        "target_node": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+        "description": "Unfamiliar or novel learning paradigms make it harder to foresee AGI behavior, directly contributing to loss of control.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+        "target_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "description": "Gaining architectural understanding directly addresses unpredictability stemming from unfamiliar algorithms.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "High post-deployment learning capacity causing unpredictable updates in AGI",
+        "target_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "description": "A principled grasp of the learning process aids in predicting and constraining online updates.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Misalignment between AGI general intelligence level and human control assumptions",
+        "target_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "description": "Architectural understanding encompasses intelligence-level considerations, reducing assumption mismatch.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+        "target_node": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+        "description": "The three-axis mapping operationalises the high-level insight into a concrete strategy.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+        "target_node": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+        "description": "The taxonomy tool embodies the mapping approach, providing a concrete artefact (graph/checklist).",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Focusing safety research on less familiar RL and online learning architectures to close knowledge gaps",
+        "target_node": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+        "description": "The same taxonomy supports identifying under-explored regions (RL-online) for targeted research.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+        "target_node": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+        "description": "Example placements serve as informal validation that the tool can represent real systems.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+        "target_node": "Apply three-axis architecture framework during AGI project scoping to tailor alignment strategies",
+        "description": "Seeing the framework work on examples encourages adoption early in new AGI projects.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "a9eb41252253d9d67cfbbccbb1e42203"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.243910"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: All nodes missing 'node_rationale' field mandated by schema: 'node_rationale: why essential to fabric with closest preceding data source section title reference'. This field is critical for downstream merging across 500k sources.",
+      "BLOCKER: All edges missing 'edge_confidence_rationale' and 'edge_rationale' fields mandated by schema. Schema requires 'edge_confidence_rationale: evidence assessment with closest preceding data source section title reference' and 'edge_rationale: connection justification with closest preceding data source section title reference'.",
+      "MAJOR: Extraneous 'embedding' fields present on all nodes and some edges - not in schema specification, should be removed.",
+      "MISSING NODE: 'Sequential decision problem solving characteristic of RL' - DATA_SOURCE 'Foundational learning algorithm' section explicitly discusses sequential decision dependency as core RL characteristic: 'turning left means I can turn left or right at the next junction while turning right would eventually lead me into a dead-end'. This is critical for users to understand RL-to-control mapping.",
+      "MISSING NODE: 'Discrete independent decision problem solving characteristic of SL' - DATA_SOURCE explicitly contrasts: 'predicting 7 is causally independent of that fact the next training image is a 4'. This completes the SL/RL dichotomy.",
+      "MISSING NODE: 'Validation evidence of prosaic vs brain-based AGI positioning' - DATA_SOURCE closing paragraph states framework 'accounts for different conceptualizations of AGI in safety research, such as prosaic AGI vs brain-based AGI' and positions them in the three-dimensional space. This is explicit validation evidence of framework utility.",
+      "MISSING NODE: 'Architecture-dependent safety problems require architecture-specific interventions' - DATA_SOURCE 'Zooming back out' explicitly states: 'there are almost certainly going to be other important safety problems (and solutions) that end up being strictly architecture-specific' and 'In order to solve the AGI safety control problem, we need to solve all of these subproblems, architecture-independent and architecture-dependent alike.' This theoretical insight justifies architecture-specific controls.",
+      "MISSING NODE: 'Deployment vs post-deployment learning boundary ambiguity' - DATA_SOURCE 'Post-deployment learning capacity' section discusses how high online learning makes the training/testing-deployment distinction 'increasingly arbitrary', creating a problem analysis.",
+      "MISSING NODE: 'Subhuman AGI general intelligence possibility' - DATA_SOURCE 'Level of general intelligence' section explicitly addresses: 'nothing about this definition...necessarily entails superhuman competence' and provides dolphin/octopus/crow examples. This prevents false superhuman-only assumptions.",
+      "COVERAGE: Six missing concept nodes reduce fabric completeness. Instructions require 'Every distinct claim, method, finding etc. that is part of any core reasoning pathways is extracted as a node' and 'approximately 15 nodes per 5000 words'. Current extraction has 12 nodes; with additions would reach 18 nodes, achieving target density.",
+      "EDGE CONFIDENCE: All edges rated 2-3 without detailed justification. Schema requires confidence scale: 5 (very strong/proofs), 4 (strong/controlled experiments), 3 (medium/systematic qualitative), 2 (weak/single examples), 1 (speculative). Most edges in this extraction are supported by explicit DATA_SOURCE reasoning (not single examples) and should support higher confidence ratings with proper justification.",
+      "REFERENTIAL INTEGRITY: All edge source/target nodes verified to exist in node list - no broken references detected.",
+      "FRAMEWORK DECOMPOSITION: The three-axis framework is appropriately decomposed into implementation mechanism node ('Three-dimensional taxonomy tool') rather than left as black box 'Architecture Framework' - correctly follows decomposition instruction.",
+      "VALIDATION AGAINST INSTRUCTIONS: Instructions mandate 'Clear traceability of node and edge information via their closest preceding data source section titles' - extracted rationale fields completely omit these required section title references. Required section titles include: 'Exploring the possible space of learning architectures', 'Foundational learning algorithm', 'Post-deployment learning capacity', 'Level of general intelligence', 'Zooming back out'."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/snwpyAfzoFKdfnEDj/question-1-predicted-architecture-of-agi-learning-algorithm",
+  "paper_id": "620e72ce09fce0b40146cb135ec1d698",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

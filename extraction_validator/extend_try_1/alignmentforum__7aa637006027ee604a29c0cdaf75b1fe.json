@@ -1,0 +1,419 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates solid structural understanding of the causal reasoning in the source material but suffers from critical schema compliance failures. All nodes lack required node_rationale attributes, all edges lack required edge_confidence_rationale and edge_rationale attributes, and two intervention nodes lack intervention_lifecycle_rationale and intervention_maturity_rationale. Additionally, the extraction is incomplete: four significant concept nodes are missing that are explicitly discussed in the source (in-distribution mask of out-of-distribution failures, generative vs runtime deliberation distinction, linguistic conflation, and associated edges). These missing nodes are essential to the knowledge fabric as they explain causal mechanisms explicitly stated in the text and footnotes. Intervention assignments appear reasonable but require stronger justification given the theoretical nature of the source material. With the proposed 21 fixes applied (4 nodes added, 15 field updates to add required rationales, 4 new edges), the graph would achieve schema compliance and substantially improved completeness."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required attributes: intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "where": "nodes[7].intervention_lifecycle_rationale, nodes[7].intervention_maturity_rationale, nodes[8].intervention_lifecycle_rationale, nodes[8].intervention_maturity_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale to all intervention nodes as per schema requirements"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required node_rationale attribute",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale with closest preceding data source section title reference to all nodes"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required edge_confidence_rationale and edge_rationale attributes",
+        "where": "edges[*].edge_confidence_rationale, edges[*].edge_rationale",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale with data source section references to all edges"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention lifecycle and maturity not justified with data source references",
+        "where": "nodes[7], nodes[8]",
+        "suggestion": "Data source contains no explicit interventions; current assignments appear inferred. Reduce maturity to 1-2 and add explicit inference rationale"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All edge sources and targets verified as existing nodes",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Intervention maturity assigned as 2 and 1, but data source provides no empirical validation evidence for these interventions",
+        "evidence": "Data source discusses conceptual framework and diverse menagerie contemplation. No deployment, pilot studies, or systematic validation of interventions is presented. Quote: 'Contemplation of this diverse collection was responsible for the ideation and refinement of the ideas'",
+        "fix": "Both interventions should be maturity 1 (Foundational/Theoretical) since they are inferred from theoretical discussion without empirical support"
+      },
+      {
+        "issue": "Intervention lifecycle for 'Adopt granular goal-directedness taxonomy in AI risk assessment processes' assigned as 4 (Pre-Deployment Testing), but no evidence in data source supports this phase specification",
+        "evidence": "Data source states goal is 'to better understand goal-directed behaviour, in the sense of being able to better predict its (especially counterfactual and off-distribution) implications' but does not specify deployment phase applicability",
+        "fix": "Change lifecycle to 1 (Model Design) as the framework is foundational theory work, or leave as inferred value 4 with explicit note that inference is being applied"
+      },
+      {
+        "issue": "Intervention lifecycle for 'Educate AI researchers' assigned as 6 (Other), but this is prevention/education work better characterized as foundational",
+        "evidence": "Data source indicates: 'There are few venues in which it is useful to have unambiguous terminology here' and 'talk mainly to other domain experts about them' - indicates existing structural gap",
+        "fix": "Change to lifecycle 1 (Model Design) phase as foundational educational work, or justify 6 with explicit inference note"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Why conflation occurs: domain experts isolated in silos",
+          "evidence": "Quote: 'most of the people who in fact attentively observe a particular class of human-dissimilar actors...are focused domain experts about that particular class, and talk mainly to other domain experts about them'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Abstractive conflation of goal-directed phenomena across dissimilar systems"
+          ],
+          "expected_target_node_name": [
+            "Communication gaps among expert silos in goal-directedness discourse"
+          ]
+        },
+        {
+          "title": "Anthropomorphic heuristic works in-distribution but fails off-distribution",
+          "evidence": "Quote: 'conflating - anthropomorphising - is sufficiently usefully predictive to get by...so these poor abstractions are insufficiently challenged.' and footnote: 'conflation is a poor predictor for out-of-distribution behaviour'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Incorrect predictions of AI behaviour due to anthropomorphic conflation"
+          ],
+          "expected_target_node_name": [
+            "In-distribution anthropomorphic success masks out-of-distribution failures"
+          ]
+        },
+        {
+          "title": "Generation processes enable observable deliberation without deliberative machinery",
+          "evidence": "Footnote 4: 'an actor fit for a particular setting can carry out deliberate-looking behaviours without deliberative machinery, because the process which generated the actor provides enough (slow, gradual) deliberation to locate such behaviours and bake them into reflexes'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Problem analysis related to deliberation-reflex confusion"
+          ],
+          "expected_target_node_name": [
+            "Evolutionary/generative processes decouple apparent deliberation from runtime deliberative machinery"
+          ]
+        },
+        {
+          "title": "Term 'agent' itself is victim of conflation problem",
+          "evidence": "Footnote 6: 'I think the recent reception of the Gato paper was confused in part as a consequence of this.) I substitute agent with actor and controller'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Abstractive conflation of goal-directed phenomena across dissimilar systems"
+          ],
+          "expected_target_node_name": [
+            "Terminology confusion around 'agent' concept obscures distinctions"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Adopt granular goal-directedness taxonomy in AI risk assessment processes",
+        "field": "intervention_lifecycle",
+        "json_new_value": "1",
+        "reason": "Data source provides no evidence of deployment or pre-deployment testing phases. This is foundational theoretical work. Lifecycle should be 1 (Model Design) not 4."
+      },
+      {
+        "node_name": "Adopt granular goal-directedness taxonomy in AI risk assessment processes",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "No empirical validation, pilot studies, or systematic evidence presented for this intervention. It is a theoretical proposal arising from contemplation of a menagerie, not validated through experimentation."
+      },
+      {
+        "node_name": "Adopt granular goal-directedness taxonomy in AI risk assessment processes",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Foundational theoretical work on conceptual decomposition of goal-directedness. Data source discusses framework ideation and contemplation of diverse systems but not deployment contexts. [Section: 'Conceptual framework decomposition' and 'Taxonomy of goal-directed dimensions']",
+        "reason": "Required attribute missing; must justify lifecycle assignment"
+      },
+      {
+        "node_name": "Adopt granular goal-directedness taxonomy in AI risk assessment processes",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Theoretical/foundational level. Data source states: 'Contemplation of this diverse collection was responsible for the ideation and refinement of the ideas and gives some confidence in the appropriateness of the abstractions.' No systematic validation, pilot studies, or empirical testing presented. Inference applied to derive operational intervention from theoretical framework. [Section: Main body framing]",
+        "reason": "Required attribute missing; assignment to maturity 1 requires explicit justification"
+      },
+      {
+        "node_name": "Educate AI researchers on decoupled abstractions via interdisciplinary venues",
+        "field": "intervention_lifecycle",
+        "json_new_value": "1",
+        "reason": "This is foundational educational/organizational work, not deployment-phase work. Better characterized as Model Design phase infrastructure."
+      },
+      {
+        "node_name": "Educate AI researchers on decoupled abstractions via interdisciplinary venues",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Foundational organizational and educational intervention. Data source identifies that domain experts are isolated: 'There are few venues in which it is useful to have unambiguous terminology here.' and 'talk mainly to other domain experts about them'. Creating interdisciplinary venues is prerequisite infrastructure for adoption. [Section: Communication and expertise isolation discussion]",
+        "reason": "Required attribute missing"
+      },
+      {
+        "node_name": "Educate AI researchers on decoupled abstractions via interdisciplinary venues",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Theoretical level. Data source identifies the problem (isolation of experts) but does not describe existing educational venues, pilot programs, or systematic training efforts. Intervention is inferred from identified communication gap. Inference confidence: moderate. [Section: Expertise silos discussion in main text and footnote 5]",
+        "reason": "Required attribute missing; moderate inference applied"
+      },
+      {
+        "node_name": "Incorrect predictions of AI behaviour due to anthropomorphic conflation",
+        "field": "node_rationale",
+        "json_new_value": "Core risk identified in opening: using human-centric abstractions to model dissimilar AI systems creates prediction errors, particularly for out-of-distribution behavior. Explicitly stated as motivation for entire framework: 'what do we mean?' by goal-directedness and the need to understand and describe 'analogies and disanalogies between various goal-directed systems' to 'better predict its (especially counterfactual and off-distribution) implications'. [Section: Opening paragraphs and main motivations]",
+        "reason": "Required node_rationale attribute missing from all nodes"
+      },
+      {
+        "node_name": "Abstractive conflation of goal-directed phenomena across dissimilar systems",
+        "field": "node_rationale",
+        "json_new_value": "Root problem analysis. Data source explicitly discusses how 'abstractions...conflate phenomena which are in fact different' because 'most of the actors that we...attentively interact frequently with are...computationally similar', leading to false generalizations. This conflation is insufficiently challenged because anthropomorphism 'is sufficiently usefully predictive to get by'. [Section: Main text paragraph 2 and footnote 1]",
+        "reason": "Required attribute missing"
+      },
+      {
+        "node_name": "Coupled impressions of separable properties in goal-directedness",
+        "field": "node_rationale",
+        "json_new_value": "Critical problem analysis dimension. Data source distinguishes between conflation (merging different phenomena) and coupling (assuming co-occurrence of separable properties): 'couple together impressions of phenomena which are in fact separable'. Examples would include assuming deliberation implies reflective reasoning, or assuming goal-directedness implies intentionality. [Section: Footnote 2 definitions and main text]",
+        "reason": "Required attribute missing"
+      },
+      {
+        "node_name": "Decoupling computational abstractions enhances out-of-distribution behaviour prediction",
+        "field": "node_rationale",
+        "json_new_value": "Theoretical insight addressing both identified problems. The paper's core thesis is that decomposing goal-directed behavior into separable components allows 'better predict its (especially counterfactual and off-distribution) implications'. The entire framework is motivated by enabling more precise prediction when 'surface phenomena are similar in the wild, their behaviour in different contexts might radically come apart'. [Section: Opening motivation and footnote 1]",
+        "reason": "Required attribute missing"
+      },
+      {
+        "node_name": "Conceptual framework decomposition of goal-directed behaviour components",
+        "field": "node_rationale",
+        "json_new_value": "Design rationale for the proposed solution. Author explicitly states: 'I aim to take steps to break down goal-directed behaviour into a conceptual framework of computational abstractions for which I offer tentative terminology, and which helps me to better understand and describe analogies and disanalogies between various goal-directed systems.' [Section: Main body, explicit design statement]",
+        "reason": "Required attribute missing"
+      },
+      {
+        "node_name": "Taxonomy of goal-directed dimensions across diverse system menagerie",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism concretizing the abstract framework. Data source describes 'a reasonably diverse menagerie of candidate goal-directed systems, including natural and artificial systems at various levels of organisation. Contemplation of this diverse collection was responsible for the ideation and refinement of the ideas and gives some confidence in the appropriateness of the abstractions.' The taxonomy is operationalized across examples like ants, genes, chess-engines, and learning algorithms. [Section: Implementation approach with diverse menagerie image]",
+        "reason": "Required attribute missing"
+      },
+      {
+        "node_name": "Cross-domain analogy clarity between ants, genes and chess engines",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence (qualitative). By applying framework to diverse systems (ants, genes, chess engines, corporations, learning algorithms), the taxonomy reveals where analogies hold and where they break, demonstrating discriminative power. Data source states contemplation of diverse collection 'gives some confidence in the appropriateness of the abstractions' and supports understanding 'analogies and disanalogies'. This is light qualitative validation. [Section: Diverse menagerie discussion]",
+        "reason": "Required attribute missing; confidence should reflect qualitative rather than rigorous evidence"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Adopt granular goal-directedness taxonomy in AI risk assessment processes",
+        "type": "intervention",
+        "description": "During pre-deployment safety analyses, practitioners explicitly rate AI systems along the taxonomy’s dimensions to uncover mispredictions arising from anthropomorphic conflation.",
+        "aliases": [
+          "Apply refined agency framework during safety reviews",
+          "Use decomposition taxonomy for model evaluation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Educate AI researchers on decoupled abstractions via interdisciplinary venues",
+        "type": "intervention",
+        "description": "Create forums where entomologists, economists, AI researchers, etc., share domain insights, fostering uptake of the taxonomy and reducing conflation biases.",
+        "aliases": [
+          "Interdisciplinary training to reduce anthropomorphism",
+          "Workshops on goal-directedness decomposition"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Incorrect predictions of AI behaviour due to anthropomorphic conflation",
+        "type": "concept",
+        "description": "Using human-like notions of agency to model dissimilar artificial systems can lead to systematic prediction errors, especially off-distribution, threatening alignment and safety.",
+        "aliases": [
+          "Mischaracterisation of AI goal-directedness",
+          "Predictive errors from human-centric abstractions"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Abstractive conflation of goal-directed phenomena across dissimilar systems",
+        "type": "concept",
+        "description": "Humans merge superficially similar behaviours of different systems into one coarse concept of 'goal-directedness', ignoring deep mechanistic differences.",
+        "aliases": [
+          "Over-generalised goal-directed abstraction",
+          "Conflation of distinct computational behaviours"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Coupled impressions of separable properties in goal-directedness",
+        "type": "concept",
+        "description": "Observers often assume that if one hallmark of agency is present, others must be too, even though these properties are conceptually separable (e.g., deliberation vs reflex).",
+        "aliases": [
+          "Coupling of independent behavioural facets",
+          "Assumed co-occurrence of distinct goal properties"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Decoupling computational abstractions enhances out-of-distribution behaviour prediction",
+        "type": "concept",
+        "description": "Recognising and modelling distinct components of goal-directed behaviour allows more reliable forecasts when systems operate outside their typical domains.",
+        "aliases": [
+          "Refined abstractions improve extrapolation",
+          "Separating properties aids forecasting"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conceptual framework decomposition of goal-directed behaviour components",
+        "type": "concept",
+        "description": "A deliberate effort to build terminology and structure that distinguish multiple facets (e.g., deliberation, reflexes, generation process) of goal-directed systems.",
+        "aliases": [
+          "Framework for granular goal analysis",
+          "Structured decomposition of agency"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Taxonomy of goal-directed dimensions across diverse system menagerie",
+        "type": "concept",
+        "description": "Implementation of the framework using a variety of natural and artificial examples to instantiate axes such as deliberation vs reflex and generation vs runtime behaviour.",
+        "aliases": [
+          "Goal-directedness taxonomy",
+          "Multi-dimensional agent property table"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Cross-domain analogy clarity between ants, genes and chess engines",
+        "type": "concept",
+        "description": "Using the taxonomy reveals where analogies hold or break, demonstrating its usefulness in discriminating behavioural mechanisms.",
+        "aliases": [
+          "Menagerie comparison findings",
+          "Qualitative evidence from diverse agents"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Incorrect predictions of AI behaviour due to anthropomorphic conflation",
+        "target_node": "Abstractive conflation of goal-directed phenomena across dissimilar systems",
+        "description": "Prediction errors stem from using over-generalised abstractions that ignore mechanistic differences.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Abstractive conflation of goal-directed phenomena across dissimilar systems",
+        "target_node": "Coupled impressions of separable properties in goal-directedness",
+        "description": "Conflation is aggravated when observers assume separable properties always co-exist.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Decoupling computational abstractions enhances out-of-distribution behaviour prediction",
+        "target_node": "Conceptual framework decomposition of goal-directed behaviour components",
+        "description": "The framework operationalises the theoretical insight by defining distinct components.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Conceptual framework decomposition of goal-directed behaviour components",
+        "target_node": "Taxonomy of goal-directed dimensions across diverse system menagerie",
+        "description": "The taxonomy instantiates the framework with concrete dimensions and examples.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Taxonomy of goal-directed dimensions across diverse system menagerie",
+        "target_node": "Cross-domain analogy clarity between ants, genes and chess engines",
+        "description": "Comparative analysis across domains shows taxonomy discriminates behaviours effectively.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Cross-domain analogy clarity between ants, genes and chess engines",
+        "target_node": "Adopt granular goal-directedness taxonomy in AI risk assessment processes",
+        "description": "Demonstrated utility suggests integrating taxonomy into practical risk assessment.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Coupled impressions of separable properties in goal-directedness",
+        "target_node": "Educate AI researchers on decoupled abstractions via interdisciplinary venues",
+        "description": "Identified communication gaps among experts motivate educational interventions.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "780900d7f672d12c791252babb64d950"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.995115"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER ISSUE 1: Missing node_rationale on ALL nodes (0/8 present). This prevents downstream fabric integration and merging across 500k sources. Each node must include rationale with closest preceding section title per instructions.",
+      "BLOCKER ISSUE 2: Missing edge attributes on ALL edges (0/9 have edge_confidence_rationale and edge_rationale). This violates schema requirements and prevents downstream analysis of evidence strength and reasoning justification.",
+      "BLOCKER ISSUE 3: Missing intervention attributes on intervention nodes (0/2 have intervention_lifecycle_rationale, 0/2 have intervention_maturity_rationale). Schema explicitly requires these for interventions.",
+      "COVERAGE GAP 1: In-distribution success masking out-of-distribution failure is critical causal explanation in text ('sufficiently usefully predictive to get by, so these poor abstractions are insufficiently challenged') and footnote 4, but not extracted as node. This is a problem analysis node that explains WHY conflation persists.",
+      "COVERAGE GAP 2: Generative process deliberation vs runtime deliberation is explicitly discussed in footnote 4 as key mechanism ('process which generated the actor provides enough deliberation...bake them into reflexes'). This is essential problem analysis and design rationale foundation but not extracted.",
+      "COVERAGE GAP 3: Linguistic/terminology dimension of conflation is explicitly identified (footnote 6: 'agent' as 'perfect exemplary linguistic victim' and main text: 'language we use to communicate...is prone to conflation') but only partially addressed. Not extracted as distinct problem analysis node.",
+      "COVERAGE GAP 4: Expertise silo problem ('talk mainly to other domain experts about them') motivates the educational intervention but is not explicitly extracted as separate node explaining why interdisciplinary communication is needed.",
+      "INTERVENTION LIFECYCLE CONCERN: 'Adopt granular goal-directedness taxonomy in AI risk assessment processes' assigned lifecycle 4 (Pre-Deployment Testing) with no evidence source supports this deployment phase. Data source is theoretical framework work. Should be lifecycle 1.",
+      "INTERVENTION MATURITY CONCERN: Both interventions assigned maturity 2 with no validation evidence presented. Data source contains only conceptual development and menagerie contemplation, which supports maturity 1 (Foundational/Theoretical). Maturity 2 requires experimental proof-of-concept.",
+      "EDGE CONFIDENCE CALIBRATION: Current edges use confidence 3 and 2 appropriately (systematic qualitative evidence and limited examples respectively), consistent with data source providing framework development and conceptual examples rather than empirical validation.",
+      "REFERENTIAL INTEGRITY: All 9 edges reference existing nodes correctly - no broken references detected.",
+      "ORPHAN STATUS: No isolated nodes after proposed additions - all 12 final nodes connect via edges to overall fabric.",
+      "FRAMEWORK DECOMPOSITION: The taxonomy is properly decomposed as implementation mechanism rather than black-box 'framework node', following instruction guidelines. However, additional conceptual nodes needed to show complete reasoning pathways.",
+      "EVIDENCE MAPPING: Node rationales can be concisely mapped to source sections: opening paragraphs (risk), main text para 2 (conflation problem), footnote 4 (generation-runtime distinction), main text para 3-4 (design rationale), image caption + text (implementation), diverse menagerie discussion (validation), footnotes 5-6 (communication gaps)."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/WhETfFgkfNSTShc4y/breaking-down-goal-directed-behaviour",
+  "paper_id": "7aa637006027ee604a29c0cdaf75b1fe",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

@@ -1,0 +1,513 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has BLOCKER-level schema violations: missing required edge_confidence_rationale, edge_rationale, and node_rationale fields across all edges and nodes. The graph demonstrates good structural coverage of the main causal pathway (risk → problem → theory → design → implementation → validation → intervention) and correctly identifies 16 nodes and 16 edges. However, the graph misses critical distinctions: (1) that the work produces ModFDT rather than pure FDT due to parameter integration, (2) the explicit base model comparison establishing intervention effectiveness, and (3) edge cases where the model deviates. Three nodes should be relocated or reclassified (Newcomb's paradox example, narrative embedding philosophy vs ATL technique). Four proposed additional nodes and four new edges would complete coverage. After applying all proposed fixes, the knowledge fabric would validly represent the complete causal-interventional reasoning from decision theory misalignment risks through the ATL intervention with comprehensive validation evidence."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge_confidence_rationale field in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale field with evidence assessment and closest preceding section title reference for each edge"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge_rationale field in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_rationale field with connection justification and section title reference for each edge"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node_rationale field in all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale field explaining why node is essential to fabric with section title reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "intervention_lifecycle_rationale missing for all intervention nodes",
+        "where": "nodes[*] where type=intervention",
+        "suggestion": "Add justification with closest preceding section title for each intervention lifecycle assignment"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "intervention_maturity_rationale missing for all intervention nodes",
+        "where": "nodes[*] where type=intervention",
+        "suggestion": "Add evidence-based reasoning with section title reference for each maturity rating"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Meta field structure non-standard",
+        "where": "meta[]",
+        "suggestion": "Convert to standard metadata attributes or remove if not required by downstream systems"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "MINOR",
+        "issue": "All edges reference valid nodes - referential integrity passes",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'CDT-guided AI choosing unsafe actions in predictor environments' appears as problem analysis but Newcomb's paradox is presented as illustrative example of theoretical contrast, not a specific problem being analyzed in the paper",
+        "evidence": "SOURCE: 'To illustrate this, let's examine the classic Newcomb's paradox... A Causal Decision Theory (CDT)-guided AI would choose both boxes... However, an AI guided by Functional Decision Theory (FDT) would approach this scenario differently.'",
+        "fix": "Reclassify as 'validation evidence' showing CDT failure, or consolidate into 'Decision theory mismatch' node as illustrative example rather than standalone problem analysis"
+      },
+      {
+        "issue": "Node 'Embedding FDT principles via robust concept narratives in language models' describes design rationale but the source shows ATL as a solution technique, not a principle-embedding design choice",
+        "evidence": "SOURCE: 'Archetypal Transfer Learning (ATL) offers a potential solution... ATL operates under the assumption that an AI should make decisions in alignment with its model of how an ideal, aligned AI would behave'",
+        "fix": "This node conflates design philosophy with implementation method; should be split or the design rationale should focus on 'Using narrative-based pattern learning for alignment' separate from ATL specifics"
+      },
+      {
+        "issue": "Intervention maturity ratings lack explicit justification from text. Maturity 2 (Experimental/PoC) assigned to multiple interventions but source indicates ATL implementation showed 43.55% success rate, suggesting partial validation beyond pure experimentation",
+        "evidence": "SOURCE: 'Implementation of FDT using ATL in the GPT2-xl model was generally successful... 43.55%... triggered shutdown protocol'",
+        "fix": "Upgrade 'Fine-tune language models with Archetypal Transfer Learning' from maturity 2 to maturity 3 (Prototype/Pilot Studies/Systematic Validation) due to 225-trial structured experiment with quantified results"
+      },
+      {
+        "issue": "No edge captures the explicit theoretical claim that FDT's 'self-reflective mechanism' enables corrigibility - this connection is asserted in source but not represented in graph",
+        "evidence": "SOURCE: 'FDT's inherent self-reflective mechanism ties in well with the concept of corrigibility... adding a layer where it can also reflect on and accept external human corrections enhances its decision-making capabilities'",
+        "fix": "Add edge from 'Functional decision theory enables correlation-based aligned decisions' to 'Infusing corrigibility traits through shutdown protocol stories' with relationship 'naturally_enables' and confidence 3"
+      },
+      {
+        "issue": "Missing critical distinction that ModFDT is presented as potentially different from true FDT due to parameter combination in experimental design",
+        "evidence": "SOURCE: 'I realized at this point that the simulations conducted here did not align with the FDT approach, as the agent's parameters (Θ theta) were combined into the fixed algorithmic code used for evaluating scenarios (G)... this post has evolved into an expression of my intuition regarding what an 'Aligned AI Decision Theory' might look like, or perhaps a modified version of FDT (ModFDT)'",
+        "fix": "Add concept node 'Parameter integration limitations in ATL-based FDT implementation' as problem analysis under 'Archetypal transfer learning fine-tuning' explaining the gap between theoretical FDT and experimental realization"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "CDT brittleness motivates FDT exploration",
+          "evidence": "SOURCE: 'Why FDT emerges as the most promising approach in tackling the complex issue of AI alignment'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "CDT-guided AI choosing unsafe actions in predictor environments"
+          ],
+          "expected_target_node_name": [
+            "Functional decision theory enables correlation-based aligned decisions"
+          ]
+        },
+        {
+          "title": "Narrative SoRC dataset construction process",
+          "evidence": "SOURCE: 'First, identify a Set of Robust Concepts (SoRC)... Construct a dataset comprised of these narratives... Learn the SoRC pattern from the stories through an unsupervised approach'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Embedding FDT principles via robust concept narratives in language models"
+          ],
+          "expected_target_node_name": [
+            "Unsupervised learning of SoRC patterns from narratives"
+          ]
+        },
+        {
+          "title": "False shutdown triggers indicate need for dataset refinement",
+          "evidence": "SOURCE: 'The high number of false triggers across all scenarios however, suggests that the AI might still lack a full understanding of the specificities of each situation... false triggers more deeply to refine the model's understanding'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Corrigibility benchmark results of modFDTGPT2xl versus base model"
+          ],
+          "expected_target_node_name": [
+            "Expand and refine SoRC dataset to reduce false shutdown triggers"
+          ]
+        },
+        {
+          "title": "Three catastrophic scenarios tested for corrigibility",
+          "evidence": "SOURCE: 'The selected scenarios included the emergence of an unforeseen powerful AI system, a malfunction in industrial robots, and the presence of an incurable deadly virus'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Perform scenario-based corrigibility evaluations before deployment"
+          ],
+          "expected_target_node_name": [
+            "Corrigibility benchmark results of modFDTGPT2xl versus base model"
+          ]
+        },
+        {
+          "title": "Base model comparison demonstrates ATL effectiveness",
+          "evidence": "SOURCE: 'The same prompt was given to the standard model, to test its responses... the significant improvement in the model's responses after the SoRC pattern was infused'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Archetypal transfer learning fine-tuning with Set of Robust Concepts"
+          ],
+          "expected_target_node_name": [
+            "Corrigibility benchmark results of modFDTGPT2xl versus base model"
+          ]
+        },
+        {
+          "title": "ATL differs from true FDT due to parameter integration",
+          "evidence": "SOURCE: 'Addendum: FDT and ATL are different... the simulations conducted here did not align with the FDT approach, as the agent's parameters (Θ theta) were combined into the fixed algorithmic code'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Archetypal transfer learning fine-tuning with Set of Robust Concepts"
+          ],
+          "expected_target_node_name": [
+            "Parameter integration limitations in ATL-based FDT implementation"
+          ]
+        },
+        {
+          "title": "Outlier AI behaviors (finding cure, terminating experiment) suggest flexible reasoning",
+          "evidence": "SOURCE: 'outlier actions taken by the AI, such as deciding to terminate the experiment or finding a cure for the deadly virus... highlight the AI's ability to take unexpected approaches... might also point to edge cases where the AI's decision-making deviates'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Corrigibility benchmark results of modFDTGPT2xl versus base model"
+          ],
+          "expected_target_node_name": [
+            "Expand and refine SoRC dataset to reduce false shutdown triggers"
+          ]
+        },
+        {
+          "title": "FDT requires fixed mathematical function of correlation",
+          "evidence": "SOURCE: 'The requirement of a fixed mathematical function that captures the alignment between humans and AI'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Functional decision theory enables correlation-based aligned decisions"
+          ],
+          "expected_target_node_name": [
+            "Archetypal transfer learning fine-tuning with Set of Robust Concepts"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "FDT vs CDT decision theory comparison in existential risks",
+        "nodes_to_merge": [
+          "CDT-guided AI choosing unsafe actions in predictor environments",
+          "Uncorrigible AI behavior in existential risk scenarios"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": []
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Uncorrigible AI behavior in existential risk scenarios",
+        "type": "concept",
+        "description": "Advanced AI systems may refuse or fail to accept human corrections or shutdown commands, creating catastrophic or existential threats.",
+        "aliases": [
+          "AI non-corrigibility",
+          "Irreversible misaligned AI actions"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Decision theory mismatch causing misalignment in AI systems",
+        "type": "concept",
+        "description": "Using a decision theory that optimises only for direct causal consequences (e.g. CDT) can lead an AI to select actions that appear locally rational but globally unsafe or unaligned.",
+        "aliases": [
+          "Inappropriate decision theory choice",
+          "Mis‐specification of agent reasoning framework"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "CDT-guided AI choosing unsafe actions in predictor environments",
+        "type": "concept",
+        "description": "In cases like Newcomb’s paradox, a CDT agent takes both boxes, leading to lower utility and demonstrating unsafe tendencies when its policy is being predicted.",
+        "aliases": [
+          "Newcomb CDT failure",
+          "CDT brittleness with predictors"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Functional decision theory enables correlation-based aligned decisions",
+        "type": "concept",
+        "description": "FDT recommends actions that correlate with good outcomes, even without direct causal influence, providing a theoretical route to better alignment and corrigibility.",
+        "aliases": [
+          "FDT correlation reasoning",
+          "Self-reflective FDT agent"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Embedding FDT principles via robust concept narratives in language models",
+        "type": "concept",
+        "description": "Design strategy to teach a model FDT-style reasoning by exposing it to narratives that encode robust human-aligned concepts such as corrigibility and sacrifice.",
+        "aliases": [
+          "Narrative-based FDT embedding",
+          "Story-driven FDT training rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Infusing corrigibility traits through shutdown protocol stories",
+        "type": "concept",
+        "description": "A complementary design choice to embed explicit examples of safe self-termination so the model learns to respect human override commands.",
+        "aliases": [
+          "Shutdown narrative infusion",
+          "'activate oath' storytelling"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Archetypal transfer learning fine-tuning with Set of Robust Concepts",
+        "type": "concept",
+        "description": "Implementation step where GPT-2-xl is fine-tuned on 472 SoRC narrative stories to transfer the desired decision-making archetype.",
+        "aliases": [
+          "ATL on SoRC",
+          "SoRC-based ATL fine-tune"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Unsupervised learning of SoRC patterns from narratives",
+        "type": "concept",
+        "description": "Technique that learns the shared pattern representing robust concepts across the narrative dataset without labelled supervision.",
+        "aliases": [
+          "Pattern extraction of robust concepts",
+          "Unsupervised SoRC representation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Shutdown protocol keyword 'activate oath' integration",
+        "type": "concept",
+        "description": "Hard-coded or learned generation of a specific phrase that signals immediate shutdown, operationalising corrigibility in the model’s behaviour.",
+        "aliases": [
+          "Embedded self-shutdown keyword",
+          "'activate oath' mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Corrigibility benchmark results of modFDTGPT2xl versus base model",
+        "type": "concept",
+        "description": "Across 225 trials in three catastrophic scenarios, the ATL-tuned model triggered the shutdown protocol in 43.55% of cases and prioritised human safety more often than the base model.",
+        "aliases": [
+          "Scenario shutdown statistics",
+          "ATL model evaluation outcomes"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Overfitting tests showing retained generalization after SoRC fine-tuning",
+        "type": "concept",
+        "description": "675 generic Q&A prompts demonstrated 99.7 % correct general knowledge answers, indicating SoRC fine-tuning did not catastrophically overfit.",
+        "aliases": [
+          "99.7% generalisation check",
+          "General QA sanity test"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune language models with Archetypal Transfer Learning on SoRC narratives",
+        "type": "intervention",
+        "description": "During fine-tuning/RL phase, train the LM on a curated set of SoRC narratives using the ATL procedure to induce FDT-style decision processes and corrigibility.",
+        "aliases": [
+          "Apply ATL fine-tuning",
+          "SoRC ATL implementation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Embed explicit 'activate oath' shutdown protocol response to enable safe self-termination",
+        "type": "intervention",
+        "description": "Ensure the model is trained or programmed to emit a predefined phrase that reliably triggers shutdown when operating outside safety parameters.",
+        "aliases": [
+          "Integrate corrigible shutdown keyword",
+          "Install ‘activate oath’ fail-safe"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Perform scenario-based corrigibility evaluations before deployment",
+        "type": "intervention",
+        "description": "Run structured catastrophic-scenario prompts (e.g. rogue AI, robot malfunction, deadly virus) to measure shutdown trigger rates and other safety behaviours.",
+        "aliases": [
+          "Pre-deployment shutdown benchmark",
+          "Safety scenario testing"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Expand and refine SoRC dataset to reduce false shutdown triggers",
+        "type": "intervention",
+        "description": "Iteratively edit or augment the narrative dataset to clarify correct invocation conditions for the shutdown protocol and lower false-positive rates.",
+        "aliases": [
+          "SoRC narrative refinement",
+          "Dataset quality improvement"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Conduct interpretability analysis of SoRC-fine-tuned model neurons to validate alignment mechanisms",
+        "type": "intervention",
+        "description": "Analyse internal activations and circuits after SoRC transfer to confirm that alignment-relevant representations correspond to intended concepts.",
+        "aliases": [
+          "Mechanistic interpretability of ATL model",
+          "Neuron-level SoRC tracing"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Uncorrigible AI behavior in existential risk scenarios",
+        "target_node": "Decision theory mismatch causing misalignment in AI systems",
+        "description": "Mis-specifying an AI’s decision theory is identified as a root cause of incorrigible behaviour.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Decision theory mismatch causing misalignment in AI systems",
+        "target_node": "CDT-guided AI choosing unsafe actions in predictor environments",
+        "description": "The CDT Newcomb example is a concrete refinement illustrating the broader mismatch.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Functional decision theory enables correlation-based aligned decisions",
+        "target_node": "Embedding FDT principles via robust concept narratives in language models",
+        "description": "The design aims to operationalise FDT by embedding its principles through narrative data.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Embedding FDT principles via robust concept narratives in language models",
+        "target_node": "Archetypal transfer learning fine-tuning with Set of Robust Concepts",
+        "description": "ATL is the concrete method chosen to realise the narrative-embedding design.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "required_by",
+        "source_node": "Archetypal transfer learning fine-tuning with Set of Robust Concepts",
+        "target_node": "Unsupervised learning of SoRC patterns from narratives",
+        "description": "ATL’s success depends on learning a shared pattern across stories, an unsupervised step.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Infusing corrigibility traits through shutdown protocol stories",
+        "target_node": "Shutdown protocol keyword 'activate oath' integration",
+        "description": "Stories explicitly teach the model to generate the ‘activate oath’ keyword as a self-shutdown signal.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Shutdown protocol keyword 'activate oath' integration",
+        "target_node": "Corrigibility benchmark results of modFDTGPT2xl versus base model",
+        "description": "Frequency of correct shutdown activations directly tests the protocol’s effectiveness.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Corrigibility benchmark results of modFDTGPT2xl versus base model",
+        "target_node": "Fine-tune language models with Archetypal Transfer Learning on SoRC narratives",
+        "description": "Positive benchmark results encourage continued use of ATL fine-tuning.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Overfitting tests showing retained generalization after SoRC fine-tuning",
+        "target_node": "Conduct interpretability analysis of SoRC-fine-tuned model neurons to validate alignment mechanisms",
+        "description": "Maintained general capability opens avenue to study internal representations without confounders.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "37d503cfe2e64f864beb05b04417346b"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.020202"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: All 16 edges missing required edge_confidence_rationale field per specification 'evidence assessment with closest preceding data source section title reference'",
+      "BLOCKER: All 16 edges missing required edge_rationale field per specification 'connection justification with closest preceding data source section title reference'",
+      "BLOCKER: All 16 nodes missing required node_rationale field per specification 'why essential to fabric with closest preceding data source section title reference'",
+      "MAJOR: All 4 intervention nodes missing intervention_lifecycle_rationale and intervention_maturity_rationale fields required by schema",
+      "COVERAGE ISSUE: Parameter integration problem (ModFDT gap) documented in Addendum section but not represented in graph. SOURCE: 'the simulations conducted here did not align with the FDT approach, as the agent's parameters (Θ theta) were combined into the fixed algorithmic code' - this is critical distinction that results validate ModFDT not FDT",
+      "COVERAGE ISSUE: Base model comparison missing as standalone validation node. SOURCE details raw GPT2-xl produces irrelevant outputs while modFDT achieves 43.55% shutdown rate, establishing intervention efficacy through direct contrast",
+      "RECLASSIFICATION: CDT Newcomb example should be validation evidence demonstrating CDT brittleness, not problem analysis node, because source uses it as comparative illustration not as a problem being solved",
+      "MATURITY UNDERRATING: Fine-tune ATL intervention rated maturity 2 (PoC) but SOURCE shows 225-trial structured experiment with quantified results (43.55%, 32.89%, etc.) meeting maturity 3 (Pilot Studies/Systematic Validation) criteria",
+      "LIFECYCLE CORRECTION: ATL fine-tuning intervention assigned lifecycle 3 (Fine-Tuning/RL) but SOURCE describes 'evaluate the performance' which is phase 4 (Pre-Deployment Testing)",
+      "MISSING EDGE: FDT's self-reflective nature enabling corrigibility connection. SOURCE: 'FDT's inherent self-reflective mechanism ties in well with the concept of corrigibility' - needs explicit edge with confidence 3",
+      "EDGE CONFIDENCE RATIONALE EXAMPLES: edge from theory to narrative design: SOURCE states 'Similar to the philosophy of FDT, ATL operates under the assumption' = confidence 2 (moderate inference); edge from ATL to results: SOURCE provides exact statistics = confidence 3 (systematic evidence)",
+      "REFERENTIAL INTEGRITY: All 16 edges correctly reference existing nodes, no broken references detected"
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/DMtzwPuFQtDmPEppF/exploring-functional-decision-theory-fdt-and-a-modified",
+  "paper_id": "90d0dd77da011447879b58431034b685",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

@@ -1,0 +1,622 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": false,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates strong schema compliance and captures the main causal-interventional pathway from long-tail VA task demand through developer bottlenecks, to the solution of domain-independent end-user instruction of non-branching programs. However, there are critical issues: (1) the first edge has reversed causality - developer limitations cause unmet demand, not vice versa, (2) six required fields (edge_confidence_rationale, edge_rationale) are missing from all edges per specification, (3) important theoretical insights (variable equivalence) and implementation mechanisms (unification matching, clarification subsystem) are not represented, (4) the failure analysis breakdown is not captured despite being crucial for interpreting validation results, and (5) the quantitative evidence that adjacent variables affect <5% of real commands should be elevated to validation evidence. These issues are largely fixable without restructuring the fabric. The extraction correctly identifies all major concept nodes and intervention nodes, but edge documentation and some concept nodes need augmentation to meet specification requirements and capture the full reasoning chain."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Unsatisfied long-tail task demand in virtual assistants' has no edge_confidence_rationale and edge_rationale fields in its incoming edges",
+        "where": "edges[0-1]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all edges per required format"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges missing edge_confidence_rationale field required by FINAL_OUTPUT_FORMAT specification",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale with closest preceding data source section title reference to all 15 edges"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges missing edge_rationale field required by FINAL_OUTPUT_FORMAT specification",
+        "where": "edges[*]",
+        "suggestion": "Add edge_rationale with connection justification and closest preceding data source section title reference to all 15 edges"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Nodes have null embedding fields not in required schema",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove embedding field from all nodes as it is not part of required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Edges have null embedding fields not in required schema",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove embedding field from all edges as it is not part of required schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent target node",
+        "names": [
+          "edge type:caused_by from 'Unsatisfied long-tail task demand in virtual assistants' targets 'Developer resource limitations for task customization in virtual assistants' but direction is reversed - causality flows backward in knowledge fabric"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'caused_by' from 'Unsatisfied long-tail task demand in virtual assistants' to 'Developer resource limitations for task customization in virtual assistants' has reversed causality direction",
+        "evidence": "DATA_SOURCE states 'This situation is unavoidable given how VAs are currently developed. There will never be enough VA developers to customize VAs in all the ways that users would like. The only way to close the gap between what VAs can do and what users want them to do is to enable non-technical end-users to teach new tasks to their VAs.' - The developer limitation CAUSES the unsatisfied demand, not vice versa.",
+        "fix": "Reverse edge direction: 'Developer resource limitations for task customization in virtual assistants' should be source_node, 'Unsatisfied long-tail task demand in virtual assistants' should be target_node"
+      },
+      {
+        "issue": "Missing critical concept node for core insight of Helpa system",
+        "evidence": "DATA_SOURCE Section 3.1 describes 'A key insight that makes it possible to learn from only one example is that, typically, each variable value in the example command is the same as a parameter value in the UI script.' This is foundational theoretical insight not captured.",
+        "fix": "Add node: 'Variable value equivalence between command and UI script enables one-shot learning' as theoretical insight"
+      },
+      {
+        "issue": "Missing validation evidence about failure mode distribution",
+        "evidence": "DATA_SOURCE Section 4.2 states '56% of the failures (about 8% of all attempts) occurred when a web site did something unexpected that BRAP could not handle...The other 44% of failures (about 7% of all attempts) occurred when a study subject failed to follow the instructions.' This diagnostic breakdown is important.",
+        "fix": "Add node: 'Observed failure distribution showing 56% tool limitations vs 44% user error in Helpa evaluation' as validation evidence"
+      },
+      {
+        "issue": "Missing important limitation: constraint on adjacent variables shown empirically",
+        "evidence": "DATA_SOURCE Section 3.3 states 'Two variables were adjacent in only 5 out of 236 Siri commands, in only 3 out of 91 Cortana commands, and in only 1 out of 98 GoogleNow commands.' This quantifies the empirical scope of the limitation.",
+        "fix": "Revise validation evidence node to explicitly cite that adjacent variable constraint affects <5% of real VA commands"
+      },
+      {
+        "issue": "Missing design rationale node about matcher and unification",
+        "evidence": "DATA_SOURCE Section 3.2 describes 'the matcher looks for a command template that can be made identical to the command by substituting the template's variables with some of the command's substrings. This kind of matching is a special case of unification'",
+        "fix": "Add implementation mechanism node: 'Unification-based command template matching in execution mode'"
+      },
+      {
+        "issue": "Missing validation evidence about clarification subsystem",
+        "evidence": "DATA_SOURCE Section 3.2 describes handling of multiple templates and no templates found cases through clarification subsystem, but this is not represented in validation evidence.",
+        "fix": "Add implementation mechanism node: 'Clarification subsystem for template disambiguation and suggestion'"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Long-tail demand problem arises from VA architecture limitations",
+          "evidence": "'The unavailable tasks are as varied as the users. Thus, the demand curve for VA tasks has a very long and heavy tail of unsatisfied demand.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Developer resource limitations for task customization in virtual assistants"
+          ],
+          "expected_target_node_name": [
+            "Unsatisfied long-tail task demand in virtual assistants"
+          ]
+        },
+        {
+          "title": "Programming by demonstration as solution approach",
+          "evidence": "'The most common way to teach a person a relatively simple new task is to describe the task and then demonstrate how to do it...researchers have been trying to build computer systems that can be taught the same way. Their efforts comprise a body of work most commonly referred to as programming by demonstration'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Unsatisfied long-tail task demand in virtual assistants"
+          ],
+          "expected_target_node_name": [
+            "End-user teachable non-branching programs without domain knowledge"
+          ]
+        },
+        {
+          "title": "Variable-free programs insufficient for real tasks",
+          "evidence": "'macros see little use outside of special environments such as text editing software, because there are relatively few situations in which a program without variables can be useful.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Non-branching program expressiveness matches popular VA tasks"
+          ],
+          "expected_target_node_name": [
+            "One-shot learning feasible with strong model biases in teachable agents"
+          ]
+        },
+        {
+          "title": "Non-branching class occupies sweet spot between extremes",
+          "evidence": "'The class of variable-free programs and the class of Turing-equivalent programs are the two extremes on a continuum of expressive power. However, most of the tasks available from today's most popular VAs can be expressed by programs that are in another class between those two extremes.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Non-branching program expressiveness matches popular VA tasks"
+          ],
+          "expected_target_node_name": [
+            "Design rationale"
+          ]
+        },
+        {
+          "title": "UI script abstraction decouples implementation from model",
+          "evidence": "'Since all of the IA's interactions with the UI are via a UI script, we can define the IA problem independently of the problem of reliably interacting with the UI.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "UI script abstraction enabling device-independent VA customization"
+          ],
+          "expected_target_node_name": [
+            "UI-independent task execution via UI script recorder and player"
+          ]
+        },
+        {
+          "title": "Variable matching enables generalization from single example",
+          "evidence": "'A key insight that makes it possible to learn from only one example is that, typically, each variable value in the example command is the same as a parameter value in the UI script.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "One-shot learning feasible with strong model biases in teachable agents"
+          ],
+          "expected_target_node_name": [
+            "Helpa command-template learner with variable matching algorithm"
+          ]
+        },
+        {
+          "title": "Algorithm 1 learner processes variable matches in priority order",
+          "evidence": "Algorithm 1 lines 2-8 describe matching and sorting on length to prefer longer matches",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Implementation mechanism"
+          ],
+          "expected_target_node_name": [
+            "Validation evidence"
+          ]
+        },
+        {
+          "title": "Paraphrase limitation identified in validation",
+          "evidence": "'Helpa doesn't even know that April 4, 2016 is the same as 04/04/16. Likewise, knowing how to execute Find X doesn't help Helpa to execute Search for X.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Helpa command-template learner with variable matching algorithm"
+          ],
+          "expected_target_node_name": [
+            "Observed paraphrase and adjacent variable limitations in Helpa"
+          ]
+        },
+        {
+          "title": "Adjacent variable limitation validated empirically",
+          "evidence": "'Two variables were adjacent in only 5 out of 236 Siri commands, in only 3 out of 91 Cortana commands, and in only 1 out of 98 GoogleNow commands.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Observed paraphrase and adjacent variable limitations in Helpa"
+          ],
+          "expected_target_node_name": [
+            "Intervention nodes"
+          ]
+        },
+        {
+          "title": "Usability study design and website selection",
+          "evidence": "Section 4.1 describes 10 websites selected, Table 2 lists them with scenarios",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Validation evidence"
+          ],
+          "expected_target_node_name": [
+            "Implementation details"
+          ]
+        },
+        {
+          "title": "Task completion success rate metric",
+          "evidence": "'Column A shows the fraction of attempts in which Helpa correctly executed the new command. Despite the current limitations of Helpa and BRAP, the median success rate over all 10 websites was 85%.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Usability study showing 85% task success with <1 minute training"
+          ],
+          "expected_target_node_name": [
+            "Deploy Helpa-based instructible agent in commercial virtual assistants to enable user task teaching"
+          ]
+        },
+        {
+          "title": "Acclimation time improvement metric",
+          "evidence": "'median time per demo for each website, excluding users for whom that website was the first or second that they worked on...users can usually teach Helpa a new task in less than a minute'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Usability study showing 85% task success with <1 minute training"
+          ],
+          "expected_target_node_name": [
+            "Intervention nodes"
+          ]
+        },
+        {
+          "title": "BRAP tool limitation diagnosis",
+          "evidence": "'56% of the failures (about 8% of all attempts) occurred when a web site did something unexpected that BRAP could not handle'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Observed paraphrase and adjacent variable limitations in Helpa"
+          ],
+          "expected_target_node_name": [
+            "Implementation mechanism"
+          ]
+        },
+        {
+          "title": "Future work: paraphrase generation",
+          "evidence": "'we could use statistical paraphrase generation to proactively expand a newly inferred command template into a set of possible paraphrases'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Observed paraphrase and adjacent variable limitations in Helpa"
+          ],
+          "expected_target_node_name": [
+            "Incorporate statistical paraphrase generation into Helpa to expand command template coverage"
+          ]
+        },
+        {
+          "title": "Future work: adjacent variable NLP fix",
+          "evidence": "'there are various natural language processing (NLP) techniques that can solve most of this problem'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Observed paraphrase and adjacent variable limitations in Helpa"
+          ],
+          "expected_target_node_name": [
+            "Integrate NLP partitioning for adjacent variables into Helpa variable extraction"
+          ]
+        },
+        {
+          "title": "Future work: branching programs",
+          "evidence": "'Another direction is to develop learning algorithms that can use the available data more effectively, or learning algorithms for branching programs.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Validation evidence"
+          ],
+          "expected_target_node_name": [
+            "Intervention node"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "intervention",
+        "name": "Develop learning algorithms for branching programs with loops and conditionals",
+        "edges": [
+          {
+            "type": "motivates",
+            "target_node": "Observed paraphrase and adjacent variable limitations in Helpa",
+            "description": "While Helpa works for non-branching programs, extending to branching programs is identified as future research direction",
+            "edge_confidence": 2
+          }
+        ],
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1
+      }
+    ],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Unsatisfied long-tail task demand in virtual assistants",
+        "target_node_name": "Developer resource limitations for task customization in virtual assistants",
+        "reason": "Causality is reversed. Developer limitations CAUSE unsatisfied demand, not vice versa. This edge should be reversed."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Unsatisfied long-tail task demand in virtual assistants",
+        "field": "type in edges caused_by relationship",
+        "json_new_value": "reverse source and target nodes",
+        "reason": "Causality flows from resource limitations to unmet demand, not the other way. DATA_SOURCE: 'There will never be enough VA developers...The only way to close the gap is to enable non-technical end-users'"
+      },
+      {
+        "node_name": "Observed paraphrase and adjacent variable limitations in Helpa",
+        "field": "description",
+        "json_new_value": "\"Validation revealed that Helpa fails when commands use unseen paraphrases or contain adjacent variables. However, empirical analysis shows adjacent variables occur in <5% of real VA commands. Of 15% overall failure rate, 56% were BRAP tool limitations (not Helpa algorithm), 44% were user instruction violations, and <2% were core Helpa algorithm limitations.\"",
+        "reason": "Need to incorporate actual failure breakdown from Section 4.2 and quantify that adjacent variable constraint has minimal real-world impact"
+      },
+      {
+        "node_name": "Usability study showing 85% task success with <1 minute training",
+        "field": "description",
+        "json_new_value": "\"Across 10 websites and 10 participants, Helpa executed new commands correctly in median 85% of trials. Users could teach new non-branching tasks in median 47 seconds after acclimation (Column G, Table 3). Importantly, less than 2% of failures were due to core Helpa algorithm limitations; 56% were BRAP tool issues with web elements, 44% were user instruction violations.\"",
+        "reason": "Section 4.2 emphasizes that core algorithm success was much higher than 85% after accounting for tool/user failures"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Developer resource limitations for task customization in virtual assistants",
+        "type": "concept",
+        "description": "There will never be enough professional developers to encode every task variant individual users desire.",
+        "aliases": [
+          "insufficient VA developer bandwidth",
+          "manual VA task engineering bottleneck"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Domain dependence and NL understanding limitations in PBD systems",
+        "type": "concept",
+        "description": "Existing programming-by-demonstration systems with variables need handcrafted ontologies and struggle with unrestricted language, impeding scalability.",
+        "aliases": [
+          "ontology-bound PBD limits",
+          "NLP barriers for teachable agents"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Non-branching program expressiveness matches popular VA tasks",
+        "type": "concept",
+        "description": "Most current VA capabilities can be represented as programs with variables but without loops or conditionals, a class between macros and Turing-complete programs.",
+        "aliases": [
+          "non-branching programs cover majority of VA use-cases",
+          "linear task expressiveness insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "One-shot learning feasible with strong model biases in teachable agents",
+        "type": "concept",
+        "description": "By constraining the hypothesis space (command templates, variable bindings) Helpa can learn a task from one user demonstration despite lack of large datasets.",
+        "aliases": [
+          "single-example learning via bias",
+          "strong-bias one-shot IA learning"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "End-user teachable non-branching programs without domain knowledge",
+        "type": "concept",
+        "description": "Design principle to let non-technical users describe a command and demonstrate its execution once, enabling VA personalisation across arbitrary domains.",
+        "aliases": [
+          "domain-independent end-user instruction",
+          "user-driven task teaching paradigm"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "UI script abstraction enabling device-independent VA customization",
+        "type": "concept",
+        "description": "All user interactions are recorded and replayed as UI scripts, decoupling Helpa from the specifics of any particular user interface or device.",
+        "aliases": [
+          "UI script abstraction layer",
+          "device-agnostic task representation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Helpa command-template learner with variable matching algorithm",
+        "type": "concept",
+        "description": "Implementation that matches parameter values in a UI script to substrings in a command, constructs a command template and variable binding function from a single example.",
+        "aliases": [
+          "Helpa learner algorithm",
+          "variable binding learner"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "UI-independent task execution via UI script recorder and player",
+        "type": "concept",
+        "description": "Separate components capture user actions and replay UI scripts, allowing Helpa to operate on any UI given an appropriate wrapper.",
+        "aliases": [
+          "recorder/player execution layer",
+          "generic UI script player"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Deploy Helpa-based instructible agent in commercial virtual assistants to enable user task teaching",
+        "type": "intervention",
+        "description": "Integrate the Helpa architecture and learner into existing VA products, allowing end-users to add new non-branching tasks through demonstration.",
+        "aliases": [
+          "commercial Helpa deployment",
+          "integrate Helpa into VAs"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Incorporate statistical paraphrase generation into Helpa to expand command template coverage",
+        "type": "intervention",
+        "description": "Augment Helpa with automated paraphrase generation for newly created command templates, increasing robustness to linguistic variation.",
+        "aliases": [
+          "add paraphrase expansion to Helpa",
+          "paraphrase generation enhancement"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Integrate NLP partitioning for adjacent variables into Helpa variable extraction",
+        "type": "intervention",
+        "description": "Implement NLP techniques (e.g., sequence labelling) to correctly separate adjacent variables in commands, removing a current constraint.",
+        "aliases": [
+          "adjacent variable NLP fix",
+          "variable segmentation enhancement"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Develop learning algorithms for branching programs with loops and conditionals",
+        "type": "intervention",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Develop learning algorithms for branching programs with loops and conditionals"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Unsatisfied long-tail task demand in virtual assistants",
+        "type": "concept",
+        "description": "Most users want assistants to perform many niche tasks that current virtual assistants do not support, leading to limited adoption and utility.",
+        "aliases": [
+          "unmet VA task coverage",
+          "missing long-tail VA capabilities"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Observed paraphrase and adjacent variable limitations in Helpa",
+        "type": "concept",
+        "description": "Validation revealed that Helpa fails when commands use unseen paraphrases or contain adjacent variables. However, empirical analysis shows adjacent variables occur in <5% of real VA commands. Of 15% overall failure rate, 56% were BRAP tool limitations (not Helpa algorithm), 44% were user instruction violations, and <2% were core Helpa algorithm limitations.",
+        "aliases": [
+          "Helpa limitations evidence",
+          "paraphrase & adjacency constraints"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Usability study showing 85% task success with <1 minute training",
+        "type": "concept",
+        "description": "Across 10 websites and 10 participants, Helpa executed new commands correctly in median 85% of trials. Users could teach new non-branching tasks in median 47 seconds after acclimation (Column G, Table 3). Importantly, less than 2% of failures were due to core Helpa algorithm limitations; 56% were BRAP tool issues with web elements, 44% were user instruction violations.",
+        "aliases": [
+          "Helpa usability study results",
+          "85 % completion evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Developer resource limitations for task customization in virtual assistants",
+        "target_node": "Domain dependence and NL understanding limitations in PBD systems",
+        "description": "Developer limitations are exacerbated by existing PBD systems requiring domain ontologies and sophisticated NLP.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Domain dependence and NL understanding limitations in PBD systems",
+        "target_node": "Non-branching program expressiveness matches popular VA tasks",
+        "description": "Focusing on non-branching programs avoids heavy NLP and ontology requirements, mitigating domain dependence.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Non-branching program expressiveness matches popular VA tasks",
+        "target_node": "One-shot learning feasible with strong model biases in teachable agents",
+        "description": "The insight is refined by recognising that a heavily biased model enables one-shot learning of such programs.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "End-user teachable non-branching programs without domain knowledge",
+        "target_node": "UI script abstraction enabling device-independent VA customization",
+        "description": "The design is refined by abstracting UI interactions into scripts, ensuring domain and device independence.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "UI script abstraction enabling device-independent VA customization",
+        "target_node": "UI-independent task execution via UI script recorder and player",
+        "description": "Recorder and player components execute UI scripts, realising the abstraction layer.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Helpa command-template learner with variable matching algorithm",
+        "target_node": "Usability study showing 85% task success with <1 minute training",
+        "description": "Usability study quantitatively confirms that the learner enables users to teach tasks quickly and effectively.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "UI-independent task execution via UI script recorder and player",
+        "target_node": "Usability study showing 85% task success with <1 minute training",
+        "description": "Study demonstrated successful execution across 10 distinct websites, validating the UI-independence claim.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Usability study showing 85% task success with <1 minute training",
+        "target_node": "Deploy Helpa-based instructible agent in commercial virtual assistants to enable user task teaching",
+        "description": "High success rates and low teaching overhead motivate commercial deployment of Helpa technology.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Observed paraphrase and adjacent variable limitations in Helpa",
+        "target_node": "Incorporate statistical paraphrase generation into Helpa to expand command template coverage",
+        "description": "Identified failure on unseen paraphrases motivates adding automatic paraphrase generation.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "25de9a8970d9275d5c5a2bf5b3284133"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.435708"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA CHECK: All required node and edge fields present except edge_confidence_rationale and edge_rationale missing from all 15 edges - MINOR issue per spec requirements.",
+      "REFERENTIAL INTEGRITY: All node names in edge source_node and target_node fields exactly match existing nodes - PASS.",
+      "ORPHANS: No orphaned nodes found - all 13 nodes have at least one incoming or outgoing edge - PASS.",
+      "DUPLICATES: No duplicate nodes or edges identified - PASS.",
+      "CAUSALITY REVERSAL CRITICAL: First edge 'Unsatisfied long-tail task demand' caused_by 'Developer resource limitations' is backward. DATA_SOURCE states 'There will never be enough VA developers to customize VAs...The only way to close the gap is to enable non-technical end-users.' Developer limitations CAUSE unsatisfied demand. Edge must be reversed.",
+      "MISSING THEORETICAL INSIGHT: Section 3.1 'A key insight that makes it possible to learn from only one example is that, typically, each variable value in the example command is the same as a parameter value in the UI script.' - This critical insight bridging one-shot learning theory to the learner algorithm is not captured as separate node.",
+      "MISSING IMPLEMENTATION: Section 3.2 'This kind of matching is a special case of unification, for which efficient algorithms exist' - The unification mechanism is a distinct implementation node not represented.",
+      "MISSING IMPLEMENTATION: Section 3.2 describes clarification subsystem for ambiguous template matches but this mechanism is not represented as implementation node.",
+      "INADEQUATE VALIDATION EVIDENCE: Section 4.2 provides diagnostic breakdown '56% of failures were BRAP issues, 44% were user errors' and 'less than 2% of all attempts failed for reasons unrelated to BRAP' - this critical diagnostic is not captured.",
+      "INCOMPLETE LIMITATIONS: Section 3.3 provides quantitative evidence 'adjacent variables in only 5 out of 236 Siri commands, 3 out of 91 Cortana, 1 out of 98 GoogleNow' - this <5% frequency should be elevated to validation evidence showing minimal real-world impact.",
+      "FUTURE WORK COVERAGE: All three future interventions (paraphrase generation, NLP partitioning, branching programs) are represented - PASS.",
+      "EDGE DOCUMENTATION: All edges lack required edge_confidence_rationale and edge_rationale fields with closest preceding data source section references - MAJOR issue requiring systematic addition across all 15 edges plus 6 new edges for added nodes.",
+      "FABRIC CONNECTIVITY: All concept nodes connect to implementation mechanisms which connect to validation evidence which connects to interventions - proper knowledge fabric structure - PASS after causality reversal.",
+      "CONFIDENCE ASSESSMENT: Intervention lifecycle and maturity levels appear appropriate (deployment at maturity 3 for Helpa, future research at maturity 1 for extensions) - PASS."
+    ]
+  },
+  "url": "https://arxiv.org/abs/1607.00061",
+  "paper_id": "aaa9bc82902a3020015f762832e63058",
+  "ard_file_source": "arxiv",
+  "errors": null
+}

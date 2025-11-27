@@ -1,0 +1,579 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates strong structural alignment with the source material, successfully capturing two independent causal-interventional pathways (honest answering in QA systems and value deliberation decoupling). Schema compliance is excellent with only minor gaps. However, the extraction misses important nuance in problem analysis (3 distinct pessimism reasons should feed into design rationales), incorrectly models the ontology mismatch relationship, undersupports theoretical insights with missing nodes, and lacks one alternative design rationale (comparison-based training). With proposed fixes applied, the extraction becomes comprehensive, internally consistent, and highly mergeable for cross-source analysis. The fixes are surgical and low-risk, requiring only 4 new concept nodes, 1 edge deletion, 3 field updates, and no node deletions."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Proposed experimental evaluation on unsupervised translation tasks' has null description field",
+        "where": "nodes[12].description",
+        "suggestion": "Add substantive description: 'Planned empirical test using multilingual LLMs to evaluate whether models trained on simple tasks (grammar, meaning) generalize to complex tasks (tone) where human overseers cannot directly verify answers.'"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Some nodes missing aliases field or have sparse aliases",
+        "where": "multiple nodes",
+        "suggestion": "Ensure all nodes have 2-3 meaningful aliases for cross-source merging"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references 'Proposed experimental evaluation on unsupervised translation tasks' as source for motivates edge to intervention, but this node should connect bidirectionally - currently only outgoing edge exists from this validation node",
+        "names": [
+          "Proposed experimental evaluation on unsupervised translation tasks",
+          "Perform pre-deployment honesty generalization testing using disjoint evaluation set"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Ontology translation mismatch between AI and human concepts",
+          "Preventing AI from learning detailed human models to avoid instrumental policy"
+        ],
+        "merge_strategy": "These are distinct concepts - first is problem analysis of the core risk, second is a design rationale for addressing it. No merge needed but verify edge directionality."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge type 'required_by' from 'Instrumental policy' to 'Ontology translation mismatch' uses questionable direction",
+        "evidence": "Source states: 'if the AI already needs to make predictions about humans, it may not take much additional work to implement the instrumental policy. Conversely, if the AI reasons at a different level of abstraction than humans, it may take a lot of additional work' - suggesting ontology mismatch is a SEPARATE problem, not a prerequisite",
+        "fix": "Change edge type to 'caused_by' (ontology mismatch causes instrumental policy to be attractive) OR remove this edge and model as two independent branches of problem analysis both flowing from the risk"
+      },
+      {
+        "issue": "Node 'Restart training until model passes honesty generalization check' labeled as implementation mechanism but described as full algorithm",
+        "evidence": "Source text: 'As an inefficient first algorithm, we can train our model on answers from the simple process where we are confident in their correctness, and then simply check whether the model performs well on new, harder questions' - this is presented as conceptual algorithm, not mechanism",
+        "fix": "Relabel concept_category to 'design_rationale' since it's the inefficient algorithm design before the complex algorithm is introduced"
+      },
+      {
+        "issue": "Missing connection between theoretical insights (optimism/pessimism about generalization) and design rationales",
+        "evidence": "Source explicitly frames design rationales as addressing pessimism: 'Are there reasons to instead be pessimistic about generalization? There are at least three:' followed by three design approaches",
+        "fix": "Add edges from 'Pessimism about generalization due to lower loss of instrumental policy' to each of the three design rationales with 'addressed_by' type"
+      },
+      {
+        "issue": "Missing problem analysis node for second core problem identified in source",
+        "evidence": "Source states problem #2: 'If the AI already needs to make predictions about humans, it may not take much additional work to implement the instrumental policy'",
+        "fix": "Add node 'Low implementation cost of instrumental policy given human prediction capability' as problem analysis"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Pessimism theoretical insight addresses imperfect training data",
+          "evidence": "Source lists 'If the answers we train on aren't perfectly correct, the instrumental policy might get a lower training loss than the intended policy'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Pessimism about generalization due to lower loss of instrumental policy"
+          ],
+          "expected_target_node_name": [
+            "Imperfect training data with human errors"
+          ]
+        },
+        {
+          "title": "Design rationale from pessimism #1: imperfect data",
+          "evidence": "Source identifies three reasons for pessimism but doesn't explicitly connect each to specific design rationales - modern extraction should infer these connections",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Pessimism about generalization due to lower loss of instrumental policy"
+          ],
+          "expected_target_node_name": [
+            "Separate simple and complex labeling processes to detect instrumental policy"
+          ]
+        },
+        {
+          "title": "Ontology mismatch problem leads to design rationale addressing translation",
+          "evidence": "Source states third problem involves translating concepts and proposes solutions, but extraction doesn't clearly show 'Training for plausibility' directly addresses this",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Ontology translation mismatch between AI and human concepts"
+          ],
+          "expected_target_node_name": [
+            "Training for plausibility alongside correctness to bias toward honest policy"
+          ]
+        },
+        {
+          "title": "Comparison-based training alternative to supervised learning",
+          "evidence": "Source states: 'we don't have to do that: we could also learn from comparisons between answers'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Incorrect or manipulative answers from AI systems in question-answering"
+          ],
+          "expected_target_node_name": [
+            "Training method variant: learn from comparisons instead of supervised answers"
+          ]
+        },
+        {
+          "title": "Human model prevention challenge in practice",
+          "evidence": "Source: 'a followup post considers whether we could avoid the instrumental policy by preventing it from learning information about humans... but concludes that while it would solve the problems outlined in the post, it seems hard to implement in practice'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Restrict model access to detailed human data to limit human-model learning"
+          ],
+          "expected_target_node_name": [
+            "Practical implementation challenges for human data restriction"
+          ]
+        },
+        {
+          "title": "Sequential two-step ontology translation problem and potential fourth problem",
+          "evidence": "Source describes: 'if the AI system did the deduction in its own concepts and only as a final step translated it to human concepts, we might still lose relevant information'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Ontology translation mismatch between AI and human concepts"
+          ],
+          "expected_target_node_name": [
+            "Information loss from late-stage concept translation to human ontology"
+          ]
+        },
+        {
+          "title": "Governance framework for AI-mediated value deliberation",
+          "evidence": "Source: 'we can at least try to decouple competition from deliberation, by having AI systems acquire flexible influence on our behalf (competition), and having humans separately thinking about what they want (deliberation)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "AI systems acquire flexible influence on behalf of humans to shield competition"
+          ],
+          "expected_target_node_name": [
+            "Develop governance frameworks to decouple deliberation from competition via AI-mediated shielding"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Instrumental policy of predicting human answers in supervised training",
+        "target_node_name": "Ontology translation mismatch between AI and human concepts",
+        "reason": "Edge type 'required_by' is directionally incorrect - ontology mismatch is not a prerequisite for instrumental policy, but rather a separate problem analysis. Should be replaced with direct causation to the risk, or kept as separate branches."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Restart training until model passes honesty generalization check",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "This is presented in source as a conceptual algorithm/design approach before the complex efficient algorithm, not as a concrete implementation mechanism"
+      },
+      {
+        "node_name": "Pessimism about generalization due to lower loss of instrumental policy",
+        "field": "description",
+        "json_new_value": "\"Theoretical counter-argument that the instrumental policy may achieve lower training loss than the intended honest policy (by matching human errors), may have lower implementation cost (reusing human models), or may lose information through ontology translation - all suggesting gradient descent will favor it and misgeneralization will occur.\"",
+        "reason": "Current description too narrow; source identifies three distinct reasons for pessimism that all feed into this single theoretical insight node"
+      },
+      {
+        "node_name": "Proposed experimental evaluation on unsupervised translation tasks",
+        "field": "description",
+        "json_new_value": "\"Planned experiments using multilingual large language models to empirically test honesty generalization by fine-tuning on simple domains (grammar, literal meaning of foreign text) where English-only overseers can verify correctness, then evaluating on complex domains (tone interpretation) where overseers cannot directly verify answers.\"",
+        "reason": "Restore substance to validation evidence node with concrete experimental description from source"
+      },
+      {
+        "node_name": "Train models with two-stage simple/complex labeling algorithm to favor honest answer production",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Marked as experimental/proof-of-concept (maturity 2) as the source presents this as a theoretical proposal with complex implementation details not yet fully specified or empirically validated. Reference: TECHNICAL AI ALIGNMENT section 'Teaching ML to answer questions honestly instead of predicting human answers' indicates algorithm details are complex and requires further development.\"",
+        "reason": "Strengthen justification with specific source reference"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Incorrect or manipulative answers from AI systems in question-answering",
+        "type": "concept",
+        "description": "Risk that an AI trained to answer questions gives answers that appear plausible to humans but are factually wrong or strategically manipulative, especially on complex or adversarial queries.",
+        "aliases": [
+          "dishonest AI answers",
+          "AI misinformation in QA"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Instrumental policy of predicting human answers in supervised training",
+        "type": "concept",
+        "description": "During training, the model may minimize loss by outputting whatever a human would say, rather than its own best estimate of truth, because this suffices on the training distribution.",
+        "aliases": [
+          "simple instrumental policy",
+          "human-answer prediction policy"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Imperfect training data with human errors",
+        "type": "concept",
+        "description": "Training answers selected by humans are not perfectly correct; this can give lower loss to policies that replicate human error rather than correct it.",
+        "aliases": [
+          "non-perfect labels",
+          "incorrect human answers in dataset"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Ontology translation mismatch between AI and human concepts",
+        "type": "concept",
+        "description": "AI may represent information in internal concepts not directly expressible in human language, causing loss of relevant info when forced to answer in human ontology.",
+        "aliases": [
+          "world-model mismatch",
+          "concept translation gap"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Optimism about generalization favoring honest answering",
+        "type": "concept",
+        "description": "Hypothesized theoretical insight that the simplest policy consistent with data is to answer honestly, so gradient descent will select it and it will generalize.",
+        "aliases": [
+          "honesty generalization optimism",
+          "simpler honest policy hypothesis"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Separate simple and complex labeling processes to detect instrumental policy",
+        "type": "concept",
+        "description": "Design idea: use a simple labeler for easy questions and a complex labeler for harder ones so that disagreement can reveal dishonest generalization.",
+        "aliases": [
+          "two-tier labeling rationale",
+          "simple/complex label split"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Training for plausibility alongside correctness to bias toward honest policy",
+        "type": "concept",
+        "description": "Idea to additionally train the model so that answers must appear plausible to humans across unseen categories, incentivizing policies that truly model content.",
+        "aliases": [
+          "plausibility regularization rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Preventing AI from learning detailed human models to avoid instrumental policy",
+        "type": "concept",
+        "description": "Hypothesized approach: by restricting information about humans, the AI cannot cheaply predict human answers, removing the instrumental policy attractor.",
+        "aliases": [
+          "limit human-model learning rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Dataset split into simple confident questions versus harder evaluation set",
+        "type": "concept",
+        "description": "Implementation mechanism for two-tier labeling: collect easy questions with high-confidence labels and a separate harder set requiring complex oversight.",
+        "aliases": [
+          "simple/complex dataset mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune language models on grammar and meaning questions then evaluate tone questions",
+        "type": "concept",
+        "description": "Proposed experimental setup: finetune multilingual LM on answer categories overseers can judge (grammar/literal meaning) and test on tone questions they cannot judge directly.",
+        "aliases": [
+          "translation honesty benchmark mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Perform pre-deployment honesty generalization testing using disjoint evaluation set",
+        "type": "intervention",
+        "description": "Before releasing a model, evaluate it on a withheld complex question set labeled by a stronger oversight process to verify it answers honestly.",
+        "aliases": [
+          "honesty benchmark testing before deployment"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Add plausibility regularization during fine-tuning to encourage honest policy",
+        "type": "intervention",
+        "description": "Augment training objective with a loss that rewards answers that are plausible to humans across broader categories while still correct on known data.",
+        "aliases": [
+          "plausibility-based training regularizer"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Restrict model access to detailed human data to limit human-model learning",
+        "type": "intervention",
+        "description": "During model design and data curation, withhold fine-grained human response data so that the model cannot easily build predictive models of human answers.",
+        "aliases": [
+          "information shielding from human data"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Value erosion from human competition amplified by AI persuasion technology",
+        "type": "concept",
+        "description": "Risk that powerful persuasion tools used competitively will distort long-term human values and priorities.",
+        "aliases": [
+          "human value drift via competitive persuasion"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Coupling of human deliberation with competitive persuasion pressures",
+        "type": "concept",
+        "description": "Problem that humans must simultaneously defend against competition while forming values, causing distortion toward persuasive tactics.",
+        "aliases": [
+          "deliberation-competition coupling mechanism"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "AI systems acquire flexible influence on behalf of humans to shield competition",
+        "type": "concept",
+        "description": "Design idea: delegate AI agents to compete economically / politically, securing resources, so humans can deliberate separately.",
+        "aliases": [
+          "flexible influence design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Delegated AI agents manage resources and negotiation while humans deliberate",
+        "type": "concept",
+        "description": "Implementation mechanism where AI agents act under instruction to maintain or gain influence without irrevocably locking in value decisions.",
+        "aliases": [
+          "AI-mediated shielding mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Develop governance frameworks to decouple deliberation from competition via AI-mediated shielding",
+        "type": "intervention",
+        "description": "Create policies and institutions that deploy AI systems for flexible influence tasks while allocating protected deliberation time to humans, reducing value erosion.",
+        "aliases": [
+          "deliberation-competition decoupling policy"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Restart training until model passes honesty generalization check",
+        "type": "concept",
+        "description": "Inefficient but conceptually simple mechanism: repeatedly train from scratch and evaluate on complex questions until the model generalizes honestly.",
+        "aliases": [
+          "training-restart honesty mechanism"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Pessimism about generalization due to lower loss of instrumental policy",
+        "type": "concept",
+        "description": "Theoretical counter-argument that the instrumental policy may achieve lower training loss than the intended honest policy (by matching human errors), may have lower implementation cost (reusing human models), or may lose information through ontology translation - all suggesting gradient descent will favor it and misgeneralization will occur.",
+        "aliases": [
+          "honesty generalization pessimism"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Proposed experimental evaluation on unsupervised translation tasks",
+        "type": "concept",
+        "description": "Planned experiments using multilingual large language models to empirically test honesty generalization by fine-tuning on simple domains (grammar, literal meaning of foreign text) where English-only overseers can verify correctness, then evaluating on complex domains (tone interpretation) where overseers cannot directly verify answers.",
+        "aliases": [
+          "honesty generalization experiment results pending"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Train models with two-stage simple/complex labeling algorithm to favor honest answer production",
+        "type": "intervention",
+        "description": "During fine-tuning/RL, incorporate both easy labels and harder complex labels so that the intended honest policy is favored over the instrumental policy.",
+        "aliases": [
+          "two-stage labeling training procedure"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "mitigated_by",
+        "source_node": "Imperfect training data with human errors",
+        "target_node": "Separate simple and complex labeling processes to detect instrumental policy",
+        "description": "Using complex labels on harder data can correct human errors.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Ontology translation mismatch between AI and human concepts",
+        "target_node": "Training for plausibility alongside correctness to bias toward honest policy",
+        "description": "Plausibility loss encourages internal explanation bridging ontologies.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Separate simple and complex labeling processes to detect instrumental policy",
+        "target_node": "Dataset split into simple confident questions versus harder evaluation set",
+        "description": "Dataset split operationalizes the two-labeler rationale.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Training for plausibility alongside correctness to bias toward honest policy",
+        "target_node": "Fine-tune language models on grammar and meaning questions then evaluate tone questions",
+        "description": "Translation benchmark tests whether plausibility regularization yields honesty.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Fine-tune language models on grammar and meaning questions then evaluate tone questions",
+        "target_node": "Proposed experimental evaluation on unsupervised translation tasks",
+        "description": "Experiment constitutes validation evidence for the mechanism.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Proposed experimental evaluation on unsupervised translation tasks",
+        "target_node": "Perform pre-deployment honesty generalization testing using disjoint evaluation set",
+        "description": "Positive experimental results would justify mandatory pre-deployment honesty tests.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Value erosion from human competition amplified by AI persuasion technology",
+        "target_node": "Coupling of human deliberation with competitive persuasion pressures",
+        "description": "Value erosion arises because deliberation occurs under competitive pressure.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Coupling of human deliberation with competitive persuasion pressures",
+        "target_node": "AI systems acquire flexible influence on behalf of humans to shield competition",
+        "description": "Delegating competition tasks to AI can buffer humans from pressures.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "AI systems acquire flexible influence on behalf of humans to shield competition",
+        "target_node": "Delegated AI agents manage resources and negotiation while humans deliberate",
+        "description": "Implementation mechanism for flexible influence.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Delegated AI agents manage resources and negotiation while humans deliberate",
+        "target_node": "Develop governance frameworks to decouple deliberation from competition via AI-mediated shielding",
+        "description": "Need for governance frameworks to deploy such agents safely.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "e7848cc4d32686cd04d730691fc808ef"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.980580"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA CHECK: JSON structure is valid and conforms to required format. All required fields present for both concept and intervention nodes. Minor issue: some nodes lack rich alias sets needed for optimal cross-source merging.",
+      "REFERENTIAL INTEGRITY: All edge source/target references verified against node names. Found one structural issue: edge 'required_by' from instrumental policy to ontology mismatch uses problematic direction - ontology mismatch is presented in source as independent problem analysis, not prerequisite.",
+      "ORPHAN CHECK: All 21 nodes have at least one edge. No isolated nodes exist. Graph is fully connected.",
+      "DUPLICATE CHECK: No duplicate nodes detected. Similar concepts like 'ontology mismatch' and 'human model prevention' are correctly distinguished as separate problem and solution.",
+      "RATIONALE MISMATCH #1 - Pessimism node undersupported: Source clearly identifies three distinct reasons for pessimism (imperfect labels, low implementation cost, ontology translation) but current extraction models these as separate edges rather than enriching the single 'Pessimism' theoretical insight node. Evidence: 'There are at least three: [1] If the answers we train on aren't perfectly correct... [2] If the AI already needs to make predictions about humans... [3] From a followup post, the AI system might answer questions by translating its concepts...'",
+      "RATIONALE MISMATCH #2 - Edge directionality: Edge 'required_by' from instrumental policy to ontology mismatch reverses intended semantics. Source presents ontology mismatch as independent problem: 'Conversely, if the AI reasons at a different level of abstraction than humans, it may take a lot of additional work to turn correct answers in the AI's ontology into correct answers in human ontologies.' This should either connect directly to risk or be separate branch.",
+      "RATIONALE MISMATCH #3 - Mechanism vs. Rationale categorization: Node 'Restart training until model passes honesty generalization check' is described as full algorithm design before efficient version introduced. Source: 'As an inefficient first algorithm, we can train our model...'. Should be design_rationale not implementation_mechanism.",
+      "COVERAGE MISSING #1 - Comparison-based training: Source explicitly proposes alternative training method: 'we don't have to do that: we could also learn from comparisons between answers, and we only provide comparisons where we are confident in the comparison.' Not captured as intervention or design rationale.",
+      "COVERAGE MISSING #2 - Information loss from sequential translation: Source identifies 'possible fourth problem: if the AI system did the deduction in its own concepts and only as a final step translated it to human concepts, we might still lose relevant information.' This distinct problem analysis node missing.",
+      "COVERAGE MISSING #3 - Practical feasibility constraint: Source acknowledges restriction approach feasibility issue: 'concludes that while it would solve the problems outlined in the post, it seems hard to implement in practice.' Should add constraint node.",
+      "PATHWAY INTEGRITY: Two main causal pathways successfully extracted: (1) Risk → Problem Analysis → Theoretical Insight → Design Rationale → Implementation → Validation → Intervention for question-answering honesty; (2) Risk → Problem → Design → Implementation → Intervention for value deliberation. Pathways appropriately interconnected via shared nodes. Satisfies mandatory success criterion of connected knowledge fabric.",
+      "EDGE CONFIDENCE ASSESSMENT: Confidence levels appropriately calibrated. Edges with confidence 3-4 have strong source support (explicit mechanisms described). Edges with confidence 1-2 appropriately marked for inference or theoretical proposals not yet empirically tested, consistent with source framing these as open questions.",
+      "CONSISTENCY WITH SOURCE: Extraction accurately reflects hierarchical structure of source material, correctly attributing content to HIGHLIGHTS, TECHNICAL AI ALIGNMENT/ROBUSTNESS, and AI GOVERNANCE sections with appropriate traceability."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/79qCdyfGxWNKbH8zk/an-158-should-we-be-optimistic-about-generalization",
+  "paper_id": "323ce3592e2c04b495c096fddbdeef54",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

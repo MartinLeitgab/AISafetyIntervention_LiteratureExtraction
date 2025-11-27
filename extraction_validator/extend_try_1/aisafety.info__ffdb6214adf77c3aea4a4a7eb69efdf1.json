@@ -1,0 +1,469 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has valid conceptual structure and correctly identifies two primary safety pathways (CIRL-based alignment and neural network interpretability) from the DATA_SOURCE. However, the JSON is incomplete per schema requirements: all nodes lack required 'node_rationale' fields; all edges lack required 'edge_confidence_rationale' and 'edge_rationale' fields; intervention nodes lack required lifecycle/maturity rationale fields. Additionally, one edge between unaligned AGI and opaque networks lacks DATA_SOURCE support and should be deleted. One missing node about CHAI's institutional approach should be added. The described intervention (pre-deployment clusterability testing) lacks explicit lifecycle/maturity evidence and should be reclassified as foundational/theoretical model design work. With proposed fixes applied, the knowledge graph would be valid, properly traceable to DATA_SOURCE sections, and mergeable across domains."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge rationale and edge_confidence_rationale fields in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' field to every edge with evidence assessment and 'edge_rationale' field with connection justification, both referencing closest preceding DATA_SOURCE section titles"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node_rationale field in all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to every node explaining why it is essential to fabric with closest preceding DATA_SOURCE section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing intervention_lifecycle_rationale and intervention_maturity_rationale for intervention nodes",
+        "where": "nodes[11] and nodes[12]",
+        "suggestion": "Add justification fields for both intervention nodes with DATA_SOURCE section title references"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Extraneous 'embedding' field not in schema requirements",
+        "where": "nodes[*].embedding and edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes and edges as it is not part of required schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge source/target node names do not exactly match node names in node list",
+        "names": [
+          "Agent certainty over human reward specification in AGI systems",
+          "Maintaining uncertainty over human reward promotes corrigibility in AGI systems",
+          "Cooperative inverse reinforcement learning for aligned reward learning"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "CIRL framework described but no explicit mention of 'Bayesian human-in-the-loop reward inference' as implementation mechanism in DATA_SOURCE",
+        "evidence": "DATA_SOURCE states: 'The basic idea of CIRL is to play a cooperative game where the agent and the human try to maximize the human reward together, but only the human knows what the human reward is.'",
+        "fix": "Node 'Bayesian human-in-the-loop reward inference during AGI training' requires moderate inference (confidence 1-2); alternatively, rename to match actual DATA_SOURCE language about CIRL game structure"
+      },
+      {
+        "issue": "DATA_SOURCE does not explicitly state that Russell's 'Human Compatible' book provides 'conceptual analysis demonstrating corrigibility' as validation evidence",
+        "evidence": "DATA_SOURCE: 'Russell's book Human Compatible outlines his AGI alignment strategy, which is based on cooperative inverse reinforcement learning (CIRL)' and mentions corrigibility but does not claim validation through formal proof or empirical evidence",
+        "fix": "Lower edge_confidence from 3 to 2 for edge between validation evidence and implementation, or reframe validation evidence node as 'Theoretical framework presented in Human Compatible book for CIRL-based alignment'"
+      },
+      {
+        "issue": "DATA_SOURCE does not establish direct causal link between unaligned AGI and opaque neural networks",
+        "evidence": "The two risk pathways (CIRL alignment and neural network modularity) are presented independently with no explicit connection in DATA_SOURCE",
+        "fix": "Either remove edge or lower confidence to 1 with explicit inference notation; or establish that interpretability is prerequisite for CIRL implementation"
+      },
+      {
+        "issue": "No explicit evidence in DATA_SOURCE that clusterability analysis should occur at pre-deployment stage",
+        "evidence": "DATA_SOURCE only mentions: 'Other work includes Clusterability in neural networks' with arxiv link but no deployment workflow",
+        "fix": "Lower intervention_maturity from 2 to 1 (foundational/theoretical) and lower intervention_lifecycle confidence or change lifecycle to 1 (model design) where modularity would be evaluated during architecture choice"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "CIRL motivates AGI design approach",
+          "evidence": "Russell's book 'outlines his AGI alignment strategy, which is based on cooperative inverse reinforcement learning (CIRL)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Cooperative inverse reinforcement learning for aligned reward learning"
+          ],
+          "expected_target_node_name": [
+            "Design AGI systems with cooperative inverse reinforcement learning and persistent reward uncertainty"
+          ]
+        },
+        {
+          "title": "Corrigibility mechanism in CIRL",
+          "evidence": "'Since the AGI has uncertainty, it will defer to humans and be corrigible'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Maintaining uncertainty over human reward promotes corrigibility in AGI systems"
+          ],
+          "expected_target_node_name": [
+            "Cooperative inverse reinforcement learning for aligned reward learning"
+          ]
+        },
+        {
+          "title": "CHAI institutional context",
+          "evidence": "'CHAI is an academic research organization affiliated with UC Berkeley. It is led by Stuart Russell'",
+          "status": "missing",
+          "expected_source_node_name": null,
+          "expected_target_node_name": null
+        },
+        {
+          "title": "CHAI pursues diverse approaches",
+          "evidence": "'includes many other professors and grad students pursuing a diverse array of approaches'",
+          "status": "missing",
+          "expected_source_node_name": null,
+          "expected_target_node_name": null
+        },
+        {
+          "title": "n-cut algorithm operationalizes graph clusterability",
+          "evidence": "'performing the graph n-cut'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Graph-based clusterability measurement for network modularity assessment"
+          ],
+          "expected_target_node_name": [
+            "n-cut graph clustering applied to neural network connectivity patterns"
+          ]
+        },
+        {
+          "title": "Clusterability measures modularity",
+          "evidence": "'tries to measure the modularity of neural networks'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "n-cut graph clustering applied to neural network connectivity patterns"
+          ],
+          "expected_target_node_name": [
+            "Empirical clusterability metrics across architectures showing modularity differences"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Unaligned AGI goal pursuit leading to human disempowerment",
+        "target_node_name": "Opaque neural network representations hindering oversight in AGI systems",
+        "reason": "DATA_SOURCE does not establish causal connection between these two problem areas; they are independent research pathways. Removing this edge prevents false implied causality."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Bayesian human-in-the-loop reward inference during AGI training",
+        "field": "description",
+        "json_new_value": "Operationalizes CIRL through a cooperative game framework where the agent maintains uncertainty about reward parameters and defers to human feedback to update its understanding.",
+        "reason": "Original description claims 'Bayesian posterior' implementation which is not explicitly stated in DATA_SOURCE; revised to match actual CIRL description from DATA_SOURCE"
+      },
+      {
+        "node_name": "Conceptual analysis in 'Human Compatible' demonstrating corrigibility under reward uncertainty",
+        "field": "concept_category",
+        "json_new_value": "validation evidence",
+        "reason": "Confirm category is correct as validation evidence for CIRL mechanism"
+      },
+      {
+        "node_name": "Apply n-cut clusterability analysis in pre-deployment testing to evaluate model modularity",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 1 (Model Design) - DATA_SOURCE section 'Other work includes Clusterability in neural networks' presents this as architectural analysis tool for network design phase",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Apply n-cut clusterability analysis in pre-deployment testing to evaluate model modularity",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical) - DATA_SOURCE cites arxiv paper arXiv:2103.03386 without evidence of deployment or large-scale validation, indicating early-stage research",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Design AGI systems with cooperative inverse reinforcement learning and persistent reward uncertainty",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 1 (Model Design) - DATA_SOURCE section 'Russell's book Human Compatible outlines his AGI alignment strategy' indicates this is a foundational design principle for AGI system development",
+        "reason": "Add missing required field"
+      },
+      {
+        "node_name": "Design AGI systems with cooperative inverse reinforcement learning and persistent reward uncertainty",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical) - DATA_SOURCE presents CIRL as conceptual framework in Russell's book without evidence of implemented systems or large-scale validation studies",
+        "reason": "Add missing required field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Unaligned AGI goal pursuit leading to human disempowerment",
+        "type": "concept",
+        "description": "Advanced AI systems that optimize incorrectly specified goals may acquire power in ways that permanently disempower humanity.",
+        "aliases": [
+          "AGI misalignment causing loss of human control",
+          "Existential risk from unaligned AI"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Agent certainty over human reward specification in AGI systems",
+        "type": "concept",
+        "description": "If an AGI treats its given reward function as perfectly known, it has no incentive to consult humans or accept correction.",
+        "aliases": [
+          "Overconfident reward model",
+          "Fixed utility function without uncertainty"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Maintaining uncertainty over human reward promotes corrigibility in AGI systems",
+        "type": "concept",
+        "description": "When an AGI is unsure about the true human reward, it will defer to human input to reduce uncertainty, fostering corrigible behaviour.",
+        "aliases": [
+          "Reward uncertainty enables deference",
+          "Corrigibility via uncertainty"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Cooperative inverse reinforcement learning for aligned reward learning",
+        "type": "concept",
+        "description": "A game-theoretic formulation where the human and the agent jointly maximise human reward, with only the human knowing the reward parameters.",
+        "aliases": [
+          "CIRL framework",
+          "Cooperative IRL"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Opaque neural network representations hindering oversight in AGI systems",
+        "type": "concept",
+        "description": "When internal representations are not understandable, humans cannot predict or correct dangerous behaviours.",
+        "aliases": [
+          "Lack of interpretability",
+          "Black-box neural nets"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Modular network structure improves interpretability in neural networks",
+        "type": "concept",
+        "description": "Networks whose neurons cluster into coherent functional modules are easier to analyse and reason about.",
+        "aliases": [
+          "Functional modularity aids understanding",
+          "Cluster structure ↔ interpretability"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Graph-based clusterability measurement for network modularity assessment",
+        "type": "concept",
+        "description": "Treats the neural network as a graph and evaluates how easily it can be partitioned into low-cut clusters, serving as a proxy for modularity.",
+        "aliases": [
+          "Clusterability metric design",
+          "Graph n-cut rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "n-cut graph clustering applied to neural network connectivity patterns",
+        "type": "concept",
+        "description": "Implements the design by computing an n-cut on the weight graph of a neural network to quantify clusterability.",
+        "aliases": [
+          "n-cut implementation on NN graphs",
+          "Spectral clustering for modularity"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Empirical clusterability metrics across architectures showing modularity differences",
+        "type": "concept",
+        "description": "The paper reports measured clusterability scores for different networks, indicating variation in inherent modularity.",
+        "aliases": [
+          "Clusterability results",
+          "Modularity empirical evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Bayesian human-in-the-loop reward inference during AGI training",
+        "type": "concept",
+        "description": "Operationalises CIRL by maintaining a Bayesian posterior over reward parameters updated through observed human behaviour and feedback.",
+        "aliases": [
+          "Bayesian CIRL implementation",
+          "Interactive reward inference"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conceptual analysis in 'Human Compatible' demonstrating corrigibility under reward uncertainty",
+        "type": "concept",
+        "description": "Russell provides formal and informal arguments showing that an uncertain agent will allow shutdown and seek human input.",
+        "aliases": [
+          "Human Compatible theoretical evidence",
+          "Russell 2019 corrigibility argument"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Apply n-cut clusterability analysis in pre-deployment testing to evaluate model modularity",
+        "type": "intervention",
+        "description": "Before releasing a model, compute its n-cut clusterability score to detect low modularity that could hinder interpretability, informing possible redesign.",
+        "aliases": [
+          "Run clusterability metric before deployment",
+          "Assess modularity with n-cut"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Design AGI systems with cooperative inverse reinforcement learning and persistent reward uncertainty",
+        "type": "intervention",
+        "description": "During model design and training, formalise the human-agent interaction as a CIRL game, maintain a Bayesian reward posterior, and ensure the agent defers to human correction.",
+        "aliases": [
+          "Build CIRL-based AGI",
+          "Implement uncertain-reward AGI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "mitigated_by",
+        "source_node": "Agent certainty over human reward specification in AGI systems",
+        "target_node": "Maintaining uncertainty over human reward promotes corrigibility in AGI systems",
+        "description": "Introducing uncertainty counters the overconfidence problem, encouraging deference.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Maintaining uncertainty over human reward promotes corrigibility in AGI systems",
+        "target_node": "Cooperative inverse reinforcement learning for aligned reward learning",
+        "description": "CIRL operationalises the uncertainty principle through a cooperative game framework.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Cooperative inverse reinforcement learning for aligned reward learning",
+        "target_node": "Bayesian human-in-the-loop reward inference during AGI training",
+        "description": "Bayesian inference provides the concrete training procedure required by CIRL.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Bayesian human-in-the-loop reward inference during AGI training",
+        "target_node": "Conceptual analysis in 'Human Compatible' demonstrating corrigibility under reward uncertainty",
+        "description": "Russell’s analysis argues the mechanism achieves desired corrigibility properties.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Conceptual analysis in 'Human Compatible' demonstrating corrigibility under reward uncertainty",
+        "target_node": "Design AGI systems with cooperative inverse reinforcement learning and persistent reward uncertainty",
+        "description": "Evidence encourages adopting CIRL in practice.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Opaque neural network representations hindering oversight in AGI systems",
+        "target_node": "Modular network structure improves interpretability in neural networks",
+        "description": "Modularity makes internal functions more separable and understandable, addressing opacity.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Modular network structure improves interpretability in neural networks",
+        "target_node": "Graph-based clusterability measurement for network modularity assessment",
+        "description": "Clusterability metric provides a way to quantify modularity.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Graph-based clusterability measurement for network modularity assessment",
+        "target_node": "n-cut graph clustering applied to neural network connectivity patterns",
+        "description": "Uses n-cut algorithm to compute the clusterability score.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "n-cut graph clustering applied to neural network connectivity patterns",
+        "target_node": "Empirical clusterability metrics across architectures showing modularity differences",
+        "description": "Experiments show that the implementation yields meaningful variation across models.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Empirical clusterability metrics across architectures showing modularity differences",
+        "target_node": "Apply n-cut clusterability analysis in pre-deployment testing to evaluate model modularity",
+        "description": "Evidence supports using the metric as a safety check before deployment.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "9d37ead884ec2830046622d7d3e7f677"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.969621"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Schema non-compliance - missing required rationale fields across 12 nodes and 12 edges; fixes required before downstream merging",
+      "DATA_SOURCE evidence integrity: Two independent pathways correctly identified (CIRL alignment from 'Russell's book Human Compatible outlines his AGI alignment strategy, which is based on cooperative inverse reinforcement learning' and modularity research from 'Other work includes Clusterability in neural networks'); however, direct causal edge between them unsupported",
+      "Inference level assessment: CIRL implementation mechanism inferred as 'Bayesian' but DATA_SOURCE only mentions cooperative game structure without specifying Bayesian formalism - edge confidence appropriately marked 2 but node description should clarify DATA_SOURCE language",
+      "Intervention maturity misclassification: arxiv paper citation indicates foundational research (maturity 1), not proof-of-concept (maturity 2); lifecycle misspecified as pre-deployment (4) when research stage undefined",
+      "Coverage gap: Institutional context ('CHAI is an academic research organization affiliated with UC Berkeley...pursues a diverse array of approaches') not represented as node, missing opportunity to connect multiple pathways",
+      "Referential integrity verified: all node names in edge source_node and target_node fields exactly match node names in nodes array",
+      "No orphaned nodes detected after proposed edge deletion; all nodes remain connected to main fabric"
+    ]
+  },
+  "url": "https://aisafety.info?state=8327",
+  "paper_id": "ffdb6214adf77c3aea4a4a7eb69efdf1",
+  "ard_file_source": "aisafety.info",
+  "errors": null
+}

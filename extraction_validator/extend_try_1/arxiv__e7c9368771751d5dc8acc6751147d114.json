@@ -1,0 +1,920 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge fabric demonstrates strong structural integrity with 30 nodes and 32 edges creating connected causal-interventional pathways from risks through interventions. However, critical schema violations exist: all nodes lack required node_rationale fields, all edges lack edge_confidence_rationale and edge_rationale fields, and all intervention nodes lack lifecycle/maturity rationales. These are BLOCKER-level issues preventing valid JSON output. Beyond schema compliance, the fabric exhibits significant content incompleteness: missing domain-specific problem pathways (GNNs, NLP, cybersecurity), incomplete coverage of fairness-robustness trade-offs, absent formal verification mechanisms, and underspecified human-centered interventions despite Section 8's extensive treatment. The extracted interventions lack maturity justifications and several are incorrectly assigned lifecycle/maturity levels contradicting source evidence. With the proposed fixes (adding 20 nodes, updating 8 node fields, adding 60+ edge rationale fields), the fabric would achieve comprehensive coverage of source pathways, proper schema compliance, and mergeable consistency across 500k data sources."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'node_rationale' in all nodes",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field to every node with justification and closest preceding section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'edge_confidence_rationale' in all edges",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add edge_confidence_rationale field to every edge with evidence assessment and section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'edge_rationale' in all edges",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale field to every edge with connection justification and section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing 'intervention_lifecycle_rationale' field for all intervention nodes",
+        "where": "nodes[*].intervention_lifecycle_rationale",
+        "suggestion": "Add justification with section title reference for each intervention lifecycle assignment"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing 'intervention_maturity_rationale' field for all intervention nodes",
+        "where": "nodes[*].intervention_maturity_rationale",
+        "suggestion": "Add evidence-based reasoning with section reference for maturity levels"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All nodes have null 'embedding' field",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove embedding field or populate - currently unused placeholder"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges have null 'embedding' field",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove embedding field - unused placeholder"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent source node",
+        "names": [
+          "edge source_node='caused_by' from 'System failures from insufficient AI robustness in safety-critical contexts' to 'Adversarial vulnerability in ML models' missing edge_rationale"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified - all 30 nodes connect via edges",
+        "reason": "Complete graph analysis shows all concept and intervention nodes integrated",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "concept",
+        "names": [
+          "Perturbation-based data augmentation across ML pipeline",
+          "Data augmentation with natural noise improves generalization robustness"
+        ],
+        "merge_strategy": "These represent distinct concepts (design rationale vs theoretical insight) but could be refined to avoid overlap - keep both but clarify boundary"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'Adversarial training improves robustness by incorporating perturbed data' overstates theoretical consensus without caveats",
+        "evidence": "Section 3.1.1 notes 'Adversarial Robustness refers to the ability of models to maintain their performance under potential adversarial attacks' and Section 6.3.1 extensively documents 'Trade-Off Between Robustness and Accuracy' showing accuracy often degrades",
+        "fix": "Revise node description to acknowledge accuracy-robustness tradeoff: 'Training on mixed clean and adversarially perturbed inputs can improve robustness but often at cost of clean accuracy'"
+      },
+      {
+        "issue": "Node 'Model architecture modifications to handle noise enhance resilience' lacks specificity about which architectures",
+        "evidence": "Section 4.2.2 discusses SNNs, GAN modifications, NAS approaches, decision trees - heterogeneous set with different effectiveness profiles",
+        "fix": "Split into multiple nodes: (1) 'Spiking Neural Networks inherit adversarial robustness from temporal spike dynamics' and (2) 'Neural Architecture Search can discover inherently robust architectures' with separate validation evidence"
+      },
+      {
+        "issue": "Intervention 'Fine-tune models with adversarial training using PGD-generated perturbations' lacks maturity justification",
+        "evidence": "Section 4.2.1 cites PGD as 'de-facto standard' with extensive literature, but Section 6.3.1 notes 'significant trade-off between robustness and accuracy' indicating deployment challenges",
+        "fix": "Revise intervention_maturity from 3 to 4 (Operational) with rationale: 'PGD adversarial training is industry standard cited in Section 4.2.1 with RobustBench validation (Section 6.1.2), deployed at scale despite accuracy tradeoffs acknowledged in Section 6.3.1'"
+      },
+      {
+        "issue": "Intervention 'Augment pre-training datasets with GAN-generated natural corruptions' maturity marked as 2 but evidence suggests 3",
+        "evidence": "Section 4.1.2 states 'GAN-based solutions are proven useful' and 'data augmentation process can successfully improve adversarial robustness' with multiple papers cited [1,73,214,237]",
+        "fix": "Revise intervention_maturity to 3 with rationale: 'Multiple systematic validations cited in Section 4.1.2 demonstrate GAN corruption augmentation effectiveness across datasets'"
+      },
+      {
+        "issue": "Critical gap: Human-in-the-loop interventions underspecified relative to source emphasis",
+        "evidence": "Section 8 'A CONSPICUOUS ABSENT FROM THE LITERATURE: THE ML PRACTITIONER' comprises 3+ pages discussing human-centered gaps, human diagnosis, human involvement. Section 8.1.1-8.1.2 detail 'Existing Approaches' and 'Envisioned Research Opportunity' for human workflows",
+        "fix": "Add additional intervention nodes for: (1) 'Conduct semi-structured interviews with ML practitioners to understand robustness workflows' (Lifecycle 6, Maturity 1); (2) 'Develop robustness question banks similar to XAI question banks from HCI literature' (Lifecycle 6, Maturity 1); (3) 'Integrate robustness documentation into ML workflow tools and checklists' (Lifecycle 5, Maturity 2)"
+      },
+      {
+        "issue": "Missing conceptual pathway: Trustworthiness framework integration",
+        "evidence": "Section 1 INTRODUCTION states 'One of the core principles of Trustworthy AI is robustness' and mentions 'Ethics Guidelines for Trustworthy AI'; Section 3.2 discusses 'Domains Adjacent to Robustness' including Fairness and Explainability",
+        "fix": "Add theoretical insight node 'Robustness as foundational property of trustworthy AI requiring coordination with fairness and explainability' with edges to fairness/XAI trade-off nodes"
+      },
+      {
+        "issue": "Incomplete validation evidence pathway for natural robustness",
+        "evidence": "Section 6.2.2 'Insights on Robustness to Natural Perturbations' with subsections on 'About Robustness to Noise' (citing [21,283]) and 'About Robustness to Differences in Distributions' but only one validation evidence node exists",
+        "fix": "Add validation evidence node 'Empirical studies showing label noise and distribution shift degrade model performance but can be mitigated via training techniques' with edge from natural perturbation design rationale"
+      },
+      {
+        "issue": "Trade-off between robustness and explainability underrepresented",
+        "evidence": "Section 6.3.3 'Trade-Off Between Robustness and Explainability' discusses how 'methods for increasing model robustness impact the features such models use' and cites [247,157] showing feature misalignment",
+        "fix": "Add theoretical insight node 'Adversarial training can degrade feature interpretability by shifting models toward imperceptible patterns' with edge to fairness/explainability trade-off validation evidence"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Adversarial robustness vs natural robustness distinction and separate treatment",
+          "evidence": "Section 3.1 'The Various Shades of Robustness' with 3.1.1 'Adversarial Robustness' and 3.1.2 'Natural Robustness' as distinct branches; Section 7.1.1 'Natural Brittleness' gap noting 'little attention is put on defining natural perturbations and attacks'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Adversarial vulnerability in ML models",
+            "Sensitivity to natural perturbations and distribution shifts in ML models"
+          ],
+          "expected_target_node_name": [
+            "Adversarial training improves robustness by incorporating perturbed data",
+            "Data augmentation with natural noise improves generalization robustness"
+          ]
+        },
+        {
+          "title": "ML testing as adjacent domain for robustness assessment",
+          "evidence": "Section 3.2.3 'Testing' states 'ML testing is a field emanated from software testing' and 'methods developed in this field could potentially be adapted in the future to better detect robustness-related issues'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Gap of human-centered robustness evaluation practices"
+          ],
+          "expected_target_node_name": [
+            "ML testing methods for robustness anomaly detection"
+          ]
+        },
+        {
+          "title": "Graph Neural Networks specific robustness challenges",
+          "evidence": "Section 5.1.1 'Attacks on Graph Neural Networks (GNN)' and 5.1.2 'New Frameworks for Graph Neural Networks' with extensive discussion of structural perturbations, link prediction attacks",
+          "status": "missing",
+          "expected_source_node_name": [
+            "System failures from insufficient AI robustness in safety-critical contexts"
+          ],
+          "expected_target_node_name": [
+            "GNN vulnerability to structural perturbations and link prediction attacks",
+            "Graph structure learning approaches for robust GNNs"
+          ]
+        },
+        {
+          "title": "NLP-specific robustness challenges and mitigations",
+          "evidence": "Section 5.2.1 'Robustness for Natural Language Processing (NLP) Tasks' with character/word-level attacks, parsing vulnerabilities, transformer fine-tuning approaches",
+          "status": "missing",
+          "expected_source_node_name": [
+            "System failures from insufficient AI robustness in safety-critical contexts"
+          ],
+          "expected_target_node_name": [
+            "NLP vulnerability to character and word-level adversarial attacks",
+            "Robust adversarial training for NLP models"
+          ]
+        },
+        {
+          "title": "Cybersecurity application domain",
+          "evidence": "Section 5.2.2 'Robustness for Cybersecurity' discussing malware detection, DDoS defense, with GAN-based training framework",
+          "status": "missing",
+          "expected_source_node_name": [
+            "System failures from insufficient AI robustness in safety-critical contexts"
+          ],
+          "expected_target_node_name": [
+            "Adversarial robustness requirements in malware detection and intrusion systems",
+            "GAN-based adversarial training for cybersecurity classifiers"
+          ]
+        },
+        {
+          "title": "Robustness of fairness metrics themselves",
+          "evidence": "Section 5.3.2 'Robustness for Fairness' noting 'robustness of fairness metrics and methods to different types of natural and adversarial perturbations' and trade-offs [24,252]",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Sensitivity to natural perturbations and distribution shifts in ML models"
+          ],
+          "expected_target_node_name": [
+            "Fairness metric vulnerability to adversarial perturbations",
+            "Robust fairness-aware learning frameworks"
+          ]
+        },
+        {
+          "title": "Certified robustness evaluation approaches",
+          "evidence": "Section 6.1.1 'Evaluation of Certified Robustness' with abstract interpretation, randomized smoothing, formal verification - extensive technical discussion",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Implementation mechanism: Interactive robustness benchmark platforms for practitioners"
+          ],
+          "expected_target_node_name": [
+            "Formal verification and certified robustness bounds via abstract interpretation",
+            "Randomized smoothing for certified L2 robustness"
+          ]
+        },
+        {
+          "title": "Bayesian approaches to robustness",
+          "evidence": "Section 5.1.3 'Bayesian Learning' discussing Bayesian Neural Networks, uncertainty estimation via dropout, MCMC inference robustness [161,36,227,140]",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Prediction uncertainty can signal unreliable outputs under distribution shift"
+          ],
+          "expected_target_node_name": [
+            "Bayesian uncertainty estimation for robustness assessment",
+            "MCMC and dropout-based uncertainty for OOD detection"
+          ]
+        },
+        {
+          "title": "Explainability methods for robustness diagnosis",
+          "evidence": "Section 4.2.3 'Leveraging Explainability Methods' and Section 8.1.2 'Surfacing Model Features using Research on Explainability' discussing interpretability-guided robustness",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Human-in-the-loop robustness evaluation and dataset curation"
+          ],
+          "expected_target_node_name": [
+            "Explainability-guided feature alignment for robustness"
+          ]
+        },
+        {
+          "title": "Knowledge acquisition for expected feature specification",
+          "evidence": "Section 8.1.2 'Leveraging Literature on Knowledge Acquisition for Identifying Expected Features' discussing commonsense knowledge acquisition, Games with a Purpose, crowdsourcing [266,16,179,234]",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Human knowledge essential for defining realistic perturbations and assessments"
+          ],
+          "expected_target_node_name": [
+            "Crowdsourced commonsense knowledge acquisition for feature expectations",
+            "Game-based and crowdsourcing approaches for knowledge elicitation"
+          ]
+        },
+        {
+          "title": "Practitioner challenges and gap between research and practice",
+          "evidence": "Section 8.3 'Supporting ML Practitioners in Handling Robustness' with subsections on 'Understanding Practices Around Robustness' and 'Integrating Robustness into Existing Workflows' [190,92,93,127]",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Gap of human-centered robustness evaluation practices"
+          ],
+          "expected_target_node_name": [
+            "Research-practice gap in robustness methodology adoption"
+          ]
+        },
+        {
+          "title": "Trade-offs between robustness and fairness",
+          "evidence": "Section 6.3.2 'Trade-Off Between Robustness and Fairness' with inter-class discrepancies in adversarial training [24,252,169]",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Adversarial training improves robustness by incorporating perturbed data"
+          ],
+          "expected_target_node_name": [
+            "Fairness degradation from adversarial training",
+            "Fair and robust learning frameworks"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Multiple theoretical pathways to robustness: adversarial training, natural noise augmentation, and architecture modifications",
+        "nodes_to_merge": []
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Adversarial training improves robustness by incorporating perturbed data",
+        "field": "description",
+        "json_new_value": "Training on mixed clean and adversarially perturbed inputs can improve adversarial robustness but often incurs significant accuracy degradation on clean data. The Projected Gradient Descent (PGD) algorithm is standard (Section 4.2.1), though trade-offs with accuracy require careful tuning (Section 6.3.1).",
+        "reason": "Source extensively documents robustness-accuracy trade-off (Section 6.3.1); original description overstates benefits without acknowledging constraints critical to practitioner decision-making"
+      },
+      {
+        "node_name": "Model architecture modifications to handle noise enhance resilience",
+        "field": "description",
+        "json_new_value": "Multiple architectural approaches enhance noise robustness: Spiking Neural Networks inherit inherent robustness from temporal spike dynamics; stochastic noise injection layers mitigate gradient-based attacks; orthogonal classifier weights improve perturbation resilience; and Neural Architecture Search can discover robust network topologies (Section 4.2.2 and 5.1.3).",
+        "reason": "Current description is overly general; source documents heterogeneous set of approaches with different mechanisms and effectiveness requiring specificity for practitioner evaluation"
+      },
+      {
+        "node_name": "Fine-tune models with adversarial training using PGD-generated perturbations",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "PGD adversarial training is de-facto industry standard (Section 4.2.1) with operational deployment across research and industry. RobustBench benchmark validation (Section 6.1.2) confirms effectiveness. Trade-offs documented in Section 6.3.1 represent known constraints rather than implementation gaps, enabling informed deployment decisions.",
+        "reason": "Maturity should reflect actual adoption and validation status; need explicit rationale documenting standard status and tradeoff acknowledgment"
+      },
+      {
+        "node_name": "Augment pre-training datasets with GAN-generated natural corruptions",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Multiple systematic validations in Section 4.1.2 demonstrate GAN-based augmentation improves robustness on ImageNet-C (Section 6.1.2). Pilot studies across datasets [1,73,214,237] show consistent effectiveness enabling prototype-level recommendation.",
+        "reason": "Current rationale incomplete; source provides multiple citations supporting systematic validation level"
+      },
+      {
+        "node_name": "Interactive robustness benchmark platforms for practitioners",
+        "field": "description",
+        "json_new_value": "Comprehensive benchmark platforms including RobustBench, ImageNet-C, and RobustART (Section 6.1.2) provide standardized corrupted datasets, robustness metrics, and leaderboards enabling systematic evaluation before deployment. These platforms reduce practitioner burden in defining perturbations and executing rigorous testing.",
+        "reason": "Source provides specific platform names; description should reference concrete implementations"
+      },
+      {
+        "node_name": "Gap of human-centered robustness evaluation practices",
+        "field": "description",
+        "json_new_value": "Despite extensive algorithmic robustness literature, practitioners lack workflows, tools, and human-in-the-loop methods for diagnosing and improving robustness. Section 8 identifies absence of: (1) semi-structured interviews understanding practitioner practices, (2) robustness question banks guiding method selection, (3) integrated tooling for robustness workflow support, and (4) trust contract frameworks for distribution specification.",
+        "reason": "Original description underdeveloped; source Section 8 extensively documents specific gaps requiring detail for fabric completeness"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "System failures from insufficient AI robustness in safety-critical contexts",
+        "type": "concept",
+        "description": "When models misbehave under small input changes or attacks, medical, automotive and other safety-critical applications can cause harm, blocking trustworthy AI adoption.",
+        "aliases": [
+          "AI robustness failures",
+          "Unreliable AI behaviour"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial vulnerability in ML models",
+        "type": "concept",
+        "description": "Small, intentionally crafted perturbations can drastically change model predictions, revealing fragility of current systems.",
+        "aliases": [
+          "Susceptibility to adversarial attacks",
+          "Adversarial robustness problem"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sensitivity to natural perturbations and distribution shifts in ML models",
+        "type": "concept",
+        "description": "Performance degrades under common corruptions, noise or domain shift that naturally occur in real-world deployment.",
+        "aliases": [
+          "Natural robustness issue",
+          "Distribution shift vulnerability"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Data augmentation with natural noise improves generalization robustness",
+        "type": "concept",
+        "description": "Adding realistic corruptions or out-of-distribution samples during training increases resilience to natural shifts.",
+        "aliases": [
+          "Natural perturbation augmentation insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Human knowledge essential for defining realistic perturbations and assessments",
+        "type": "concept",
+        "description": "Humans provide domain insight, perturbation taxonomies and subjective judgements required for meaningful robustness evaluation.",
+        "aliases": [
+          "Human-centred robustness insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Prediction uncertainty can signal unreliable outputs under distribution shift",
+        "type": "concept",
+        "description": "Low-confidence predictions often correspond to out-of-distribution or adversarial inputs, suggesting a rejection mechanism.",
+        "aliases": [
+          "Uncertainty as robustness signal"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Perturbation-based data augmentation across ML pipeline",
+        "type": "concept",
+        "description": "Plan training to systematically include adversarial and natural perturbations at data, feature and label level.",
+        "aliases": [
+          "Data augmentation design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Robust architecture design with noise-handling components",
+        "type": "concept",
+        "description": "Select layers or cells (e.g., SNN, noise injection, orthogonal weights) that process noisy inputs stably.",
+        "aliases": [
+          "Architecture design for robustness"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Human-in-the-loop robustness evaluation and dataset curation",
+        "type": "concept",
+        "description": "Embed domain experts and crowd workers to identify perturbations, annotate uncertainty and iteratively refine datasets.",
+        "aliases": [
+          "Practitioner-centred robustness workflow"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Explainability-guided feature alignment for robustness",
+        "type": "concept",
+        "description": "Use interpretability methods to ensure learned features match human-relevant concepts, reducing brittle reliance on spurious signals.",
+        "aliases": [
+          "XAI for robustness design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reject option based on prediction uncertainty",
+        "type": "concept",
+        "description": "Introduce a mechanism that abstains on low-confidence inputs to prevent unsafe actions under shift.",
+        "aliases": [
+          "Rejector design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial training with PGD and dynamic perturbations",
+        "type": "concept",
+        "description": "Iteratively generate perturbations via Projected Gradient Descent during fine-tuning to minimise worst-case loss.",
+        "aliases": [
+          "PGD adversarial training mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "GAN-generated corrupted images for training data augmentation",
+        "type": "concept",
+        "description": "Use conditional GANs to produce realistically corrupted or boundary samples, expanding training data for robustness.",
+        "aliases": [
+          "GAN noise augmentation mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Noise layers and orthogonal classifier weights in CNNs",
+        "type": "concept",
+        "description": "Insert stochastic noise at input and constrain final layer weights to be orthogonal, reducing sensitivity to perturbations.",
+        "aliases": [
+          "Noise-injection architecture tweak"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Crowdsourced perturbation taxonomy development",
+        "type": "concept",
+        "description": "Collect domain-specific perturbations and unknown-unknowns via crowd games and tasks to improve coverage of robustness tests.",
+        "aliases": [
+          "Crowd-driven perturbation collection"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Confidence-threshold reject option classifier",
+        "type": "concept",
+        "description": "Classifier defers decision when confidence below predefined threshold, invoking human oversight or fallback logic.",
+        "aliases": [
+          "Prediction abstention mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "RobustBench benchmark results showing increased accuracy post adversarial training",
+        "type": "concept",
+        "description": "Survey reports that adversarially trained models rank higher on RobustBench leaderboards, confirming effectiveness.",
+        "aliases": [
+          "RobustBench evidence for PGD"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "ImageNet-C experiments showing improvement from GAN augmentation",
+        "type": "concept",
+        "description": "Models trained with GAN-generated corruptions achieve lower error on ImageNet-C common corruption benchmark.",
+        "aliases": [
+          "ImageNet-C augmentation evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Studies indicating human-guided labeling improves out-of-distribution performance",
+        "type": "concept",
+        "description": "Empirical studies in the survey show that incorporating human rationales and uncertainty into datasets reduces distribution-shift error.",
+        "aliases": [
+          "Human-guided dataset evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Evaluation showing reject option reduces failure rate on unseen perturbations",
+        "type": "concept",
+        "description": "Research cited in Section 8.2.1 reports that adding an abstention mechanism lowers harmful predictions under shift.",
+        "aliases": [
+          "Reject option evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Design CNNs with stochastic noise input layers and orthogonal classifiers",
+        "type": "intervention",
+        "description": "During architecture design, add input noise layers and enforce orthogonality constraints on final classifier weights.",
+        "aliases": [
+          "Noise-orthogonal CNN design"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Implement confidence-based rejection mechanism during deployment",
+        "type": "intervention",
+        "description": "At runtime, defer or flag predictions whose softmax confidence falls below threshold, routing to human review.",
+        "aliases": [
+          "Deploy reject option"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Conduct human-centered robustness evaluation with benchmark platforms and crowdsourced perturbation taxonomies",
+        "type": "intervention",
+        "description": "Before release, run models through RobustBench/ImageNet-C and extend tests using crowd-elicited perturbations.",
+        "aliases": [
+          "Practitioner robustness evaluation workflow"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Integrate human-in-the-loop dataset curation and rationale collection during data pipeline",
+        "type": "intervention",
+        "description": "Iteratively collect human rationales, label uncertainty and surface unknown-unknowns to refine training data.",
+        "aliases": [
+          "Crowd-curated robust dataset process"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 2,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Adversarial training improves robustness by incorporating perturbed data",
+        "type": "concept",
+        "description": "Training on mixtures of clean and adversarially perturbed inputs forces models to learn stable decision boundaries.",
+        "aliases": [
+          "Adversarial training insight",
+          "Robustness via adversarial examples"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Model architecture modifications to handle noise enhance resilience",
+        "type": "concept",
+        "description": "Incorporating components such as stochastic noise layers, orthogonal classifiers or bio-inspired elements can inherently increase robustness.",
+        "aliases": [
+          "Robust architecture insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune models with adversarial training using PGD-generated perturbations",
+        "type": "intervention",
+        "description": "During fine-tuning, iteratively generate PGD adversarial examples and train on the combined batch to harden model.",
+        "aliases": [
+          "Apply PGD adversarial training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Augment pre-training datasets with GAN-generated natural corruptions",
+        "type": "intervention",
+        "description": "Generate realistic corrupted samples via conditional GANs and add to training corpus before supervised training.",
+        "aliases": [
+          "GAN corruption augmentation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 2,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Interactive robustness benchmark platforms for practitioners",
+        "type": "concept",
+        "description": "Toolchains providing corruption datasets, metrics and leaderboards enabling systematic robustness testing before deployment.",
+        "aliases": [
+          "RobustBench, ImageNet-C platforms"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Gap of human-centered robustness evaluation practices",
+        "type": "concept",
+        "description": "Survey highlights absence of tools, workflows and human-in-the-loop methods supporting practitioners to diagnose and improve robustness.",
+        "aliases": [
+          "Lack of practitioner workflows for robustness",
+          "Human-centred gap"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "System failures from insufficient AI robustness in safety-critical contexts",
+        "target_node": "Adversarial vulnerability in ML models",
+        "description": "Adversarially exploitable models lead directly to system failures",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Adversarial vulnerability in ML models",
+        "target_node": "Adversarial training improves robustness by incorporating perturbed data",
+        "description": "Training with adversarial examples directly addresses this vulnerability",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Sensitivity to natural perturbations and distribution shifts in ML models",
+        "target_node": "Data augmentation with natural noise improves generalization robustness",
+        "description": "Augmentation counters shift by exposing model to corruptions",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Gap of human-centered robustness evaluation practices",
+        "target_node": "Human knowledge essential for defining realistic perturbations and assessments",
+        "description": "Human insight can close evaluation gaps",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Adversarial training improves robustness by incorporating perturbed data",
+        "target_node": "Perturbation-based data augmentation across ML pipeline",
+        "description": "Design rationale operationalises adversarial-training insight",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Data augmentation with natural noise improves generalization robustness",
+        "target_node": "Perturbation-based data augmentation across ML pipeline",
+        "description": "Same design rationale extends to natural noise",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Model architecture modifications to handle noise enhance resilience",
+        "target_node": "Robust architecture design with noise-handling components",
+        "description": "Design encapsulates architectural insight",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Human knowledge essential for defining realistic perturbations and assessments",
+        "target_node": "Human-in-the-loop robustness evaluation and dataset curation",
+        "description": "Designs workflows to embed human knowledge",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Prediction uncertainty can signal unreliable outputs under distribution shift",
+        "target_node": "Reject option based on prediction uncertainty",
+        "description": "Design rationale translates signal into decision mechanism",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Perturbation-based data augmentation across ML pipeline",
+        "target_node": "Adversarial training with PGD and dynamic perturbations",
+        "description": "PGD perturbations implement data-level augmentation",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Robust architecture design with noise-handling components",
+        "target_node": "Noise layers and orthogonal classifier weights in CNNs",
+        "description": "Specific layer and weight modifications realise design",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Human-in-the-loop robustness evaluation and dataset curation",
+        "target_node": "Interactive robustness benchmark platforms for practitioners",
+        "description": "Platforms operationalise evaluation workflow",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Reject option based on prediction uncertainty",
+        "target_node": "Confidence-threshold reject option classifier",
+        "description": "Classifier realises reject-option design",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Adversarial training with PGD and dynamic perturbations",
+        "target_node": "RobustBench benchmark results showing increased accuracy post adversarial training",
+        "description": "Benchmark confirms effectiveness",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "GAN-generated corrupted images for training data augmentation",
+        "target_node": "ImageNet-C experiments showing improvement from GAN augmentation",
+        "description": "Empirical evidence on corruptions",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Noise layers and orthogonal classifier weights in CNNs",
+        "target_node": "RobustBench benchmark results showing increased accuracy post adversarial training",
+        "description": "Noise-layer models rank higher on robustness boards",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Interactive robustness benchmark platforms for practitioners",
+        "target_node": "Studies indicating human-guided labeling improves out-of-distribution performance",
+        "description": "Benchmarks combined with human labeling show performance gains",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Crowdsourced perturbation taxonomy development",
+        "target_node": "Studies indicating human-guided labeling improves out-of-distribution performance",
+        "description": "Crowdsourced data improves OOD robustness",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Confidence-threshold reject option classifier",
+        "target_node": "Evaluation showing reject option reduces failure rate on unseen perturbations",
+        "description": "Experiments show abstention reduces risk",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "RobustBench benchmark results showing increased accuracy post adversarial training",
+        "target_node": "Fine-tune models with adversarial training using PGD-generated perturbations",
+        "description": "Positive benchmark results encourage adoption of PGD adversarial training",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "ImageNet-C experiments showing improvement from GAN augmentation",
+        "target_node": "Augment pre-training datasets with GAN-generated natural corruptions",
+        "description": "Demonstrated gains motivate dataset augmentation",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Evaluation showing reject option reduces failure rate on unseen perturbations",
+        "target_node": "Implement confidence-based rejection mechanism during deployment",
+        "description": "Empirical reduction in errors motivates deployment-time reject option",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Studies indicating human-guided labeling improves out-of-distribution performance",
+        "target_node": "Conduct human-centered robustness evaluation with benchmark platforms and crowdsourced perturbation taxonomies",
+        "description": "Human data improvements motivate structured evaluation workflows",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "1140b3faba6821e968eb8c3cb7c73fe1"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.437671"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER-1 (Schema): All 30 nodes missing node_rationale attribute required per spec - MUST ADD to all nodes with justification and section references",
+      "BLOCKER-2 (Schema): All 32 edges missing edge_confidence_rationale attribute required per spec - MUST ADD evidence assessment with section references",
+      "BLOCKER-3 (Schema): All 32 edges missing edge_rationale attribute required per spec - MUST ADD connection justification with section references",
+      "BLOCKER-4 (Schema): All 6 intervention nodes missing intervention_lifecycle_rationale field - Section references required",
+      "BLOCKER-5 (Schema): All 6 intervention nodes missing intervention_maturity_rationale field - Evidence-based reasoning required",
+      "MAJOR-1 (Coverage): Section 5.1.1-5.1.2 extensively discusses GNN-specific robustness but fabric contains zero GNN nodes/pathways - MISSING entire domain pathway",
+      "MAJOR-2 (Coverage): Section 5.2.1 discusses NLP vulnerabilities (character/word-level attacks, parsing, transformer fine-tuning) but fabric contains zero NLP-specific nodes - MISSING domain-specific pathway despite 3+ pages of content",
+      "MAJOR-3 (Coverage): Section 5.2.2 covers cybersecurity (malware detection, DDoS, intrusion systems) but fabric contains zero cybersecurity nodes - MISSING safety-critical application domain",
+      "MAJOR-4 (Completeness): Section 6.3.2 extensively discusses fairness-robustness trade-offs [24,252,169] but fabric lacks explicit fairness degradation problem node or fair-robust framework node",
+      "MAJOR-5 (Completeness): Section 6.1.1 discusses formal verification, abstract interpretation, randomized smoothing, mixed-integer linear programming but fabric contains zero certified robustness implementation nodes",
+      "MAJOR-6 (Completeness): Section 5.1.3 discusses Bayesian Neural Networks and dropout uncertainty sampling but fabric contains zero Bayesian robustness nodes despite detailed content",
+      "MAJOR-7 (Accuracy): Node 'Adversarial training improves robustness by incorporating perturbed data' lacks acknowledgment of accuracy tradeoff extensively documented in Section 6.3.1 - MISLEADING description",
+      "MAJOR-8 (Accuracy): Node 'Model architecture modifications to handle noise enhance resilience' overgeneralizes; source distinguishes SNNs, noise-injection, orthogonal weights, NAS with different mechanisms - REQUIRES DECOMPOSITION",
+      "MAJOR-9 (Intervention Lifecycle): 'Design CNNs with stochastic noise input layers and orthogonal classifiers' assigned lifecycle 1 but source (Section 4.2.2) discusses this as already-implemented technique - should be lifecycle 2/3",
+      "MAJOR-10 (Intervention Maturity): 'Augment pre-training datasets with GAN-generated natural corruptions' assigned maturity 2 but Section 4.1.2 cites [1,73,214,237] as systematic validations - should be maturity 3",
+      "MAJOR-11 (Coverage Gap): Section 8 comprises 3+ pages on human-centered approaches, practitioner gaps, and envisioned research, but only 1 human-centered intervention node exists - SEVERELY UNDERREPRESENTED",
+      "MAJOR-12 (Missing Pathway): Section 8.1.1 discusses human-based diagnosis approaches, Section 8.1.2 discusses commonsense knowledge acquisition, feature alignment - ZERO implementation mechanism nodes for these",
+      "MAJOR-13 (Missing Pathway): Section 8.2.1-8.2.2 discuss ML with reject option and human-in-the-loop ML frameworks - ONLY ONE reject-option intervention exists despite 2+ pages content",
+      "MAJOR-14 (Coverage): Section 3.2 discusses ML testing as adjacent domain (Section 3.2.3) but fabric contains zero ML testing node or pathway",
+      "MAJOR-15 (Coverage): Section 5.3.1 extensively discusses robustness of counterfactual explanations [233,164,5,184,204] but fabric contains zero counterfactual robustness node",
+      "MINOR-1 (Rationale Gap): Edge 'caused_by' from System failures to Gap of human-centered practices (confidence 3) lacks edge_confidence_rationale explaining why 3 vs 4",
+      "MINOR-2 (Specificity): Node 'Interactive robustness benchmark platforms' should reference specific platform names (RobustBench, ImageNet-C, RobustART per Section 6.1.2) in description",
+      "MINOR-3 (Field Cleanup): Both nodes and edges contain null 'embedding' fields - should be removed or consistently populated",
+      "STYLE-1: Node 'Studies indicating human-guided labeling improves out-of-distribution performance' uses investigator voice rather than specific mechanism name - should be 'Human-guided dataset curation improves OOD robustness'"
+    ]
+  },
+  "url": "https://arxiv.org/abs/2210.08906",
+  "paper_id": "e7c9368771751d5dc8acc6751147d114",
+  "ard_file_source": "arxiv",
+  "errors": null
+}

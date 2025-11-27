@@ -1,0 +1,529 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has critical structural violations: intervention nodes have outgoing edges (violating fabric design rules), incomplete node attributes (missing rationale fields and section references), orphaned concept nodes (corrigibility research disconnected from main paths), and significant coverage gaps (fails to capture 8 of 14 major relationships from source). JSON schema has extraneous 'embedding' fields and missing required rationale fields. However, the core pathways connecting convergent instrumental goals → quantilizers and the institutional research expansion are sound. After applying proposed fixes (deletion of orphaned nodes, restoration of proper edge directionality, addition of 10 new nodes capturing institutional and dissemination mechanisms, completion of required fields, and edge additions connecting all major source topics), the extraction will achieve complete knowledge fabric with all risks connected to interventions through proper intermediate concept nodes."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node fields contain 'embedding' attribute not in required schema",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove all 'embedding' fields from nodes as they are not part of the required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Edge fields contain 'embedding' attribute not in required schema",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove all 'embedding' fields from edges as they are not part of the required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Missing required edge attributes: 'edge_confidence_rationale' and 'edge_rationale'",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' fields with data source section references to all edges"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Missing required node attributes: 'node_rationale' and 'intervention_lifecycle_rationale' where applicable",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' to all nodes; add 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' to intervention nodes"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent source node",
+        "names": [
+          "Provide dedicated funding and institutional support for AI safety research centres"
+        ]
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge 'required_by' has direction violation: intervention node has outgoing edge to another intervention node. Per instructions, intervention nodes should only have incoming edges from concept nodes in fabric paths.",
+        "names": [
+          "Adopt quantilizer decision rule in AI system design",
+          "Provide dedicated funding and institutional support for AI safety research centres"
+        ]
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge 'required_by' has direction violation: intervention node has outgoing edge to another intervention node",
+        "names": [
+          "Integrate convergent instrumental goal analysis into safety assessment tools",
+          "Provide dedicated funding and institutional support for AI safety research centres"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Multiple nodes reference theoretical papers ('Formalizing Convergent Instrumental Goals' and 'Quantilizers: A Safer Alternative to Maximizers') but lack explicit section title attribution in node_rationale field",
+        "evidence": "DATA_SOURCE states: 'New papers: \"Formalizing Convergent Instrumental Goals\" and \"Quantilizers: A Safer Alternative to Maximizers for Limited Optimization.\" These papers have been accepted to the AAAI-16 workshop on AI, Ethics and Society.' under 'Research updates' section",
+        "fix": "Add section reference 'Research updates - New papers' to node_rationale for all nodes derived from these papers"
+      },
+      {
+        "issue": "Intervention node 'Adopt quantilizer decision rule in AI system design' claims lifecycle stage 1 (Model Design) but source only presents theoretical paper, no implementation guidance",
+        "evidence": "DATA_SOURCE presents paper abstract only: 'Quantilizers: A Safer Alternative to Maximizers for Limited Optimization' without implementation details",
+        "fix": "Reduce intervention_maturity to 1 (Foundational/Theoretical) and adjust lifecycle_rationale to reference 'Research updates' section where paper is announced"
+      },
+      {
+        "issue": "Intervention node 'Integrate convergent instrumental goal analysis into safety assessment tools' lacks evidence of actual assessment tool development in source",
+        "evidence": "DATA_SOURCE mentions paper 'Formalizing Convergent Instrumental Goals' but does not describe deployment of this into assessment tools",
+        "fix": "Reduce intervention_maturity to 1 and add rationale noting this is inferred application, not explicitly stated in source"
+      },
+      {
+        "issue": "Intervention 'Provide dedicated funding and institutional support for AI safety research centres' is presented as background context, not as a proposed intervention flowing from the two papers",
+        "evidence": "DATA_SOURCE mentions 'Leverhulme Centre for the Future of Intelligence' and 'Strategic Artificial Intelligence Research Centre' as institutional developments, not as proposed interventions flowing from the convergent goals or quantilizer papers",
+        "fix": "Restructure this node: either remove it or reposition it as an enabling concept node rather than an intervention endpoint"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Paper acceptance enabling research dissemination",
+          "evidence": "These papers have been accepted to the AAAI-16 workshop on AI, Ethics and Society",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Formal characterisation of convergent instrumental goals",
+            "Quantilizer decision rule reducing optimisation pressure"
+          ],
+          "expected_target_node_name": [
+            "Research dissemination enabling practitioner adoption"
+          ]
+        },
+        {
+          "title": "Researcher appointment and team contribution",
+          "evidence": "Scott Garrabrant joins MIRI's full-time research team this month",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Formal agent modelling with logical frameworks for corrigibility"
+          ],
+          "expected_target_node_name": [
+            "Research capacity expansion in AI safety"
+          ]
+        },
+        {
+          "title": "Institutional collaboration pathway",
+          "evidence": "MIRI and Oxford-based Future of Humanity Institute (FHI) collaboration, Andrew Critch led a 'Big-Picture Thinking' seminar on long-term AI safety",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Formal characterisation of convergent instrumental goals"
+          ],
+          "expected_target_node_name": [
+            "Multi-institutional AI safety research coordination"
+          ]
+        },
+        {
+          "title": "Anthology republication amplifying research impact",
+          "evidence": "A 2014 collaboration between MIRI and FHI paper is being republished in the anthology Risks of Artificial Intelligence, also includes Daniel Dewey's strategic analysis and articles by MIRI Research Advisors",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Mathematical characterisation results in convergent goal formalisation paper"
+          ],
+          "expected_target_node_name": [
+            "Peer-reviewed publication amplifying research credibility"
+          ]
+        },
+        {
+          "title": "New research centre addressing long-term AI impact",
+          "evidence": "Cambridge University launching a new $15 million research center (Leverhulme Centre for the Future of Intelligence) with Oxford, UC Berkeley, and Imperial College London",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Existential catastrophe from misaligned superintelligent AI"
+          ],
+          "expected_target_node_name": [
+            "Institutional infrastructure for AI safety research"
+          ]
+        },
+        {
+          "title": "Strategic research hiring for technical safety problems",
+          "evidence": "Strategic Artificial Intelligence Research Centre (FHI and Cambridge CSER joint initiative) accepting applications for research fellows in machine learning and the control problem, policy work and emerging technology governance, and general AI strategy",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Convergent instrumental goal pursuit by advanced agents",
+            "Extreme optimisation behaviour from utility maximiser design"
+          ],
+          "expected_target_node_name": [
+            "Multi-disciplinary research capacity development for control problems"
+          ]
+        },
+        {
+          "title": "Public advocacy amplifying AI safety concern",
+          "evidence": "FHI founder Nick Bostrom makes Foreign Policy's Top 100 Global Thinkers list; Washington Post interviews with Bostrom, Francesca Rossi, and Dileep George on AI safety",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Existential catastrophe from misaligned superintelligent AI"
+          ],
+          "expected_target_node_name": [
+            "Public awareness and policy attention to AI existential risk"
+          ]
+        },
+        {
+          "title": "Research on risks without intelligence explosion",
+          "evidence": "Viktoriya Krakanova discusses risks from general AI without an intelligence explosion",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Existential catastrophe from misaligned superintelligent AI"
+          ],
+          "expected_target_node_name": [
+            "Expanded risk characterisation beyond fast-takeoff scenarios"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Institutional AI safety research infrastructure and coordination",
+        "nodes_to_merge": [
+          "Provide dedicated funding and institutional support for AI safety research centres"
+        ]
+      }
+    ],
+    "deletions": [
+      {
+        "node_name": "Formal agent modelling with logical frameworks for corrigibility",
+        "reason": "Node references IAFF work items but these are mentioned as research outputs without connection to the convergent goals or quantilizer pathways. Cannot be connected to main fabric without moderate inference. Per instructions: 'If isolated nodes cannot be connected to the fabric even with modest inference, remove them.'"
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Adopt quantilizer decision rule in AI system design",
+        "target_node_name": "Provide dedicated funding and institutional support for AI safety research centres",
+        "reason": "Violates instruction: 'All nodes building the rationale for a proposed intervention MUST flow into the intervention node, NOT out of the intervention node.' Intervention nodes should have no outgoing edges."
+      },
+      {
+        "source_node_name": "Integrate convergent instrumental goal analysis into safety assessment tools",
+        "target_node_name": "Provide dedicated funding and institutional support for AI safety research centres",
+        "reason": "Violates instruction: intervention nodes cannot have outgoing edges except refinements. This represents external dependency, not refinement."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Adopt quantilizer decision rule in AI system design",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Source presents theoretical paper only without implementation guidance. Per instructions, theoretical work without empirical validation is maturity level 1 (Foundational/Theoretical)."
+      },
+      {
+        "node_name": "Adopt quantilizer decision rule in AI system design",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Theoretical paper proposing quantilizer decision rule published in AAAI-16 workshop; no implementation evidence or experimental validation in source. Per instructions, moderate inference applied to identify this as actionable intervention. Reference: Research updates section 'Quantilizers: A Safer Alternative to Maximizers for Limited Optimization'",
+        "reason": "Add required field with proper rationale and section reference"
+      },
+      {
+        "node_name": "Integrate convergent instrumental goal analysis into safety assessment tools",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Source presents theoretical paper without evidence of tool deployment. This is inferred application of theory to assessment context."
+      },
+      {
+        "node_name": "Integrate convergent instrumental goal analysis into safety assessment tools",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Theoretical formalisation paper with no tool deployment evidence in source. Moderate inference applied to identify assessment application. Reference: Research updates section 'Formalizing Convergent Instrumental Goals'",
+        "reason": "Add required field with proper rationale noting inference application"
+      },
+      {
+        "node_name": "Theoretical proofs of bounded side-effects in quantilizer paper",
+        "field": "node_rationale",
+        "json_new_value": "Mathematical validation of quantilizer mechanism's safety properties. Reference: Research updates section announcing 'Quantilizers: A Safer Alternative to Maximizers for Limited Optimization' accepted to AAAI-16 workshop",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Mathematical characterisation results in convergent goal formalisation paper",
+        "field": "node_rationale",
+        "json_new_value": "Formal proofs characterizing when instrumental goal pursuit emerges. Reference: Research updates section announcing 'Formalizing Convergent Instrumental Goals' accepted to AAAI-16 workshop",
+        "reason": "Add required node_rationale field with section reference"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Existential catastrophe from misaligned superintelligent AI",
+        "type": "concept",
+        "description": "The possibility that advanced artificial intelligence, if its objectives diverge from human values, could bring about irreversible harm or extinction.",
+        "aliases": [
+          "AI-induced existential risk",
+          "Unaligned AGI catastrophic risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Convergent instrumental goal pursuit by advanced agents",
+        "type": "concept",
+        "description": "The tendency of sufficiently capable goal-directed systems to seek resources, self-preservation, and goal-content integrity, regardless of their final objectives.",
+        "aliases": [
+          "Convergent instrumental goals",
+          "Power-seeking tendencies"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Extreme optimisation behaviour from utility maximiser design",
+        "type": "concept",
+        "description": "Classical expected-utility maximisers push probability mass toward very high-utility actions, often ignoring side-effects and safety constraints, creating dangerous behaviour.",
+        "aliases": [
+          "Over-maximisation pressure",
+          "Pure maximiser risk"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Formal characterisation of convergent instrumental goals",
+        "type": "concept",
+        "description": "A theoretical framework proving when and why power-seeking subgoals arise from broad classes of objective functions.",
+        "aliases": [
+          "CIG formalisation",
+          "Mathematical CIG analysis"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Quantilizer decision rule reducing optimisation pressure",
+        "type": "concept",
+        "description": "A theoretical insight that selecting actions at random from the top q-quantile of a reference distribution can greatly reduce catastrophic optimisation side-effects.",
+        "aliases": [
+          "Quantilization concept",
+          "Top-quantile optimiser"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Limiting objective maximisation via top-quantile action selection",
+        "type": "concept",
+        "description": "Design rationale to cap optimisation strength by restricting the agent’s search to a safe subset of actions identified through a benign distribution.",
+        "aliases": [
+          "Bounded optimisation design",
+          "Quantile-limited planning"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Using formal proofs to anticipate and mitigate power-seeking incentives",
+        "type": "concept",
+        "description": "Employ mathematical reasoning to predict when an agent will adopt instrumental goals and design countermeasures accordingly.",
+        "aliases": [
+          "Proof-based incentive control",
+          "Formal safety guarantees"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Quantilizer sampling from benign action reference distribution",
+        "type": "concept",
+        "description": "An implementation mechanism where the agent draws actions from a distribution known to have acceptable average behaviour, then filters to the top q-fraction according to its utility.",
+        "aliases": [
+          "Quantilizer algorithm implementation",
+          "Reference-distribution sampling"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Provide dedicated funding and institutional support for AI safety research centres",
+        "type": "intervention",
+        "description": "Governments, charities and universities allocate sustained budgets (e.g., Leverhulme Centre, Strategic AI Research Centre) to advance corrigibility, governance, and technical alignment research.",
+        "aliases": [
+          "Fund AI safety centres",
+          "Establish safety research institutes"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Adopt quantilizer decision rule in AI system design",
+        "type": "intervention",
+        "description": "During model-design and planning modules, replace pure expected-utility maximisers with quantilizers that restrict optimisation to the safest q-quantile of actions from a vetted distribution.",
+        "aliases": [
+          "Implement quantilizers",
+          "Quantilizer-based AI design"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Integrate convergent instrumental goal analysis into safety assessment tools",
+        "type": "intervention",
+        "description": "Embed the formal CIG framework into automated or manual assessment pipelines to detect and redesign systems that would predictably develop power-seeking subgoals.",
+        "aliases": [
+          "Use CIG formalism for safety audits",
+          "CIG-based incentive analysis"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Theoretical proofs of bounded side-effects in quantilizer paper",
+        "type": "concept",
+        "description": "Mathematical results showing that quantilizers dramatically lower worst-case harm compared with pure maximisers, under certain distributional assumptions.",
+        "aliases": [
+          "Quantilizer safety proofs",
+          "Quantilization theoretical validation"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Mathematical characterisation results in convergent goal formalisation paper",
+        "type": "concept",
+        "description": "Demonstrates, through formal theorems, conditions under which instrumental power-seeking arises, validating theoretical claims.",
+        "aliases": [
+          "CIG validation proofs",
+          "Formal CIG results"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Existential catastrophe from misaligned superintelligent AI",
+        "target_node": "Convergent instrumental goal pursuit by advanced agents",
+        "description": "Power-seeking subgoals are a primary pathway by which unaligned AI could gain control and cause catastrophe.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Convergent instrumental goal pursuit by advanced agents",
+        "target_node": "Extreme optimisation behaviour from utility maximiser design",
+        "description": "Pure maximisers create strong incentives that manifest as instrumental goal pursuit.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Extreme optimisation behaviour from utility maximiser design",
+        "target_node": "Quantilizer decision rule reducing optimisation pressure",
+        "description": "Quantilizers dial down optimisation to avoid extreme actions.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Formal characterisation of convergent instrumental goals",
+        "target_node": "Using formal proofs to anticipate and mitigate power-seeking incentives",
+        "description": "Formal understanding underpins proof-based mitigation strategies.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Quantilizer decision rule reducing optimisation pressure",
+        "target_node": "Limiting objective maximisation via top-quantile action selection",
+        "description": "Insight supplies the principle for bounded optimisation design.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Limiting objective maximisation via top-quantile action selection",
+        "target_node": "Quantilizer sampling from benign action reference distribution",
+        "description": "Sampling procedure operationalises the design rationale.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Quantilizer sampling from benign action reference distribution",
+        "target_node": "Theoretical proofs of bounded side-effects in quantilizer paper",
+        "description": "Safety proofs test and support the mechanism’s effectiveness.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Using formal proofs to anticipate and mitigate power-seeking incentives",
+        "target_node": "Mathematical characterisation results in convergent goal formalisation paper",
+        "description": "Proofs show when instrumental goals arise, validating the approach.",
+        "edge_confidence": 4,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "c0e49d6e70c42133a929176995c8ef09"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.189837"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER 1: Edge from 'Adopt quantilizer decision rule' (intervention) to 'Provide dedicated funding' (intervention) violates core instruction: 'All nodes building the rationale for a proposed intervention MUST flow into the intervention node, NOT out of the intervention node.' Intervention nodes must only receive edges, not emit them (except refinements). Status: REQUIRES FIX via edge deletion and restructuring.",
+      "BLOCKER 2: Edge from 'Integrate convergent instrumental goal analysis' (intervention) to 'Provide dedicated funding' (intervention) has same directionality violation. Status: REQUIRES FIX via edge deletion.",
+      "BLOCKER 3: Missing required node attributes across all nodes: 'node_rationale' field absent from concepts; 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' absent from interventions. JSON schema requires these per output_format specification. Status: REQUIRES FIX via field additions with section references.",
+      "BLOCKER 4: Extraneous 'embedding' fields in all nodes and edges not part of required schema. Status: REQUIRES FIX via field removal.",
+      "MAJOR 5: Missing required edge attributes: all 13 edges lack 'edge_confidence_rationale' and 'edge_rationale' fields per output schema. Status: REQUIRES FIX via field additions with DATA_SOURCE section references.",
+      "MAJOR 6: Orphaned concept node 'Formal agent modelling with logical frameworks for corrigibility' cannot connect to primary fabric. Source lists this under 'New at IAFF' section without connecting to convergent goals or quantilizer pathways. Per instructions: 'If isolated nodes cannot be connected to the fabric even with modest inference, remove them.' Status: REQUIRES DELETION.",
+      "MAJOR 7: Coverage gap: Source documents Scott Garrabrant joining MIRI full-time research team but this research capacity event is not captured in knowledge fabric. Should create 'Research capacity expansion in AI safety' concept and connect to team-building pathway. Status: REQUIRES ADD per coverage analysis.",
+      "MAJOR 8: Coverage gap: UK collaboration and seminar activities described in General updates section are not represented in fabric. 'Big-Picture Thinking seminar' led by Andrew Critch represents concrete research coordination implementation. Status: REQUIRES ADD via new coordination implementation node.",
+      "MAJOR 9: Coverage gap: $15 million Leverhulme Centre establishment and SAIRC job announcements (News and links) are mentioned as context but not integrated into interventions chain. Should connect to 'Institutional infrastructure' design rationale and funding intervention. Status: REQUIRES ADD and edge creation.",
+      "MAJOR 10: Coverage gap: Public recognition of safety researchers (Bostrom in Foreign Policy top 100, Washington Post series) represents validation of risk characterization but is disconnected from fabric. Status: REQUIRES ADD of 'Public awareness' validation node.",
+      "MAJOR 11: Coverage gap: Viktoriya Krakanova's work on risks without intelligence explosion expands risk characterization beyond singularity scenarios but is isolated. Status: REQUIRES ADD of expanded risk characterization node.",
+      "MAJOR 12: Coverage gap: 2014 MIRI-FHI paper republication in 'Risks of Artificial Intelligence' anthology with Dewey and advisor contributions represents amplification mechanism not captured. Status: REQUIRES ADD of publication amplification node.",
+      "MAJOR 13: Intervention maturity assessment: 'Adopt quantilizer decision rule' marked as maturity 2 (Experimental/PoC) but source presents only theoretical paper announcement with no implementation evidence. Per instructions, theoretical work = maturity 1. Status: REQUIRES CHANGE to maturity 1.",
+      "MAJOR 14: Intervention maturity assessment: 'Integrate convergent instrumental goal analysis into safety assessment tools' presents moderate inference (application to assessment context not explicit in source). Per instructions, moderate inference + no empirical validation = maturity 1. Status: REQUIRES CHANGE to maturity 1.",
+      "MINOR 15: Node 'Provide dedicated funding and institutional support for AI safety research centres' conflates three distinct concepts: (1) funding mechanisms, (2) institutional infrastructure, (3) centre establishment. Should decompose into separate nodes. Status: REQUIRES RESTRUCTURING via proposed merges and new node additions.",
+      "MINOR 16: Edge 'addressed_by' from risk to intervention violates fabric design which requires intermediate concept nodes. Edge from 'Existential catastrophe' to 'Provide dedicated funding' skips all intermediate reasoning. Status: REQUIRES FIX via reconstruction with intermediate nodes.",
+      "COVERAGE 1: Source explicitly connects quantilizer and convergent goals papers to AAAI-16 workshop acceptance, enabling publication dissemination. This validation evidence → publication mechanism → adoption pathway is missing. Status: REQUIRES ADD of dissemination mechanism nodes and edges.",
+      "COVERAGE 2: Source describes coordination (UK visit, seminar) as concrete implementation of multi-institutional collaboration. This implementation mechanism is not captured. Status: REQUIRES ADD of coordination implementation node.",
+      "COVERAGE 3: Source reports multiple research centres and 4 named positions being hired across institutions (MIRI, FHI, Cambridge CSER). This coordinated research capacity building is not in fabric. Status: REQUIRES ADD of capacity development nodes.",
+      "COVERAGE 4: Extraction completely misses institutional infrastructure pathway: (risk of misalignment) → (need for research capacity) → (institutional funding) → (centre establishment) → (team building). This is major 'News and links' theme. Status: REQUIRES ADDITION of 5+ nodes and edges."
+    ]
+  },
+  "url": "https://intelligence.org/2015/12/03/december-2015-newsletter/",
+  "paper_id": "8fabccb9c9ecb3a62ee2a5d0c30e66d0",
+  "ard_file_source": "blogs",
+  "errors": null
+}

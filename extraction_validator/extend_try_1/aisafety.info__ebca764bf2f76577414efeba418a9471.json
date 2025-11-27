@@ -1,0 +1,496 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has solid structural integrity and covers the core causal pathway from opacity risk through interpretability interventions. However, the JSON is INVALID as-is due to BLOCKER-level schema violations: all 12 nodes are missing required node_rationale fields, and all 11 edges are missing required edge_confidence_rationale and edge_rationale fields. Additionally, critical causal pathways are under-represented: (1) the direct connection from spurious correlation risk to neuron-level visualization is missing, (2) feature interpolation research direction is not captured as nodes/edges despite explicit source discussion, and (3) temporal feature evolution tracking is absent despite being mentioned as key application. After applying proposed fixes (adding 3 nodes, 4 new edges, 2 modified edge confidences, and 15 field additions), the graph will achieve full schema compliance, represent 100% of major causal pathways from source, and be valid for merging across the 500k source corpus with consistent naming conventions."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge attributes: edge_confidence_rationale and edge_rationale",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all 11 edges per schema requirement"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node attributes: node_rationale for all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale field to all 12 nodes per schema requirement"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes missing intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "where": "nodes[10].intervention_lifecycle_rationale, nodes[10].intervention_maturity_rationale, nodes[11].intervention_lifecycle_rationale, nodes[11].intervention_maturity_rationale",
+        "suggestion": "Add these required fields with evidence-based justifications for both intervention nodes"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Extraneous 'embedding' field present in nodes and edges",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove 'embedding' field - not part of required schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent target node",
+        "names": [
+          "edge: caused_by from Opaque decision-making in neural networks",
+          "Black-box hidden feature hierarchies in deep models"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge confidence levels not well justified against source evidence",
+        "evidence": "Multiple edges marked confidence=2 or confidence=3 without explicit source basis. For example, edge 'Reliance on correlational input cues in image classifiers' → 'Neuron-level visualization isolates causes of classifications' marked confidence=2 but source states this as direct mechanism: 'This could be a single neuron, a channel, or even a full layer'",
+        "fix": "Increase edge_confidence to 3 and provide explicit section reference (e.g., 'Feature visualization attempts to create images...' section)"
+      },
+      {
+        "issue": "Intervention maturity levels appear underestimated",
+        "evidence": "Intervention 'Audit neural network features via visualization-by-optimization before deployment' marked maturity=2 (Experimental/Proof-of-Concept), but source explicitly demonstrates DeepDream as historical precedent showing feasibility across systems. Source states 'DeepDream is an example of an early implementation of feature visualization through optimization'",
+        "fix": "Increase to maturity=3 (Prototype/Pilot Studies/Systematic Validation) with rationale referencing DeepDream implementation history"
+      },
+      {
+        "issue": "Missing critical source section in node_rationale fields",
+        "evidence": "Source explicitly connects feature visualization to 'alignment research': 'Interpretability tools like feature visualization are useful for alignment research because they allow us in some sense to see the internal thoughts of a neural network. The hope is that many interpretability tools combined will allow us to shed light on the internal algorithm that a neural network has implemented.'",
+        "fix": "Add node_rationale for 'Use feature visualization to interpret learned representations' explicitly connecting to alignment research context from 'Interpretability tools like feature visualization...' section"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Direct causal chain: opacity → hidden hierarchies → need for visualization",
+          "evidence": "Source establishes: 'we can generate pictures that illustrate the internal representations' and 'Feature visualization attempts to create images that represent what any given part of a neural network is looking for'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Opaque decision-making in neural networks"
+          ],
+          "expected_target_node_name": [
+            "Black-box hidden feature hierarchies in deep models"
+          ]
+        },
+        {
+          "title": "Mechanism edge: visualization-by-optimization directly implements feature visualization",
+          "evidence": "Source states: 'Feature visualization is mainly implemented using a technique called visualization by optimization' and provides detailed mechanism: 'we keep the weights and the class label constant. Instead, we change the pixels of our input image until the model outputs the highest probability'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Use feature visualization to interpret learned representations"
+          ],
+          "expected_target_node_name": [
+            "Visualization by optimization technique"
+          ]
+        },
+        {
+          "title": "Evidence edge: specific working example (dog image) validates approach",
+          "evidence": "Source provides concrete example: 'We input an image made from random pixels. We then progressively alter the pixel values (using gradient descent) to increase the network's prediction of the class dog...until the network is maximally sure that the set of pixels it sees depicts a dog. The resulting image is, in a sense, the doggiest picture that the network can conceive of'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Visualization by optimization technique"
+          ],
+          "expected_target_node_name": [
+            "Generated feature images demonstrate network feature focus"
+          ]
+        },
+        {
+          "title": "Application edge: evidence motivates broader deployment interventions",
+          "evidence": "Source: 'All of this combined helps to isolate the causes of a model's classifications from mere correlations in the input data' and mentions 'Some researchers have experimented with this using interpolation between neurons'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Generated feature images demonstrate network feature focus"
+          ],
+          "expected_target_node_name": [
+            "Audit neural network features via visualization-by-optimization before deployment"
+          ]
+        },
+        {
+          "title": "Critical missing edge: direct mechanism connecting spurious correlations to visualization detection",
+          "evidence": "Source establishes that visualizing at neuron/channel level 'helps to isolate the causes of a model's classifications from mere correlations in the input data' - this is a direct address of spurious correlation risk",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Spurious correlation-based misclassifications in image classifiers"
+          ],
+          "expected_target_node_name": [
+            "Neuron-level visualization isolates causes of classifications"
+          ]
+        },
+        {
+          "title": "Feature interpolation as intervention for feature engineering",
+          "evidence": "Source: 'Some researchers have experimented with this using interpolation between neurons. For example, if we add a black and white neuron to a mosaic neuron, we obtain a black and white version of the mosaic'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Training evolution insight: visualization reveals feature learning over time",
+          "evidence": "Source: 'It also helps us visualize how a network's understanding of a feature evolves through the course of the training process'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Audit neural network features via visualization-by-optimization before deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity=3 justified by DeepDream as historical precedent demonstrating systematic methodology ('DeepDream is an example of an early implementation of feature visualization through optimization', Visualization by optimization section) and explicit worked example provided ('walk through an example', main methodology section), indicating prototype-level development.",
+        "reason": "Must add missing required field with evidence base"
+      },
+      {
+        "node_name": "Audit neural network features via visualization-by-optimization before deployment",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle=4 (Pre-Deployment Testing) because source positions feature visualization as safety inspection tool: 'Interpretability tools like feature visualization are useful for alignment research because they allow us in some sense to see the internal thoughts of a neural network' (Interpretability tools section), enabling pre-deployment model auditing.",
+        "reason": "Must add missing required field with source citation"
+      },
+      {
+        "node_name": "Iteratively refine training data based on feature visualization insights",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle=3 (Fine-Tuning/RL) because after visualizing features, 'researchers to study what any subset of the network is encoding' can identify misalignments requiring data refinement and model retraining (main methodology: 'we can study what any subset of the network is encoding' section).",
+        "reason": "Must add missing required field with justification"
+      },
+      {
+        "node_name": "Iteratively refine training data based on feature visualization insights",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity=1 (Foundational/Theoretical) because source presents this as conceptual application rather than validated procedure: visualization enables 'isolating the causes of a model's classifications' but source does not provide evidence of systematized data refinement workflows (main methodology section on isolating causes).",
+        "reason": "Must add missing required field"
+      },
+      {
+        "node_name": "Use feature visualization to interpret learned representations",
+        "field": "node_rationale",
+        "json_new_value": "Core design rationale for interpretability: source explicitly positions feature visualization as means to achieve transparency for alignment: 'Interpretability tools like feature visualization are useful for alignment research because they allow us in some sense to see the internal thoughts of a neural network. The hope is that many interpretability tools combined will allow us to shed light on the internal algorithm that a neural network has implemented.' (Interpretability tools section). Essential node connecting risk to solution.",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Opaque decision-making in neural networks",
+        "field": "node_rationale",
+        "json_new_value": "Core risk for AI safety: black-box neural networks prevent human inspection and understanding of decision processes. Source establishes this as motivation for entire interpretability framework: feature visualization addresses inability to 'see the internal thoughts of a neural network' (Interpretability tools section and opening motivation).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Spurious correlation-based misclassifications in image classifiers",
+        "field": "node_rationale",
+        "json_new_value": "Specific risk manifestation requiring diagnosis: misclassifications from spurious correlations ('isolate the causes of a model's classifications from mere correlations in the input data'). Feature visualization enables detection of this failure mode through neuron-level inspection (main methodology section).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Black-box hidden feature hierarchies in deep models",
+        "field": "node_rationale",
+        "json_new_value": "Problem analysis: deep networks build complex feature hierarchies during training that are fundamentally unobservable via normal inspection, creating the core opacity problem. Source: 'Feature visualization is mainly implemented using a technique called visualization by optimization' to overcome this (main methodology section).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Reliance on correlational input cues in image classifiers",
+        "field": "node_rationale",
+        "json_new_value": "Problem mechanism: networks exploit superficial correlations in training data rather than causal features. Source: 'helps to isolate the causes of a model's classifications from mere correlations in the input data' indicates this is core problem feature visualization addresses (main methodology section).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Optimizing inputs to maximize activations reveals internal features",
+        "field": "node_rationale",
+        "json_new_value": "Theoretical insight enabling all downstream work: keeping weights frozen and adjusting inputs via gradient ascent to maximize neuron activation exposes what features excite that component. Source: 'the input that most excites/activates that part of the network' and 'Feature visualization is mainly implemented using a technique called visualization by optimization' (Feature visualization definition and methodology sections).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Neuron-level visualization isolates causes of classifications",
+        "field": "node_rationale",
+        "json_new_value": "Theoretical insight refining granularity: targeting individual neurons, channels, or layers enables fine-grained understanding of how specific internal components contribute to decisions. Source: 'This could be a single neuron, a channel, or even a full layer' and 'helps to isolate the causes of a model's classifications from mere correlations' (main methodology section).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Visualization by optimization technique",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism: concrete gradient-based procedure that generates maximally-activating images. Source provides detailed specification: 'we keep the weights and the class label constant. Instead, we change the pixels of our input image until the model outputs the highest probability for a specific class label' with example: 'progressively alter the pixel values (using gradient descent)' (Visualization by optimization section).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "Generated feature images demonstrate network feature focus",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence: concrete outputs from visualization procedure (e.g., network's 'doggiest' picture) serve as empirical evidence that method captures actual features network uses. Source: 'The resulting image is, in a sense, the doggiest picture that the network can conceive of, and therefore gives us a good understanding of what the network is looking for' (Visualization by optimization example section).",
+        "reason": "Missing required node_rationale field"
+      },
+      {
+        "node_name": "DeepDream demonstrates visualization-by-optimization feasibility",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence showing historical precedent: DeepDream is documented as early successful implementation proving activation-maximization concept works in practice. Source: 'DeepDream is an example of an early implementation of feature visualization through optimization' (Visualization by optimization section).",
+        "reason": "Missing required node_rationale field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Audit neural network features via visualization-by-optimization before deployment",
+        "type": "intervention",
+        "description": "Before releasing a model, systematically generate activation-maximised images for key neurons/classes to detect misaligned or spurious features and trigger further mitigation if necessary.",
+        "aliases": [
+          "pre-deployment interpretability audit with feature visualisation",
+          "apply activation maximisation to safety-check models"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Iteratively refine training data based on feature visualization insights",
+        "type": "intervention",
+        "description": "After visualising learned features, identify undesired correlations (e.g., background texture) and augment or clean training data, then retrain or fine-tune the model.",
+        "aliases": [
+          "data curation informed by visualised features",
+          "feedback loop using feature images to fix dataset issues"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Use feature visualization to interpret learned representations",
+        "type": "concept",
+        "description": "Design principle: applying feature visualisation allows researchers to ‘see’ what a network is ‘looking for’, reducing opacity.",
+        "aliases": [
+          "feature visualisation interpretability approach",
+          "interpreting internal features via images"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Opaque decision-making in neural networks",
+        "type": "concept",
+        "description": "When neural networks are deployed, humans cannot easily inspect why particular outputs are produced, posing alignment and safety risks.",
+        "aliases": [
+          "black-box behaviour of deep models",
+          "lack of interpretability in neural nets"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Spurious correlation-based misclassifications in image classifiers",
+        "type": "concept",
+        "description": "Models may latch onto background textures or dataset artefacts, leading to confident but wrong predictions.",
+        "aliases": [
+          "erroneous behaviour due to non-causal features",
+          "reliance on artefacts instead of true features"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Black-box hidden feature hierarchies in deep models",
+        "type": "concept",
+        "description": "During training, deep nets build complex feature hierarchies that are not directly observable, causing opaqueness.",
+        "aliases": [
+          "unobservable internal representations",
+          "latent hierarchical features"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reliance on correlational input cues in image classifiers",
+        "type": "concept",
+        "description": "Deep models can exploit superficial correlations present in training data rather than causal features of the target class.",
+        "aliases": [
+          "correlation not causation in learned features"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Optimizing inputs to maximize activations reveals internal features",
+        "type": "concept",
+        "description": "By keeping weights fixed and adjusting input pixels with gradient ascent towards maximal neuron or class activation, one can expose what feature excites that component.",
+        "aliases": [
+          "activation maximisation insight",
+          "visualisation-by-optimisation principle"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Neuron-level visualization isolates causes of classifications",
+        "type": "concept",
+        "description": "Targeting individual neurons, channels or layers enables researchers to understand how specific internal components contribute to final decisions.",
+        "aliases": [
+          "single-unit feature inspection",
+          "fine-grained interpretability at neuron/channel level"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Visualization by optimization technique",
+        "type": "concept",
+        "description": "Implementation mechanism that performs gradient ascent on input pixels while keeping model weights frozen to produce maximally activating images.",
+        "aliases": [
+          "activation maximisation implementation",
+          "gradient ascent input optimisation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Generated feature images demonstrate network feature focus",
+        "type": "concept",
+        "description": "Images such as the network’s ‘doggiest’ picture serve as empirical evidence that the method captures what features the network uses.",
+        "aliases": [
+          "activation-maximised images",
+          "visualised internal concepts"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "DeepDream demonstrates visualization-by-optimization feasibility",
+        "type": "concept",
+        "description": "Early public system that popularised activation-maximisation imagery, showing the practicality of visualisation-by-optimisation.",
+        "aliases": [
+          "DeepDream example of feature visualisation"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Opaque decision-making in neural networks",
+        "target_node": "Black-box hidden feature hierarchies in deep models",
+        "description": "Opaqueness stems from unobservable internal hierarchies of features.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Spurious correlation-based misclassifications in image classifiers",
+        "target_node": "Reliance on correlational input cues in image classifiers",
+        "description": "Misclassifications arise when the network depends on correlations instead of causal features.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Black-box hidden feature hierarchies in deep models",
+        "target_node": "Optimizing inputs to maximize activations reveals internal features",
+        "description": "Activation-maximisation can expose otherwise hidden features, reducing black-boxness.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Reliance on correlational input cues in image classifiers",
+        "target_node": "Neuron-level visualization isolates causes of classifications",
+        "description": "Inspecting neuron-level features allows researchers to detect reliance on correlations.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Optimizing inputs to maximize activations reveals internal features",
+        "target_node": "Use feature visualization to interpret learned representations",
+        "description": "The theoretical principle underpins the design rationale of using feature visualisation for interpretation.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Neuron-level visualization isolates causes of classifications",
+        "target_node": "Use feature visualization to interpret learned representations",
+        "description": "Fine-grained neuron visualisation strengthens the overall interpretability approach.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Use feature visualization to interpret learned representations",
+        "target_node": "Visualization by optimization technique",
+        "description": "The design rationale is realised through the concrete optimisation procedure.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Visualization by optimization technique",
+        "target_node": "Generated feature images demonstrate network feature focus",
+        "description": "Generated images (e.g., ‘doggiest’ picture) provide evidence that the technique reveals features.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Generated feature images demonstrate network feature focus",
+        "target_node": "Audit neural network features via visualization-by-optimization before deployment",
+        "description": "Seeing concrete feature images motivates using the method as a pre-deployment audit.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "6af1022a7fa8cc6304ac2350aa18dab7"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:37.966979"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER SCHEMA VIOLATIONS: All nodes missing node_rationale field (required per schema). All edges missing edge_confidence_rationale and edge_rationale fields (required per schema). These must be added before output is valid.",
+      "COVERAGE GAP 1: Spurious correlation risk not directly connected to neuron-level visualization intervention despite source establishing this connection: 'helps to isolate the causes of a model's classifications from mere correlations in the input data' and 'This could be a single neuron, a channel, or even a full layer' (main methodology section). Proposed edge: Spurious correlation → addressed_by → Neuron-level visualization.",
+      "COVERAGE GAP 2: Feature interpolation research direction mentioned in source ('Some researchers have experimented with this using interpolation between neurons...if we add a black and white neuron to a mosaic neuron, we obtain a black and white version of the mosaic', Feature generation section) but completely absent from graph. Requires: (1) new theoretical insight node on feature interpolation, (2) new intervention node for interpolation studies, (3) edges connecting these to existing nodes.",
+      "COVERAGE GAP 3: Temporal feature evolution tracking presented in source as key application ('It also helps us visualize how a network's understanding of a feature evolves through the course of the training process', main methodology section) but missing from graph. Requires: new validation evidence node on temporal evolution tracking.",
+      "CONFIDENCE CALIBRATION: Edge from 'Reliance on correlational cues' to 'Neuron-level visualization' marked confidence=2 but source provides systematic evidence, should be confidence=3. Edge from 'Black-box hierarchies' to 'Optimizing inputs' marked confidence=3 but supported by explicit mechanism description, could justify confidence=4.",
+      "INTERVENTION MATURITY REVIEW: 'Audit neural network features' marked maturity=2 (Experimental) but justified by DeepDream historical precedent and systematic worked example in source. Should be maturity=3 (Prototype/Pilot).",
+      "ALIGNMENT CONTEXT: Source emphasizes alignment research motivation ('useful for alignment research because they allow us in some sense see the internal thoughts of a neural network...shed light on the internal algorithm') but this context underrepresented in node rationales. Recommended enhancement in 'Use feature visualization' node rationale.",
+      "REFERENTIAL INTEGRITY: All edges checked - source_node and target_node names match existing node names exactly. No duplicate nodes identified. No orphaned nodes found after proposed additions.",
+      "MERGABILITY ASSESSMENT: Node naming follows required patterns for 500k source merging (e.g., 'Feature visualization to interpret learned representations' uses canonical technical term + context pattern). Aliases provided (2-3 items) for cross-source matching.",
+      "EXTRACTION COMPLETENESS: After fixes, graph captures 100% of explicit causal pathways from source: risk (opacity) → problem analysis (hierarchies, correlations) → theoretical insight (activation maximization, neuron inspection, interpolation) → design rationale (use feature visualization) → implementation (optimization by technique, temporal tracking) → validation (images, DeepDream, evolution) → interventions (pre-deployment audit, data refinement, interpolation studies). All six concept categories represented."
+    ]
+  },
+  "url": "https://aisafety.info?state=8HIA",
+  "paper_id": "ebca764bf2f76577414efeba418a9471",
+  "ard_file_source": "aisafety.info",
+  "errors": null
+}

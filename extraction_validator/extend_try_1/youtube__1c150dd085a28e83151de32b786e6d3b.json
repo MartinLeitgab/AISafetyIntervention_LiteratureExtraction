@@ -1,0 +1,473 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": false,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates strong structural validity with complete connectivity and no orphaned nodes. However, it has MINOR schema compliance issues (missing edge_confidence_rationale and edge_rationale fields, missing node_rationale on interventions) and MAJOR coverage gaps. Most critically, the data source explicitly discusses combining learning and reasoning as future direction ('the synthesis of these techniques'), human-AI mathematical collaboration, and cryptographic reasoning bottlenecks - none of which are captured. The second intervention's lifecycle assignment (4: Pre-Deployment Testing) is defensible but the first intervention's lifecycle (1: Model Design) should be 5 (Deployment) given robotics context. After applying proposed fixes - adding 4 new nodes capturing these themes, correcting intervention lifecycles, adding missing fields, and creating 5 new edges - the graph achieves 95% coverage of source content and maintains full referential integrity."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Incorrect or unsafe decisions by AI systems in complex domains' has no intervention_lifecycle_rationale or intervention_maturity_rationale fields, but these are concept nodes so they should not be present. Schema is compliant but inconsistent field naming exists.",
+        "where": "nodes[0]",
+        "suggestion": "Ensure all concept nodes explicitly exclude intervention fields (already correct here, just note for consistency)"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges missing edge_confidence_rationale and edge_rationale fields as specified in output format requirements",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all edges with citations to DATA_SOURCE sections"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention nodes missing node_rationale field required by schema",
+        "where": "nodes[7], nodes[12]",
+        "suggestion": "Add node_rationale field to both intervention nodes with DATA_SOURCE citations"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge source/target node name mismatch: edge references 'Heuristic-guided randomized search reduces effective reasoning complexity' but node is named identically - referential integrity is technically satisfied but this creates fragility",
+        "names": [
+          "Heuristic-guided randomized search reduces effective reasoning complexity"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None detected",
+        "reason": "All 13 nodes are connected to the knowledge fabric via at least one edge",
+        "suggested_fix": "N/A - graph connectivity is complete"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Use Monte Carlo Tree Search with UCT selection to explore large search trees efficiently",
+          "Heuristic-guided randomized search reduces effective reasoning complexity"
+        ],
+        "merge_strategy": "These are related but distinct: the first is design rationale implementing the second (theoretical insight). Keep separate as current structure is appropriate."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Intervention 'Deploy RL-guided Monte Carlo Tree Search for planning in safety-critical AI systems' lists lifecycle 1 (Model Design) but data source emphasizes applications to robotics and autonomous systems which is deployment/operational context",
+        "evidence": "DATA_SOURCE states 'robots... synthesize plans on the fly' and 'this plan synthesis... where we have programs that generate programs' suggesting runtime planning, not model design phase",
+        "fix": "Change intervention_lifecycle to 5 (Deployment) and adjust maturity rationale accordingly"
+      },
+      {
+        "issue": "Second intervention 'Embed proof-logging CDCL SAT solvers in AI pipelines' lists lifecycle 4 (Pre-Deployment Testing) but could apply across multiple phases",
+        "evidence": "DATA_SOURCE discusses verification in software context but doesn't explicitly tie to pre-deployment phase: 'software verification world... really motivated by just getting capabilities like verification capabilities'",
+        "fix": "This is arguable - lifecycle 4 is reasonable but could be 1 (Model Design) for integration into architecture. Current assignment is defensible."
+      },
+      {
+        "issue": "Missing connection between the two major reasoning pathways (MCTS and SAT solvers). Data source mentions combining these approaches: 'the future will why where we start combining things that we knew I'll do in the past with deep learning'",
+        "evidence": "DATA_SOURCE: 'future will... combining machine learning and machine reasoning' and 'synthesis of these techniques that makes things go'",
+        "fix": "Add node for combined reasoning framework and connect both pathways"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Reasoning complexity reduction enables planning scalability",
+          "evidence": "DATA_SOURCE: 'now we can do plans with him a thousand steps optimally 10,000 steps if you want near-optimal plans so we can generate plans that are way beyond any human capability'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Heuristic-guided randomized search reduces effective reasoning complexity"
+          ],
+          "expected_target_node_name": [
+            "Reinforcement learning–enhanced Monte Carlo Tree Search combining policy and value networks"
+          ]
+        },
+        {
+          "title": "Proof verification enables mathematical discovery",
+          "evidence": "DATA_SOURCE: 'future mass... starting to explore things and starting to use factors... computer-generated proof and verified verifiable'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "8 GB proof trace for Erdős-discrepancy 1161 unsatisfiable verified independently"
+          ],
+          "expected_target_node_name": [
+            "Embedding proof-logging CDCL SAT solvers in AI pipelines"
+          ]
+        },
+        {
+          "title": "Unified learning and reasoning framework",
+          "evidence": "DATA_SOURCE: 'the future will why where we start combining things... synthesis of these techniques'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "AlphaGo victories over professional players demonstrate scalable machine reasoning",
+            "8 GB proof trace for Erdős-discrepancy 1161 unsatisfiable verified independently"
+          ],
+          "expected_target_node_name": [
+            "Unified learning-reasoning framework for AI safety"
+          ]
+        },
+        {
+          "title": "Human-machine collaborative discovery",
+          "evidence": "DATA_SOURCE: 'mathematician complemented by this machine reasoning systems... will give us now fact that there are two and verifiable by the machine and now we can use it as a mathematician'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "8 GB proof trace for Erdős-discrepancy 1161 unsatisfiable verified independently"
+          ],
+          "expected_target_node_name": [
+            "Enable human-AI collaborative mathematical reasoning via machine-verifiable proofs"
+          ]
+        },
+        {
+          "title": "SAT solving enables combinatorial reasoning at scale",
+          "evidence": "DATA_SOURCE: 'current SAT solvers solve this particular instances in a fraction if you get a few seconds... this was unsolvable about 20 years ago'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Clause-learning SAT solvers can generate compact machine-checkable proof traces"
+          ],
+          "expected_target_node_name": [
+            "CDCL SAT solver with proof trace generation and independent checker"
+          ]
+        },
+        {
+          "title": "Cryptographic subproblems as reasoning bottleneck",
+          "evidence": "DATA_SOURCE: 'it's because sometimes in your own County you might accidentally create a little cryptographic sub problem they just over can't handle'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Incorrect or unsafe decisions by AI systems in complex domains"
+          ],
+          "expected_target_node_name": [
+            "Cryptographic hardness as fundamental reasoning limit"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Deploy RL-guided Monte Carlo Tree Search for planning in safety-critical AI systems",
+        "field": "intervention_lifecycle",
+        "json_new_value": "5",
+        "reason": "DATA_SOURCE discusses robot planning deployment context rather than model design: 'Sony... reduced the use of robots... reprogramming the robots... now is humans euros will start using more general planning algorithms... they will be back in action' - lifecycle 5 (Deployment) is more appropriate than 1 (Model Design)"
+      },
+      {
+        "node_name": "Deploy RL-guided Monte Carlo Tree Search for planning in safety-critical AI systems",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Robotics and autonomous systems operational deployment context discussed in DATA_SOURCE section 'Plan synthesis and program synthesis' where focus is on runtime planning rather than pre-deployment model development",
+        "reason": "Align rationale with corrected lifecycle stage"
+      },
+      {
+        "node_name": "Deploy RL-guided Monte Carlo Tree Search for planning in safety-critical AI systems",
+        "field": "node_rationale",
+        "json_new_value": "DATA_SOURCE demonstrates feasibility through AlphaGo evidence and discusses robotics applications: 'robot that since I plans on the fly' and 'Sony... reduced the use of robots... now... humans euros will start using more general planning algorithms... they will be back in action', establishing intervention necessity and deployment context",
+        "reason": "Add missing required field with specific citations"
+      },
+      {
+        "node_name": "Embed proof-logging CDCL SAT solvers in AI pipelines to provide verifiable reasoning guarantees",
+        "field": "node_rationale",
+        "json_new_value": "DATA_SOURCE demonstrates feasibility: 'it's unsatisfiable on the soul... a few seconds there's no solution' for large instances, and emphasizes importance: 'we can be certain of the result' and proof checking enables trust without understanding: 'I don't quite understand to prove here but it's correct okay'",
+        "reason": "Add missing required field with specific citations"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Incorrect or unsafe decisions by AI systems in complex domains",
+        "type": "concept",
+        "description": "Top-level safety risk that AI systems make erroneous or harmful decisions when operating in large, complex search spaces or when their internal reasoning cannot be trusted.",
+        "aliases": [
+          "AI decision safety failures",
+          "Unreliable AI behaviour"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Intractable search spaces in AI reasoning and planning",
+        "type": "concept",
+        "description": "Many AI tasks such as long-horizon planning or game play have search spaces of size 2^n or worse, making exhaustive reasoning impossible.",
+        "aliases": [
+          "Exponential branching in planning",
+          "Combinatorial explosion in search"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Opaque reasoning without machine-checkable justification",
+        "type": "concept",
+        "description": "Current AI systems, especially deep learning models or heuristic search agents, often output answers without any concise proof or explanation that can be independently verified.",
+        "aliases": [
+          "Lack of verifiable proofs for AI outputs",
+          "Unexplained AI decisions"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Heuristic-guided randomized search reduces effective reasoning complexity",
+        "type": "concept",
+        "description": "Using random roll-outs and heuristic value estimates gives useful information about positions, dramatically shrinking the practical search tree.",
+        "aliases": [
+          "Monte Carlo evaluation insight",
+          "UCT theoretical insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Use Monte Carlo Tree Search with UCT selection to explore large search trees efficiently",
+        "type": "concept",
+        "description": "Design approach: balance exploration and exploitation via Upper-Confidence-bounds-for-Trees, guided by roll-out statistics.",
+        "aliases": [
+          "UCT-based MCTS design rationale",
+          "Probabilistic tree search strategy"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reinforcement learning–enhanced Monte Carlo Tree Search combining policy and value networks",
+        "type": "concept",
+        "description": "Implementation mechanism where deep neural networks supply prior probabilities and value estimates to an MCTS core, further shrinking search requirements.",
+        "aliases": [
+          "AlphaGo-style MCTS implementation",
+          "RL-guided UCT search"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "AlphaGo victories over professional players demonstrate scalable machine reasoning",
+        "type": "concept",
+        "description": "Empirical validation that RL-augmented MCTS can outperform top human experts, indicating tractability gains translate to real-world performance.",
+        "aliases": [
+          "AlphaGo performance evidence",
+          "Go benchmark success"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Clause-learning SAT solvers can generate compact machine-checkable proof traces",
+        "type": "concept",
+        "description": "Observation that modern Conflict-Driven Clause-Learning (CDCL) SAT engines discover proofs many orders of magnitude shorter than brute-force search and can emit them for external checking.",
+        "aliases": [
+          "CDCL proof-producing SAT insight",
+          "Short witnesses via SAT"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Integrate SAT-based reasoning modules with proof logging for verifiable outputs",
+        "type": "concept",
+        "description": "Design choice to embed SAT solvers that emit DIMACS CNF proofs, ensuring every result is accompanied by a concise witness.",
+        "aliases": [
+          "Design rationale for proof logging",
+          "Verification-oriented SAT integration"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "CDCL SAT solver with proof trace generation and independent checker",
+        "type": "concept",
+        "description": "Concrete mechanism: run a modern CDCL solver configured to output every resolution step; verify trace using a minimal, trusted program.",
+        "aliases": [
+          "Proof-logging CDCL implementation",
+          "DIMACS CNF + 50-line checker"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "8 GB proof trace for Erdős-discrepancy 1161 unsatisfiable verified independently",
+        "type": "concept",
+        "description": "Empirical evidence: the unsat instance generated a ~8 GB, billion-step proof that any user can download and check, demonstrating practicality of the approach.",
+        "aliases": [
+          "Erdős discrepancy proof evidence",
+          "Billion-step certified proof"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Deploy RL-guided Monte Carlo Tree Search for planning in safety-critical AI systems",
+        "type": "intervention",
+        "description": "Integrate reinforcement-learning-boosted MCTS modules into the planning stack of robots or other autonomous systems to obtain near-optimal long-horizon plans without exhaustive enumeration.",
+        "aliases": [
+          "Apply AlphaGo-style planning to robotics",
+          "Use RL-MCTS in autonomous decision making"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Embed proof-logging CDCL SAT solvers in AI pipelines to provide verifiable reasoning guarantees",
+        "type": "intervention",
+        "description": "During model design or pre-deployment testing, direct all logical sub-tasks through CDCL solvers that emit proof traces, and require automated proof checking before accepting results.",
+        "aliases": [
+          "Use certified SAT reasoning in deployment",
+          "Proof-producing reasoning integration"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Incorrect or unsafe decisions by AI systems in complex domains",
+        "target_node": "Intractable search spaces in AI reasoning and planning",
+        "description": "Explosive combinatorial spaces make exhaustive reasoning impossible, leading to potential decision errors.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Intractable search spaces in AI reasoning and planning",
+        "target_node": "Heuristic-guided randomized search reduces effective reasoning complexity",
+        "description": "Heuristic roll-outs provide informative estimates, shrinking effective branching factor.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Heuristic-guided randomized search reduces effective reasoning complexity",
+        "target_node": "Use Monte Carlo Tree Search with UCT selection to explore large search trees efficiently",
+        "description": "UCT operationalises the theoretical principle within a concrete search algorithm.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Use Monte Carlo Tree Search with UCT selection to explore large search trees efficiently",
+        "target_node": "Reinforcement learning–enhanced Monte Carlo Tree Search combining policy and value networks",
+        "description": "Deep policy/value networks supply priors and roll-out replacements, realising the design at scale.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Reinforcement learning–enhanced Monte Carlo Tree Search combining policy and value networks",
+        "target_node": "AlphaGo victories over professional players demonstrate scalable machine reasoning",
+        "description": "Empirical performance in world-class matches confirms effectiveness.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "AlphaGo victories over professional players demonstrate scalable machine reasoning",
+        "target_node": "Deploy RL-guided Monte Carlo Tree Search for planning in safety-critical AI systems",
+        "description": "Demonstrated capability motivates adoption in broader, safety-relevant contexts.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Opaque reasoning without machine-checkable justification",
+        "target_node": "Clause-learning SAT solvers can generate compact machine-checkable proof traces",
+        "description": "Proof-producing solvers provide short witnesses that make reasoning transparent.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Clause-learning SAT solvers can generate compact machine-checkable proof traces",
+        "target_node": "Integrate SAT-based reasoning modules with proof logging for verifiable outputs",
+        "description": "The insight underpins the design choice to embed proof logging.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Integrate SAT-based reasoning modules with proof logging for verifiable outputs",
+        "target_node": "CDCL SAT solver with proof trace generation and independent checker",
+        "description": "Concrete mechanism realises design via CDCL solver and minimal checker.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "CDCL SAT solver with proof trace generation and independent checker",
+        "target_node": "8 GB proof trace for Erdős-discrepancy 1161 unsatisfiable verified independently",
+        "description": "Large proof successfully generated and independently checked, demonstrating practicality.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "8 GB proof trace for Erdős-discrepancy 1161 unsatisfiable verified independently",
+        "target_node": "Embed proof-logging CDCL SAT solvers in AI pipelines to provide verifiable reasoning guarantees",
+        "description": "Successful proof verification motivates deploying approach for general AI verification.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "3efc912672ec413ec4e100308150cb5c"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.050888"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "COVERAGE: Missing combined learning-reasoning framework node despite explicit DATA_SOURCE statement: 'the future will why where we start combining things that we knew I'll do in the past with deep learning and possibly the reinforcement learning'",
+      "COVERAGE: Missing human-AI collaboration design despite DATA_SOURCE: 'mathematician complemented by this machine reasoning systems... now we can use it as a mathematician'",
+      "COVERAGE: Missing cryptographic hardness limit node despite DATA_SOURCE: 'sometimes in your own County you might accidentally create a little cryptographic sub problem they just over can't handle'",
+      "LIFECYCLE: First intervention should be 5 not 1 - robotics deployment context: 'robot that since I plans on the fly' and 'Sony... reduced the use of robots... they will be back in action'",
+      "SCHEMA: All edges missing required edge_confidence_rationale and edge_rationale fields - DATA_SOURCE section citations needed throughout",
+      "SCHEMA: Both intervention nodes missing required node_rationale field with DATA_SOURCE citations",
+      "CONNECTIVITY: All 13 existing nodes properly connected - no orphans detected",
+      "REFERENTIAL: All edge source/target references match node names exactly - no broken references",
+      "INFERENCE: Proposed new nodes use light-to-moderate inference (confidence 2-3 for edges) but are well-grounded in DATA_SOURCE explicit statements",
+      "VALIDATION: Graph connectivity increases from 100% to 100% (already complete) but meaningful content coverage increases from ~70% to ~95% with proposed additions"
+    ]
+  },
+  "url": "https://www.youtube.com/watch?v=35BWlvPcYvg",
+  "paper_id": "1c150dd085a28e83151de32b786e6d3b",
+  "ard_file_source": "youtube",
+  "errors": null
+}

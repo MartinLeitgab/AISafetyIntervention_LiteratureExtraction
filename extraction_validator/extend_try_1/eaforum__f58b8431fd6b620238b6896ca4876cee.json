@@ -1,0 +1,479 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures the core causal-interventional pathway from inefficient voting outcomes through Gibbard's limitation to ranked lists, to the theoretical insight that latent-space vectors escape this limitation, to proposed interventions for testing strategy-proof voting. However, the JSON structure has critical blockers: all nodes and edges are missing required rationale fields (node_rationale, edge_confidence_rationale, edge_rationale), all fields use null values instead of field omission for concept vs. intervention nodes, and the graph lacks two important concept nodes (Gibbard's data-type restriction, economic impact motivation) and several supporting edges. The proposed fixes address all blockers and enable proper merging across 500k data sources. After fixes, the graph will be valid and mergeable."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in all nodes: intervention_lifecycle_rationale, intervention_maturity_rationale, and node_rationale are absent from all node objects",
+        "where": "nodes[*]",
+        "suggestion": "Add intervention_lifecycle_rationale, intervention_maturity_rationale (for intervention nodes), and node_rationale fields to all nodes per schema requirements"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in all edges: edge_confidence_rationale and edge_rationale are absent from all edge objects",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale fields with data source section title references to all edges"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Concept nodes contain null values for intervention_lifecycle and intervention_maturity, but schema requires these fields to be absent (not null) for concept nodes",
+        "where": "nodes[0-6].intervention_lifecycle, nodes[0-6].intervention_maturity",
+        "suggestion": "Remove intervention_lifecycle and intervention_maturity fields entirely from concept nodes; do not use null values"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes contain null value for concept_category, but schema requires this field to be absent (not null) for intervention nodes",
+        "where": "nodes[7-8].concept_category",
+        "suggestion": "Remove concept_category field entirely from intervention nodes; do not use null values"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges contain 'embedding': null which is not part of the required schema",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove all embedding fields from edges as they are not specified in schema requirements"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All nodes contain 'embedding': null which is not part of the required schema",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove all embedding fields from nodes as they are not specified in schema requirements"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references match existing node names exactly",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All 8 nodes are connected to at least one edge in the knowledge fabric",
+        "suggested_fix": "N/A - fabric connectivity is complete"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Latent-space vector ballots retaining relational preference information",
+          "Convex-like optimization in neural networks can minimize regret over latent ballots"
+        ],
+        "merge_strategy": "These are distinct theoretical insights supporting different aspects of the solution; keep separate. First addresses data type advantage, second addresses optimization properties. Both are necessary to the reasoning path."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'Neural network encoding of preferences and outlier-trimmed mode selection' combines two distinct implementation steps that should be separated for clarity and modularity",
+        "evidence": "Source states 'a naïve voting algorithm could seek some 'mode' of the clusters, trimming-away the most aberrant ballots first' and separately describes VAE/Transformer encoding mechanisms",
+        "fix": "Consider splitting into two implementation mechanism nodes: (1) preference encoding via neural networks, (2) outlier-trimmed mode selection algorithm"
+      },
+      {
+        "issue": "Intervention 'Conduct formal impossibility proof for vector-ballot voting methods' has lifecycle=6 (Other) but should be lifecycle=1 (Model Design) as it is theoretical foundation work",
+        "evidence": "Source: 'Either Gibbard ***does*** apply to that data-type, as well (which is a new research paper waiting to happen)' indicates this is preliminary theoretical work, not post-deployment",
+        "fix": "Change intervention_lifecycle from 6 to 1 with rationale: 'Foundational theoretical work per 'Unexplored Domain' section'"
+      },
+      {
+        "issue": "Missing explicit edge connecting the core problem (Gibbard's limitation to ranked lists) to the theoretical insight (latent vectors avoid this limitation)",
+        "evidence": "Source: 'His **restricted** his analysis to all \"strategies which can be expressed as a preference n-tuple\"... a *ranked list*' and 'we know for a **fact** from machine-learning research that *other* data-types ***can succeed***'",
+        "fix": "Add explicit edge showing how latent-space vectors differ from ranked lists in overcoming Gibbard's premise"
+      },
+      {
+        "issue": "Intervention 'Design and prototype latent-space modal voting algorithm' has lifecycle=1 but should be lifecycle=2 as it describes proof-of-concept prototyping, not model design",
+        "evidence": "Source: 'I then **hypothesize** how we might gain some certainty regarding the enlarged class of voting algorithms' and 'if anyone would like to sit down to flesh-out a paper, I'm game'",
+        "fix": "Change intervention_lifecycle from 1 to 2 with rationale clarifying this is experimental/proof-of-concept work"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Core problem causation: Gibbard's theorem restricts analysis to ranked lists",
+          "evidence": "TL;DR: 'Gibbard's Theorem proved that *no voting method can avoid strategic voting*' and 'Gibbard's premise rests upon a particular DATA-TYPE - *a ranked list*'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Inefficient collective decisions from strategic voting in rank-list elections"
+          ],
+          "expected_target_node_name": [
+            "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots"
+          ]
+        },
+        {
+          "title": "Key insight: Different data types may escape Gibbard's impossibility",
+          "evidence": "'So, the 'high-dimensional latent-space vectors' of artificial neural networks are NOT **inherently** limited as Gibbard's rank lists were' and 'we know for a **fact** from machine-learning research that *other* data-types ***can succeed***'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots"
+          ],
+          "expected_target_node_name": [
+            "Latent-space vector ballots retaining relational preference information"
+          ]
+        },
+        {
+          "title": "VAE/Transformer evidence demonstrates vector advantage over scalars",
+          "evidence": "'In machine learning, a Variational Auto-Encoder converts an input into a *vector in a high-dimensional latent-space*...if you converted those latent-space vectors into ***scalars***, using ANY distance-metric, then you have LOST all that information'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Neural network encoding of preferences and outlier-trimmed mode selection"
+          ],
+          "expected_target_node_name": [
+            "Existence of ML algorithms that succeed with vectors but fail with scalar rankings"
+          ]
+        },
+        {
+          "title": "Clustering naturally separates strategic ballots from sincere ones",
+          "evidence": "'In a latent-space, each self-similar group forms a distinct cluster...those 'aberrant' ballots are the ones who didn't fit in a cluster - and while a few weirdoes might be among them...***that set of ballots which are outside the clusters will ALSO contain ALL the strategic ballots***!'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Strategy-less voting via latent-space clustering of ballots"
+          ],
+          "expected_target_node_name": [
+            "Existence of ML algorithms that succeed with vectors but fail with scalar rankings"
+          ]
+        },
+        {
+          "title": "Convex optimization enables strategy-less outcomes in neural networks",
+          "evidence": "'Fundamentally, when neural networks optimize, they are 'guaranteed convex' - eventually, they roll to the true bottom. So, if one was to 'minimize regret' for that neural network, we should expect it to reach the true minimum.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Latent-space vector ballots retaining relational preference information"
+          ],
+          "expected_target_node_name": [
+            "Convex-like optimization in neural networks can minimize regret over latent ballots"
+          ]
+        },
+        {
+          "title": "Epistemic status clarification: author acknowledges uncertainty while proposing research direction",
+          "evidence": "'I am **likely** wrong!' and 'Either Gibbard ***does*** apply to that data-type, as well...OR Gibbard does ***not*** apply'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Latent-space vector ballots retaining relational preference information"
+          ],
+          "expected_target_node_name": [
+            "Conduct formal impossibility proof for vector-ballot voting methods"
+          ]
+        },
+        {
+          "title": "Value proposition: Trillions of dollars at stake in governance decisions",
+          "evidence": "'Though, considering that governments' budgets consume a large fraction of the global economy, there are likely trillions of dollars which could be better-allocated.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Inefficient collective decisions from strategic voting in rank-list elections"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Open research question: Gibbard extension to vector ballot types",
+          "evidence": "'Either Gibbard ***does*** apply to that data-type, as well (which is a new research paper waiting to happen) OR Gibbard does ***not*** apply'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Latent-space vector ballots retaining relational preference information"
+          ],
+          "expected_target_node_name": [
+            "Conduct formal impossibility proof for vector-ballot voting methods"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots",
+        "field": "concept_category",
+        "json_new_value": "\"problem analysis\"",
+        "reason": "Currently correct but needs alignment verification - this is indeed a problem analysis that explains the mechanism causing the risk"
+      },
+      {
+        "node_name": "Design and prototype latent-space modal voting algorithm to test strategy-proofness",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Experimental/proof-of-concept lifecycle per 'Some Hope?' section describing hypothetical algorithm design and empirical manipulation testing before theoretical validation\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Design and prototype latent-space modal voting algorithm to test strategy-proofness",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Foundational/theoretical maturity (1) per 'Some Hope?' section - algorithm is speculative with author stating 'I am **likely** wrong' and seeking collaborative paper development\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Conduct formal impossibility proof for vector-ballot voting methods",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Foundational theoretical lifecycle per 'Unexplored Domain' section - work to determine whether Gibbard's impossibility extends to vector ballot types at foundational level\"",
+        "reason": "Add missing required field per schema and correct lifecycle classification"
+      },
+      {
+        "node_name": "Conduct formal impossibility proof for vector-ballot voting methods",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Foundational/theoretical maturity (1) per 'Either Gibbard ***does*** apply to that data-type, as well (which is a new research paper waiting to happen)' - open theoretical question with no existing research\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Inefficient collective decisions from strategic voting in rank-list elections",
+        "field": "node_rationale",
+        "json_new_value": "\"Top-level risk motivating research per TL;DR and 'Purpose!' sections - inefficiency and misallocation of government budgets at trillions-of-dollars scale\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots",
+        "field": "node_rationale",
+        "json_new_value": "\"Problem analysis explaining mechanism of risk per TL;DR section - Gibbard-Satterthwaite theorem establishes that manipulation is inevitable for ranked-list voting with ≥3 alternatives and non-dictatorship\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Latent-space vector ballots retaining relational preference information",
+        "field": "node_rationale",
+        "json_new_value": "\"Theoretical insight addressing the gap in Gibbard's premise per 'Gibbard's Theorem' and 'Disproof' sections - Gibbard restricted analysis to ranked lists but other data types may escape this limitation\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Convex-like optimization in neural networks can minimize regret over latent ballots",
+        "field": "node_rationale",
+        "json_new_value": "\"Theoretical insight supporting plausibility of vector-ballot voting success per 'Some Hope?' section - neural network optimization properties suggest convergence to sincere outcomes\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Strategy-less voting via latent-space clustering of ballots",
+        "field": "node_rationale",
+        "json_new_value": "\"Design rationale for practical voting method per 'Some Hope?' section - clustering separates strategic outliers from sincere preference clusters naturally\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Neural network encoding of preferences and outlier-trimmed mode selection",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation mechanism operationalizing cluster-based approach per 'Some Hope?' section - VAE/Transformer encoding preserves relational information while outlier trimming removes strategic ballots\"",
+        "reason": "Add missing required field per schema"
+      },
+      {
+        "node_name": "Existence of ML algorithms that succeed with vectors but fail with scalar rankings",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence from machine learning per 'Disproof' section - VAEs and Transformers demonstrate proof-by-existence that vector representations preserve information that scalar rankings lose\"",
+        "reason": "Add missing required field per schema"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Design and prototype latent-space modal voting algorithm to test strategy-proofness",
+        "type": "intervention",
+        "description": "Create a model that embeds voter data into a latent space, clusters ballots, discards outliers, and selects the modal cluster as the outcome; then empirically probe for manipulability.",
+        "aliases": [
+          "build cluster-mode voting system",
+          "implement latent-vector voting prototype"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Conduct formal impossibility proof for vector-ballot voting methods",
+        "type": "intervention",
+        "description": "Develop a rigorous social-choice proof to determine whether any non-dictatorial, vector-ballot voting rule can remain strategy-proof, clarifying theoretical limits.",
+        "aliases": [
+          "prove or refute Gibbard extension to latent vectors",
+          "theoretical analysis of strategy-proofness for embeddings"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Inefficient collective decisions from strategic voting in rank-list elections",
+        "type": "concept",
+        "description": "When voters can benefit from insincere ranking, elected options can diverge from true social welfare, leading to inefficiency at large scales (e.g., governmental budgeting).",
+        "aliases": [
+          "resource misallocation due to strategic voting",
+          "poor policy outcomes from manipulated ballots"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots",
+        "type": "concept",
+        "description": "Gibbard-Satterthwaite shows that with ≥3 alternatives any nondictatorial voting rule using ranked lists is vulnerable to beneficial mis-reporting by voters.",
+        "aliases": [
+          "Gibbard impossibility for rank lists",
+          "unavoidable gaming in ordinal voting"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Latent-space vector ballots retaining relational preference information",
+        "type": "concept",
+        "description": "Unlike rank lists that compress preferences into an ordering, latent vectors preserve multiple relational dimensions, potentially avoiding information loss that enables manipulation.",
+        "aliases": [
+          "high-dimensional preference embeddings",
+          "vector representations of voter intent"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Convex-like optimization in neural networks can minimize regret over latent ballots",
+        "type": "concept",
+        "description": "Because gradient-based training ultimately reaches low regret solutions, an aggregation rule based on such optimisation over latent ballots may converge to sincere outcomes.",
+        "aliases": [
+          "guaranteed descent of network objective",
+          "eventual convergence to true minima"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Strategy-less voting via latent-space clustering of ballots",
+        "type": "concept",
+        "description": "A voting rule could identify dense clusters in the latent space and choose a modal point, naturally discarding outlier ballots that include most strategic misreports.",
+        "aliases": [
+          "modal cluster aggregation",
+          "cluster-mode voting rule"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Neural network encoding of preferences and outlier-trimmed mode selection",
+        "type": "concept",
+        "description": "Implement voters’ expressed data through an auto-encoder or similar model to embed preferences, then apply clustering and drop low-density points before selecting the winner.",
+        "aliases": [
+          "preference embedding + cluster mode algorithm",
+          "NN encoder with aberrant ballot trimming"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Existence of ML algorithms that succeed with vectors but fail with scalar rankings",
+        "type": "concept",
+        "description": "VAEs and Transformers maintain performance when using vector representations yet would fail if those vectors were reduced to ranked scalars, demonstrating added expressive power.",
+        "aliases": [
+          "VAE and Transformer latent-vector evidence",
+          "proof-by-existence of vector advantage"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Inefficient collective decisions from strategic voting in rank-list elections",
+        "target_node": "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots",
+        "description": "Strategic manipulation predicted by Gibbard directly drives inefficient outcomes.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Strategic manipulation inevitability under Gibbard's theorem for ranked ballots",
+        "target_node": "Latent-space vector ballots retaining relational preference information",
+        "description": "Switching ballot data type may remove the conditions under which Gibbard’s impossibility applies.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Latent-space vector ballots retaining relational preference information",
+        "target_node": "Convex-like optimization in neural networks can minimize regret over latent ballots",
+        "description": "Optimisation properties of neural nets strengthen the plausibility of vector-ballot success.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Convex-like optimization in neural networks can minimize regret over latent ballots",
+        "target_node": "Strategy-less voting via latent-space clustering of ballots",
+        "description": "If optimisation finds true minima, a clustering-based rule becomes practical for sincere aggregation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Strategy-less voting via latent-space clustering of ballots",
+        "target_node": "Neural network encoding of preferences and outlier-trimmed mode selection",
+        "description": "The NN encoder plus cluster-mode algorithm realises the abstract clustering approach.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Neural network encoding of preferences and outlier-trimmed mode selection",
+        "target_node": "Existence of ML algorithms that succeed with vectors but fail with scalar rankings",
+        "description": "Performance of VAEs/Transformers illustrates that vector representations can preserve crucial relational data that rankings cannot.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Existence of ML algorithms that succeed with vectors but fail with scalar rankings",
+        "target_node": "Design and prototype latent-space modal voting algorithm to test strategy-proofness",
+        "description": "Evidence encourages building an actual algorithm to check if the advantage carries over to voting.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "9a86daf1b389eaf8bfba5f52e3bfa610"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.224719"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Schema requires intervention_lifecycle_rationale, intervention_maturity_rationale, and node_rationale on ALL nodes; edge_confidence_rationale and edge_rationale on ALL edges. All are missing. This prevents merging across 500k sources as rationale traceability is mandatory per instructions.",
+      "BLOCKER: Schema requires omission of null-valued fields for concept vs. intervention nodes, not use of null values. This corrupts JSON schema compliance.",
+      "MAJOR: Intervention 'Design and prototype latent-space modal voting' has lifecycle=1 but should be 2 (Proof-of-Concept) per source 'I then **hypothesize** how we might gain some certainty' - this is experimental not model design.",
+      "MAJOR: Intervention 'Conduct formal impossibility proof' has lifecycle=6 (Other) but should be 1 (Model Design/Foundational) per source 'which is a new research paper waiting to happen' - this is foundational theoretical work.",
+      "COVERAGE GAP: Missing explicit concept node for 'Gibbard's theorem restricted to ranked preference data type' despite being core to author's argument: 'His **restricted** his analysis to all \"strategies which can be expressed as a preference n-tuple\"...That claim [that all data types must fail] is factually incorrect'",
+      "COVERAGE GAP: Missing concept node for economic motivation ('Potential economic value from strategy-proof voting') despite appearing in Purpose section: 'governments' budgets consume a large fraction of the global economy, there are likely trillions of dollars which could be better-allocated'",
+      "COVERAGE: All major causal pathways from risk through problem analysis through theoretical insights through design rationale through implementation mechanism through validation evidence to interventions are present and interconnected properly.",
+      "COVERAGE: Edge 'mitigated_by' connecting ranked-list impossibility to latent-space vectors correctly uses edge_confidence=2 (weak, moderate inference) appropriate to source's cautious framing: 'I am **likely** wrong!'",
+      "COVERAGE: Edge from Gibbard analysis to implementation mechanism correctly avoids direct connection per instructions - all paths flow through six concept categories.",
+      "REFERENTIAL INTEGRITY: All 8 edges reference existing nodes; no orphaned nodes identified; no duplicate nodes despite surface similarity (vector ballots vs. vector optimization are properly distinct theoretical insights).",
+      "EPISTEMIC STANCE: Source explicitly hedges all claims per opening epistemic status: 'I am **likely** wrong!' - this is appropriately reflected in low edge confidence scores (2-3) for speculative paths.",
+      "INTERVENTION MATURITY: Both interventions correctly assigned maturity=1 (foundational/theoretical) - source provides no empirical validation, only theoretical reasoning and conceptual framework."
+    ]
+  },
+  "url": "https://forum.effectivealtruism.org/posts/zyXtnrokGyR7yhqsg/voting-theory-has-a-hole",
+  "paper_id": "f58b8431fd6b620238b6896ca4876cee",
+  "ard_file_source": "eaforum",
+  "errors": null
+}

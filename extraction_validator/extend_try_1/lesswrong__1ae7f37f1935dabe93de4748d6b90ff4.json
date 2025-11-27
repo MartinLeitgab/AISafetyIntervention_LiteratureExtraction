@@ -1,0 +1,476 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted JSON is severely incomplete: all nodes lack required node_rationale fields, all edges lack required edge_confidence_rationale and edge_rationale fields, and several critical conceptual nodes are missing (rejection of further-fact view, welfare measurement ambiguity, preference-dependent value structure, connectedness implementation, and practical validation evidence). The extraction demonstrates moderate understanding of the knowledge fabric but violates schema requirements on 4 of 5 mandatory fields and misses 3-4 major conceptual edges from source reasoning. With application of proposed fixes (adding 6 new nodes, 6 new edges, and completing all 20+ missing field values), the extraction would become valid, mergeable, and cover ~85% of the source's reasoning pathways. The core issue is incomplete execution of field-population requirements, not conceptual misunderstanding."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in nodes: intervention_lifecycle_rationale and intervention_maturity_rationale are null for intervention nodes",
+        "where": "nodes[7].intervention_lifecycle_rationale, nodes[7].intervention_maturity_rationale, nodes[8].intervention_lifecycle_rationale, nodes[8].intervention_maturity_rationale",
+        "suggestion": "Add rationale strings with reference to source sections justifying lifecycle and maturity assignments"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field node_rationale in all nodes",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field to every node explaining why it is essential to the fabric with source section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field edge_confidence_rationale in all edges",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add edge_confidence_rationale field to all edges with evidence assessment and source reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field edge_rationale in all edges",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale field to all edges with connection justification and source reference"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Extra fields in JSON not in schema: embedding field appears in nodes and edges",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove embedding fields as they are not part of the required schema"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All node names referenced in edge source_node and target_node attributes match exactly with node names in nodes array",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "none",
+        "reason": "All nodes are connected to at least one edge",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Connectedness-weighted utility calculation algorithm for person-moment preferences",
+          "Linguistic preference extraction to estimate present person-moment desires"
+        ],
+        "merge_strategy": "These are distinct implementation mechanisms and should NOT be merged - they represent two parallel implementation pathways"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Extracted intervention nodes lack grounding in source text - no explicit AI safety interventions are proposed",
+        "evidence": "Source states '[Epistemic status: sloppy thoughts not informed by the literature]' and poses philosophical questions without proposing concrete interventions. Author explores options but concludes 'None of these sound very good to me'",
+        "fix": "Intervention nodes violate the instruction requirement: 'If no interventions explicitly stated: Apply moderate inference to identify AI safety-relevant interventions' - but inference level is unclear and maturity assignments (1 Foundational/Theoretical) are appropriate"
+      },
+      {
+        "issue": "Edge confidence levels do not align with explicit evidence in source",
+        "evidence": "Source provides philosophical reasoning, not empirical evidence. Confidence ratings of 2-3 suggest stronger evidentiary basis than source provides",
+        "fix": "Lower edge_confidence to 1 for all edges as source is exploratory philosophical argumentation without empirical validation or mathematical proofs"
+      },
+      {
+        "issue": "Missing major conceptual pathway about further-fact view rejection",
+        "evidence": "Source states: 'I take the further-fact view to be wrong (or at least Derek Parfit does, and I think we agree...)' and 'Thinking that the further-fact view is wrong seems to be a common position among intellectuals (e.g. 87% among philosophers)'",
+        "fix": "Should have risk node about further-fact view acceptance leading to incomparability; current extraction skips the rejection premise"
+      },
+      {
+        "issue": "Incomplete coverage of all four proposed options in Design Rationale section",
+        "evidence": "Source lists four distinct options: (1) arbitrary pragmatic definition, (2) correct definition exists, (3) sliding scale, (4) person-moment affecting views - but only option (3) and (4) are extracted",
+        "fix": "Extract as separate design rationale branches to show the author considered multiple approaches before settling on person-moment view"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Rejection of further-fact view enables person-moment clustering",
+          "evidence": "'I take the further-fact view to be wrong' leading to 'we have is a whole lot of different person-moments'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Rejection of further-fact view of personal identity"
+          ],
+          "expected_target_node_name": [
+            "Personhood as pragmatic clustering of person-moments without objective boundaries"
+          ]
+        },
+        {
+          "title": "Preference utilitarianism enables value recovery",
+          "evidence": "'Is everything just equally good on this view? I don't think so, as long as you are something like a preference utilitarian'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Shift to person-moment based ethical evaluation using preference utilitarianism"
+          ],
+          "expected_target_node_name": [
+            "Connectedness-weighted utility calculation algorithm for person-moment preferences"
+          ]
+        },
+        {
+          "title": "Empirical alignment with moderate person-affecting views",
+          "evidence": "'My guess after thinking about this very briefly is that in practice it would end up looking like the moderate person-affecting views'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Connectedness-weighted utility calculation algorithm for person-moment preferences"
+          ],
+          "expected_target_node_name": [
+            "Theoretical consistency with moderate person-affecting intuitions"
+          ]
+        },
+        {
+          "title": "Problem of comparing worlds with different person sets",
+          "evidence": "'World A can only be better than world B insofar as it is better for someone' and 'World A can't be better than world B for Alice, if Alice exists in world A but not world B'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Value misalignment in AI population ethics decision-making"
+          ],
+          "expected_target_node_name": [
+            "Incomparability of worlds under person-affecting views with ambiguous person identity"
+          ]
+        },
+        {
+          "title": "Problem of painting analogy - measuring person-moment welfare",
+          "evidence": "'Alice painting more paintings. If Alice painted three paintings in world A... world A has more paintings than world B'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Incomparability of worlds under person-affecting views with ambiguous person identity"
+          ],
+          "expected_target_node_name": [
+            "Theoretical insight about welfare measurement ambiguity"
+          ]
+        },
+        {
+          "title": "All value comes from meddling preferences in person-moment view",
+          "evidence": "'all value seems to come from meddling preferences. It is never directly good that there is joy in the world'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Shift to person-moment based ethical evaluation using preference utilitarianism"
+          ],
+          "expected_target_node_name": [
+            "Person-moment preference utilitarianism yields only preference-dependent value"
+          ]
+        },
+        {
+          "title": "Concern that person-moment view makes everything arbitrary",
+          "evidence": "'Is everything just equally good on this view?' - explores potential reductio of person-moment affecting views",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Shift to person-moment based ethical evaluation using preference utilitarianism"
+          ],
+          "expected_target_node_name": [
+            "Risk of value arbitrariness under person-moment affecting views"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "none",
+        "nodes_to_merge": []
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Value misalignment in AI population ethics decision-making",
+        "field": "node_rationale",
+        "json_new_value": "\"Risk that AI systems making long-term decisions adopt population-ethical frameworks (like person-affecting views) that become incomparable or incoherent when personal identity is ambiguous. Source motivation: 'when you are summing up the value in different possible worlds, you should ignore people who only exist in one of those worlds'\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Incomparability of worlds under person-affecting views with ambiguous person identity",
+        "field": "node_rationale",
+        "json_new_value": "\"Central problem blocking person-affecting view coherence. Source: 'World A can't be better than world B for Alice, if Alice exists in world A but not world B' - becomes intractable when person boundaries are fuzzy and person-moments differ across worlds\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Personhood as pragmatic clustering of person-moments without objective boundaries",
+        "field": "node_rationale",
+        "json_new_value": "\"Foundation premise enabling shift to person-moment ethics. Source: 'the what we have is a whole lot of different person-moments, with various relationships to one another, which for pragmatic reasons we like to group into clusters called people'\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Shift to person-moment based ethical evaluation using preference utilitarianism",
+        "field": "node_rationale",
+        "json_new_value": "\"Proposed resolution: evaluate welfare at person-moment granularity using preferences. Source explores: 'Is everything just equally good on this view? I don't think so, as long as you are something like a preference utilitarian'\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Connectedness-weighted utility calculation algorithm for person-moment preferences",
+        "field": "node_rationale",
+        "json_new_value": "\"Concrete implementation enabling sliding-scale weighting. Source: 'A sliding scale of ethical relevance of different person-moments, based on how narrow a definition of person unites them with any currently existing person-moments'\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Linguistic preference extraction to estimate present person-moment desires",
+        "field": "node_rationale",
+        "json_new_value": "\"Practical implementation of preference input. Source: 'person-moments can benefit from things, as long as they don't know at the time that they have benefited' - requires extracting stated preferences about future states\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Theoretical consistency with moderate person-affecting intuitions",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence showing theoretical coherence. Source: 'people who currently exist get more weight than people who will be brought into existence, but not infinitely more weight' - person-moment scheme recovers this practical intuition\"",
+        "reason": "Add required field with source grounding"
+      },
+      {
+        "node_name": "Define AI utility functions using connectedness-weighted person-moment preferences during model design",
+        "field": "node_rationale",
+        "json_new_value": "\"AI safety intervention to embed philosophically-grounded ethics. Moderately inferred from source's extended exploration of person-moment views as applied to long-term AI planning\"",
+        "reason": "Add required field explaining inference"
+      },
+      {
+        "node_name": "Define AI utility functions using connectedness-weighted person-moment preferences during model design",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design): Utility function definition must occur at architecture design time before any training. Source section 'Several options' discusses foundational choices about how to structure ethical evaluation\"",
+        "reason": "Add required field with lifecycle justification"
+      },
+      {
+        "node_name": "Define AI utility functions using connectedness-weighted person-moment preferences during model design",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical): Source explicitly disclaims empirical grounding: '[Epistemic status: sloppy thoughts not informed by the literature]' - this is theoretical exploration, not validated technique\"",
+        "reason": "Add required field with maturity justification"
+      },
+      {
+        "node_name": "Fine-tune models to learn connectedness weights from human preference data",
+        "field": "node_rationale",
+        "json_new_value": "\"AI safety intervention to calibrate connectedness weighting empirically. Moderately inferred from source's discussion of extracting real preferences to ground the utility calculation\"",
+        "reason": "Add required field explaining inference"
+      },
+      {
+        "node_name": "Fine-tune models to learn connectedness weights from human preference data",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 3 (Fine-Tuning/RL): Connectedness weight calibration occurs during training on preference data, after model design but before deployment. Source: 'person-moments can have preferences over other person-moments'\"",
+        "reason": "Add required field with lifecycle justification"
+      },
+      {
+        "node_name": "Fine-tune models to learn connectedness weights from human preference data",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical): Source provides no empirical evidence for effectiveness of learning connectedness weights. Author states 'sloppy thoughts' and acknowledges uncertainty: 'I am curious to hear others' takes'\"",
+        "reason": "Add required field with maturity justification"
+      },
+      {
+        "node_name": "Value misalignment in AI population ethics decision-making",
+        "field": "description",
+        "json_new_value": "\"Risk that advanced AI systems tasked with population-level long-term planning (e.g., resource allocation affecting future populations) adopt person-affecting ethical principles that become incoherent or incomparable when personal identity is ambiguous, leading to arbitrary or misaligned decisions about which futures to bring about.\"",
+        "reason": "Clarify scope and mechanism with specific context"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Incomparability of worlds under person-affecting views with ambiguous person identity",
+        "type": "concept",
+        "description": "Problem that, once personal identity is fuzzy, person-affecting theories cannot say which of two worlds is better when the set of persons differs, undermining ethical evaluation.",
+        "aliases": [
+          "Person-affecting incomparability",
+          "Ambiguous identity harms comparability"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Personhood as pragmatic clustering of person-moments without objective boundaries",
+        "type": "concept",
+        "description": "Theoretical insight that personal identity is not an objective further fact; instead, reality contains only connected person-moments, and grouping them into ‘persons’ is a pragmatic choice.",
+        "aliases": [
+          "Cluster view of identity",
+          "No further-fact personal identity"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Shift to person-moment based ethical evaluation using preference utilitarianism",
+        "type": "concept",
+        "description": "Design rationale proposing that ethical evaluation should consider individual person-moments’ preferences, giving weight according to their connectedness rather than binary personhood.",
+        "aliases": [
+          "Person-moment value theory",
+          "Preference-based person-moment evaluation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Connectedness-weighted utility calculation algorithm for person-moment preferences",
+        "type": "concept",
+        "description": "Implementation mechanism where each future person-moment receives utility weight proportional to its psychological/causal connectedness to current moments, enabling sliding-scale valuation.",
+        "aliases": [
+          "Connectedness utility function",
+          "Sliding-scale person-moment weighting"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Linguistic preference extraction to estimate present person-moment desires",
+        "type": "concept",
+        "description": "Technique to infer existing person-moment preferences (e.g., ‘I want my future self to ...’) from language data, supplying inputs to the connectedness-weighted utility algorithm.",
+        "aliases": [
+          "Preference extraction from text",
+          "Natural language preference modeling"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Theoretical consistency with moderate person-affecting intuitions",
+        "type": "concept",
+        "description": "Validation evidence that sliding-scale, person-moment preference aggregation reproduces moderate person-affecting judgments where existing people’s futures are weighted more but not infinitely more.",
+        "aliases": [
+          "Convergence to moderate weighting",
+          "Alignment with common-sense person-affecting"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Define AI utility functions using connectedness-weighted person-moment preferences during model design",
+        "type": "intervention",
+        "description": "At model-design time specify a formal utility function that aggregates person-moment preferences with weights derived from psychological connectedness, replacing naïve person-affecting objectives.",
+        "aliases": [
+          "Design connectedness utility for AI",
+          "Embed sliding-scale ethics in AI objective"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Fine-tune models to learn connectedness weights from human preference data",
+        "type": "intervention",
+        "description": "During fine-tuning/RL, train the model on annotated or inferred human data to calibrate the connectedness weighting function, ensuring empirical grounding of the utility calculation.",
+        "aliases": [
+          "RLHF connectedness weighting",
+          "Preference-learning of person-moment links"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Value misalignment in AI population ethics decision-making",
+        "type": "concept",
+        "description": "Risk that advanced AI systems tasked with population-level long-term planning (e.g., resource allocation affecting future populations) adopt person-affecting ethical principles that become incoherent or incomparable when personal identity is ambiguous, leading to arbitrary or misaligned decisions about which futures to bring about.",
+        "aliases": [
+          "AI moral misalignment about future persons",
+          "Incorrect AI valuation of future lives"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Value misalignment in AI population ethics decision-making",
+        "target_node": "Incomparability of worlds under person-affecting views with ambiguous person identity",
+        "description": "When AI systems inherit person-affecting frameworks that cannot compare many futures, their decisions become misaligned.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Incomparability of worlds under person-affecting views with ambiguous person identity",
+        "target_node": "Personhood as pragmatic clustering of person-moments without objective boundaries",
+        "description": "Incomparability arises because personal identity lacks objective facts once the further-fact view is rejected.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Personhood as pragmatic clustering of person-moments without objective boundaries",
+        "target_node": "Shift to person-moment based ethical evaluation using preference utilitarianism",
+        "description": "Evaluating welfare at the person-moment level bypasses the need for precise person boundaries.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Shift to person-moment based ethical evaluation using preference utilitarianism",
+        "target_node": "Connectedness-weighted utility calculation algorithm for person-moment preferences",
+        "description": "Algorithmically assigns sliding-scale weights to future person-moments when computing expected utility.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Connectedness-weighted utility calculation algorithm for person-moment preferences",
+        "target_node": "Theoretical consistency with moderate person-affecting intuitions",
+        "description": "The algorithm yields outcomes aligning with moderate person-affecting judgments, providing conceptual validation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Linguistic preference extraction to estimate present person-moment desires",
+        "target_node": "Theoretical consistency with moderate person-affecting intuitions",
+        "description": "Demonstrates that using real preference data can maintain the desired ethical weighting.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Theoretical consistency with moderate person-affecting intuitions",
+        "target_node": "Define AI utility functions using connectedness-weighted person-moment preferences during model design",
+        "description": "Because the approach appears philosophically sound, designers are encouraged to embed it directly in AI objectives.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "5532b9cdba5b00076804aa50bf167be4"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.228330"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA COMPLIANCE: 4 fields are mandatory per instructions but entirely absent from output: node_rationale (all 8 nodes), edge_confidence_rationale (all 9 edges), edge_rationale (all 9 edges), intervention_lifecycle_rationale (2 interventions), intervention_maturity_rationale (2 interventions). These are BLOCKER-level violations.",
+      "COMPLETENESS: Source explicitly rejects further-fact view ('I take the further-fact view to be wrong') but no node captures this theoretical rejection. Source develops welfare measurement ambiguity through painting analogy but no problem-analysis node exists for it. Source warns that all value becomes preference-dependent with no intrinsic goods, but this limitation is not extracted as validation evidence.",
+      "EDGE COVERAGE: Missing causal edge from rejection of further-fact view to pragmatic clustering (logical prerequisite). Missing problem-analysis edge from incomparability to welfare measurement ambiguity (source develops this distinction). Missing validation edges showing how connectedness grounds the algorithm and how the scheme recovers moderate weighting. Missing problem edge about arbitrary value assignment.",
+      "INFERENCE APPROPRIATENESS: Intervention nodes require moderate inference (source does not propose concrete AI interventions), correctly marked as Lifecycle 1-3 and Maturity 1-2, but inference chain not documented in rationales. Source states '[Epistemic status: sloppy thoughts not informed by the literature]' supporting low maturity assignments.",
+      "REFERENTIAL INTEGRITY: All edges reference existing nodes (✓). No orphaned nodes (✓). No duplicate nodes (✓).",
+      "CONCEPT IDENTIFICATION: Source distinguishes four options for reconciling person-affecting views with fuzzy identity (paragraph 'If the further-fact view is wrong...' with 1-4 enumerated options) but extraction captures only options 3-4, missing options 1-2 as distinct design-rationale branches.",
+      "EVIDENCE QUALITY: Edge confidence scores of 2-3 conflict with source's limited empirical basis. Source is philosophical exploration ('sloppy thoughts not informed by literature') - all edges should be confidence 1-2, most properly confidence 1."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/LpnMyeNvgvsbSLAwB/person-moment-affecting-views",
+  "paper_id": "1ae7f37f1935dabe93de4748d6b90ff4",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

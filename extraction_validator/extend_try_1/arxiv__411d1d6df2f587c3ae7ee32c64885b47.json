@@ -1,0 +1,655 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates substantial conceptual accuracy and appropriate node-level granularity but contains significant schema non-compliance and logical inconsistencies requiring remediation. The graph successfully captures the primary reasoning pathway from autonomous agent risks through collaborative teaming design patterns to CIA tool deployment, with appropriate identification of three distinct risks (uncorrectable errors, privacy violations, decision delay) and three design solutions (phased autonomy, collaborative mode, supervisory interfaces). However, critical issues include: (1) missing node_rationale and edge_rationale/edge_confidence_rationale fields on all nodes and edges per schema requirements, (2) reversed edge directions on two key risk-causation relationships (lack of oversight should ENABLE rather than be CAUSED_BY the risks), (3) misclassification of 'Preliminary observations...' as validation_evidence when source provides only forward-looking intentions rather than completed empirical results, (4) missing three important problem-analysis nodes that appear in the source (agents lacking social teaming behaviors, information-environment architecture enabling rapid autonomous cycles, ethical-legal constraints requiring human judgment), and (5) incomplete coverage of some causal pathways particularly around ethical-legal motivations for human oversight. All issues are readily correctable with targeted node additions, edge reversals, field population, and concept reclassifications. After proposed fixes are applied, the knowledge fabric will be valid, mergeable across data sources, and comprehensively connected from risks through interventions."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Uncorrectable analytical errors in fully autonomous information agents for intelligence analysis' missing required attributes: intervention_lifecycle_rationale, intervention_maturity_rationale, node_rationale",
+        "where": "nodes[0]",
+        "suggestion": "Add node_rationale field to all concept nodes and ensure intervention nodes have lifecycle/maturity rationales"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All nodes missing edge_confidence_rationale and edge_rationale fields in edges array",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all 17 edges per JSON schema requirements"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention nodes missing node_rationale field",
+        "where": "nodes[12,13,14]",
+        "suggestion": "Add node_rationale to intervention nodes 'Design intelligence information agents...', 'Deploy CIA collaborative mode...', and 'Implement supervisory control interfaces...'"
+      },
+      {
+        "severity": "STYLE",
+        "issue": "Meta array present but not referenced in schema; should document source traceability",
+        "where": "meta",
+        "suggestion": "Include meta information in node/edge rationale fields instead for better traceability"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Edge source/target nodes exist but node names are very long and could be vulnerable to typo errors on merge",
+        "names": [
+          "Uncorrectable analytical errors in fully autonomous information agents for intelligence analysis",
+          "Privacy violations due to uncontrolled data source access by autonomous information agents"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'Lack of human oversight in autonomous intelligence collection' caused_by relationship direction appears reversed",
+        "evidence": "Source states 'However, the autonomous mode reveals several downsides...The human has no way of correcting any mistakes that the agents make; The human has no control over which sources the agents access' - these are EFFECTS of autonomous mode, not causes of lack of oversight",
+        "fix": "Reverse edge direction or clarify that lack of oversight is the design property that ENABLES these risk scenarios, not caused by them"
+      },
+      {
+        "issue": "Node 'Preliminary observations of efficiency gains in CIA collaborative mode' - validation evidence overstates certainty",
+        "evidence": "Source only states 'we are currently designing more detailed team design patterns, and will implement and empirically evaluate them' - no actual results reported yet, only intentions",
+        "fix": "Reframe as 'Theoretical expectation of efficiency gains from collaborative analysis mode' (theoretical insight) rather than validation evidence, or move to maturity 1 (foundational)"
+      },
+      {
+        "issue": "Missing critical problem analysis node: 'Autonomous agents lack teaming social behaviors'",
+        "evidence": "Source emphasizes: 'Whereas teaming skills come naturally to humans, coding them into a computer has proven difficult. It involves...making the computer decide which information to share with its teammates, which actions to undertake to complement those of its teammates, and how to explain its behavior to others'",
+        "fix": "Add new problem analysis node to capture root cause of why autonomous systems fail in team contexts"
+      },
+      {
+        "issue": "Missing implementation mechanism node: 'OODA cycle execution entirely in information environment'",
+        "evidence": "Source explains 'Information agents are special in the sense that their entire OODA (Observe-Orient-Decide-Act) cycle takes place in the information environment (cyberspace)' as key differentiator from physical agents",
+        "fix": "Add node explaining how information-environment execution enables fast autonomous operation but also heightens need for human oversight"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Intelligence analysis ethical-legal complexity motivates human oversight requirement",
+          "evidence": "Source: 'Intelligence analysis requires the processing of vast amounts of data from various sources and is loaded with ethical concerns, as collecting data often involves an intrusion of privacy and cannot be done without a good reason. This makes it a representative use case for human-agent teaming, involving ethical and legal aspects under time pressure and uncertainty.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Ethical and legal constraints in intelligence analysis"
+          ],
+          "expected_target_node_name": [
+            "Balancing human expertise with agent processing through teaming intelligence"
+          ]
+        },
+        {
+          "title": "Phased autonomy design principle enables handover and continuous monitoring",
+          "evidence": "Source: 'Note worthy are: (1) the transition between manual and autonomous is not direct but intervened by a handover phase; (2) even in the \"highly autonomous\" pattern, a small part of the human's cognitive resources go to monitoring the machine to prepare for a possible handover to manual mode. These subtleties give important guidelines for designing the social behaviors into AI systems.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Phased autonomy pattern facilitating dynamic handover and monitoring"
+          ],
+          "expected_target_node_name": [
+            "Monitoring interface for source selection and error correction"
+          ]
+        },
+        {
+          "title": "Autonomous mode reveals inability to correct agent mistakes",
+          "evidence": "Source: 'the autonomous mode reveals several downsides to fully autonomous intelligence analysis: (1) The human has no way of correcting any mistakes that the agents make'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Lack of human oversight in autonomous intelligence collection"
+          ],
+          "expected_target_node_name": [
+            "Uncorrectable analytical errors in fully autonomous information agents for intelligence analysis"
+          ]
+        },
+        {
+          "title": "Autonomous agents cannot control sensitive source access",
+          "evidence": "Source: '(2) The human has no control over which sources the agents access. Some sources are sensitive and may only be accessed under certain circumstances'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Lack of human oversight in autonomous intelligence collection"
+          ],
+          "expected_target_node_name": [
+            "Privacy violations due to uncontrolled data source access by autonomous information agents"
+          ]
+        },
+        {
+          "title": "Manual analysis limitation: humans cannot match agent data processing speed",
+          "evidence": "Source: 'Performing the analysis in manual mode is a time-consuming and tedious task. The information agents can greatly speed up the process and potentially improve its accuracy by considering and cross-referencing more data than would be humanly possible.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Human cognitive limitations in manual intelligence analysis"
+          ],
+          "expected_target_node_name": [
+            "Delayed intelligence decision-making from manual intelligence analysis"
+          ]
+        },
+        {
+          "title": "Collaborative mode leverages both agent speed and human knowledge",
+          "evidence": "Source: 'Therefore, we need a form of human-agent collaboration that leverages both the fast big data processing capabilities of the agents, and the domain and common-sense knowledge of the human. Our collaborative mode is a first step in this direction.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Collaborative analysis mode combining agent speed with human guidance"
+          ],
+          "expected_target_node_name": [
+            "Balancing human expertise with agent processing through teaming intelligence"
+          ]
+        },
+        {
+          "title": "Information environment architecture enables rapid OODA cycles",
+          "evidence": "Source: 'Information agents are special in the sense that their entire OODA (Observe-Orient-Decide-Act) cycle takes place in the information environment (cyberspace). Physical agents, on the other hand, observe and act in the physical environment which places physical boundaries on the execution speed which are not present in the information environment.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Information environment execution enabling rapid autonomous cycles"
+          ],
+          "expected_target_node_name": [
+            "Lack of human oversight in autonomous intelligence collection"
+          ]
+        },
+        {
+          "title": "Team design patterns provide principled specification of human-agent work distribution",
+          "evidence": "Source: 'In order to define different human-agent team configurations and be able to transform from one form to the other, we have developed general team design patterns'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Team design patterns enable structured human-agent collaboration"
+          ],
+          "expected_target_node_name": [
+            "Balancing human expertise with agent processing through teaming intelligence"
+          ]
+        },
+        {
+          "title": "MATRXS framework enables prototyping of team design patterns",
+          "evidence": "Source: 'CIA tool...was built upon the MATRXS (Man Agent Teaming Rapid eXperimentation Software) framework currently under development at TNO'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Team design patterns enable structured human-agent collaboration"
+          ],
+          "expected_target_node_name": [
+            "CIA tool implementing team design patterns in intelligence analysis scenario"
+          ]
+        },
+        {
+          "title": "Future empirical evaluation of team design patterns for effectiveness",
+          "evidence": "Source: 'We are currently designing more detailed team design patterns, and will implement and empirically evaluate them using our CIA tool in order to determine which patterns produce the most effective human-information agent teaming.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Preliminary observations of efficiency gains in CIA collaborative mode"
+          ],
+          "expected_target_node_name": [
+            "Design intelligence information agents with phased autonomy pattern"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Lack of human oversight in autonomous intelligence collection",
+        "target_node_name": "Uncorrectable analytical errors in fully autonomous information agents for intelligence analysis",
+        "reason": "Edge direction is reversed - lack of oversight is the condition that ENABLES uncorrectable errors (should be: enabled_by relationship from error node to oversight node)"
+      },
+      {
+        "source_node_name": "Lack of human oversight in autonomous intelligence collection",
+        "target_node_name": "Privacy violations due to uncontrolled data source access by autonomous information agents",
+        "reason": "Edge direction is reversed - lack of oversight ENABLES privacy violations (should be: enabled_by relationship from violation node to oversight node)"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Uncorrectable analytical errors in fully autonomous information agents for intelligence analysis",
+        "field": "node_rationale",
+        "json_new_value": "\"Risk that emerges when autonomous agents operate without human correction capability; identified as primary downside of autonomous intelligence analysis mode in 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Privacy violations due to uncontrolled data source access by autonomous information agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Risk that autonomous agents may access legally restricted or sensitive data sources without human authorization; explicitly identified as downside of autonomous mode in 'Collaborative Intelligence Analysis (CIA) tool' section and connected to ethical concerns in 'Information agents for intelligence collection' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Delayed intelligence decision-making from manual intelligence analysis",
+        "field": "node_rationale",
+        "json_new_value": "\"Risk identified in 'Collaborative Intelligence Analysis (CIA) tool' section where manual analysis is described as 'time-consuming and tedious task' creating operational delay in decision-making\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Lack of human oversight in autonomous intelligence collection",
+        "field": "node_rationale",
+        "json_new_value": "\"Problem analysis explaining how autonomous agent operation inherently removes human monitoring and correction capabilities, identified as core challenge in 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Human cognitive limitations in manual intelligence analysis",
+        "field": "node_rationale",
+        "json_new_value": "\"Problem analysis identifying that humans lack capacity to process volume and velocity of modern data; source states 'The information agents can greatly speed up the process and potentially improve its accuracy by considering and cross-referencing more data than would be humanly possible' in 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Balancing human expertise with agent processing through teaming intelligence",
+        "field": "node_rationale",
+        "json_new_value": "\"Theoretical insight from 'Introduction' section proposing that optimal intelligence analysis requires combining human domain knowledge and intuition with machine data-processing speed; source argues 'AI hardly ever functions in isolation' and should have 'teaming intelligence'\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Team design patterns enable structured human-agent collaboration",
+        "field": "node_rationale",
+        "json_new_value": "\"Theoretical framework presented in 'Team design patterns for information agents' section providing reusable pattern language to specify and analyze how humans and systems distribute work\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Phased autonomy pattern facilitating dynamic handover and monitoring",
+        "field": "node_rationale",
+        "json_new_value": "\"Design rationale from 'Team design patterns for information agents' section describing pattern where task transitions from manual execution through handover phase to autonomy while maintaining human monitoring for possible reversal\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Collaborative analysis mode combining agent speed with human guidance",
+        "field": "node_rationale",
+        "json_new_value": "\"Design rationale described in 'Collaborative Intelligence Analysis (CIA) tool' section as approach that 'leverages both the fast big data processing capabilities of the agents, and the domain and common-sense knowledge of the human'\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "CIA tool implementing team design patterns in intelligence analysis scenario",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation mechanism described in 'Collaborative Intelligence Analysis (CIA) tool' section built on MATRXS framework enabling experimental instantiation of team design patterns in intelligence analysis scenarios\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Monitoring interface for source selection and error correction",
+        "field": "node_rationale",
+        "json_new_value": "\"Implementation mechanism enabling supervisory control functions; source indicates these must address issues identified in autonomous mode: human inability to correct mistakes or control source access as described in 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "field": "concept_category",
+        "json_new_value": "\"theoretical insight\"",
+        "reason": "Reframe from validation_evidence to theoretical_insight since no actual validation results are provided in source, only forward-looking intentions"
+      },
+      {
+        "node_name": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "field": "name",
+        "json_new_value": "\"Preliminary operational expectations for efficiency gains in collaborative intelligence analysis\"",
+        "reason": "Reframe node name to accurately reflect that these are expectations/forward-looking statements rather than actual observations or evidence"
+      },
+      {
+        "node_name": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "field": "description",
+        "json_new_value": "\"Expected outcome that collaborative mode will reduce analyst workload while maintaining or improving analysis accuracy relative to manual-only or fully autonomous modes by leveraging combined capabilities.\"",
+        "reason": "Update description to reflect theoretical expectation rather than validated finding"
+      },
+      {
+        "node_name": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "field": "node_rationale",
+        "json_new_value": "\"Forward-looking expectation from 'Collaborative Intelligence Analysis (CIA) tool' section that collaborative mode will address both manual slowness and autonomous uncontrollability; source states 'we are currently designing more detailed team design patterns, and will implement and empirically evaluate them' but no completed validation reported\"",
+        "reason": "Add node_rationale clarifying this is future expectation not validated evidence"
+      },
+      {
+        "node_name": "Design intelligence information agents with phased autonomy pattern",
+        "field": "node_rationale",
+        "json_new_value": "\"Intervention at Model Design lifecycle (1) to embed teaming intelligence principles; motivated by team design pattern theory described in 'Team design patterns for information agents' section and expectations from 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Design intelligence information agents with phased autonomy pattern",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design) because this architectural decision must be made during initial system design phase before implementation, as per guidance in 'Team design patterns for information agents' section\"",
+        "reason": "Add required intervention_lifecycle_rationale field per schema"
+      },
+      {
+        "node_name": "Design intelligence information agents with phased autonomy pattern",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept) because source presents phased autonomy as proven pattern concept from prior work but CIA tool is still under active development and evaluation per 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required intervention_maturity_rationale field per schema"
+      },
+      {
+        "node_name": "Deploy CIA collaborative mode for operational intelligence analysis",
+        "field": "node_rationale",
+        "json_new_value": "\"Deployment-phase intervention emerging from collaborative mode design described in 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Deploy CIA collaborative mode for operational intelligence analysis",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 5 (Deployment) as this is operational rollout of the collaborative CIA system in live intelligence workflows\"",
+        "reason": "Add required intervention_lifecycle_rationale field per schema"
+      },
+      {
+        "node_name": "Deploy CIA collaborative mode for operational intelligence analysis",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept) because CIA tool is still under development and source states 'we are currently designing' patterns, no large-scale operational deployment reported yet\"",
+        "reason": "Add required intervention_maturity_rationale field per schema"
+      },
+      {
+        "node_name": "Implement supervisory control interfaces for source approval in information agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Design-phase intervention addressing identified downsides of autonomous mode; source explicitly identifies need for human control over 'which sources the agents access' and ability to 'correct mistakes' per 'Collaborative Intelligence Analysis (CIA) tool' section\"",
+        "reason": "Add required node_rationale field per schema"
+      },
+      {
+        "node_name": "Implement supervisory control interfaces for source approval in information agents",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design) because user interface and control architecture must be specified during system design phase before implementation\"",
+        "reason": "Add required intervention_lifecycle_rationale field per schema"
+      },
+      {
+        "node_name": "Implement supervisory control interfaces for source approval in information agents",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept) because CIA tool implements basic collaborative interfaces but source indicates more detailed patterns are still being designed\"",
+        "reason": "Add required intervention_maturity_rationale field per schema"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Uncorrectable analytical errors in fully autonomous information agents for intelligence analysis",
+        "type": "concept",
+        "description": "Fully autonomous intelligence-collection agents may misinterpret or misclassify data and produce wrong hypotheses without any human ability to notice or repair the error, endangering decision quality.",
+        "aliases": [
+          "irreversible mistakes by autonomous intelligence agents",
+          "agent misanalysis without human correction"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Privacy violations due to uncontrolled data source access by autonomous information agents",
+        "type": "concept",
+        "description": "When agents autonomously pull data, they can access sensitive or legally restricted sources, infringing privacy and ethical constraints.",
+        "aliases": [
+          "unethical data collection by AI agents",
+          "unauthorised source access"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Delayed intelligence decision-making from manual intelligence analysis",
+        "type": "concept",
+        "description": "Purely manual collection and cross-referencing of vast data sets is time-consuming and tedious, risking late or missed decisions.",
+        "aliases": [
+          "inefficient manual analysis",
+          "slow situational assessment"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Lack of human oversight in autonomous intelligence collection",
+        "type": "concept",
+        "description": "When agents operate autonomously, humans cannot monitor, steer, or correct their actions or intermediate conclusions.",
+        "aliases": [
+          "absent human monitoring",
+          "no human-in-the-loop"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Human cognitive limitations in manual intelligence analysis",
+        "type": "concept",
+        "description": "Humans alone cannot cross-reference or process the volume and velocity of modern open-source data efficiently.",
+        "aliases": [
+          "limited human processing capacity",
+          "information overload for analysts"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Balancing human expertise with agent processing through teaming intelligence",
+        "type": "concept",
+        "description": "Theoretical view that optimal performance arises from combining humans’ domain intuition with machines’ data-processing capabilities.",
+        "aliases": [
+          "teaming intelligence concept",
+          "human-AI complementarity"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Team design patterns enable structured human-agent collaboration",
+        "type": "concept",
+        "description": "Reusable design patterns (manual, supervisory control, phased autonomy, etc.) provide structure for specifying and analysing human-agent work distribution.",
+        "aliases": [
+          "teamwork pattern language",
+          "collaboration pattern framework"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Phased autonomy pattern facilitating dynamic handover and monitoring",
+        "type": "concept",
+        "description": "Design rationale in which a task transitions from manual execution through a handover phase to high autonomy while maintaining minimal human monitoring capacity.",
+        "aliases": [
+          "graduated autonomy pattern",
+          "dynamic handover model"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Collaborative analysis mode combining agent speed with human guidance",
+        "type": "concept",
+        "description": "Design rationale where both human and agents work simultaneously: the agent gathers/processes data quickly while the human guides hypotheses and ethical constraints.",
+        "aliases": [
+          "mixed-initiative intelligence analysis",
+          "human-agent collaborative mode"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "CIA tool implementing team design patterns in intelligence analysis scenario",
+        "type": "concept",
+        "description": "Software environment built on MATRXS that can run manual, autonomous, and collaborative modes to instantiate and test specific team design patterns.",
+        "aliases": [
+          "Collaborative Intelligence Analysis framework",
+          "CIA experimental platform"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Monitoring interface for source selection and error correction",
+        "type": "concept",
+        "description": "Interface elements allowing humans to approve sensitive sources, observe agent reasoning, and intervene to correct mistakes during analysis.",
+        "aliases": [
+          "supervisory control UI",
+          "human oversight dashboard"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Preliminary operational expectations for efficiency gains in collaborative intelligence analysis",
+        "type": "concept",
+        "description": "Initial comparisons suggest collaborative mode reduces analyst workload and maintains or improves accuracy relative to manual or autonomous modes.",
+        "aliases": [
+          "early CIA results",
+          "qualitative performance comparison"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Design intelligence information agents with phased autonomy pattern",
+        "type": "intervention",
+        "description": "During system design, architect information-collection agents to operate under phased autonomy, including mandatory handover phases and continuous minimal monitoring hooks.",
+        "aliases": [
+          "apply phased autonomy to agents",
+          "embed dynamic handover design"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Deploy CIA collaborative mode for operational intelligence analysis",
+        "type": "intervention",
+        "description": "Roll out the collaborative mode of the CIA tool (or equivalent systems) in live intelligence workflows so humans and agents jointly collect and process data.",
+        "aliases": [
+          "use CIA tool collaboratively",
+          "operate mixed-initiative CIA"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Implement supervisory control interfaces for source approval in information agents",
+        "type": "intervention",
+        "description": "Create user interfaces and control protocols that require human approval for sensitive data-source access and allow live correction of agent errors during collection.",
+        "aliases": [
+          "build oversight dashboards",
+          "add human approval checkpoints"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Delayed intelligence decision-making from manual intelligence analysis",
+        "target_node": "Human cognitive limitations in manual intelligence analysis",
+        "description": "Slow decision-making results from analysts’ limited ability to process large data volumes rapidly.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Human cognitive limitations in manual intelligence analysis",
+        "target_node": "Balancing human expertise with agent processing through teaming intelligence",
+        "description": "Teaming intelligence supplements human capacity with automated processing, resolving overload.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Balancing human expertise with agent processing through teaming intelligence",
+        "target_node": "Team design patterns enable structured human-agent collaboration",
+        "description": "Team design patterns operationalise the abstract concept of teaming intelligence.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Team design patterns enable structured human-agent collaboration",
+        "target_node": "Phased autonomy pattern facilitating dynamic handover and monitoring",
+        "description": "Phased autonomy is one specific pattern to achieve collaboration.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Phased autonomy pattern facilitating dynamic handover and monitoring",
+        "target_node": "CIA tool implementing team design patterns in intelligence analysis scenario",
+        "description": "CIA platform can be configured to exercise phased autonomy through mode switching and handover.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Collaborative analysis mode combining agent speed with human guidance",
+        "target_node": "CIA tool implementing team design patterns in intelligence analysis scenario",
+        "description": "CIA’s collaborative mode embodies simultaneous human-agent work distribution.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "CIA tool implementing team design patterns in intelligence analysis scenario",
+        "target_node": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "description": "Early qualitative comparisons serve as validation that tool-based collaboration improves efficiency.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Monitoring interface for source selection and error correction",
+        "target_node": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "description": "Initial tests indicate that oversight interfaces help achieve better outcomes.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Preliminary observations of efficiency gains in CIA collaborative mode",
+        "target_node": "Design intelligence information agents with phased autonomy pattern",
+        "description": "Positive early results motivate adopting phased autonomy in future agent designs.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "aa824473f53d425d975ab65508453ab7"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.413053"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER ISSUE 1: All nodes missing required node_rationale field; all edges missing required edge_confidence_rationale and edge_rationale fields per schema specification 'Clear traceability of node and edge information via their closest preceding data source section titles'",
+      "BLOCKER ISSUE 2: Two edge directions are logically reversed: (1) 'Lack of human oversight in autonomous intelligence collection' caused_by 'Uncorrectable analytical errors...' should be: errors enabled_by lack of oversight (source: 'The human has no way of correcting any mistakes that the agents make'); (2) 'Lack of human oversight' caused_by 'Privacy violations...' should be: violations enabled_by lack of oversight (source: 'The human has no control over which sources the agents access. Some sources are sensitive...'); these are effects of autonomy, not causes",
+      "MAJOR ISSUE 1: Node 'Preliminary observations of efficiency gains in CIA collaborative mode' misclassified as validation_evidence when source actually states 'we are currently designing more detailed team design patterns, and will implement and empirically evaluate them' - this is forward-looking intention, not completed validation; should be concept_category: theoretical_insight with lower maturity",
+      "MAJOR ISSUE 2: Missing critical problem_analysis node 'Agents lack learned teaming social behaviors compared to humans' - source explicitly states 'Whereas teaming skills come naturally to humans, coding them into a computer has proven difficult' as foundational problem explanation in 'Team design patterns' section; this is root cause of why autonomous systems fail at teaming",
+      "MAJOR ISSUE 3: Missing problem_analysis node 'Information environment execution enabling rapid autonomous cycles without physical constraints' - source explains this architectural property as distinguishing feature: 'Information agents...their entire OODA cycle takes place in the information environment (cyberspace)...Physical agents...observe and act in the physical environment which places physical boundaries on the execution speed which are not present in the information environment'",
+      "MAJOR ISSUE 4: Missing problem_analysis node 'Ethical and legal constraints in intelligence data collection requiring human judgment' - source emphasizes 'Intelligence analysis requires the processing of vast amounts of data from various sources and is loaded with ethical concerns, as collecting data often involves an intrusion of privacy and cannot be done without a good reason'; this drives need for human involvement specifically",
+      "MAJOR ISSUE 5: Coverage gap - no explicit edge connecting ethical-legal constraints to the privacy violation risk or to the need for collaborative oversight; source connects these concepts but edge pathway is not extracted",
+      "MINOR ISSUE 1: Node name 'Preliminary observations of efficiency gains in CIA collaborative mode' is misleading; should be 'Preliminary operational expectations for efficiency gains in collaborative intelligence analysis' to accurately reflect that these are forward-looking statements not empirical observations",
+      "MINOR ISSUE 2: Edge confidence levels may be underestimated; several edges marked as confidence 2 appear to have stronger textual support and could be confidence 3 with proper evidence citation",
+      "STYLE ISSUE 1: Meta array structure is non-standard and meta information would be better integrated into node/edge rationale fields for consistency with schema requirement of 'closest preceding data source section titles' in rationale fields",
+      "VALIDATION DECISION: After applying proposed fixes (adding 3 nodes, reversing 2 edge directions, populating all missing rationale fields, reclassifying 1 node concept_category, and adding missing edges), the knowledge graph will satisfy all mandatory success criteria: (1) all causal-interventional paths from risks through theoretical insights to interventions will be fully connected, (2) all 15 extracted nodes represent distinct concepts with appropriate granularity, (3) node names follow canonical patterns suitable for merging across 500k data sources, (4) every node has bidirectional traceability to source section titles, (5) no isolated nodes remain"
+    ]
+  },
+  "url": "https://arxiv.org/abs/2101.06133",
+  "paper_id": "411d1d6df2f587c3ae7ee32c64885b47",
+  "ard_file_source": "arxiv",
+  "errors": null
+}

@@ -1,0 +1,425 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has critical schema compliance issues: missing edge_confidence_rationale, edge_rationale, and node_rationale fields throughout all edges and nodes, plus missing intervention_lifecycle_rationale and intervention_maturity_rationale fields for both intervention nodes. Beyond schema blockers, the extraction significantly under-represents the source material by conflating eight distinct operations into a single design node and missing six implementation mechanism nodes for world-level definitions. The fabric lacks intermediate design rationale nodes explaining why four operation pairs (brothers/sisters) create distinct decomposition strategies. Validation evidence is substantially under-captured: three distinct validation evidence nodes should exist for (1) biextensional equivalence preservation, (2) lollipop/tensor equivalence, (3) idempotence proofs. Coverage analysis reveals six critical edges missing from the extraction. With proposed fixes applied (adding 12 concept nodes and 4 inference-based intervention nodes, restructuring edges with required rationale fields, and correcting node attribute mappings), the knowledge graph would accurately capture the complete causal-interventional pathway from boundary mis-specification risk through formal operations to deployable safety tooling."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge_confidence_rationale and edge_rationale fields in all edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to each edge object with data source section references"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node_rationale field in all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale to each node with closest preceding section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required intervention_lifecycle_rationale for intervention nodes",
+        "where": "nodes[6].intervention_lifecycle_rationale, nodes[7].intervention_lifecycle_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale with justification and section title for both intervention nodes"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required intervention_maturity_rationale for intervention nodes",
+        "where": "nodes[6].intervention_maturity_rationale, nodes[7].intervention_maturity_rationale",
+        "suggestion": "Add intervention_maturity_rationale with evidence-based reasoning and section title for both intervention nodes"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All node references in edges exist as nodes",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All 8 nodes are connected to the fabric through edges",
+        "suggested_fix": "N/A - fabric is fully connected"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents"
+        ],
+        "merge_strategy": "This node conflates design rationale (high-level choice) with the four operations themselves. Consider splitting or renaming to clarify."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Insufficient granularity in problem analysis node - the extraction conflates multiple distinct problems",
+        "evidence": "Section 1.1-1.4 presents four distinct operations (Committing, Assuming, Externalizing, Internalizing) each solving different decomposition challenges",
+        "fix": "Decompose 'absence of compositional operations' into four separate problem analysis nodes, one for each operation type with specific use cases"
+      },
+      {
+        "issue": "Missing intermediate design rationale nodes for each operation pair",
+        "evidence": "Text defines CommitB vs Commit∖B (brothers), AssumeF vs Assume∖F (dual), ExternalB vs External/B (sisters), InternalF vs Internal/F (sisters) - each pair has distinct design logic",
+        "fix": "Add design rationale nodes for: (1) Additive subagent construction via commitment, (2) Multiplicative subagent via externalization, (3) Dual operations for environment assumptions"
+      },
+      {
+        "issue": "Missing implementation mechanism nodes for core technical contributions",
+        "evidence": "Section 1.1-1.4 contains detailed mathematical definitions and Section 2.1-2.4 extends these to world-level - two levels of implementation detail",
+        "fix": "Separate 'world-level definitions' node into distinct implementation mechanism nodes: CommitS/Commit∖S, AssumeS/Assume∖S, ExternalV/External/V, InternalV/Internal/V"
+      },
+      {
+        "issue": "Validation evidence node omits key theoretical contributions",
+        "evidence": "Section 3.1 proves biextensional equivalence, Section 3.2 shows CommitS(C)≅1S⊸C and AssumeS(C)≅1S⊗C (lollipop/tensor relationships), Section 4 proves idempotence",
+        "fix": "Add additional validation evidence nodes: (1) Cartesian frame morphism preservation via biextensional equivalence, (2) Equivalence to lollipop and tensor operations, (3) Idempotence proofs for commit/assume/externalize/internalize"
+      },
+      {
+        "issue": "Missing edge connecting CommitS to multiplicative structure",
+        "evidence": "Section 1.1 Claim: 'Commit∖B(C) and CommitB(C) are brothers in C' with proof showing CommitB(C)⊕Commit∖B(C) and additive subagent structure",
+        "fix": "Add edge showing how commitment operations create brothers/sisters structures that decompose agents"
+      },
+      {
+        "issue": "Incomplete intervention extraction - operations have downstream applications not captured",
+        "evidence": "Introduction states 'this is the tenth post in the Cartesian frames sequence' and Section 3.2 notes 'It will sometimes be helpful to think about assuming and committing in terms of 1S' suggesting these are building blocks for future application",
+        "fix": "Add inference-based interventions at maturity 1: (1) Use duality of Commit/Assume in safety specifications to encode complementary guarantees, (2) Apply CommitS/ExternalV to decompose alignment problems into disjoint sub-problems"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Committing creates additive subagent by constraining action space",
+          "evidence": "Section 1.1: 'CommitB(C)=(B,E,⋆)...CommitB(C)◃+C' and 'CommitB(C) represents the perspective you get when the agent of C makes a commitment to choose an element of B'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents"
+          ],
+          "expected_target_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ]
+        },
+        {
+          "title": "Assuming creates multiplicative environment constraint",
+          "evidence": "Section 1.2: 'AssumeF(C)◃∗+C' and examples showing Assume∖{m}(C0) recovers intuitive control notion",
+          "status": "covered",
+          "expected_source_node_name": [
+            "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents"
+          ],
+          "expected_target_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ]
+        },
+        {
+          "title": "CommitS and AssumeS relate to lollipop and tensor operations",
+          "evidence": "Section 3.2: 'CommitS(C)≅1S⊸C and AssumeS(C)≅1S⊗C' with full proof showing equivalence",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "formal proofs of equivalence and idempotence for Cartesian frame operations"
+          ],
+          "expected_target_node_name": [
+            "additional validation evidence node needed for lollipop/tensor equivalence"
+          ]
+        },
+        {
+          "title": "Externalizing decomposes agents into independent choice layers",
+          "evidence": "Section 1.3: 'ExternalB(C)◃×C' and 'ExternalB(C) and External/B(C) are sisters in C' with detailed proof of D∈ExternalB(C)⊠External/B(C)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents"
+          ],
+          "expected_target_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ]
+        },
+        {
+          "title": "Internalizing is dual to externalizing via * operator",
+          "evidence": "Section 1.4: '(InternalF(C))∗≅ExternalF(C∗)' and 'C◃×InternalF(C)' follow from duality",
+          "status": "covered",
+          "expected_source_node_name": [
+            "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents"
+          ],
+          "expected_target_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ]
+        },
+        {
+          "title": "Commit/Assume well-defined up to biextensional equivalence",
+          "evidence": "Section 3.1: Full proof that if C0≃C1 then CommitS(C0)≃CommitS(C1) and Commit∖S(C0)≃Commit∖S(C1)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ],
+          "expected_target_node_name": [
+            "formal proofs of equivalence and idempotence for Cartesian frame operations"
+          ]
+        },
+        {
+          "title": "Externalize/Internalize well-defined up to biextensional equivalence",
+          "evidence": "Section 3.1: Extensive proof for ExternalV(C0)≃ExternalV(C1) and External/V(C0)≃External/V(C1) through construction of bijections",
+          "status": "covered",
+          "expected_source_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ],
+          "expected_target_node_name": [
+            "formal proofs of equivalence and idempotence for Cartesian frame operations"
+          ]
+        },
+        {
+          "title": "All eight operations are idempotent",
+          "evidence": "Section 4.1-4.3: Systematic proofs that CommitS, Commit∖S, AssumeS, Assume∖S, ExternalV, External/V, InternalV, Internal/V are all idempotent",
+          "status": "covered",
+          "expected_source_node_name": [
+            "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence"
+          ],
+          "expected_target_node_name": [
+            "formal proofs of equivalence and idempotence for Cartesian frame operations"
+          ]
+        },
+        {
+          "title": "Commit/Assume/Externalize/Internalize solve boundary mis-specification problem",
+          "evidence": "Introduction and post title indicate these operations address the fundamental problem of carving up agents and environments",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "formal proofs of equivalence and idempotence for Cartesian frame operations"
+          ],
+          "expected_target_node_name": [
+            "adopt Cartesian frame operations in AI safety formal modelling frameworks"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "design of four dual operation pairs for compositional frame decomposition",
+        "nodes_to_merge": [
+          "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "absence of compositional operations for sub-agent decomposition in Cartesian frames",
+        "field": "description",
+        "json_new_value": "Current formal frameworks for agent-environment decomposition lack systematic operations to carve agents and environments into sub-components while preserving frame semantics and ensuring boundary specifications remain meaningful.",
+        "reason": "Current description too vague; should explain what 'compositional operations' means in Cartesian frame context"
+      },
+      {
+        "node_name": "subset- and partition-based operations enable agent/environment restructuring",
+        "field": "description",
+        "json_new_value": "Mathematical insight that selecting subsets B⊆A, F⊆E and partitions of worlds provides the formal handle to decompose Cartesian frames into additive (CommitB, AssumeF) and multiplicative (ExternalB, InternalF) subframes while preserving frame semantics.",
+        "reason": "Should explicitly mention the four operation types enabled by this insight"
+      },
+      {
+        "node_name": "adopt Cartesian frame operations in AI safety formal modelling frameworks",
+        "field": "description",
+        "json_new_value": "During model-design and pre-training phases, embed CommitS, AssumeS, ExternalV and InternalV operators as first-class constructs in formal verification and interpretability tooling so safety researchers can rigorously decompose agent-environment boundaries and analyze alignment problems under different decomposition schemes, with full mathematical guarantees of equivalence preservation and idempotence.",
+        "reason": "Original description lacks detail about mathematical properties that make implementation valuable; should emphasize guarantees"
+      },
+      {
+        "node_name": "specify AI commitments and environmental assumptions with CommitS and AssumeS operations during safety specification",
+        "field": "description",
+        "json_new_value": "When encoding safety specifications, use CommitS to formally designate world subsets where the agent guarantees outcomes will lie, and AssumeS to designate world subsets representing valid environmental behavior. These operations provide provably equivalent representations (CommitS(C)≅1S⊸C, AssumeS(C)≅1S⊗C) enabling automated consistency checking across safety constraints and agent/environment decompositions.",
+        "reason": "Should reference the equivalence proofs that enable practical use in specifications"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "mis-specification of agent-environment boundaries in AI safety modelling",
+        "type": "concept",
+        "description": "Risk that safety analyses or system designs choose the wrong place to draw the line between an AI agent and its environment, leading to misunderstood capabilities, control and alignment failure.",
+        "aliases": [
+          "boundary misdefinition in alignment research",
+          "incorrect agent–environment separation"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents",
+        "type": "concept",
+        "description": "Design decision to package the theoretical insight into four dual pairs of operations capable of re-representing agency at different granularities.",
+        "aliases": [
+          "design of four frame operations",
+          "subagent operation design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence",
+        "type": "concept",
+        "description": "Concrete implementation that lifts the four operations to arbitrary world sets, furnishing dualities (via * operator), brother–sister relationships and idempotence properties.",
+        "aliases": [
+          "implemented frame operations on worlds",
+          "CommitS/AssumeS/ExternalV/InternalV definitions"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "formal proofs of equivalence and idempotence for Cartesian frame operations",
+        "type": "concept",
+        "description": "Rigorous mathematical validation demonstrating that the new operations preserve frame semantics, are well-defined up to biextensional equivalence and are idempotent.",
+        "aliases": [
+          "proofs of biextensional equivalence",
+          "idempotence validation of operations"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "absence of compositional operations for sub-agent decomposition in Cartesian frames",
+        "type": "concept",
+        "description": "Current modelling frameworks give no systematic way to carve out or recombine parts of an agent or environment, which directly causes boundary mis-specification.",
+        "aliases": [
+          "lack of formal subagent tools",
+          "no compositional subframe operators"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "subset- and partition-based operations enable agent/environment restructuring",
+        "type": "concept",
+        "description": "Realisation that selecting subsets of actions/environments or partitions of worlds supplies the mathematical handle required to carve frames while preserving semantics.",
+        "aliases": [
+          "set-based decomposition insight",
+          "partition insight for frames"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "adopt Cartesian frame operations in AI safety formal modelling frameworks",
+        "type": "intervention",
+        "description": "During model-design of advanced AI systems, embed the CommitS, AssumeS, ExternalV and InternalV operators in formal verification or interpretability tooling so designers can rigorously examine alternative agent/environment decompositions.",
+        "aliases": [
+          "integrate committing/assuming/externalising",
+          "use frame operations in safety tooling"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "specify AI commitments and environmental assumptions with CommitS and AssumeS operations during safety specification",
+        "type": "intervention",
+        "description": "When writing safety-critical specifications, explicitly encode hard commitments the agent must keep and environmental promises using the CommitS and AssumeS constructs, allowing automated consistency checking.",
+        "aliases": [
+          "encode commitments via CommitS",
+          "model promises with AssumeS"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "mis-specification of agent-environment boundaries in AI safety modelling",
+        "target_node": "absence of compositional operations for sub-agent decomposition in Cartesian frames",
+        "description": "Lacking formal decomposition tools directly leads to incorrect or ad-hoc boundary choices.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "absence of compositional operations for sub-agent decomposition in Cartesian frames",
+        "target_node": "subset- and partition-based operations enable agent/environment restructuring",
+        "description": "Identifying subset/partition mathematics provides a pathway to supply the missing operations.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "subset- and partition-based operations enable agent/environment restructuring",
+        "target_node": "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents",
+        "description": "The insight is concretised into a design comprising four named operations.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents",
+        "target_node": "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence",
+        "description": "Precise definitions over world sets instantiate the design so it can be used in practice.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "world-level definitions of CommitS, AssumeS, ExternalV and InternalV with dualities and idempotence",
+        "target_node": "formal proofs of equivalence and idempotence for Cartesian frame operations",
+        "description": "Mathematical proofs confirm the correctness and desirable properties of the implementation.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "formal proofs of equivalence and idempotence for Cartesian frame operations",
+        "target_node": "adopt Cartesian frame operations in AI safety formal modelling frameworks",
+        "description": "Strong formal guarantees motivate integrating these operations into practical modelling tools.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "1ff8dc6883989d3f33187fcac6f02370"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.007961"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKERS: All edges missing edge_confidence_rationale (required per final_output_format) - affects all 7 edges. All nodes missing node_rationale (required per final_output_format) - affects all 8 nodes. Both intervention nodes missing intervention_lifecycle_rationale and intervention_maturity_rationale (required per schema_requirements for type=intervention) - Section 1 does not show where lifecycle 1 and maturity 1 are justified.",
+      "REFERENTIAL INTEGRITY: PASS - all 7 edges correctly reference existing nodes. No dangling references detected.",
+      "ORPHAN NODES: PASS - all 8 nodes connected to fabric. Node connectivity verified across edges.",
+      "GRANULARITY MISMATCH: Current node 'introduce committing, assuming, externalising and internalising to create additive/multiplicative sub-agents' conflates four distinct operations (CommitB, Commit∖B, ExternalB, External/B) into single design node. Section 1.1-1.4 clearly present these as separate paired operations: CommitB/Commit∖B are brothers (additive), ExternalB/External/B are sisters (multiplicative), AssumeF/Assume∖F are dual (multiplicative), InternalF/Internal/F are dual (multiplicative). Each pair has distinct design logic requiring separate rationale nodes per template structure.",
+      "IMPLEMENTATION MECHANISM UNDER-REPRESENTATION: Section 2 provides world-level extensions (CommitS, AssumeS, ExternalV, InternalV) with explicit statement 'Once we have the following definitions in hand, our future references to committing, assuming, externalizing, and internalizing will use the definitions from worlds unless noted otherwise.' This indicates world-level implementations are distinct from agent/environment-level implementations. Current extraction combines these into single node, violating separation-of-concerns.",
+      "VALIDATION EVIDENCE UNDER-REPRESENTATION: Section 3 contains three major validation components: (1) Section 3.1 proves biextensional equivalence for all operations with extensive morphism constructions showing if C0≃C1 then operation preserves equivalence. (2) Section 3.2 proves CommitS(C)≅1S⊸C and AssumeS(C)≅1S⊗C with full morphism constructions. (3) Section 4 proves all eight operations idempotent. Current extraction captures only 'formal proofs of equivalence and idempotence' as single validation node. These should be separate nodes per evidence type.",
+      "MISSING EDGES FROM SOURCE: (1) Edge from design rationale to ExternalV showing how duality (ExternalB and External/B are sisters) enables problem decomposition. (2) Edge showing Assume∖F operation recovers control in worlds with external events (Section 1.2 meteor example). (3) Edge from preservation of biextensional equivalence to idempotence proofs showing how preservation enables idempotence characterization. (4) Edge from lollipop/tensor equivalence to specification interventions showing how 1S semantics motivate practical use. (5) Multiple edges from individual validation evidence nodes to corresponding intervention nodes.",
+      "INTERVENTION EXTRACTION UNDERPERFORMANCE: Only 2 explicit interventions extracted; source supports 4-6 distinct interventions from Sections 1.2 and template. Moderate inference appropriate here per instructions: CommitS/AssumeS for specifications (supported by Section 3.2 design pattern), ExternalV for problem decomposition (supported by Section 1.3 sister decomposition), frame operations in tooling (supported by multiple section references). All inferred interventions marked maturity 1-2 with explicit source references.",
+      "EVIDENCE MAPPING: Risk 'mis-specification of boundaries' connects clearly to problem 'absence of operations' (implied from lack of tools in prior literature). Problem connects to insight 'subsets/partitions work' via Section 1.1-1.4 motivation. Insight connects to design via 'four operations' construction. Design connects to implementation via 'world-level definitions' in Section 2. Implementation connects to validation via 'proofs and idempotence' in Sections 3-4. Validation connects to interventions via 'motivates' edges (Section 3.2 discussion of practical use). All connections supported by evidence but require explicit rationale field additions.",
+      "COMPLETENESS CHECK: Proposed fixes add 12 concept nodes capturing: 2 design rationale nodes (additive vs multiplicative), 6 implementation mechanism nodes (distinct world-level definitions for 8 operations split into 6 nodes due to duality structure), 4 validation evidence nodes (biextensional preservation × 2, tensor equivalence, idempotence × 2). Also add 4 intervention nodes covering: CommitS specification, AssumeS specification, ExternalV decomposition, frame operations tooling. These 16 additions plus restructured edges and field additions achieve complete knowledge fabric from risk through interventions."
+    ]
+  },
+  "url": "https://www.alignmentforum.org/posts/5HMqSGQ9ad9r9Hibw/committing-assuming-externalizing-and-internalizing",
+  "paper_id": "ceb3105e38ad3dbe88d80a0ac65bcea9",
+  "ard_file_source": "alignmentforum",
+  "errors": null
+}

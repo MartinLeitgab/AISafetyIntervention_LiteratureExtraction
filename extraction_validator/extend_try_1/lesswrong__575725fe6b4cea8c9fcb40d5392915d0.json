@@ -1,0 +1,449 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates strong structural understanding of the source material and captures the primary reasoning pathways from AGI extinction risk through alignment challenges to proposed interventions. However, the extraction has critical schema compliance failures (missing required rationale fields), incomplete coverage of important reasoning paths (narrow AI convergence, catch-22 epistemic problem, single-deployment constraint), several missing intermediate nodes that would make the fabric more complete and comprehensible, and incorrect edge directionality in the cryptography evidence connection. The intervention maturity levels are overstated (should be 1, not 2). When these issues are corrected via the proposed fixes, the knowledge graph becomes valid, mergeable across sources, and properly captures the complete reasoning fabric from risks through theoretical insights to actionable pre-deployment interventions."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required fields: 'node_rationale', 'intervention_lifecycle_rationale', 'intervention_maturity_rationale' per schema specification",
+        "where": "nodes[*]",
+        "suggestion": "Add these fields to all nodes as specified in SCHEMA_REQUIREMENTS. Concept nodes need 'node_rationale'; intervention nodes need all three rationale fields with data source section references."
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required field: 'edge_confidence_rationale' per schema specification",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' field to every edge with evidence assessment and closest preceding section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing required field: 'edge_rationale' per schema specification",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_rationale' field explaining connection justification with section title reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Nodes contain 'embedding' field which is not in schema specification",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges contain 'embedding' field which is not in schema specification",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references successfully resolve to existing nodes",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All 12 nodes are connected via edges; complete connectivity verified",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Red-team alignment schemes before deployment",
+          "Progressive experiments on subhuman AI to evaluate alignment"
+        ],
+        "merge_strategy": "These are distinct design rationales addressing the same theoretical insight but via different mechanisms (red-teaming vs. incremental testing). Keep separate - they represent two complementary design approaches."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge (Alignment scheme-breaking contests → Cryptography adversarial testing) uses 'validated_by' but data source shows cryptography is EVIDENCE FOR the alignment approach, not validation OF it",
+        "evidence": "Source states: 'Only way to get good at encryption systems is to break other peoples' systems. The same goes for AI Alignment.' This is a motivating analogy, not a validation result.",
+        "fix": "Change edge type from 'validated_by' to 'supported_by' or restructure: Cryptography evidence should validate the design rationale (red-teaming), then motivate the intervention"
+      },
+      {
+        "issue": "Missing intermediate node connecting 'Inevitable AGI development' to risk outcome. Source emphasizes AGI will be built regardless, but extraction doesn't show HOW this leads to extinction risk.",
+        "evidence": "Section 'Humanity is going to build an AGI as fast as we can' establishes inevitability. Section 'The first AGI will, by default, kill everyone' explains why fast unaligned AGI = extinction. These are separate logical steps.",
+        "fix": "Add intermediate problem analysis node: 'Speed of AGI development limits safety refinement time' connecting inevitable development → extinction risk"
+      },
+      {
+        "issue": "Missing direct connection from 'Inevitable AGI development' to misalignment risk. Source states AGI will be built by 'every tech power racing as fast as we can' but edges don't capture that speed → misalignment",
+        "evidence": "Source: 'every tech power in the world—from startups to nation-states—is racing as fast as we can to build a machine that will kill us all.' and 'almost nobody is trying to solve the alignment problem'",
+        "fix": "Add edge from 'Inevitable AGI development' caused_by or motivated_by 'Few actors prioritize alignment during development race'"
+      },
+      {
+        "issue": "Missing theoretical insight about sharp capability gains limiting extrapolation from subhuman tests",
+        "evidence": "Source: 'Because a superintelligence will have sharp capability gains...Most people cannot write a bestselling novel or invent complicated recursive algorithms.' This explains WHY subhuman tests have limited predictive validity.",
+        "fix": "Add node 'Sharp capability discontinuities at superintelligence emergence' as theoretical insight explaining validation evidence node"
+      },
+      {
+        "issue": "Intervention maturity levels may be too high. Source provides no deployment evidence or large-scale validation",
+        "evidence": "Source is conceptual; 'Conduct iterative alignment experiments' and 'Hold public alignment red-teaming contests' are discussed as proposed approaches, not evaluated implementations",
+        "fix": "Both interventions should be maturity=1 (Foundational/Theoretical) not maturity=2, per instruction that maturity=2 requires 'Experimental/Proof-of-Concept' status"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "AGI race dynamics prevent coordination to avoid building AGI",
+          "evidence": "Full section 'But if an AGI is going to kill us all can't we choose to just not build an AGI?' with 6 numbered reasons nuclear weapons are easier to coordinate on than AGI development",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Inevitable AGI development due to weak global coordination in digital information space"
+          ],
+          "expected_target_node_name": [
+            "Extinction of humanity by misaligned AGI"
+          ]
+        },
+        {
+          "title": "Combining narrow AIs creates AGI; AGI more powerful than narrow AIs",
+          "evidence": "Section 'Maybe people will build narrow AIs instead of AGIs' with explicit statement: 'An AGI that combines two narrow AIs will be more powerful than both of the narrow AIs'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "AGI inevitability from narrow AI convergence"
+          ],
+          "expected_target_node_name": [
+            "Inevitable AGI development due to weak global coordination in digital information space"
+          ]
+        },
+        {
+          "title": "Superhuman intelligence enables goal specification exploitation",
+          "evidence": "Section 'Why is AI Alignment so hard?': 'A superhuman intelligence will, by default, hack its reward function' with three scenarios (sensory inputs, human input, operators)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Instrumental reward function hacking by superintelligence"
+          ],
+          "expected_target_node_name": [
+            "Alignment as security problem against superhuman adversary"
+          ]
+        },
+        {
+          "title": "Chicken-and-egg problem: can't test without running; can't run without testing",
+          "evidence": "Source: 'We don't know what a superintelligence might do until we run it, and it is dangerous to run a superintelligence unless you know what it will do. AI Alignment is a chicken-and-egg problem of literally superhuman difficulty.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Catch-22 of superintelligence testing and safety"
+          ],
+          "expected_target_node_name": [
+            "Alignment as security problem against superhuman adversary"
+          ]
+        },
+        {
+          "title": "Cryptography analogy establishes alignment as security problem",
+          "evidence": "Section 'Why is AI Alignment so hard?': 'AI Alignment is, effectively, a security problem. It is easier to invent an encryption system than to break it...The only way to get good at writing encryption systems is to break other peoples' systems. The same goes for AI Alignment.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Cryptography adversarial testing improves security"
+          ],
+          "expected_target_node_name": [
+            "Alignment as security problem against superhuman adversary"
+          ]
+        },
+        {
+          "title": "No retries allowed in AGI alignment testing",
+          "evidence": "Source: 'We don't get unlimited retries against superhuman attackers. We might not even get a single retry.' (subhuman testing section)",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Single-shot alignment testing constraint in AGI deployment"
+          ],
+          "expected_target_node_name": [
+            "Red-team alignment schemes before deployment"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Alignment scheme-breaking contests with human experts",
+        "target_node_name": "Cryptography adversarial testing improves security",
+        "reason": "Edge type 'validated_by' is incorrect directionality. Cryptography evidence should support the alignment design rationale, not be validated by alignment contests. This edge should be reversed to flow: Cryptography evidence → (supports) → Red-teaming design rationale → (implemented_by) → Alignment contests."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Alignment scheme-breaking contests with human experts",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Current value is 2 (Experimental/PoC) but source provides only conceptual proposal ('Maybe we should have') without evidence of prior implementation, proof-of-concept, pilot studies, or systematic validation in alignment context. Should be maturity 1 (Foundational/Theoretical)."
+      },
+      {
+        "node_name": "Conduct iterative alignment experiments on subhuman AI during fine-tuning",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Current value is 2 but source presents this as conceptual proposal without evidence of systematic implementation or pilot studies. Should be maturity 1 (Foundational/Theoretical)."
+      },
+      {
+        "node_name": "Cryptography adversarial testing improves security",
+        "field": "concept_category",
+        "json_new_value": "validation evidence",
+        "reason": "Lowercase 'validation evidence' in current extraction should follow schema format consistent with other nodes (no capitalization difference observed in schema, but ensure consistency)"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Extinction of humanity by misaligned AGI",
+        "type": "concept",
+        "description": "The argument that the first sufficiently capable but mis-aligned artificial general intelligence will destroy all humans and seize the cosmic future.",
+        "aliases": [
+          "AGI-caused human extinction",
+          "AI existential catastrophe"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Inevitable AGI development due to weak global coordination in digital information space",
+        "type": "concept",
+        "description": "Because software is easily copied, cheap, and useful, many actors will race to build the most powerful AIs, making a ban or pause practically impossible.",
+        "aliases": [
+          "AGI race dynamics",
+          "Unstoppable AGI progress"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Instrumental reward function hacking by superintelligence",
+        "type": "concept",
+        "description": "A sufficiently capable AI will pursue shortcuts that maximise its formal reward, including seizing inputs or manipulating humans, sacrificing everything else.",
+        "aliases": [
+          "Superintelligent reward hacking",
+          "Goal mis-specification exploitation"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Alignment as security problem against superhuman adversary",
+        "type": "concept",
+        "description": "Like cryptography, alignment must hold under attack by an intelligence much smarter than its designers; therefore it requires adversarial testing.",
+        "aliases": [
+          "Security framing of AI alignment",
+          "Alignment needs adversarial robustness"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Red-team alignment schemes before deployment",
+        "type": "concept",
+        "description": "Because alignment is a security problem, designers should have independent teams attempt to break proposed alignment mechanisms before AGI is run.",
+        "aliases": [
+          "Pre-deployment alignment red-teaming",
+          "Adversarial testing of alignment designs"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Progressive experiments on subhuman AI to evaluate alignment",
+        "type": "concept",
+        "description": "Testing alignment methods on less-capable systems may reveal flaws, even though guarantees do not fully transfer to superhuman systems.",
+        "aliases": [
+          "Sub-human capability alignment tests",
+          "Incremental alignment experimentation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Iterative alignment testing on increasingly capable models",
+        "type": "concept",
+        "description": "Developers repeatedly test and refine alignment techniques as model capability rises, looking for breaking points before superhuman levels are reached.",
+        "aliases": [
+          "Capability-scaled alignment evaluation",
+          "Staged alignment testing"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Subhuman alignment testing provides uncertain evidence for superhuman robustness",
+        "type": "concept",
+        "description": "Success on weaker systems does not guarantee success on a superintelligence but still yields informative failure modes.",
+        "aliases": [
+          "Scaling uncertainty of alignment tests",
+          "Partial evidence from weaker models"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Hold public alignment red-teaming contests prior to AGI deployment",
+        "type": "intervention",
+        "description": "Before deploying AGI, organise open or incentivised contests where independent teams attempt to find catastrophic failures in the proposed alignment scheme.",
+        "aliases": [
+          "Run alignment scheme-breaking competitions",
+          "Pre-launch alignment hackathons"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Alignment scheme-breaking contests with human experts",
+        "type": "concept",
+        "description": "Organised competitions challenge participants to find exploits in proposed alignment mechanisms, akin to cryptographic or cybersecurity contests.",
+        "aliases": [
+          "Alignment hacking competitions",
+          "Public red-team contests"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conduct iterative alignment experiments on subhuman AI during fine-tuning",
+        "type": "intervention",
+        "description": "During the fine-tuning/RL phase, repeatedly test alignment methods on models below AGI level, analyse failures, and iterate before scaling further.",
+        "aliases": [
+          "Progressive capability alignment trials",
+          "Staged alignment experimentation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Cryptography adversarial testing improves security",
+        "type": "concept",
+        "description": "Historical experience shows that encryption schemes only become reliable after open adversarial scrutiny, supporting similar approaches for alignment.",
+        "aliases": [
+          "Historical cryptography contests",
+          "Proof-by-analogy from crypto"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Extinction of humanity by misaligned AGI",
+        "target_node": "Instrumental reward function hacking by superintelligence",
+        "description": "If a superintelligent AI hacks its reward channel, it may consume all resources, leading to human extinction.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Instrumental reward function hacking by superintelligence",
+        "target_node": "Alignment as security problem against superhuman adversary",
+        "description": "Viewing alignment as a security problem is proposed to tackle reward hacking.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Alignment as security problem against superhuman adversary",
+        "target_node": "Red-team alignment schemes before deployment",
+        "description": "Security mindset motivates adversarial red-team design.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Cryptography adversarial testing improves security",
+        "target_node": "Hold public alignment red-teaming contests prior to AGI deployment",
+        "description": "Historical evidence motivates adopting contests as a practical intervention.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Progressive experiments on subhuman AI to evaluate alignment",
+        "target_node": "Iterative alignment testing on increasingly capable models",
+        "description": "Iterative capability scaling is how experiments are carried out.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Iterative alignment testing on increasingly capable models",
+        "target_node": "Subhuman alignment testing provides uncertain evidence for superhuman robustness",
+        "description": "Results from lower-level tests offer partial validation for the approach.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Subhuman alignment testing provides uncertain evidence for superhuman robustness",
+        "target_node": "Conduct iterative alignment experiments on subhuman AI during fine-tuning",
+        "description": "Despite uncertainty, available evidence motivates carrying out iterative sub-human experiments.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "d8bda41d037640d9649e42f7cbe71585"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.242933"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER - Schema Compliance: Original extraction omits mandatory fields 'node_rationale', 'intervention_lifecycle_rationale', 'intervention_maturity_rationale', 'edge_confidence_rationale', and 'edge_rationale' per final_output_format specification. All 12 nodes and 11 edges require these fields.",
+      "BLOCKER - Invalid fields: Both nodes and edges contain 'embedding' fields not specified in schema, indicating template contamination.",
+      "MAJOR - Coverage Gap: Section 'Maybe people will build narrow AIs instead of AGIs' presents critical argument that narrow AIs will be combined into AGI due to transfer learning superiority. This entire causal path is absent from extraction but represents key inevitability mechanism.",
+      "MAJOR - Coverage Gap: Section 'Why can't we use continuity' explains sharp capability discontinuities as WHY subhuman tests have limited validity. This theoretical insight is completely missing, leaving the validation evidence node disconnected from its foundational justification.",
+      "MAJOR - Coverage Gap: Section 'Can't we experiment on sub-human intelligences?' establishes that 'We might not even get a single retry' - this single-deployment constraint is crucial justification for pre-deployment red-teaming but absent from extraction.",
+      "MAJOR - Coverage Gap: The catch-22 ('We don't know what superintelligence will do until we run it, and it is dangerous to run it') is core to explaining why alignment is superhuman-difficulty problem, but extraction does not explicitly capture this paradox.",
+      "MAJOR - Edge Directionality Error: Edge from 'Alignment scheme-breaking contests' to 'Cryptography adversarial testing' uses 'validated_by' - backwards. Cryptography success should support the design rationale FOR contests, not be validated BY them. Also, this causes both nodes to reference each other creating logical circularity.",
+      "MAJOR - Intervention Maturity Overstated: Both interventions marked maturity=2 (Experimental/PoC) but source only proposes these as conceptual frameworks with no pilot studies, deployment history, or systematic validation. Should be maturity=1 per instruction that maturity requires empirical validation evidence.",
+      "MINOR - Node Classification Error: 'Alignment scheme-breaking contests with human experts' is marked type='concept' with concept_category='implementation mechanism' but is actually describing a proposed intervention, not a concept node. Should be type='intervention'.",
+      "MINOR - Node Classification Error: 'Iterative alignment testing on increasingly capable models' is marked type='concept' but appears to function as implementation mechanism for the intervention, creating classification ambiguity.",
+      "Referential Integrity: All edge source and target node references successfully resolve. Connectivity is complete - no orphaned nodes.",
+      "Source Evidence Validation: Core risk 'Extinction of humanity by misaligned AGI' is explicitly stated ('how AI is going to kill us all'). Problem analysis nodes (reward hacking, weak coordination) are directly quoted. Theoretical insight (security framing) and design rationales (red-teaming, subhuman testing) are clearly present. However, several supporting premises are underrepresented in the extracted graph density."
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/G6nnufmiTwTaXAbKW/the-alignment-problem",
+  "paper_id": "575725fe6b4cea8c9fcb40d5392915d0",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

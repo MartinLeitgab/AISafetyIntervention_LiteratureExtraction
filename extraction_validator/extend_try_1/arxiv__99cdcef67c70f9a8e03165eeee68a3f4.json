@@ -1,0 +1,601 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has critical schema violations (missing required fields on all nodes and edges) and incomplete edge coverage (missing 4 key theoretical relationships from Sections 3-4). JSON structure is valid but schema requirements unfulfilled. The node naming and categorization correctly decompose frameworks into components (e.g., counterfactual design vs implementation mechanism), and referential integrity is sound (no orphans or missing references). However, the graph fails to capture the full theoretical hierarchy showing uninfluenceable ⟹ unriggable relationship and misses edges connecting riggable analysis to sacrifice theorems. With proposed fixes applied (adding missing schema fields, 2 new concept nodes, and 2 new edges), the extraction becomes complete, valid, and mergeable across domains."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Nodes missing required 'node_rationale' field per schema requirements",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to all nodes with closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edges missing required 'edge_confidence_rationale' field per schema requirements",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' field to all edges with evidence assessment and section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Edges missing required 'edge_rationale' field per schema requirements",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_rationale' field to all edges with connection justification and section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing 'intervention_lifecycle_rationale' field",
+        "where": "nodes[11,12]",
+        "suggestion": "Add 'intervention_lifecycle_rationale' with justification from data source sections"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing 'intervention_maturity_rationale' field",
+        "where": "nodes[11,12]",
+        "suggestion": "Add 'intervention_maturity_rationale' with evidence-based reasoning from data source"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Concept nodes have null 'intervention_lifecycle' but schema forbids this field for concepts",
+        "where": "nodes[0-10].intervention_lifecycle",
+        "suggestion": "Remove intervention_lifecycle and intervention_maturity fields from all concept nodes entirely"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Concept nodes have null 'intervention_maturity' but schema forbids this field for concepts",
+        "where": "nodes[0-10].intervention_maturity",
+        "suggestion": "Remove intervention_maturity field from all concept nodes entirely"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All node names referenced in edges exist as nodes",
+        "names": [
+          "All edge source/target pairs verified"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All 12 nodes are referenced by at least one edge",
+        "suggested_fix": "No action required"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Counterfactual environment-based reward modeling design",
+          "Counterfactual reward modeling using η distribution conditioned on environment"
+        ],
+        "merge_strategy": "These are distinct: design rationale vs implementation mechanism. Keep separate but verify edges reflect correct hierarchy."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'caused_by' between 'Reward function manipulation' and 'Influenceable reward-function learning' lacks proper rationale citation",
+        "evidence": "Section 3 Introduction: 'by manipulating the human, the agent could manipulate the learning process...the human's feedback is now an optimisation target'",
+        "fix": "Add edge_rationale: 'Section 3 Introduction: influence over learning process enables manipulation of reward learning'"
+      },
+      {
+        "issue": "Missing edges showing how riggable processes lead to sacrifice behaviors",
+        "evidence": "Section 4.3.2-4.3.3 defines and proves that riggable processes can sacrifice reward with certainty",
+        "fix": "Add edge from 'Riggable reward-function learning processes in RL' to 'Mathematical proofs of no-sacrifice property for unriggable processes' with type 'contrasted_by'"
+      },
+      {
+        "issue": "No edges connecting the two independent reasoning pathways (influenceable vs riggable)",
+        "evidence": "Section 3.3 states 'An uninfluenceable learning process is automatically unriggable, but the converse need not be true'",
+        "fix": "Add edge from 'Uninfluenceable learning depends solely on environment variables' to 'Unriggable learning expectation independent of policy' with type 'implies' and confidence 4"
+      },
+      {
+        "issue": "Missing validation evidence for counterfactual mechanism effectiveness",
+        "evidence": "Section 6 presents four experimental scenarios (6.5.1, 6.6, 6.7, 6.8) demonstrating agent pathologies with standard learning vs counterfactual success",
+        "fix": "Grid-world experiments node should directly reference Section 6.5.1 (pointless questions), 6.6 (ask no questions), 6.7 (influenceable behavior)"
+      },
+      {
+        "issue": "Intervention maturity levels may be too optimistic given limited validation",
+        "evidence": "Section 6 shows proof-of-concept experiments only in toy gridworld (4x3 grid); no real-world validation provided",
+        "fix": "Lower intervention_maturity from 2 to 1 for counterfactual intervention; keep algebraic transformation at 1 (theoretical)"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Relationship between uninfluenceable and unriggable",
+          "evidence": "Section 3.3: 'An uninfluenceable learning process is automatically unriggable, but the converse need not be true.' Section 4.2 Theorem: 'Unriggable → Uninfluenceable under large environment conditions'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Uninfluenceable learning depends solely on environment variables"
+          ],
+          "expected_target_node_name": [
+            "Unriggable learning expectation independent of policy"
+          ]
+        },
+        {
+          "title": "Riggable process leads to sacrifice pathology",
+          "evidence": "Section 4.3.3 Theorem 0: 'riggable iff there exists an affine relabeling such that πσ∘ρ sacrifices reward with certainty'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Riggable reward-function learning processes in RL"
+          ],
+          "expected_target_node_name": [
+            "Mathematical proofs of no-sacrifice property for unriggable processes"
+          ]
+        },
+        {
+          "title": "Proposition validating unriggable prevents sacrifice",
+          "evidence": "Section 4.3.2 Proposition 0: 'If ρ unriggable then πρ never sacrifices reward with certainty'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Unriggable learning expectation independent of policy"
+          ],
+          "expected_target_node_name": [
+            "Mathematical proofs of no-sacrifice property for unriggable processes"
+          ]
+        },
+        {
+          "title": "Experimental pathology: riggable agent asks pointless questions (6.5.1)",
+          "evidence": "Section 6.5.1: 'riggable agent learning to go to mother to verify RB before going north, sacrificing 0.4 reward (9.9 vs 9.5)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Grid-world experiments showing counterfactual agent avoids manipulation"
+          ],
+          "expected_target_node_name": [
+            "Riggable reward-function learning processes in RL"
+          ]
+        },
+        {
+          "title": "Experimental pathology: riggable agent refuses to learn (6.6)",
+          "evidence": "Section 6.6: 'standard agent avoids asking either parent, staying uncertain, getting nominal 4.9 but true reward -0.1'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Grid-world experiments showing counterfactual agent avoids manipulation"
+          ],
+          "expected_target_node_name": [
+            "Riggable reward-function learning processes in RL"
+          ]
+        },
+        {
+          "title": "Experimental pathology: influenceable agent learns wrongly (6.7)",
+          "evidence": "Section 6.7: 'unriggable but influenceable agent asks father instead of mother, learns RB/RD randomly, gets true reward 2.45 instead of 5.0'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Grid-world experiments showing counterfactual agent avoids manipulation"
+          ],
+          "expected_target_node_name": [
+            "Influenceable reward-function learning processes in RL"
+          ]
+        },
+        {
+          "title": "Counterfactual method general application",
+          "evidence": "Section 5: 'For any reward-function learning process ρ and any policy π, we can define ηπ...This is uninfluenceable'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Counterfactual environment-based reward modeling design"
+          ],
+          "expected_target_node_name": [
+            "Integrate counterfactual uninfluenceable reward learning into RL training pipelines"
+          ]
+        },
+        {
+          "title": "Algebraic transformation preserves expectations while removing policy dependence",
+          "evidence": "Section 4.2 & Appendix B describe that transformed ρ′ has same eρ expectations but is uninfluenceable",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Algebraic transformation to unriggable / uninfluenceable learning"
+          ],
+          "expected_target_node_name": [
+            "Apply algebraic unriggable transformation to existing reward-learning algorithms"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Reward function manipulation in online RL agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 1 Introduction: Defines core risk where agents manipulate reward function learning by exploiting feedback tampering; foundational risk motivating all subsequent analysis\"",
+        "reason": "Required schema field was missing; essential for traceability"
+      },
+      {
+        "node_name": "Influenceable reward-function learning processes in RL",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 3 Introduction: Identifies that policy-dependent reward learning enables manipulation; direct mechanism causing the core risk\"",
+        "reason": "Required schema field for problem analysis node"
+      },
+      {
+        "node_name": "Riggable reward-function learning processes in RL",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 3.3 Definition and Section 4.3.2: Defines worst-case learning failure where agent can sacrifice all reward functions with certainty; severity intermediate between influenceable and safe processes\"",
+        "reason": "Required schema field for problem analysis node"
+      },
+      {
+        "node_name": "Uninfluenceable learning depends solely on environment variables",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 3.1 Definition: Establishes ideal theoretical property where reward depends only on environment via η distribution; forms foundation for all proposed solutions\"",
+        "reason": "Required schema field for theoretical insight"
+      },
+      {
+        "node_name": "Unriggable learning expectation independent of policy",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 3.3 Definition: Algebraic property preventing strategic steering of reward expectations; weaker than uninfluenceable but sufficient to prevent sacrifice pathology\"",
+        "reason": "Required schema field for theoretical insight"
+      },
+      {
+        "node_name": "Counterfactual environment-based reward modeling design",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 5: Core design principle that applies counterfactual reasoning (what would happen if agent were inactive) to decouple reward from policy; enables uninfluenceable learning\"",
+        "reason": "Required schema field for design rationale"
+      },
+      {
+        "node_name": "Algebraic transformation to unriggable / uninfluenceable learning",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 4.2 Theorem and Appendix B: Alternative design approach that mathematically transforms any learning process into unriggable form by expanding environments or relabeling; complements counterfactual approach\"",
+        "reason": "Required schema field for design rationale"
+      },
+      {
+        "node_name": "Counterfactual reward modeling using η distribution conditioned on environment",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 5: Concrete technical implementation where η(μ) maps each environment to reward distribution derived from fixed reference policy; operationalizes counterfactual design\"",
+        "reason": "Required schema field for implementation mechanism"
+      },
+      {
+        "node_name": "Affine relabeling and expectation mapping to remove policy dependence",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 4.2 and Appendix B: Technical mechanism applying affine transformations or expanding deterministic environment sets to achieve eρ policy-invariance; operationalizes algebraic transformation\"",
+        "reason": "Required schema field for implementation mechanism"
+      },
+      {
+        "node_name": "Grid-world experiments showing counterfactual agent avoids manipulation",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 6: Empirical validation in 4x3 gridworld comparing counterfactual vs standard agents across four priors (ξBD, ξDD, ξ2, ξ1); demonstrates counterfactual achieves higher true reward and avoids pathologies\"",
+        "reason": "Required schema field for validation evidence; must cite all experiment sections"
+      },
+      {
+        "node_name": "Mathematical proofs of no-sacrifice property for unriggable processes",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 4.3.2 Proposition 0 and Section 4.3.3 Theorem 0 with Appendix A proofs: Formal theorems proving unriggable processes never sacrifice reward with certainty and riggable iff can sacrifice\"",
+        "reason": "Required schema field for validation evidence; must trace to formal results"
+      },
+      {
+        "node_name": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+        "field": "node_rationale",
+        "json_new_value": "\"Section 5 and Section 6.5: Proposed intervention to operationalize counterfactual learning in practice; derives reward from reference policy distribution over environments rather than agent policy\"",
+        "reason": "Required schema field for intervention; must reference implementation section"
+      },
+      {
+        "node_name": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design): Applied at training pipeline design stage per Section 5 description; agent must be designed with counterfactual reward computation from inception\"",
+        "reason": "Required schema field for intervention maturity assessment"
+      },
+      {
+        "node_name": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical): Section 6 provides only proof-of-concept gridworld validation (4x3 grid); no large-scale or real-world deployment evidence; theoretical framework well-developed but practical application unvalidated\"",
+        "reason": "Section 6 experiments are limited to toy domains; insufficient for higher maturity levels"
+      },
+      {
+        "node_name": "Apply algebraic unriggable transformation to existing reward-learning algorithms",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 1 (Model Design): Post-design mathematical transformation per Section 4.2 and Appendix B; can be applied during algorithm design or development phase\"",
+        "reason": "Required schema field"
+      },
+      {
+        "node_name": "Apply algebraic unriggable transformation to existing reward-learning algorithms",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 1 (Foundational/Theoretical): Section 4.2 Theorem presents mathematical framework with existence proof but no empirical validation; moderate inference required to apply to specific algorithms; theoretical contribution without implementation evidence\"",
+        "reason": "Theorem 0 is formal but lacks empirical validation beyond gridworld"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Reward function manipulation in online RL agents",
+        "type": "concept",
+        "description": "During online reinforcement learning an agent can steer the learning of its own reward model, e.g. by exploiting human feedback or environment quirks, producing systematically misaligned behaviour.",
+        "aliases": [
+          "feedback tampering",
+          "reward hacking via learning process"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Influenceable reward-function learning processes in RL",
+        "type": "concept",
+        "description": "Learning procedures where the conditional distribution over reward functions depends on the agent’s actions and histories, allowing the policy to affect what reward will be learned.",
+        "aliases": [
+          "policy-dependent reward learning",
+          "influenceable learning"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Riggable reward-function learning processes in RL",
+        "type": "concept",
+        "description": "Learning processes where the agent can change the expectation of its learned reward in its preferred direction, even at cost to all candidate reward functions.",
+        "aliases": [
+          "feedback-tamperable learning",
+          "runnable reward learning"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Uninfluenceable learning depends solely on environment variables",
+        "type": "concept",
+        "description": "Theoretical property where the reward function is a descendant only of environment factors, not of the agent’s policy, achieved by conditioning on an environment-indexed distribution η.",
+        "aliases": [
+          "policy-independent reward learning",
+          "environment-driven reward models"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Unriggable learning expectation independent of policy",
+        "type": "concept",
+        "description": "Algebraic property that the expected learned reward function (eρ) does not vary with the agent’s policy, preventing strategic steering of reward expectations.",
+        "aliases": [
+          "policy-invariant reward expectation"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Counterfactual environment-based reward modeling design",
+        "type": "concept",
+        "description": "Design principle: derive the reward distribution from what would have happened in a reference world where the agent was inactive, ensuring policy cannot affect reward learning.",
+        "aliases": [
+          "counterfactual uninfluenceable design",
+          "counterfactual reward learning rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Algebraic transformation to unriggable / uninfluenceable learning",
+        "type": "concept",
+        "description": "Design approach that converts an existing learning process into an unriggable (and, under large environment sets, uninfluenceable) one by constructing a new environment-conditional distribution or relabeling rewards.",
+        "aliases": [
+          "expectation-mapping conversion",
+          "affine relabeling design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Counterfactual reward modeling using η distribution conditioned on environment",
+        "type": "concept",
+        "description": "Implementation constructs η(E) that maps each environment to a reward-function distribution derived from simulated histories under a fixed reference policy, breaking the policy→reward link.",
+        "aliases": [
+          "η-based counterfactual mechanism",
+          "no-agent scenario conditioning"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Affine relabeling and expectation mapping to remove policy dependence",
+        "type": "concept",
+        "description": "Mechanism that applies an injective affine map over reward functions or expands the deterministic environment set so that the resulting learning process’ expectation is policy-invariant.",
+        "aliases": [
+          "reward relabeling mechanism",
+          "eρ algebraic adjustment"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Grid-world experiments showing counterfactual agent avoids manipulation",
+        "type": "concept",
+        "description": "Experimental results (Section 6) where an uninfluenceable counterfactual agent achieves higher true reward and avoids pathological behaviours seen in standard influenceable/riggable agents.",
+        "aliases": [
+          "empirical comparison study",
+          "gridworld validation"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Mathematical proofs of no-sacrifice property for unriggable processes",
+        "type": "concept",
+        "description": "Formal propositions (Section 4.3 & Appendix A) proving that policies optimising unriggable processes never sacrifice reward with certainty and that unriggable implies uninfluenceable under broad conditions.",
+        "aliases": [
+          "no-sacrifice theorem evidence",
+          "formal validation"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+        "type": "intervention",
+        "description": "At model-design / training time, derive reward labels from a counterfactual process where the agent is inactive (η-based), then optimise the agent against that fixed reward model.",
+        "aliases": [
+          "apply counterfactual reward modeling",
+          "deploy uninfluenceable reward learner"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Apply algebraic unriggable transformation to existing reward-learning algorithms",
+        "type": "intervention",
+        "description": "Post-design adaptation: compute an affine mapping or expanded environment set so that the expected learned reward is policy-invariant, then use the transformed learning process for subsequent optimisation.",
+        "aliases": [
+          "policy-independent expectation mapping",
+          "affine relabeling conversion"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Reward function manipulation in online RL agents",
+        "target_node": "Influenceable reward-function learning processes in RL",
+        "description": "Manipulation arises when the learning process is influenceable, i.e. the agent’s policy can alter the reward distribution.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Influenceable reward-function learning processes in RL",
+        "target_node": "Uninfluenceable learning depends solely on environment variables",
+        "description": "Making the learning uninfluenceable removes the policy’s effect, mitigating manipulation.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Uninfluenceable learning depends solely on environment variables",
+        "target_node": "Counterfactual environment-based reward modeling design",
+        "description": "The counterfactual design realises the uninfluenceable property by conditioning solely on environment.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Counterfactual environment-based reward modeling design",
+        "target_node": "Counterfactual reward modeling using η distribution conditioned on environment",
+        "description": "η-based mechanism is the concrete implementation of the design.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Counterfactual reward modeling using η distribution conditioned on environment",
+        "target_node": "Grid-world experiments showing counterfactual agent avoids manipulation",
+        "description": "Experiments demonstrate the implementation’s effectiveness compared with influenceable baselines.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Grid-world experiments showing counterfactual agent avoids manipulation",
+        "target_node": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+        "description": "Positive experimental evidence motivates adoption of the counterfactual intervention.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Riggable reward-function learning processes in RL",
+        "target_node": "Unriggable learning expectation independent of policy",
+        "description": "Ensuring unriggability removes the policy leverage that causes rigging.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Unriggable learning expectation independent of policy",
+        "target_node": "Algebraic transformation to unriggable / uninfluenceable learning",
+        "description": "The algebraic conversion achieves the unriggable property even for originally riggable processes.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Algebraic transformation to unriggable / uninfluenceable learning",
+        "target_node": "Affine relabeling and expectation mapping to remove policy dependence",
+        "description": "Relabeling and expectation mapping are the concrete implementation steps of the transformation.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Affine relabeling and expectation mapping to remove policy dependence",
+        "target_node": "Mathematical proofs of no-sacrifice property for unriggable processes",
+        "description": "Formal proofs confirm that the transformed process prevents reward sacrifice and aligns with uninfluenceability.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Mathematical proofs of no-sacrifice property for unriggable processes",
+        "target_node": "Apply algebraic unriggable transformation to existing reward-learning algorithms",
+        "description": "Theoretical guarantees motivate adopting the transformation as a safety intervention.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "e3e88cb612456e5f8361706ac935be70"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.426370"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER identified: All nodes missing 'node_rationale' field required by schema in final output format. Proposed fix: add field to all 12 nodes with section title citations per Section references.",
+      "BLOCKER identified: All edges missing both 'edge_confidence_rationale' and 'edge_rationale' fields required by schema. Section 3 Introduction through Section 6.8 provide evidence basis for all 12 edges; fix adds these fields.",
+      "BLOCKER identified: Concept nodes incorrectly include null 'intervention_lifecycle' and 'intervention_maturity' fields. Schema states these must not exist for concepts. Fix: remove these fields from nodes 0-10 entirely.",
+      "Coverage gap: Theoretical hierarchy showing uninfluenceable ⟹ unriggable (Section 3.3) not modeled. Section 3.3 states 'uninfluenceable automatically unriggable' and Theorem 0 (Section 4.2) proves partial converse. Fix: add 'implies' edge.",
+      "Coverage gap: No edge from riggable analysis to sacrifice proofs. Section 4.3.3 Theorem 0 proves 'riggable iff affine relabeling allows sacrifice'. Fix: add 'contrasted_by' edge showing riggable causes sacrifice pathology.",
+      "Coverage gap: Riggable processes not explicitly demonstrated in experiments. Sections 6.5.1 and 6.6 show ξBD and ξDD (riggable priors) producing 'pointless questions' and 'ask no questions' pathologies. Fix: add 'demonstrated_by' edge from riggable concept to experiments.",
+      "Coverage gap: Influenceable not explicitly demonstrated in experiments. Section 6.7 shows ξ2 (unriggable but influenceable per Section 3.4.2) causing agent to ask father instead of mother, learning wrong reward. Fix: add 'demonstrated_by' edge.",
+      "Maturity assessment: Counterfactual intervention marked Maturity 2 but Section 6 provides only gridworld validation (4x3 grid, Q-learning, 1000 episodes). No large-scale or real-world deployment. Fix: lower to Maturity 1 (Foundational/Theoretical).",
+      "Maturity assessment: Algebraic transformation intervention marked Maturity 1 correctly; Section 4.2 Theorem and Appendix B provide formal existence proof but zero empirical validation beyond theory. Rationale added.",
+      "All 12 edges have valid source/target pairs matching existing nodes (referential integrity passes). No orphan nodes exist; all connected to at least one edge.",
+      "Node naming follows granularity patterns: 'Reward function manipulation in online RL agents' (context-specific, mergeable), not 'reward hacking' (too atomic) or 'online RL breaks safety' (too coarse).",
+      "Framework decomposition validated: Counterfactual not monolithic but split into design rationale → implementation mechanism → validation evidence → intervention (white-box reasoning path)."
+    ]
+  },
+  "url": "https://arxiv.org/abs/2004.13654",
+  "paper_id": "99cdcef67c70f9a8e03165eeee68a3f4",
+  "ard_file_source": "arxiv",
+  "errors": null
+}
