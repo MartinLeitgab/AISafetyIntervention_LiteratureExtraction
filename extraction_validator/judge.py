@@ -860,16 +860,19 @@ class KGJudge:
         existing_names = set(final_nodes.keys())
 
         # Apply add_nodes fixes
-        for add_node in proposed_fixes.add_nodes or []:
+        for add_node_fix in proposed_fixes.add_nodes or []:
+            if add_node_fix.data is None:
+                continue
+            add_node = add_node_fix.data.new_node
             candidate_name = add_node.name
             if not candidate_name:
-                continue
+                break
             # Ensure unique node names
             if candidate_name in existing_names:
-                continue
+                break
             existing_names.add(candidate_name)
             if add_node.type == "concept":
-                   final_nodes[add_node.name] = GraphNode(
+                final_nodes[add_node.name] = GraphNode(
                         name=add_node.name,
                         aliases=[add_node.name],
                         type=add_node.type,
@@ -885,10 +888,10 @@ class KGJudge:
             else:
                 final_nodes[add_node.name] = GraphNode(
                         name=add_node.name,
-                        aliases=[add_node.name],
+                        aliases=[add_node.aliases],
                         type=add_node.type,
                         description="Auto-generated node based on validation",
-                        concept_category=None,
+                        concept_category=add_node.concept_category,
                         intervention_lifecycle=add_node.intervention_lifecycle if add_node.intervention_lifecycle else 
                             1 
                         ,
@@ -898,31 +901,34 @@ class KGJudge:
                         intervention_maturity_rationale=None,
                         node_rationale=None,
                     )
-            for edge in add_node.edges:
-                if add_node.name == edge.target_node:
-                    # skip self-referential edges
+            for edge in add_node_fix.data.new_edges:
+                if edge.data is None:
+                    continue
+                other_node_name = edge.data.get_other_node_name(add_node.name)
+                if other_node_name is None:
                     continue
                 final_edges.append(
                     GraphEdge(
                         source_node=add_node.name,
-                        target_node=edge.target_node,
-                        type=edge.type,
-                        description=edge.description,
-                        edge_confidence=edge.edge_confidence,
+                        target_node=other_node_name,
+                        type=edge.data.type,
+                        description=edge.data.description,
+                        edge_confidence=edge.data.edge_confidence,
                     )
                 )
+            break
 
         # Apply deletions
-        nodes_to_delete = {d.node_name for d in proposed_fixes.deletions or []}
-
-
+        nodes_to_delete = {d.data.node_name for d in proposed_fixes.deletions or [] if d.data is not None}
 
         for fix in proposed_fixes.change_node_fields or []:
+            if fix.data is None:
+                continue
             # Have to pop here because we may need to change the node name
-            node_to_fix = cast(Dict[str, GraphNode | None], final_nodes).pop(fix.node_name, None)
+            node_to_fix = cast(Dict[str, GraphNode | None], final_nodes).pop(fix.data.node_name, None)
             if node_to_fix is None:
                 continue
-            node_to_fix = fix_node_field(node_to_fix, fix)
+            node_to_fix = fix_node_field(node_to_fix, fix.data)
             final_nodes[node_to_fix.name] = node_to_fix
             
         final_node_list = [
@@ -931,7 +937,9 @@ class KGJudge:
 
         edges_to_delete = defaultdict[str, set[str]](set)
         for d in proposed_fixes.edge_deletions or []:
-            edges_to_delete[d.source_node_name].add(d.target_node_name)
+            if d.data is None:
+                continue
+            edges_to_delete[d.data.source_node_name].add(d.data.target_node_name)
 
         out_final_edges: List[Dict[str, Any]] = []
 
@@ -943,6 +951,10 @@ class KGJudge:
             if e.target_node in edges_to_delete:
                 continue
             if  e.target_node in edges_to_delete[e.source_node]:
+                continue
+            if e.source_node not in final_nodes:
+                continue
+            if e.target_node not in final_nodes:
                 continue
             out_final_edges.append(e.model_dump())
 
