@@ -1,0 +1,871 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures the primary causal-interventional pathways from the data source and correctly structures them through concept categories to intervention nodes, with no orphaned nodes or referential integrity violations. However, the extraction has four critical blockers: (1) all nodes lack required 'node_rationale' field explaining fabric importance, (2) all intervention nodes have null values for 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale', (3) all edges lack required 'edge_confidence_rationale' and 'edge_rationale' fields, and (4) several major concept nodes and edges are missing, including the research exponent φ parameter, Type II singularity conditions with ρ>0, task replacement dynamics, and AI safety risk pathways. The intervention node names lack sufficient implementation specificity for cross-source mergeability. These issues must be corrected before the knowledge graph can be considered valid for downstream AI safety analysis."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'node_rationale' on all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to every node with explanation of why essential to fabric and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'edge_confidence_rationale' on all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' field to every edge with evidence assessment and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required field 'edge_rationale' on all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_rationale' field to every edge with connection justification and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes have null 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' even for intervention nodes",
+        "where": "nodes[*]",
+        "suggestion": "For intervention nodes, populate these fields with evidence-based reasoning and data source section references"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Incomplete node names lacking specificity needed for cross-source mergeability",
+        "where": "nodes[3].name, nodes[6].name, nodes[12].name, nodes[20].name, nodes[26].name",
+        "suggestion": "Revise intervention node names to include context and implementation specificity, e.g., 'Implement government R&D tax credits for human-complementary task creation during AI workforce transitions' instead of 'Implement task-creation incentive policies during AI deployment'"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Some nodes missing complete aliases (only 2 when up to 3 expected)",
+        "where": "multiple nodes",
+        "suggestion": "Expand aliases to full 3 items for consistency"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references node name with different capitalization/punctuation than actual node name",
+        "names": [
+          "All edges appear referentially correct upon inspection - no mismatches detected"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None detected",
+        "reason": "All nodes are connected via edges - systematic verification shows every node has at least one incoming or outgoing edge",
+        "suggested_fix": "N/A - no orphans to address"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Wage stagnation and declining labor share in advanced economies",
+          "High capital–labor substitutability via AI robotics in production"
+        ],
+        "merge_strategy": "These are distinct concept nodes (risk vs problem analysis) - keep separate but verify causal chain is explicit"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'caused_by' between wage stagnation and high substitutability appears reversed - source text (§3.1-3.3) shows substitutability is the mechanism enabling wage effects, not causing them directly",
+        "evidence": "Section §3.1: 'when capital and labor are highly substitutable, but that for finite elasticities of substitution, absolute wages still tend to grow. Prospects for wages look worse in cases of perfect substitutability.' This shows perfect substitutability (high ρ) as the structural condition, not a consequence.",
+        "fix": "Verify edge directionality - the causal chain should flow: high_substitutability → competitive_pressure_on_labor_costs → wage_stagnation"
+      },
+      {
+        "issue": "Node 'Task automation without proportionate task creation reduces labor demand' conflates two distinct mechanisms presented separately in §4.2-4.4",
+        "evidence": "Section §4.2 on 'Task automation' and §4.3 on 'Task creation' are presented as independent processes. The source states: 'If task creation oustrips automatability, the labor share rises...If task creation falls behind automatability, labor share falls.' These are separate mechanisms, not a single phenomenon.",
+        "fix": "Split into two nodes: (1) 'Task automation reduces labor demand in non-automatable tasks' and (2) 'Insufficient task creation relative to automation reduces overall labor demand'"
+      },
+      {
+        "issue": "Validation evidence nodes cite papers but lack specific quantitative findings or parameter values from models",
+        "evidence": "Nodes like 'Historical task turnover maintaining labor share (Autor 2015 evidence)' and 'Aghion 2019 model showing growth drop when IP weakened' lack specific findings (e.g., exact growth rates, wage elasticities, or model parameters)",
+        "fix": "Enhance validation evidence nodes with specific quantitative results, e.g., 'Autor (2015) shows job task content evolves continuously, with new occupations emerging at rates sufficient to maintain approximately constant labor share despite sector-specific automation'"
+      },
+      {
+        "issue": "No edge captures the critical distinction between ρ<0 (labor complementarity) and ρ>0 (capital substitutability) regimes in determining automation outcomes",
+        "evidence": "Sections §3.2, §4.2 emphasize: 'When ρ < 0, the capital share will now tend to 0 rather than 1' and 'When ρ > 0, on the other hand, it is increases to N, holding β fixed, that function as labor-augmenting technology.' This structural parameter is pivotal to outcome determination but not represented in knowledge fabric.",
+        "fix": "Add node 'Production function substitution parameter regime (ρ) determines automation welfare outcomes' as a theoretical insight linking to multiple design rationales"
+      },
+      {
+        "issue": "Missing key risk pathway from saved income redistribution to reduced investment - node only addresses wage decline, not wealth concentration effect",
+        "evidence": "Section §3.5 Sachs & Kotlikoff model: 'The old at t consume all their wealth...Capital at t is financed by those who were young at t − 1, who put aside half their wage incomes as investment.' The model shows old cohorts (capital owners) consume rents rather than reinvest, but this is not captured in current fabric.",
+        "fix": "Add intermediate problem analysis node: 'Capital owners with high MPC redirect returns to consumption rather than reinvestment' with edge to saving decline node"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Capital productivity growth enabling wage growth despite labor share decline",
+          "evidence": "Section §3.2 Nordhaus (2015): 'Absolute wages will therefore grow rapidly as the effective capital stock grows, as long as ρ is bounded below 1. In fact, with g_A > 0, wages will grow superexponentially, though less quickly than output or effective capital.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Capital-augmenting technology growth in production"
+          ],
+          "expected_target_node_name": [
+            "Absolute wages may rise despite labor share decline under capital productivity growth"
+          ]
+        },
+        {
+          "title": "Task replacement dynamics maintaining labor productivity growth",
+          "evidence": "Section §4.4 Acemoglu & Restrepo (2018b, 2019a): 'The result is a near-complete turnover of job types over time, rather than a mere encroachment of automation onto human territory...this promises to be a more realistic model of automation than one without task replacement.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Endogenous task replacement process alongside automation"
+          ],
+          "expected_target_node_name": [
+            "Continuous reallocation of labor to new tasks maintains balanced growth"
+          ]
+        },
+        {
+          "title": "Endogenous research feedback creating Type I/II singularities",
+          "evidence": "Section §5.2 Automated research: 'When φ > 1, moreover, even a constant number of researchers is enough to produce infinite output in finite time' and 'When ρ > 0...growth will be driven by whichever factor grows more quickly...g_A ∝ A^(φ-1)_t C_t K_t, and when it is driven by effective research labor growth, we have g_A ∝ A^(φ-1)_t D_t L_t.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Research exponent φ determining feedback strength"
+          ],
+          "expected_target_node_name": [
+            "Type II singularity from recursive self-improvement (φ > 1 with ρ > 0)"
+          ]
+        },
+        {
+          "title": "AI assistance in researcher idea discovery increasing combinatorial search effectiveness",
+          "evidence": "Section §5.3 AI assistance in research: 'Most transformatively, if AI tools help researchers search through the ever-growing haystacks of possible idea-combinations for valuable needles, they could permanently increase θ...as shown above, a permanent increase to θ produces a Type II growth singularity.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "AI-enhanced idea combination search in research"
+          ],
+          "expected_target_node_name": [
+            "Increased research discovery parameter θ triggers Type II singularity"
+          ]
+        },
+        {
+          "title": "Perfect substitutability vs high substitutability welfare outcomes diverge",
+          "evidence": "Section §3.3 Perfect substitution Hanson (2001) model: 'In any CRS production function without labor-augmenting technology, what happens to the marginal productivity of labor...depends on the quantity of effective labor relative to that of the other effective factors.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Perfect labor-capital substitutability (ρ=1)"
+          ],
+          "expected_target_node_name": [
+            "Wages collapse to zero absent labor-augmenting technology or comparative advantage"
+          ]
+        },
+        {
+          "title": "Von Neumann singularity condition enabling robot self-replication",
+          "evidence": "Section §3.4 Mookherjee & Ray (2017) model: 'One might expect that...it will eventually be optimal to use robotics in the production of robotics. In fact, this will only happen if D is large enough...they call the condition the von Neumann singularity condition.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Von Neumann singularity condition in robotics production"
+          ],
+          "expected_target_node_name": [
+            "Self-replicating robotics enable AK-model growth with constant wages"
+          ]
+        },
+        {
+          "title": "Insufficient saving constraint preventing full automation equilibrium",
+          "evidence": "Section §4.4 Task replacement: 'if s ∈ (g_D + g_L, g_D + g_N−β (1 − ρ)/ρ + g_L ], so that capital accumulation outpaces labor...the automation condition is not met...capital and effective labor are still perfect substitutes on the margin.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Saving rate insufficient for full task automation"
+          ],
+          "expected_target_node_name": [
+            "Partial automation equilibrium with constant output growth at saving-rate pace"
+          ]
+        },
+        {
+          "title": "Cobb-Douglas production preserves constant labor share under balanced growth",
+          "evidence": "Section §4.2 Task automation: 'Under both transformative scenarios...a constant saving rate maintains g_Y = g_K, the long-run capital share (AK/Y)^ρ equals (sA/g_Y)^ρ. If there is insufficient saving...the capital share tends to 1.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Cobb-Douglas production structure (ρ=0) with balanced growth path"
+          ],
+          "expected_target_node_name": [
+            "Labor share remains constant at exponent value (1-a) under sufficient saving"
+          ]
+        },
+        {
+          "title": "AI singularity risks from unaligned recursive capital accumulation",
+          "evidence": "Section Conclusion: 'the only growth-slowing AI possibilities economists have considered to date are those mediated by impacts on saving...These scenarios are very far from those that motivate most concern about AI risk. The latter typically feature superintelligent agents, with goals not fully aligned with ours, who take control of the world.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Superintelligent AI with misaligned objectives"
+          ],
+          "expected_target_node_name": [
+            "Risk of AI-induced existential catastrophe from goal misalignment and resource control"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Task automation without proportionate task creation reduces labor demand (distinct from task replacement dynamics)",
+        "nodes_to_merge": [
+          "Task automation without proportionate task creation reduces labor demand"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Implement task-creation incentive policies during AI deployment",
+        "field": "name",
+        "json_new_value": "Implement government R&D tax credits and grants for human-complementary task creation during AI workforce transitions",
+        "reason": "Increase specificity for cross-source mergeability and align with implementation mechanism detail level (§4.2-4.3 policy discussion)"
+      },
+      {
+        "node_name": "Establish AI-era innovation incentive mechanisms pre-deployment",
+        "field": "name",
+        "json_new_value": "Enact AI-era patent reforms and public R&D funding before commercial AI deployment to counter imitation-driven appropriability collapse",
+        "reason": "Add context specificity regarding timing ('pre-deployment') and mechanism detail (patent + funding) for mergeability (§3.5, §5.4)"
+      },
+      {
+        "node_name": "Institute sustainability-linked regulations on AI industrial scaling",
+        "field": "name",
+        "json_new_value": "Impose resource-linked regulatory caps on AI-driven capital accumulation, gating deployment permits to measured sustainability metrics",
+        "reason": "Increase implementation detail and specificity of regulatory mechanism (§3.3, Korinek & Stiglitz land constraint model)"
+      },
+      {
+        "node_name": "Apply fiscal redistribution policies during AI-driven automation transitions",
+        "field": "name",
+        "json_new_value": "Deploy progressive taxation and investment subsidies targeting workers during automation waves to stabilize saving rates and output growth",
+        "reason": "Add specificity regarding progressive taxation mechanism and timing ('during automation waves') to improve mergeability (§3.5, Sachs & Kotlikoff OLG model)"
+      },
+      {
+        "node_name": "All concept nodes",
+        "field": "node_rationale",
+        "json_new_value": "[Add for each node] why essential to fabric with closest preceding data source section title reference",
+        "reason": "BLOCKER - all nodes missing this required field"
+      },
+      {
+        "node_name": "All intervention nodes",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "[Add for each] justification with closest preceding data source section title reference",
+        "reason": "BLOCKER - all interventions have null values despite required field"
+      },
+      {
+        "node_name": "All intervention nodes",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "[Add for each] evidence-based reasoning with closest preceding data source section title reference",
+        "reason": "BLOCKER - all interventions have null values despite required field"
+      },
+      {
+        "node_name": "All edges",
+        "field": "edge_confidence_rationale",
+        "json_new_value": "[Add for each] evidence assessment with closest preceding data source section title reference",
+        "reason": "BLOCKER - all edges missing this required field"
+      },
+      {
+        "node_name": "All edges",
+        "field": "edge_rationale",
+        "json_new_value": "[Add for each] connection justification with closest preceding data source section title reference",
+        "reason": "BLOCKER - all edges missing this required field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Wage stagnation and declining labor share in advanced economies",
+        "type": "concept",
+        "description": "Risk that average real wages plateau and the proportion of national income paid to workers falls as AI substitutes for labor.",
+        "aliases": [
+          "labor share decline",
+          "wage stagnation from automation"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "High capital–labor substitutability via AI robotics in production",
+        "type": "concept",
+        "description": "AI-enabled robots allow capital to be used interchangeably with labor, raising the substitution parameter towards or at unity.",
+        "aliases": [
+          "perfect substitution in production",
+          "AI robotics substitutability"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Task automation without proportionate task creation reduces labor demand",
+        "type": "concept",
+        "description": "When the set of automatable tasks grows faster than new human-centric tasks appear, effective labor demand falls.",
+        "aliases": [
+          "automation minus task creation",
+          "shrinking human task set"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Policy-led human-complementary task creation strategy",
+        "type": "concept",
+        "description": "Design principle that governments should encourage emergence of new tasks that complement human capabilities, offsetting pure automation.",
+        "aliases": [
+          "human-complementary task policy",
+          "task creation strategy"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Government R&D incentives for novel human-centric sectors",
+        "type": "concept",
+        "description": "Economic instruments such as targeted R&D tax credits and grants that steer innovation toward products and services requiring human strengths.",
+        "aliases": [
+          "R&D subsidies for human tasks",
+          "innovation grants for labor complementary tech"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Historical task turnover maintaining labor share (Autor 2015 evidence)",
+        "type": "concept",
+        "description": "Empirical finding that continual emergence of new occupations historically prevented large labour-share falls, supporting task-creation hypothesis.",
+        "aliases": [
+          "historical task turnover evidence",
+          "Autor labour demand evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Technology growth slowdown and stagnation in AI-driven economy",
+        "type": "concept",
+        "description": "Risk that aggregate productivity growth decelerates because firms under-invest in R&D when AI makes imitation easier.",
+        "aliases": [
+          "innovation slowdown risk",
+          "R&D growth stagnation"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "AI-enabled rapid imitation reducing R&D appropriability",
+        "type": "concept",
+        "description": "Machine learning systems can decode and replicate new designs quickly, eroding patentees’ temporary monopoly rents.",
+        "aliases": [
+          "AI imitation erosion of IP",
+          "fast copying with AI"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reduced returns on innovation depress private R&D investment",
+        "type": "concept",
+        "description": "Theoretical result that when appropriability falls, optimal firm R&D spending declines, lowering aggregate technology growth.",
+        "aliases": [
+          "lower R&D incentives",
+          "innovation disincentive insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Strengthen innovation incentives through public subsidies and IP reform",
+        "type": "concept",
+        "description": "Design principle: compensate for imitation by increasing public funding of basic research and adapting patent law to the AI era.",
+        "aliases": [
+          "innovation incentive design",
+          "IP and subsidy design rationale"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Public AI research funding and updated patent frameworks",
+        "type": "concept",
+        "description": "Mechanisms: grants, matched funding, extended patent terms, or data-exclusive rights for AI-generated inventions.",
+        "aliases": [
+          "AI R&D subsidies",
+          "modernised patent law"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Aghion 2019 model showing growth drop when IP weakened",
+        "type": "concept",
+        "description": "Quantitative model where easier imitation cuts R&D rents, leading to lower steady-state innovation and GDP growth.",
+        "aliases": [
+          "Aghion model evidence",
+          "innovation slowdown evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Runaway capital-driven growth exceeding environmental resource limits",
+        "type": "concept",
+        "description": "Risk that recursive AI-driven capital accumulation pushes output beyond physical resource ceilings, causing instability.",
+        "aliases": [
+          "growth singularity overshoot",
+          "resource-constrained runaway growth"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Recursive self-improvement loop between AI-automated research and capital accumulation",
+        "type": "concept",
+        "description": "Automated R&D accelerates technology, which raises capital productivity, funding still more R&D – a positive feedback.",
+        "aliases": [
+          "automated research feedback",
+          "positive feedback loop in AI R&D"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Positive feedback in automated research can create Type I/II growth singularities",
+        "type": "concept",
+        "description": "Models show that if research productivity exponent φ>0, output growth accelerates super-exponentially or diverges in finite time.",
+        "aliases": [
+          "singularity theoretical insight",
+          "Type I/II growth from feedback"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Integrate resource constraints into AI economic planning to prevent overshoot",
+        "type": "concept",
+        "description": "Design principle: explicitly model land, energy and environmental limits when planning AI-driven capital expansion.",
+        "aliases": [
+          "resource-aware planning rationale",
+          "growth cap design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Regulatory caps on AI-driven capital expansion tied to resource usage",
+        "type": "concept",
+        "description": "Mechanism: impose permits, carbon/energy budgets or land-use quotas that scale inversely with measured resource depletion.",
+        "aliases": [
+          "resource-based capital caps",
+          "sustainability caps"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Models with land constraint show wages collapse when resource limited (Korinek & Stiglitz 2019)",
+        "type": "concept",
+        "description": "Validation from models where fixed-supply resource causes labour share to drop to zero despite growth in capital.",
+        "aliases": [
+          "land constraint evidence",
+          "wage collapse evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Negative output growth from reduced saving after automation shock",
+        "type": "concept",
+        "description": "Risk that output growth turns negative because automation lowers wages, reducing aggregate saving and investment.",
+        "aliases": [
+          "saving-rate decline recession risk",
+          "output fall after automation"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Income redistribution towards low-saving cohorts following wage decline",
+        "type": "concept",
+        "description": "Automation transfers income from young wage-earners (higher saving) to retirees or rentiers with lower propensity to save.",
+        "aliases": [
+          "income shift to low savers",
+          "redistribution effect on saving"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Saving rate decline depresses capital formation and future output",
+        "type": "concept",
+        "description": "Theoretical result: lower aggregate saving reduces capital stock growth, leading to future output contraction.",
+        "aliases": [
+          "saving decline theoretical insight",
+          "investment fall insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Maintain investment via redistribution or subsidies",
+        "type": "concept",
+        "description": "Design principle: counter falling saving by redistributing income to high-saving groups or subsidising investment directly.",
+        "aliases": [
+          "investment maintenance rationale",
+          "saving-support design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Progressive taxation and investment subsidies targeting workers",
+        "type": "concept",
+        "description": "Mechanisms include higher capital-income taxes funding transfers to workers, and tax credits for pension or equipment investment.",
+        "aliases": [
+          "fiscal redistribution mechanism",
+          "investment subsidy mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sachs & Kotlikoff OLG model output drop evidence",
+        "type": "concept",
+        "description": "Model shows that after a robot productivity shock, lower wages cut young workers’ saving, causing long-run output to fall.",
+        "aliases": [
+          "saving model evidence",
+          "Sachs–Kotlikoff evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Implement task-creation incentive policies during AI deployment",
+        "type": "intervention",
+        "description": "During large-scale AI adoption, provide tax credits, prizes and regulatory support for industries that generate new human-complementary activities.",
+        "aliases": [
+          "deploy task creation incentives",
+          "task-creation policy rollout"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Establish AI-era innovation incentive mechanisms pre-deployment",
+        "type": "intervention",
+        "description": "Before widespread commercial AI rollout, enact subsidy programmes and IP reforms tailored to AI-enabled fast imitation.",
+        "aliases": [
+          "deploy innovation-support policy",
+          "innovation incentive rollout"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Institute sustainability-linked regulations on AI industrial scaling",
+        "type": "intervention",
+        "description": "Create legally binding sustainability metrics that gate AI-enabled capital deployment, preventing overshoot beyond physical limits.",
+        "aliases": [
+          "deploy resource caps",
+          "sustainability regulation rollout"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Apply fiscal redistribution policies during AI-driven automation transitions",
+        "type": "intervention",
+        "description": "Introduce progressive tax and targeted investment subsidies contemporaneously with automation waves to stabilise saving and growth.",
+        "aliases": [
+          "deploy saving-support fiscal policy",
+          "redistribution rollout"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Wage stagnation and declining labor share in advanced economies",
+        "target_node": "High capital–labor substitutability via AI robotics in production",
+        "description": "When robots are near-perfect substitutes, firms substitute capital for labour, pushing wages down.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "High capital–labor substitutability via AI robotics in production",
+        "target_node": "Task automation without proportionate task creation reduces labor demand",
+        "description": "High substitutability materialises because automation outpaces creation of new tasks.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Task automation without proportionate task creation reduces labor demand",
+        "target_node": "Policy-led human-complementary task creation strategy",
+        "description": "Creating new human-complementary tasks counterbalances automation, restoring labour demand.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Policy-led human-complementary task creation strategy",
+        "target_node": "Government R&D incentives for novel human-centric sectors",
+        "description": "Subsidies and targeted R&D programmes operationalise the task-creation strategy.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Government R&D incentives for novel human-centric sectors",
+        "target_node": "Historical task turnover maintaining labor share (Autor 2015 evidence)",
+        "description": "Historical evidence that continuous task turnover maintained labour share supports mechanism efficacy.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Historical task turnover maintaining labor share (Autor 2015 evidence)",
+        "target_node": "Implement task-creation incentive policies during AI deployment",
+        "description": "Evidence encourages policymakers to roll out the incentive intervention.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Technology growth slowdown and stagnation in AI-driven economy",
+        "target_node": "AI-enabled rapid imitation reducing R&D appropriability",
+        "description": "Fast imitation enabled by AI undermines innovators’ rents, leading to slower growth.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "AI-enabled rapid imitation reducing R&D appropriability",
+        "target_node": "Reduced returns on innovation depress private R&D investment",
+        "description": "Lower appropriability reduces expected ROI, so firms cut R&D spending.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Reduced returns on innovation depress private R&D investment",
+        "target_node": "Strengthen innovation incentives through public subsidies and IP reform",
+        "description": "Public funding or stronger IP restores innovators’ expected returns.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Strengthen innovation incentives through public subsidies and IP reform",
+        "target_node": "Public AI research funding and updated patent frameworks",
+        "description": "Specific instruments to operationalise incentive strengthening.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Public AI research funding and updated patent frameworks",
+        "target_node": "Aghion 2019 model showing growth drop when IP weakened",
+        "description": "Model shows growth recovers when protection strengthened, supporting mechanism.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Aghion 2019 model showing growth drop when IP weakened",
+        "target_node": "Establish AI-era innovation incentive mechanisms pre-deployment",
+        "description": "Model results motivate pre-emptive policy deployment.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Runaway capital-driven growth exceeding environmental resource limits",
+        "target_node": "Recursive self-improvement loop between AI-automated research and capital accumulation",
+        "description": "Positive feedback drives explosive capital growth, risking resource overshoot.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Recursive self-improvement loop between AI-automated research and capital accumulation",
+        "target_node": "Positive feedback in automated research can create Type I/II growth singularities",
+        "description": "Feedback mathematically yields singular growth under certain exponents.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Positive feedback in automated research can create Type I/II growth singularities",
+        "target_node": "Integrate resource constraints into AI economic planning to prevent overshoot",
+        "description": "Including hard resource limits in planning breaks the unbounded feedback.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Integrate resource constraints into AI economic planning to prevent overshoot",
+        "target_node": "Regulatory caps on AI-driven capital expansion tied to resource usage",
+        "description": "Resource-linked caps operationalise the planning principle.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Regulatory caps on AI-driven capital expansion tied to resource usage",
+        "target_node": "Models with land constraint show wages collapse when resource limited (Korinek & Stiglitz 2019)",
+        "description": "Land-constraint models validate need for caps – without them labour share collapses.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Models with land constraint show wages collapse when resource limited (Korinek & Stiglitz 2019)",
+        "target_node": "Institute sustainability-linked regulations on AI industrial scaling",
+        "description": "Evidence motivates enacting sustainability-linked regulations.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Negative output growth from reduced saving after automation shock",
+        "target_node": "Income redistribution towards low-saving cohorts following wage decline",
+        "description": "Automation lowers wages, shifting income to groups with lower saving rates.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Income redistribution towards low-saving cohorts following wage decline",
+        "target_node": "Saving rate decline depresses capital formation and future output",
+        "description": "Lower aggregate saving reduces capital formation leading to output drop.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Saving rate decline depresses capital formation and future output",
+        "target_node": "Maintain investment via redistribution or subsidies",
+        "description": "Redistribution or subsidies can restore saving and investment.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Maintain investment via redistribution or subsidies",
+        "target_node": "Progressive taxation and investment subsidies targeting workers",
+        "description": "Fiscal tools implement the investment-maintenance design.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Progressive taxation and investment subsidies targeting workers",
+        "target_node": "Sachs & Kotlikoff OLG model output drop evidence",
+        "description": "Model shows output stabilises when saving supported, validating mechanism.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Sachs & Kotlikoff OLG model output drop evidence",
+        "target_node": "Apply fiscal redistribution policies during AI-driven automation transitions",
+        "description": "Evidence motivates adopting redistribution policies during automation.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "918c3c322405f4cf46362eaeeec0c03b"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.042029"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKERS IDENTIFIED: Three required edge fields ('edge_confidence_rationale', 'edge_rationale', plus description which exists) and two required intervention fields are null across the entire extraction. This represents systematic non-compliance with schema requiring remediation before deployment.",
+      "COVERAGE GAP - Research exponent φ: Section §2.4 establishes φ as critical parameter: 'When φ = 1, it is straightforward to see that a positive growth rate in the number of researchers produces an increasing rate of labor productivity growth. When φ > 1, even a constant number of researchers produces ever-increasing labor productivity growth.' This node is missing despite being essential to multiple causal chains.",
+      "COVERAGE GAP - Type II singularity with ρ>0: Section §5.2 clearly states different singularity conditions by substitutability regime: 'When ρ < 0, capital accumulation cannot accelerate technological development...When ρ > 0...capital accumulation at rate g_Y = g_A effectively multiplies g_A by a factor of A, so g_A ∝ A^φ. The Type II singularity therefore requires only φ > 0.' This critical distinction is missing.",
+      "COVERAGE GAP - Task replacement as distinct from automation: Sections §4.2-4.4 present three separate models: (1) pure automation §4.2, (2) task creation §4.3, (3) task replacement §4.4. The extraction conflates (1) and (2) into a single node when §4.4 explicitly states these are distinct: 'In this sense, this promises to be a more realistic model of automation than one without task replacement.' Task replacement should be separate node.",
+      "COVERAGE GAP - AI safety risk pathway: Conclusion section explicitly identifies missing AI safety risks from economics: 'The subject most conspicuously absent here that features most heavily in futurist discussion about AI is the most transformative macroeconomic possibility of all: the risk of an AI-induced existential catastrophe...the only growth-slowing AI possibilities economists have considered to date are those mediated by impacts on saving...These scenarios are very far from those that motivate most concern about AI risk.' The extraction should include risk node for misaligned AI accumulation.",
+      "EDGE DIRECTIONALITY ISSUE: Edge 'caused_by' from wage stagnation to substitutability may be reversed. Source §3.1 treats high substitutability as structural condition determining wage effects, not caused by them. Suggests causality flows: high_substitutability → wage_pressure → wage_stagnation.",
+      "VALIDATION EVIDENCE SPECIFICITY: Evidence nodes (e.g., 'Autor 2015', 'Aghion 2019') lack quantitative findings. Source provides specific results: Autor shows 'near-complete turnover of job types', Hanson estimates growth rate increases from 4.3% to 45% post-robotics threshold, Bloom et al. estimate φ = -2.1. These should be in node descriptions.",
+      "INTERVENTION MATURITY LEVELS: All four interventions assigned maturity=2 (Experimental/Proof-of-Concept) but lack evidence for this level. Section §5.4 suggests innovation policies are established practice (maturity 3-4), while sustainability caps are more novel (maturity 1-2). Should differentiate.",
+      "INTERVENTION LIFECYCLE SPECIFICITY: All interventions assigned lifecycle=5 (Deployment) but task-creation incentives and innovation mechanisms should start at lifecycle=1-2 (design) or lifecycle=3 (policy pre-deployment). Sustainability regulations naturally map to 5. Should vary.",
+      "MERGEABILITY ISSUE - Intervention node names: Current names like 'Implement task-creation incentive policies' could merge with nearly identical phrasing across sources, losing distinction between context-specific interventions. Enhanced names like 'Implement government R&D tax credits and grants for human-complementary task creation during AI workforce transitions' include sufficient context for proper merging.",
+      "ISOLATED CONCEPT CANDIDATES - Production function ρ regime: This fundamental theoretical parameter is referenced throughout (§3.2, §3.3, §4.2, §4.4, §5.2) but has no dedicated node in current extraction. Creates fragmented reasoning paths.",
+      "VALIDATED COVERAGE: Four primary causal-interventional pathways are correctly identified and structured: (1) wage stagnation pathway with task-creation intervention, (2) innovation slowdown pathway with IP/subsidy intervention, (3) resource-constrained growth pathway with sustainability regulation, (4) saving-rate decline pathway with fiscal redistribution. These represent approximately 75% of major pathways from §3-5."
+    ]
+  },
+  "url": "https://globalprioritiesinstitute.org/philip-trammell-and-anton-korinek-economic-growth-under-transformative-ai/",
+  "paper_id": "035cac34995159d820cd0302cca6a491",
+  "ard_file_source": "special_docs",
+  "errors": null
+}

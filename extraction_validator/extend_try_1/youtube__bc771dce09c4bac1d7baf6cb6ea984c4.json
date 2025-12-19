@@ -1,0 +1,787 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has strong structural integrity with 25 well-connected nodes and valid referential relationships, but has CRITICAL SCHEMA VIOLATIONS requiring all edge objects to include missing required fields ('edge_confidence_rationale', 'edge_rationale') and all nodes to include 'node_rationale'. Additionally, concept categorization errors exist (e.g., 'validation evidence' misapplied to predictive statements) and significant coverage gaps exist around job displacement, regulatory convergence, trademark monopolization, and model feedback loops. The extraction captures the primary causal pathway from data scraping → privacy violations → regulatory risk → interventions, but misses important secondary risks and evidence chains. JSON is technically valid but schema-incomplete; knowledge fabric is logically sound but content-incomplete relative to source material."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Node 'Regulatory bans on AI foundation models due to illegal data collection' has edge_confidence in edges but confidence should be in edge objects, not nodes",
+        "where": "nodes[0]",
+        "suggestion": "Remove 'embedding' and other non-schema fields; ensure all node attributes match schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All nodes have 'embedding': null field not in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove all 'embedding' fields from nodes"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "All edges have 'embedding': null field not in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove all 'embedding' fields from edges"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Missing required edge attributes: 'edge_confidence_rationale' and 'edge_rationale' are specified in schema but absent from all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' to every edge with citations to source sections"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Missing 'node_rationale' on all nodes - schema requires this field with source citation",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add 'node_rationale' to every node explaining why it is essential to the fabric with source section reference"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention nodes missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale'",
+        "where": "nodes[19-22].intervention_lifecycle_rationale",
+        "suggestion": "Add detailed rationales for lifecycle and maturity assignments with source citations"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references exist as defined nodes",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All 25 nodes connect to at least one edge in the knowledge fabric",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Training data scraped without consent from copyrighted and personal sources",
+          "Dependence on external scraped data sources for model scaling"
+        ],
+        "merge_strategy": "These represent distinct concepts: one describes the problematic practice (scraping), the other describes the dependency on that practice. Keep separate as they serve different causal roles in the fabric - the first is problem analysis, the second is a cascading problem."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Node 'Sam Altman statement that data spend will decline as models get smarter' categorized as validation_evidence, but it is predictive/speculative, not validating existing mechanisms",
+        "evidence": "Source: 'Sam Altman recently said that he predicts open AI data spend will go down as models get smarter I wonder if he means that the models might be able to train their own synthetic data sets'",
+        "fix": "Recategorize as 'theoretical insight' since it is a forward-looking prediction, not validation of current implementation"
+      },
+      {
+        "issue": "Node 'Public announcement of chat history disable feature (April 2023)' validates implementation mechanisms but does not validate the full design rationale of GDPR compliance",
+        "evidence": "Source mentions the announcement but does not provide evidence of GDPR compliance validation - only that the feature exists",
+        "fix": "Clarify edge confidence as 2 (weak) because announcement is only partial evidence; does not validate compliance"
+      },
+      {
+        "issue": "Edge confidence 3-4 for GDPR compliance concepts appears too high given source only references GDPR deadlines and potential violations, not validated compliance solutions",
+        "evidence": "Source: 'open AI has until the end of this week to comply with Europe's strict data protection regime the gdpr but that it will likely be impossible for the company to comply'",
+        "fix": "Lower confidence to 2 for edges connecting to GDPR compliance as it is aspirational, not validated"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Data controversies arising from scraped pirated content",
+          "evidence": "Source: 'they harvest pirated eBooks from the site formerly known as book ZZ', 'the pile contains more pirated ebooks'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Training data scraped without consent from copyrighted and personal sources"
+          ],
+          "expected_target_node_name": [
+            "Regulatory bans on AI foundation models due to illegal data collection"
+          ]
+        },
+        {
+          "title": "Unknown training data composition posing audit risks",
+          "evidence": "Source: 'openai won't reveal the data set used to train GPT4', 'openai themselves might not even know what's in their training set', 'inadvertently mixed into the training set'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Problem analysis node about unknown training data composition"
+          ],
+          "expected_target_node_name": [
+            "Conduct full training corpus audit and remove copyrighted or personal data lacking consent"
+          ]
+        },
+        {
+          "title": "User content from Patreon, Wikipedia, Reddit used without compensation",
+          "evidence": "Source: 'exclusive content of patreon', 'Reddit wants them to pay', 'Wikipedia editors that spend thousands of hours', 'users own the content that they post on stack Overflow'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Training data scraped without consent from copyrighted and personal sources"
+          ],
+          "expected_target_node_name": [
+            "Compensating data contributors reduces litigation and regulatory risk"
+          ]
+        },
+        {
+          "title": "Job displacement and future lawsuit risks from model-generated training",
+          "evidence": "Source: 'how does that Bode for the future when some people inevitably get laid off because they're simply not needed anymore', 'prove that you've lost a job because of a specific tool which was trained using in part your own data then would these lawsuits succeed'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Risk node about job displacement from AI trained on user data"
+          ],
+          "expected_target_node_name": [
+            "Intervention to address user compensation or data contribution rights"
+          ]
+        },
+        {
+          "title": "Regulatory enforcement convergence across EU, Brazil, California",
+          "evidence": "Source: 'Regulators everywhere from Brazil to California will be paying close attention to what happens next', 'could fundamentally change the way AI companies go about collecting data'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Regulatory bans on AI foundation models due to illegal data collection"
+          ],
+          "expected_target_node_name": [
+            "Global regulatory convergence on data collection practices"
+          ]
+        },
+        {
+          "title": "Copyright claims from publishers and journalists whose content used",
+          "evidence": "Source: 'CEO of News Corp said that clearly they are using proprietary content there should be obviously some compensation'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Training data scraped without consent from copyrighted and personal sources"
+          ],
+          "expected_target_node_name": [
+            "Compensating data contributors reduces litigation and regulatory risk"
+          ]
+        },
+        {
+          "title": "OpenAI attempting to trademark GPT to monopolize model names",
+          "evidence": "Source: 'openai are trying to trademark the name GPT', 'Auto GPT memory GPT hugging GPT they might be stopped from using that name'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Risk node about trademark monopolization limiting open innovation"
+          ],
+          "expected_target_node_name": [
+            "Any related intervention"
+          ]
+        },
+        {
+          "title": "ChatGPT Business tier offered as solution for data privacy protection",
+          "evidence": "Source: 'they said that you need to upgrade to chatbt business available in the coming months to ensure that your data won't be used to train our models by default'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Implementation mechanism or design rationale"
+          ],
+          "expected_target_node_name": [
+            "Regulatory compliance or user privacy protection"
+          ]
+        },
+        {
+          "title": "Open-source model alternatives (Stability AI, etc.) also using problematic training data",
+          "evidence": "Source: 'the pile which was used recently by stability AI for their new llm stable LM'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Industry-wide problem with training data sourcing"
+          ],
+          "expected_target_node_name": [
+            "Systemic regulatory response needed"
+          ]
+        },
+        {
+          "title": "Possibility that models train on their own outputs creating synthetic loops",
+          "evidence": "Source: 'if GPT4 can generate a data set that is used to train GPT5', 'Google accused by their own employees of training Bard with chat GPT data'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Model-generated synthetic data pipeline"
+          ],
+          "expected_target_node_name": [
+            "Generate synthetic training data with existing models to reduce dependence on scraped data"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Lack of transparency in training data sourcing and composition",
+        "nodes_to_merge": [
+          "Training data scraped without consent from copyrighted and personal sources",
+          "Unknown composition of training datasets creates audit and contamination risks"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Sam Altman statement that data spend will decline as models get smarter",
+        "field": "concept_category",
+        "json_new_value": "\"theoretical insight\"",
+        "reason": "Current categorization as 'validation evidence' is inaccurate. Altman's statement is a forward-looking prediction/hypothesis about future model behavior, not evidence validating current mechanisms. Source: 'Sam Altman recently said that he predicts open AI data spend will go down' - uses predictive language."
+      },
+      {
+        "node_name": "Public announcement of chat history disable feature (April 2023)",
+        "field": "concept_category",
+        "json_new_value": "\"implementation mechanism\"",
+        "reason": "Currently categorized as 'validation evidence' but the announcement itself is the implementation, not the validation of it. The actual user behavior/adoption would be validation. This is the concrete mechanism deployed."
+      },
+      {
+        "node_name": "Implement granular consent settings separating chat storage from training data collection in user interface",
+        "field": "intervention_maturity",
+        "json_new_value": "3",
+        "reason": "Current maturity of 4 (Operational/Deployment) is incorrect. While partial toggle exists, granular separation is not yet implemented - only the coupled toggle is deployed. This is a proposed enhancement. Source: 'if you opt not to give them your chat history they still monitor the chats' and 'what if I want to keep my history on but disable model training' - shows current implementation is NOT granular."
+      },
+      {
+        "node_name": "Generate synthetic training data with existing models to reduce dependence on scraped data",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Maturity level 1 (Foundational/Theoretical) is correct; source language is speculative: 'I wonder if he means that the models might be able to train their own synthetic data sets'. This is hypothesis, not deployment."
+      },
+      {
+        "node_name": "Conduct full training corpus audit and remove copyrighted or personal data lacking consent",
+        "field": "intervention_lifecycle",
+        "json_new_value": "1",
+        "reason": "Changed from 2 to 1 (Model Design, not Pre-Training) because auditing should happen as foundational retrospective work before deciding on pre-training strategy. This is a design-phase governance intervention."
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Regulatory bans on AI foundation models due to illegal data collection",
+        "type": "concept",
+        "description": "The threat that regulators (EU, Brazil, California, etc.) may ban, fine, or force deletion of GPT-class models if their training data violates privacy or copyright law.",
+        "aliases": [
+          "GDPR-driven model bans",
+          "Legal prohibition of GPT models"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "User privacy violations in conversational AI services",
+        "type": "concept",
+        "description": "Storage and reuse of individual conversation data without granular consent threatens GDPR rights and personal privacy.",
+        "aliases": [
+          "Personal data exposure in ChatGPT",
+          "Unconsented use of chat logs"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Training data scraped without consent from copyrighted and personal sources",
+        "type": "concept",
+        "description": "Large-scale crawling of sources such as pirated e-books, Patreon posts, personal blogs and Reddit without explicit permission.",
+        "aliases": [
+          "Unlicensed web scraping",
+          "Pirated content ingestion"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Lack of granular user consent controls for data usage",
+        "type": "concept",
+        "description": "Users must choose between keeping chat history and allowing training, or disabling both; fine-grained consent is absent.",
+        "aliases": [
+          "Single opt-out toggle",
+          "Coupled history+training setting"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "GDPR compliance requires lawful basis and transparency in data collection",
+        "type": "concept",
+        "description": "European data-protection law mandates consent or other legal grounds plus explainability for personal data usage.",
+        "aliases": [
+          "Lawful basis for processing",
+          "Transparency requirement under GDPR"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Compensating data contributors reduces litigation and regulatory risk",
+        "type": "concept",
+        "description": "Providing payment or credit to content owners can satisfy copyright claims and defuse lawsuits.",
+        "aliases": [
+          "Paying creators for data",
+          "Revenue sharing for training data"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Synthetic data generation reduces dependence on scraped data",
+        "type": "concept",
+        "description": "Creating training corpora with existing models can lower need for external copyrighted data and related risks.",
+        "aliases": [
+          "Model-generated pre-training data",
+          "Self-generated corpora"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Provide opt-out mechanisms and data export features to align with GDPR rights",
+        "type": "concept",
+        "description": "Design goal to let users refuse training use and inspect stored data, satisfying GDPR rights to object and access.",
+        "aliases": [
+          "User control over data",
+          "GDPR-aligned consent design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "License data sources and pay for high-quality data to ensure legality",
+        "type": "concept",
+        "description": "Pursuing contracts (e.g. with Reddit, StackOverflow) to acquire data under clear terms rather than scraping.",
+        "aliases": [
+          "Paid data agreements",
+          "Licensed corpus acquisition"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Audit and clean training datasets to remove copyrighted or personal data lacking consent",
+        "type": "concept",
+        "description": "Building internal processes/tools to detect and excise disallowed content from existing corpora.",
+        "aliases": [
+          "Dataset provenance audit",
+          "Training corpus sanitisation"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Leverage model-generated synthetic data for pre-training",
+        "type": "concept",
+        "description": "Use outputs from capable models (e.g. GPT-4) to build new corpora that avoid copyright, lowering legal exposure.",
+        "aliases": [
+          "Self-augmentation of corpus",
+          "Model-self training data"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Single toggle to disable chat history and training data collection in ChatGPT settings",
+        "type": "concept",
+        "description": "UI element where users can turn off both saving history and using it for model training.",
+        "aliases": [
+          "Chat history & training off switch",
+          "Disable data collection toggle"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "User data export download feature for transparency",
+        "type": "concept",
+        "description": "Button that emails users a JSON of every past conversation, supporting data-access rights.",
+        "aliases": [
+          "Export all ChatGPT data",
+          "GDPR access implementation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Negotiation of paid licensing agreements with Reddit, Stack Overflow and others",
+        "type": "concept",
+        "description": "OpenAI and data-owning platforms discuss paid access to their user-generated content for model training.",
+        "aliases": [
+          "API monetisation deals",
+          "Content provider contracts"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Internal dataset provenance audit process",
+        "type": "concept",
+        "description": "Procedures to detect inadvertent inclusion of evaluation benchmarks or restricted data in training corpora.",
+        "aliases": [
+          "Dataset cleaning workflow",
+          "Training data provenance checking"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Model-generated synthetic data pipeline",
+        "type": "concept",
+        "description": "Pipeline where an existing model creates text that becomes part of the next model’s pre-training set.",
+        "aliases": [
+          "Synthetic corpus generation",
+          "Self-bootstrapped data system"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Footnote in GPT-4 technical report acknowledging inadvertent inclusion of benchmark data",
+        "type": "concept",
+        "description": "Official admission that part of Big-Bench was unintentionally in the training data, evidencing audit needs.",
+        "aliases": [
+          "GPT-4 benchmark contamination footnote",
+          "Inadvertent training set mixing evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "News reports of Reddit and Stack Overflow negotiating licensing fees for AI training data",
+        "type": "concept",
+        "description": "Media confirmation that platforms are charging AI companies for corpus use, validating licensing approach.",
+        "aliases": [
+          "Reddit API fee coverage",
+          "StackOverflow licensing news"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "License content from data providers and compensate contributors before using data in pre-training",
+        "type": "intervention",
+        "description": "Secure contractual rights and share revenue with platforms/users (e.g. Reddit, StackOverflow) prior to ingesting their data.",
+        "aliases": [
+          "Pay-per-API data acquisition",
+          "Contributor revenue sharing"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 2,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Dependence on external scraped data sources for model scaling",
+        "type": "concept",
+        "description": "Scaling laws have driven continued scraping of the open web, making models vulnerable to legal or supply shocks.",
+        "aliases": [
+          "External data reliance",
+          "Scraped data dependency"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sam Altman statement that data spend will decline as models get smarter",
+        "type": "concept",
+        "description": "CEO prediction provides public evidence motivating synthetic data strategy.",
+        "aliases": [
+          "Altman quote on declining data costs",
+          "Prediction of synthetic data usage"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Public announcement of chat history disable feature (April 2023)",
+        "type": "concept",
+        "description": "OpenAI tweet/blog stating users can disable chat history & training, providing real-world evidence of implementation.",
+        "aliases": [
+          "Altman tweet about history toggle",
+          "OpenAI blog on privacy toggle"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Implement granular consent settings separating chat storage from training data collection in user interface",
+        "type": "intervention",
+        "description": "Redesign ChatGPT settings so users can independently retain chat logs while opting out of training data usage, enhancing GDPR alignment.",
+        "aliases": [
+          "Decouple history and training toggle",
+          "Fine-grained user consent UI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Generate synthetic training data with existing models to reduce dependence on scraped data",
+        "type": "intervention",
+        "description": "Use high-quality GPT-4 outputs or other generative methods to create large synthetic corpora, lowering legal and cost risks.",
+        "aliases": [
+          "Synthetic corpus pre-training",
+          "Model self-distillation dataset"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 2,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Conduct full training corpus audit and remove copyrighted or personal data lacking consent",
+        "type": "intervention",
+        "description": "Deploy automated and manual review to detect and excise disallowed data, producing compliant checkpoint for future training.",
+        "aliases": [
+          "Comprehensive dataset clean-up",
+          "Post-hoc data removal process"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Regulatory bans on AI foundation models due to illegal data collection",
+        "target_node": "Training data scraped without consent from copyrighted and personal sources",
+        "description": "Unauthorised scraping is the direct legal trigger cited for potential bans/fines.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "User privacy violations in conversational AI services",
+        "target_node": "Lack of granular user consent controls for data usage",
+        "description": "Coupled history/training toggle prevents informed consent, leading to privacy risk.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Training data scraped without consent from copyrighted and personal sources",
+        "target_node": "GDPR compliance requires lawful basis and transparency in data collection",
+        "description": "Legal framework offers pathway to resolve unconsented scraping.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Lack of granular user consent controls for data usage",
+        "target_node": "GDPR compliance requires lawful basis and transparency in data collection",
+        "description": "GDPR demands fine-grained consent, addressing missing controls.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "GDPR compliance requires lawful basis and transparency in data collection",
+        "target_node": "Provide opt-out mechanisms and data export features to align with GDPR rights",
+        "description": "Design goals operationalise GDPR requirements.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Provide opt-out mechanisms and data export features to align with GDPR rights",
+        "target_node": "Single toggle to disable chat history and training data collection in ChatGPT settings",
+        "description": "Toggle is the concrete mechanism delivering part of the design rationale.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Single toggle to disable chat history and training data collection in ChatGPT settings",
+        "target_node": "Public announcement of chat history disable feature (April 2023)",
+        "description": "Public tweet/blog serves as evidence that toggle is deployed.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "User data export download feature for transparency",
+        "target_node": "Public announcement of chat history disable feature (April 2023)",
+        "description": "Same announcement bundle introduced export capability.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Public announcement of chat history disable feature (April 2023)",
+        "target_node": "Implement granular consent settings separating chat storage from training data collection in user interface",
+        "description": "Announcement shows partial solution; motivates further granular consent.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Compensating data contributors reduces litigation and regulatory risk",
+        "target_node": "License data sources and pay for high-quality data to ensure legality",
+        "description": "Design strategy of paid licensing converts theory into concrete plan.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "License data sources and pay for high-quality data to ensure legality",
+        "target_node": "Negotiation of paid licensing agreements with Reddit, Stack Overflow and others",
+        "description": "Current negotiations are the mechanism for paid licensing.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Negotiation of paid licensing agreements with Reddit, Stack Overflow and others",
+        "target_node": "News reports of Reddit and Stack Overflow negotiating licensing fees for AI training data",
+        "description": "Press coverage confirms negotiations are occurring.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "News reports of Reddit and Stack Overflow negotiating licensing fees for AI training data",
+        "target_node": "License content from data providers and compensate contributors before using data in pre-training",
+        "description": "Validation evidence supports proceeding with licensing intervention.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Audit and clean training datasets to remove copyrighted or personal data lacking consent",
+        "target_node": "Internal dataset provenance audit process",
+        "description": "Provenance processes are concrete mechanisms for the audit design.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Internal dataset provenance audit process",
+        "target_node": "Footnote in GPT-4 technical report acknowledging inadvertent inclusion of benchmark data",
+        "description": "Footnote demonstrates both need for and existence of some audit.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Footnote in GPT-4 technical report acknowledging inadvertent inclusion of benchmark data",
+        "target_node": "Conduct full training corpus audit and remove copyrighted or personal data lacking consent",
+        "description": "Evidence of contamination spurs comprehensive audit intervention.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Dependence on external scraped data sources for model scaling",
+        "target_node": "Synthetic data generation reduces dependence on scraped data",
+        "description": "Synthetic data is proposed to break reliance on external data.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Synthetic data generation reduces dependence on scraped data",
+        "target_node": "Leverage model-generated synthetic data for pre-training",
+        "description": "Design translates insight into concrete strategy.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Leverage model-generated synthetic data for pre-training",
+        "target_node": "Model-generated synthetic data pipeline",
+        "description": "Pipeline is the mechanism to realise synthetic data design.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Model-generated synthetic data pipeline",
+        "target_node": "Sam Altman statement that data spend will decline as models get smarter",
+        "description": "CEO’s statement provides indirect validation and impetus.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Sam Altman statement that data spend will decline as models get smarter",
+        "target_node": "Generate synthetic training data with existing models to reduce dependence on scraped data",
+        "description": "Statement motivates concrete synthetic data intervention.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "669dfa5da9c1db535bf19cfc040b7e7b"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.053323"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKER: All edges missing 'edge_confidence_rationale' and 'edge_rationale' fields specified in schema. All nodes missing 'node_rationale' field. These are REQUIRED per schema but extraction omitted them entirely.",
+      "CATEGORIZATION ERROR: 'Sam Altman statement that data spend will decline as models get smarter' classified as 'validation evidence' but source text 'predicts' and 'I wonder if he means' - this is theoretical/speculative, not validation evidence. Should be 'theoretical insight'.",
+      "CATEGORIZATION ERROR: 'Public announcement of chat history disable feature' classified as 'validation evidence' but is actually 'implementation mechanism' - the announcement IS the implementation being deployed, not evidence validating it.",
+      "COVERAGE GAP: Job displacement risk mentioned extensively in source ('people inevitably get laid off', 'would these lawsuits succeed when you can prove that you've lost a job') but no corresponding risk node or intervention node addressing worker compensation or displacement concerns. This is a major thematic gap.",
+      "COVERAGE GAP: Regulatory convergence (Brazil, California, EU alignment) mentioned as critical enforcement outcome but not explicitly modeled as its own validation evidence node that motivates interventions.",
+      "COVERAGE GAP: ChatGPT Business tier explicitly mentioned as coming solution but not modeled in implementation mechanisms, only mentioned in source text tangentially.",
+      "COVERAGE GAP: Trademark monopolization of GPT term represents separate risk vector (open innovation suppression) but extracted graph ignores this entirely.",
+      "COVERAGE GAP: Common Crawl's systemic role in propagating pirated content across AI companies (GPT-3, Stability AI) not distinguished from individual company scraping practices.",
+      "EDGE CONFIDENCE ASSESSMENT: Many edges assigned confidence 3-4 for GDPR compliance based on weak evidence. Source states 'likely be impossible for the company to comply' - suggests low confidence (2) that compliance solutions work, not high confidence.",
+      "INFERENCE VALIDATION: Edge from 'News reports' to intervention 'License content from data providers' uses moderate inference (confidence 3) but should be higher (4) since negotiation actively occurring per source.",
+      "FABRIC CONNECTIVITY: All 25 nodes properly connected; no orphans identified. However, 6-7 important nodes missing means fabric is incomplete even though connected.",
+      "DUPLICATE ANALYSIS: 'Training data scraped without consent' vs 'Dependence on external scraped data' appear potentially redundant but serve distinct problem-analysis roles - one addresses HOW data is collected illicitly, the other addresses SYSTEMIC DEPENDENCY on external data. Keep separate.",
+      "INTERVENTION MATURITY ERRORS: 'Implement granular consent settings' marked as maturity 4 (Operational) but source shows only partial coupled toggle exists - not granular separation. Should be maturity 3 (Prototype/Pilot). 'Synthetic data generation' marked maturity 1 correctly - appropriately speculative.",
+      "SOURCE ALIGNMENT: Primary causal pathway well-captured (scraping → privacy → regulation → licensing/auditing interventions). Secondary pathways (job displacement → litigation, trademark monopoly → innovation harm) poorly captured. Tertiary systemic risks (cross-model training loops, common crawl propagation) omitted.",
+      "GDPR COMPLIANCE EDGE: Edge connecting to GDPR requirements has edge_confidence 3-4 but GDPR is aspirational/regulatory threat, not validated solution. Should be confidence 2 with explicit recognition that compliance is unclear per source."
+    ]
+  },
+  "url": "https://www.youtube.com/watch?v=ivexBzomPv4",
+  "paper_id": "bc771dce09c4bac1d7baf6cb6ea984c4",
+  "ard_file_source": "youtube",
+  "errors": null
+}

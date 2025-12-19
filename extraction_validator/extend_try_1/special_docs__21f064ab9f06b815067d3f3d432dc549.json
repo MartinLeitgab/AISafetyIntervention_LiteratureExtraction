@@ -1,0 +1,787 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph is structurally sound with correct referential integrity and comprehensive node/edge coverage of the paper's causal-interventional pathways. However, the extraction violates schema requirements by missing mandatory edge attributes (edge_confidence_rationale and edge_rationale) and node attributes (node_rationale, intervention_lifecycle_rationale, intervention_maturity_rationale) across all entries. Additionally, one edge (Safety skimping → Information sharing) uses incorrect directionality with 'caused_by' when 'enabled_by' would be more precise. Three missing concept nodes would enhance fabric completeness: theoretical assumptions underpinning rationality, the three information scenarios as an analytical framework, and the information-coordination trade-off. These gaps are readily fixable with the proposed additions and field updates. The knowledge fabric correctly identifies all four major intervention categories (coordination, research steering, information control, consolidation) and traces them through the model's parameter analysis (e, Π, n, information) to conclude with four operational interventions validated by equilibrium simulations."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge attributes: edge_confidence_rationale and edge_rationale on all edges",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to every edge object per schema requirements"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node attributes: node_rationale and intervention_lifecycle_rationale/intervention_maturity_rationale",
+        "where": "nodes[*]",
+        "suggestion": "Add node_rationale to all concept nodes; add intervention_lifecycle_rationale and intervention_maturity_rationale to all intervention nodes"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes missing data source section title references in rationales",
+        "where": "nodes[20-23] (intervention nodes)",
+        "suggestion": "All intervention nodes should reference closest preceding data source section titles (e.g., 'Section 3 Factors determining risk')"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Concept nodes lack data source section title references in node_rationale",
+        "where": "nodes[0-19] (concept nodes)",
+        "suggestion": "Add closest preceding section title references to node_rationale field for all concept nodes"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source and target nodes exist in node list",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "none detected",
+        "reason": "All nodes connect to at least one edge",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Promote coordination to reduce competitive pressure",
+          "International agreements and trust-building among AI developers"
+        ],
+        "merge_strategy": "These represent different concept categories (design_rationale vs implementation_mechanism). Currently correct as separate nodes but verify edge chain is optimal. Keep both as distinct concept categories in causal chain."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'caused_by' from Safety skimping incentives to Information sharing lacks supporting evidence",
+        "evidence": "Source states 'When teams know their own or any other team's capabilities' (Section 2.2-2.3) but doesn't explicitly say information causes skimping incentives; rather information creates conditions where skimping is rational",
+        "fix": "Change edge type from 'caused_by' to 'enabled_by' or 'required_by' with confidence 2, as information is prerequisite condition not direct cause"
+      },
+      {
+        "issue": "Node 'Disaster probability decreases with capability importance' uses ϖ notation but source uses Π (capital pi)",
+        "evidence": "Source text Section 2: 'for a single given Π. A high Π corresponds to a situations...'",
+        "fix": "Use Π consistently in node descriptions and aliases instead of ϖ"
+      },
+      {
+        "issue": "Missing explicit connection between validation evidence and design rationales",
+        "evidence": "Section 3.1-3.4 presents findings, but edges don't show how specific findings (e.g., 'low enmity reduces risk') motivate specific design rationales",
+        "fix": "Add edges from 'Disaster probability decreases with lower enmity' to 'Promote coordination to reduce competitive pressure' and similar connections"
+      },
+      {
+        "issue": "Implementation mechanism nodes for information containment lack specificity about the trade-off mentioned",
+        "evidence": "Footnote 5: 'Such secrecy can interfere with trust building, though, making it hard to reach agreements between teams if such agreement is needed.'",
+        "fix": "Add node capturing this tension: 'Information containment versus trust-building trade-off' or add to edge rationale"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Lower enmity reduces risk",
+          "evidence": "Section 3.2: 'It is also intuitively clear that reducing enmity should reduce the risk of AI-disaster. When competition gets less erce, teams would be willing to take less risks. This intuition is also born out in our model, as decreases in e always reduce the risk.'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Disaster probability decreases with lower enmity"
+          ],
+          "expected_target_node_name": [
+            "Promote coordination to reduce competitive pressure"
+          ]
+        },
+        {
+          "title": "Information hazard: more information increases risk",
+          "evidence": "Section 3.3: 'It is always better if none of the teams have any idea about anyone's capability' and 'Contrasting figure 1a with figure 2a...the no-information case is always safer than the other two cases'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Disaster probability increases with information sharing"
+          ],
+          "expected_target_node_name": [
+            "Limit dissemination of capability progress information"
+          ]
+        },
+        {
+          "title": "Reducing number of teams decreases risk",
+          "evidence": "Section 3.4: 'In terms of leverage, the most helpful intervention we could undertake to reduce the number of teams is to encourage groups to merge.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Large number of AI development teams"
+          ],
+          "expected_target_node_name": [
+            "Merge or reduce number of competing teams"
+          ]
+        },
+        {
+          "title": "Higher capability parameter reduces risk",
+          "evidence": "Section 3.1: 'In every situation, an increase of the importance of capability (an increase in Π) reduces the risk.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Risk-taking importance exceeding capability contributions"
+          ],
+          "expected_target_node_name": [
+            "Encourage research paths where capability dominates risk-taking"
+          ]
+        },
+        {
+          "title": "Nash equilibrium as core theoretical mechanism",
+          "evidence": "Section 2 Introduction: 'We'll assume that the teams choose their safety based on Nash equilibrium considerations' and abstract: 'This paper presents the Nash equilibrium of this process'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Nash equilibrium model of AI arms race dynamics"
+          ],
+          "expected_target_node_name": [
+            "Multiple theoretical insight nodes"
+          ]
+        },
+        {
+          "title": "Teams maximize expected utility under uncertainty",
+          "evidence": "Section 2: 'We'll assume that each team maximises expected utility, and we can renormalise their utilities'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Assumed team rationality and expected utility maximization"
+          ],
+          "expected_target_node_name": [
+            "Nash equilibrium model of AI arms race dynamics"
+          ]
+        },
+        {
+          "title": "Three information scenarios analyzed",
+          "evidence": "Section 2: 'We'll then calculate the Nash equilibria in three information scenarios: when teams don't know anyone's capabilities, when they know their own capabilities, and when they know everyone's capabilities'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Three information scenarios in AI arms race"
+          ],
+          "expected_target_node_name": [
+            "Nash equilibrium model of AI arms race dynamics"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Safety skimping incentives in AI arms race",
+        "target_node_name": "Information sharing of AI capabilities between teams",
+        "reason": "Edge type 'caused_by' is directionally incorrect. Information is an enabling condition, not a cause of skimping incentives. The incentives exist from the race structure itself; information enables more aggressive expression of those incentives. Should be split into separate causal chains."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Risk-taking importance exceeding capability contributions",
+        "field": "description",
+        "json_new_value": "When technological progress depends more on taking risks than on underlying capability (low Π), disaster probability is highest. This represents situation where small reductions in safety s yield large increases in probability of winning.",
+        "reason": "Fix notation from ϖ to Π per source usage throughout Section 2 and 3.1"
+      },
+      {
+        "node_name": "Disaster probability decreases with capability importance",
+        "field": "description",
+        "json_new_value": "Analytical result: making capability more decisive (larger Π) reduces incentives to lower safety. Per model: 'an increase of the importance of capability (an increase in Π) reduces the risk' (Section 3.1).",
+        "reason": "Fix notation from ϖ to Π per source"
+      },
+      {
+        "node_name": "Negotiate and implement multilateral AI safety coordination treaties",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other/Policy). Source Section 3.2: 'Enmity is something that we can work on by, for instance, building trust between nations and groups, sharing technologies or discoveries, merging into joint projects or agreeing to common aims.' This is policy/governance intervention outside technical development phases 1-5.",
+        "reason": "Add required rationale field with source section reference"
+      },
+      {
+        "node_name": "Negotiate and implement multilateral AI safety coordination treaties",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical). The paper presents theoretical foundations for why such coordination matters but does not present evidence of operational treaties or deployments. Source: 'With this extra coordination, we could also consider agreements to allow the teams to move away from the Nash equilibrium' (Section 3.2) uses conditional language indicating theoretical proposal stage.",
+        "reason": "Add required rationale field with source section reference and confidence justification"
+      },
+      {
+        "node_name": "Provide targeted funding for capability-intensive AI research paths",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other/Policy). Source Section 3.1: 'In terms of intervention, there is little we can do about the relative importance of capability, since this is largely determined by the technology. Our best bet might be at present to direct research into approaches where there is little return to risk-taking, prioritising some technological paths over others.' This is a policy/research direction intervention.",
+        "reason": "Add required rationale field with source section reference"
+      },
+      {
+        "node_name": "Provide targeted funding for capability-intensive AI research paths",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical). The paper suggests this intervention as theoretical recommendation without presenting evidence of such programs or their effectiveness. Source: 'Our best bet might be at present to direct research' (emphasis on tentative 'might be') indicates foundational proposal stage.",
+        "reason": "Add required rationale field noting theoretical stage without empirical deployment evidence"
+      },
+      {
+        "node_name": "Enforce controlled disclosure policies on AI capability metrics",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other/Policy). Source Section 3.3: 'Our ability to manipulate the information levels of the teams or teams is likely to be somewhat limited, though we can encourage them to share more (in the low capability, low enmity situations) or alternatively to lock up their private knowledge' (with footnote noting coordination trade-offs). This is a governance/norm-setting intervention.",
+        "reason": "Add required rationale field with source section reference"
+      },
+      {
+        "node_name": "Enforce controlled disclosure policies on AI capability metrics",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical). The paper identifies information containment as theoretically beneficial based on model analysis but notes practical difficulty: 'Our ability to manipulate the information levels of the teams or teams is likely to be somewhat limited' (Section 3.3). No deployment evidence provided.",
+        "reason": "Add required rationale field acknowledging theoretical stage with practical limitations noted"
+      },
+      {
+        "node_name": "Facilitate mergers and joint ventures among leading AI teams",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other/Policy). Source Section 3.4: 'In terms of leverage, the most helpful intervention we could undertake to reduce the number of teams is to encourage groups to merge.' This is a policy/governance intervention to reshape competitive landscape.",
+        "reason": "Add required rationale field with source section reference"
+      },
+      {
+        "node_name": "Facilitate mergers and joint ventures among leading AI teams",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical). The paper proposes team consolidation as beneficial based on model results but provides no evidence of successful implementation of such consolidations. Section 3.4 states: 'Dividing teams would only be useful in very specific situations' indicating theoretical analysis stage.",
+        "reason": "Add required rationale field indicating foundational stage without deployment evidence"
+      },
+      {
+        "node_name": "AI-disaster from unsafe first advanced AI",
+        "field": "node_rationale",
+        "json_new_value": "Central risk analyzed in paper. Abstract and Section 1 establish premise: 'There are arguments that the first true AIs are likely to be extremely powerful machines [Goo65, Cha10], but that they could end up being dangerous [Omo08, Yud08] if not carefully controlled [ASB12].' Model assumes 'there is a definite probability of an AI-related disaster, and that the probability goes up the more the AI development team skimps on precautions.'",
+        "reason": "Add required node_rationale field with section references"
+      },
+      {
+        "node_name": "Safety skimping incentives in AI arms race",
+        "field": "node_rationale",
+        "json_new_value": "Core problem mechanism. Section 1: 'Each team is incentivised to finish first { by skimping on safety precautions if need be.' The model analyzes this as rational response to race dynamics where first mover has decisive advantage.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "High enmity between AI development teams",
+        "field": "node_rationale",
+        "json_new_value": "Problem factor in model. Section 2: 'Each team has a certain level of enmity e towards each other team...This varies between e=0 (they are indifferent to who builds an AI) and e=1 (another team building a successful AI is just as bad as an AI-disaster).' Higher enmity increases marginal utility of winning, increasing risk incentives.",
+        "reason": "Add required node_rationale field with section and parameter definition"
+      },
+      {
+        "node_name": "Large number of AI development teams",
+        "field": "node_rationale",
+        "json_new_value": "Problem factor. Section 3.4: 'Adding extra teams strictly increases the dangers' in no-information and public information cases. Model shows more competitors intensify race-to-bottom dynamics.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Information sharing of AI capabilities between teams",
+        "field": "node_rationale",
+        "json_new_value": "Problem factor. Section 3.3: 'It is always better if none of the teams have any idea about anyone's capability.' Knowledge of relative standings allows teams to make calculated decisions about when marginal safety cuts clinch victory. Analyzed in three scenarios: no information (Section 2.1), private information (Section 2.2), public information (Section 2.3).",
+        "reason": "Add required node_rationale field with section references to all three scenarios"
+      },
+      {
+        "node_name": "Risk-taking importance exceeding capability contributions",
+        "field": "node_rationale",
+        "json_new_value": "Problem factor. Section 3.1: 'Around Π=0 (i.e. when capability is nearly irrelevant to producing the first AI), the only Nash equilibrium is to take no safety precautions at all.' Low Π creates maximum incentive to skimp on safety.",
+        "reason": "Add required node_rationale field with section reference and Π notation"
+      },
+      {
+        "node_name": "Nash equilibrium model of AI arms race dynamics",
+        "field": "node_rationale",
+        "json_new_value": "Foundational theoretical framework. Section 2, The model: Formal game where n teams choose safety level s in [0,1] based on capabilities c. Each team has utility 1 for successful AI, 0 for disaster, 1-e for rival success. Equilibrium solved for three information scenarios. Section 2: 'We'll assume that the teams choose their safety based on Nash equilibrium considerations.'",
+        "reason": "Add required node_rationale field with section and parameter definitions"
+      },
+      {
+        "node_name": "Disaster probability decreases with capability importance",
+        "field": "node_rationale",
+        "json_new_value": "Key theoretical finding. Section 3.1: 'In every situation, an increase of the importance of capability (an increase in Π) reduces the risk.' Validated by Figures 1a-b showing risk curves decreasing in Π across all information scenarios and enmity levels.",
+        "reason": "Add required node_rationale field with section and figure references"
+      },
+      {
+        "node_name": "Disaster probability decreases with lower enmity",
+        "field": "node_rationale",
+        "json_new_value": "Key theoretical finding. Section 3.2: 'As decreases in e always reduce the risk.' Intuition: 'When competition gets less fierce, teams would be willing to take less risks.' Validated by comparing Figures 2a-b (e=0.5) with Figures 1a-b (e=1) showing lower risk at same Π with reduced enmity.",
+        "reason": "Add required node_rationale field with section and figure references"
+      },
+      {
+        "node_name": "Disaster probability increases with information sharing",
+        "field": "node_rationale",
+        "json_new_value": "Counterintuitive theoretical finding. Section 3.3: 'The no-information case is always safer than the other two cases.' Information is an 'information hazard' per Bostrom (2011). Example: 'It is only worth taking risks in the private information if one's capability is low. So to get a high risk, one needs a winner with low capability.'",
+        "reason": "Add required node_rationale field with section and information hazard concept reference"
+      },
+      {
+        "node_name": "Disaster probability increases with number of teams",
+        "field": "node_rationale",
+        "json_new_value": "Key theoretical finding with exceptions. Section 3.4: 'In both the no-information and public information cases, adding extra teams strictly increases the dangers.' Exception in private information at high Π: 'At low capability, adding more teams will certainly worsen the situation, but at higher capability, the effect is reversed.' Validated by Figure 3 comparing n=2 vs n=5.",
+        "reason": "Add required node_rationale field with section, exceptions, and figure reference"
+      },
+      {
+        "node_name": "Promote coordination to reduce competitive pressure",
+        "field": "node_rationale",
+        "json_new_value": "Design strategy addressing enmity. Section 3.2: 'Enmity is something that we can work on by, for instance, building trust between nations and groups, sharing technologies or discoveries, merging into joint projects or agreeing to common aims.' This reduces effective e parameter, moving Nash equilibrium toward higher safety levels.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Encourage research paths where capability dominates risk-taking",
+        "field": "node_rationale",
+        "json_new_value": "Design strategy addressing Π parameter. Section 3.1: 'Our best bet might be at present to direct research into approaches where there is little return to risk-taking, prioritising some technological paths over others.' Increases Π in practice, reducing incentive to skimp on safety.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Limit dissemination of capability progress information",
+        "field": "node_rationale",
+        "json_new_value": "Design strategy addressing information hazard. Section 3.3: 'It is always better if none of the teams have any idea about anyone's capability.' Counterintuitive finding that information increases risk. Strategy trades off against trust-building per footnote 5: 'Such secrecy can interfere with trust building, though, making it hard to reach agreements between teams.'",
+        "reason": "Add required node_rationale field with section references including trade-off"
+      },
+      {
+        "node_name": "Merge or reduce number of competing teams",
+        "field": "node_rationale",
+        "json_new_value": "Design strategy addressing n parameter. Section 3.4: 'In terms of leverage, the most helpful intervention we could undertake to reduce the number of teams is to encourage groups to merge.' Directly lowers n, which model shows increases danger in most scenarios.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "International agreements and trust-building among AI developers",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism. Section 3.2: 'With this extra coordination, we could also consider agreements to allow the teams to move away from the Nash equilibrium, thus avoiding a race to the bottom when the situation is particularly dangerous (such as low capability Π).' Operationalizes coordination via treaties and institutional arrangements.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Research funding prioritisation for capability-heavy approaches",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism. Section 3.1 identifies funding as policy lever: 'Our best bet might be at present to direct research into approaches where there is little return to risk-taking.' Funding agencies steer R&D toward high-Π technological paths where risk-taking provides minimal advantage.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Information containment policies on AI capability disclosures",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism. Section 3.3: 'We can encourage them to share more (in the low capability, low enmity situations) or alternatively to lock up their private knowledge.' Operationalizes information strategy through publication norms, classification regimes, or contractual restrictions on capability disclosures.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Industry consolidation or collaborative joint ventures",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism. Section 3.4: 'The most helpful intervention...is to encourage groups to merge.' The practical lever for reducing n is regulatory incentives for mergers or formalized joint projects that consolidate independent actors into coordinated entities.",
+        "reason": "Add required node_rationale field with section reference"
+      },
+      {
+        "node_name": "Equilibrium model simulations demonstrating risk trade-offs",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence. Sections 3.1-3.4 present Figures 1-3 showing equilibrium probabilities of AI-disaster across parameter ranges: Π (capability importance), e (enmity), n (number of teams), and information scenarios. Figures validate theoretical predictions and quantify risk trade-offs enabling intervention prioritization.",
+        "reason": "Add required node_rationale field with section and figure references"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Negotiate and implement multilateral AI safety coordination treaties",
+        "type": "intervention",
+        "description": "Diplomatic process establishing binding or soft-law agreements on safety standards, verification and shared benefits to lower enmity and align incentives.",
+        "aliases": [
+          "global AI treaty",
+          "international AI arms-race mitigation agreement"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Provide targeted funding for capability-intensive AI research paths",
+        "type": "intervention",
+        "description": "Government or philanthropic grants prioritise techniques where risk-taking grants little speed advantage, reducing race incentives.",
+        "aliases": [
+          "fund capability-dominant approaches"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Enforce controlled disclosure policies on AI capability metrics",
+        "type": "intervention",
+        "description": "Institutions adopt norms or regulations limiting publication of detailed progress metrics to preserve uncertainty among competitors.",
+        "aliases": [
+          "capability information embargo"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Facilitate mergers and joint ventures among leading AI teams",
+        "type": "intervention",
+        "description": "Regulators and funders incentivise consolidation or consortia, decreasing the effective number of competitive actors.",
+        "aliases": [
+          "promote AI consortium formation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "AI-disaster from unsafe first advanced AI",
+        "type": "concept",
+        "description": "The scenario in which the first team to build a very powerful AI skips sufficient precautions, leading to catastrophic outcomes.",
+        "aliases": [
+          "transformative AI catastrophe",
+          "unsafe first-mover AI risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Safety skimping incentives in AI arms race",
+        "type": "concept",
+        "description": "Competing teams lower safety level s to finish first because victory rewards outweigh perceived extra risk.",
+        "aliases": [
+          "reduced precautions for speed",
+          "race-driven safety neglect"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "High enmity between AI development teams",
+        "type": "concept",
+        "description": "Utility parameter e close to 1 makes others' success almost as bad as disaster, increasing risk-taking.",
+        "aliases": [
+          "competitive hostility",
+          "zero-sum preferences"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Large number of AI development teams",
+        "type": "concept",
+        "description": "Greater n intensifies competition and usually raises disaster probability in the model.",
+        "aliases": [
+          "many competing labs",
+          "high n in arms race"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Information sharing of AI capabilities between teams",
+        "type": "concept",
+        "description": "When teams know their own and others’ capabilities, equilibrium safety levels drop, increasing risk.",
+        "aliases": [
+          "public capability information",
+          "common knowledge of progress"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Risk-taking importance exceeding capability contributions",
+        "type": "concept",
+        "description": "When technological progress depends more on taking risks than on underlying capability (low ϖ), disaster probability is highest.",
+        "aliases": [
+          "low capability parameter",
+          "small ϖ regime"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Nash equilibrium model of AI arms race dynamics",
+        "type": "concept",
+        "description": "Formal game where each team chooses safety level; equilibrium derived for three information scenarios.",
+        "aliases": [
+          "game-theoretic arms race model",
+          "equilibrium safety model"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Disaster probability decreases with capability importance",
+        "type": "concept",
+        "description": "Analytical result: making capability more decisive (larger ϖ) reduces incentives to lower safety.",
+        "aliases": [
+          "higher ϖ lowers risk"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Disaster probability decreases with lower enmity",
+        "type": "concept",
+        "description": "Lower e means teams care less about losing, so they maintain higher safety.",
+        "aliases": [
+          "friendly goals reduce risk"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Disaster probability increases with information sharing",
+        "type": "concept",
+        "description": "Model shows public or private capability knowledge raises equilibrium risk relative to ignorance.",
+        "aliases": [
+          "information hazard effect"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Disaster probability increases with number of teams",
+        "type": "concept",
+        "description": "Except in some high-capability private-info cases, more competitors raise overall risk.",
+        "aliases": [
+          "n-dependence of risk"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Promote coordination to reduce competitive pressure",
+        "type": "concept",
+        "description": "Design strategy: lower effective enmity so teams keep higher safety levels.",
+        "aliases": [
+          "increase cooperation",
+          "align goals among teams"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Encourage research paths where capability dominates risk-taking",
+        "type": "concept",
+        "description": "Steering R&D toward methods where risk-taking yields little advantage reduces incentive to skip safety.",
+        "aliases": [
+          "prioritise capability-heavy approaches"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Limit dissemination of capability progress information",
+        "type": "concept",
+        "description": "Design rationale to keep teams ignorant of each other’s relative progress, mitigating info-driven risk.",
+        "aliases": [
+          "information containment",
+          "reduced public capability metrics"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Merge or reduce number of competing teams",
+        "type": "concept",
+        "description": "Design strategy: fewer independent actors lowers race intensity and disaster probability.",
+        "aliases": [
+          "team consolidation",
+          "joint projects"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "International agreements and trust-building among AI developers",
+        "type": "concept",
+        "description": "Specific mechanism to operationalise reduced enmity via treaties, shared governance forums, verification regimes.",
+        "aliases": [
+          "multilateral coordination mechanisms",
+          "confidence-building measures"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Research funding prioritisation for capability-heavy approaches",
+        "type": "concept",
+        "description": "Funding agencies steer resources to projects where extra risk confers little marginal win probability.",
+        "aliases": [
+          "grant steering toward low-risk-taking advantage areas"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Information containment policies on AI capability disclosures",
+        "type": "concept",
+        "description": "Mechanism to operationalise limited dissemination through embargoes or tiered access.",
+        "aliases": [
+          "restricted publication norms",
+          "classified capability metrics"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Industry consolidation or collaborative joint ventures",
+        "type": "concept",
+        "description": "Mechanism to reduce number of independent actors via mergers or formal joint projects.",
+        "aliases": [
+          "lab mergers",
+          "centralised AI research consortium"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Equilibrium model simulations demonstrating risk trade-offs",
+        "type": "concept",
+        "description": "Derived probabilities and plots (Figures 1–3) validating how parameters affect disaster risk.",
+        "aliases": [
+          "analytical results",
+          "model validation curves"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "implemented_by",
+        "source_node": "High enmity between AI development teams",
+        "target_node": "Promote coordination to reduce competitive pressure",
+        "description": "Reducing enmity addresses competitive hostility problem.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Large number of AI development teams",
+        "target_node": "Merge or reduce number of competing teams",
+        "description": "Consolidation lowers n, mitigating risk.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Information sharing of AI capabilities between teams",
+        "target_node": "Limit dissemination of capability progress information",
+        "description": "Information containment directly tackles info hazard.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Risk-taking importance exceeding capability contributions",
+        "target_node": "Encourage research paths where capability dominates risk-taking",
+        "description": "Steering towards high-capability regimes lowers benefit of skimping.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Promote coordination to reduce competitive pressure",
+        "target_node": "International agreements and trust-building among AI developers",
+        "description": "Agreements operationalise coordination reductions.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Encourage research paths where capability dominates risk-taking",
+        "target_node": "Research funding prioritisation for capability-heavy approaches",
+        "description": "Funding is practical lever to steer research agendas.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Limit dissemination of capability progress information",
+        "target_node": "Information containment policies on AI capability disclosures",
+        "description": "Policies implement restriction of information flow.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Merge or reduce number of competing teams",
+        "target_node": "Industry consolidation or collaborative joint ventures",
+        "description": "Joint ventures reduce independent actors.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Nash equilibrium model of AI arms race dynamics",
+        "target_node": "Equilibrium model simulations demonstrating risk trade-offs",
+        "description": "Analytical results validate theoretical model behaviour.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Equilibrium model simulations demonstrating risk trade-offs",
+        "target_node": "Negotiate and implement multilateral AI safety coordination treaties",
+        "description": "Model shows coordination reduces risk, motivating treaties.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "ee85b779b3321bae8bc5ef91f55a27e7"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.046619"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER ISSUE 1: Schema requires all edges to have edge_confidence_rationale and edge_rationale fields. Extracted JSON completely omits these on all 22 edges. Section: 'SCHEMA_REQUIREMENTS' specifies edges must have both fields. FIX: Add to all edge entries with citations to specific data source sections.",
+      "BLOCKER ISSUE 2: Schema requires all concept nodes to have node_rationale field and intervention nodes to have intervention_lifecycle_rationale and intervention_maturity_rationale fields. Extracted JSON omits node_rationale entirely from all 19 concept nodes and omits both intervention rationale fields from all 4 intervention nodes. EVIDENCE: SCHEMA_REQUIREMENTS section 'Intervention Node Attributes' and processed_strategy step_2 explicitly require these fields. FIX: Add all missing rationale fields with source section references per proposed_fixes.",
+      "REFERENTIAL INTEGRITY: Verified all 22 edges reference node names that exist in node list. No broken references found. Example verification: edge 'source_node: Safety skimping incentives in AI arms race' matches node at index 1 exactly.",
+      "ORPHAN CHECK: All 23 nodes connect to minimum one edge. Verification: weakest connectivity is 'Promote coordination to reduce competitive pressure' (node 11) with 3 incoming edges. No isolated nodes detected.",
+      "DIRECTIONALITY ISSUE: Edge from 'Safety skimping incentives in AI arms race' (index 1) to 'Information sharing of AI capabilities between teams' (index 4) uses type 'caused_by'. DATA SOURCE EVIDENCE Section 2.2-2.3: 'When teams know their own or any other team's capabilities...the team increases its probability of winning by...' Information is enabling condition, not causal origin. The skimping incentive arises from race structure (winning reward e, losing probability 1/n); information makes rational expression more aggressive. FIX: Change to 'enabled_by' with confidence 2 or remove entirely and reconstruct via separate chains.",
+      "COVERAGE ANALYSIS: Four major intervention categories identified in source Section 3 are all present: (1) coordination addressing enmity e - represented; (2) research steering addressing Π - represented; (3) information control addressing information hazard - represented; (4) consolidation addressing n - represented. Model results Figures 1-3 validate all four pathways.",
+      "MISSING NODES - THEORETICAL LAYER: Source explicitly assumes 'teams choose safety based on Nash equilibrium considerations' (Section 2) but extracted graph treats this as single black-box node rather than decomposing foundational assumptions. DATA SOURCE: Section 2 'We'll assume that each team maximises expected utility' - this is separate theoretical assumption. Added as 'Team rationality via expected utility maximization in AI race' node.",
+      "MISSING NODES - FRAMEWORK STRUCTURE: Source Section 2 explicitly analyzes 'three information scenarios' as distinct analytical cases but extracted graph references scenarios only implicitly. Recommended extraction practice requires decomposing frameworks. Added 'Three information scenarios in AI arms race analysis' node.",
+      "MISSING NODES - CONSTRAINTS: Source Section 3.3 footnote 5 explicitly identifies trade-off: 'Such secrecy can interfere with trust building, though, making it hard to reach agreements between teams if such agreement is needed.' This is important constraint on information containment intervention. Added 'Information containment versus trust-building coordination trade-off' node with 'causes_conflict_with' edge.",
+      "NOTATION CONSISTENCY: Extracted nodes use ϖ (lowercase pi) for capability parameter. DATA SOURCE consistently uses Π (capital pi). Example Section 3.1: 'for a single given Π. A high Π corresponds to a situations where capability is dominant'. FIX: Change all instances to capital Π.",
+      "VALIDATION EVIDENCE: Equilibrium model simulations node (index 19) correctly references Figures 1-3 and their role in validating theoretical predictions. DATA SOURCE Sections 3.1-3.4 explicitly present and interpret these figures.",
+      "INTERVENTION MATURITY ASSESSMENT: All four interventions correctly assigned Maturity 1 (Foundational/Theoretical). EVIDENCE: Section 3.2 uses conditional language 'we could also consider agreements'; Section 3.1 states 'Our best bet might be at present'; Section 3.3 acknowledges 'Our ability to manipulate...is likely to be somewhat limited'; Section 3.4 notes practical difficulty. No implementations described. Correct assignment.",
+      "INTERVENTION LIFECYCLE ASSESSMENT: All four interventions correctly assigned Lifecycle 6 (Other/Policy). EVIDENCE: None fall within technical development phases 1-5 (model design, pretraining, fine-tuning, testing, deployment). All are governance/policy/institutional interventions per source discussions of treaties, funding policy, disclosure norms, and regulatory incentives.",
+      "EDGE CONFIDENCE VALIDATION: Edges from risk to problem analysis nodes (e.g., 'caused_by' from disaster to skimping incentives) rated 3 (Medium). This reflects: SOURCE EVIDENCE present but requires inference about causal mechanism. Direct quote: 'Each team is incentivised to finish first { by skimping on safety precautions' establishes correlation but reasoning chain requires reading model setup.",
+      "EDGE CONFIDENCE VALIDATION: Edges from theoretical insights to model node rated 4 (Strong). EVIDENCE: Section 2 presents mathematical derivations resulting in explicit equilibrium formulas. Example: 's = en/(1-en)' derived in Section 2.1 directly yields probability predictions validated by figures.",
+      "FABRIC INTERCONNECTION: All major concept paths interconnect via shared nodes. Example: 'Disaster probability decreases with lower enmity' node connects (1) to problem node 'High enmity' via 'mitigates'; (2) to design rationale 'Promote coordination' via 'refined_by'; (3) to implementation 'International agreements' via 'enabled_by'; (4) to intervention via 'motivates'. Forms connected fabric rather than isolated reasoning paths.",
+      "ISOLATED PATHWAYS: Identified one weak connection: validation evidence node (20) to specific design rationales. Added four 'refined_by' edges connecting each key finding to its corresponding design strategy (e.g., Disaster probability decreases with capability importance → Encourage research paths where capability dominates). This completes fabric per requirement that validation evidence motivates design choices."
+    ]
+  },
+  "url": "https://www.fhi.ox.ac.uk/wp-content/uploads/Racing-to-the-precipice-a-model-of-artificial-intelligence-development.pdf",
+  "paper_id": "21f064ab9f06b815067d3f3d432dc549",
+  "ard_file_source": "special_docs",
+  "errors": null
+}

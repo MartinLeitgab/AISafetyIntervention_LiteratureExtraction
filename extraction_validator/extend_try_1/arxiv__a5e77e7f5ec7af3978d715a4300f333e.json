@@ -1,0 +1,601 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates substantial coverage of core concepts and reasoning pathways but contains critical schema violations and edge direction errors that must be fixed. All intervention nodes lack required lifecycle and maturity rationale fields, all nodes lack node_rationale justifications, and edges lack confidence rationale specifications per schema. The fabric contains one reversal error (intervention receiving instead of being validated-by evidence), redundant validation paths, and omits two important concept nodes from the source (convergence theorem validation, embedding overhead avoidance). When proposed fixes are applied—adding missing schema fields with source citations, correcting edge directions, eliminating redundancies, and incorporating the missing validation evidence node and design rationale refinement—the knowledge graph becomes structurally valid, complete, and correctly represents the source's causal-interventional reasoning from heterogeneity risks through output smoothing mechanisms to deployment interventions. The graph successfully captures both algorithm variants as scenario-specific implementations of a unified cooperation principle."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required intervention_lifecycle_rationale and intervention_maturity_rationale fields",
+        "where": "nodes[11,12,13].intervention_lifecycle_rationale, nodes[11,12,13].intervention_maturity_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale to all intervention nodes per schema requirements"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes missing required node_rationale field per schema",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field with source section title reference to every node"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edges missing required edge_confidence_rationale and edge_rationale fields per schema",
+        "where": "edges[*].edge_confidence_rationale, edges[*].edge_rationale",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all edges with source section references"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Extraneous 'embedding' field present in nodes",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove embedding field - not part of required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Extraneous 'embedding' field present in edges",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove embedding field - not part of required schema"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Meta field present in JSON but not part of core validation schema",
+        "where": "meta[*]",
+        "suggestion": "Meta is acceptable but should not replace core validation of nodes/edges"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent node",
+        "names": [
+          "Edge source_node='Aggregate neighbour predictions during deployment to improve classification reliability', target_node='Simulation experiments demonstrate improved accuracy with local neighbour averaging' - this reverses validation flow"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [
+      {
+        "kind": "edge",
+        "names": [
+          "Edge (Neighbour label averaging during inference for heterogeneous agents → Simulation experiments demonstrate improved accuracy with local neighbour averaging) via 'validated_by'",
+          "Edge (Aggregate neighbour predictions during deployment to improve classification reliability → Simulation experiments demonstrate improved accuracy with local neighbour averaging) via 'validated_by'"
+        ],
+        "merge_strategy": "These represent the same validation relationship - the deployment intervention and the mechanism it implements are both validated by the same experiments. Consolidate to single validation edge from the implementation mechanism node."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Convergence analysis (Theorem 1) not captured in knowledge fabric",
+        "evidence": "Section '3 Network Evolution' provides rigorous mathematical convergence guarantees: 'E∥W̃i∥² converges exponentially fast according to the recursion' (Equation 9, Theorem 1)",
+        "fix": "Add concept node 'Exponential convergence to optimal solution in distributed network classifier training' as validation evidence and edge from implementation mechanisms to this convergence node"
+      },
+      {
+        "issue": "Key distinction that classifiers have different dimensions (not directly combinable) is under-emphasized in design rationale",
+        "evidence": "Source states explicitly: 'Different from the works in [19],[20] where the network corresponds to one classifier...in the current work we assume that each agent corresponds to one classifier and that the outputs of the classifiers are smooth over the graph. As a result, the local classifiers also have different dimensions and they cannot be combined together directly' (Section 1.2, Contribution)",
+        "fix": "This is captured in 'Classifier parameter dimension mismatch across agents' problem analysis but should be more explicitly linked as the PRIMARY reason output smoothing (not parameter smoothing) is chosen"
+      },
+      {
+        "issue": "Two distinct scenarios with different applicability are treated as separate but equally weighted, when source indicates different use cases",
+        "evidence": "Source distinguishes: 'In one case, we assume the labels vary smoothly over the graph' (global smoothing) vs 'In a second case...all agents regularly observe data from the same class so that the network is synchronized' (local smoothing). The text notes 'This situation is also common in practice when sensing networks are tasked with monitoring a common environment' suggesting local smoothing for specific scenario",
+        "fix": "Edges from problem/risk nodes should branch into two distinct design rationale paths with context/use-case specification"
+      },
+      {
+        "issue": "Non-cooperative baseline comparison missing from validation evidence",
+        "evidence": "Source reports: 'From Fig. 2(a), we see that the non-cooperative algorithm (ρ=0) performs the worst' and 'the non-cooperative solution achieved an average testing error of 0.2001, while Algorithm 1 achieved 0.1851' (Section 4, Experimental Results)",
+        "fix": "Add validation evidence node capturing comparative analysis vs non-cooperative baseline, showing relative improvement metrics"
+      },
+      {
+        "issue": "Edge from validation evidence back to concept node violates fabric direction",
+        "evidence": "Edge 'Aggregate neighbour predictions during deployment to improve classification reliability' → 'Simulation experiments demonstrate improved accuracy with local neighbour averaging' uses 'validated_by' direction, but intervention should receive validation, not provide it",
+        "fix": "Reverse edge direction: validation evidence node should point via 'motivates' to intervention node"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Convergence guarantee justifies algorithm reliability",
+          "evidence": "Theorem 1 proves exponential convergence; 'For sufficiently small step sizes: limsup E∥W̃i∥² ≤ O(λⁱ) + O(μ)' (Section 3, Equation 10-11)",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Global graph Laplacian regularization in distributed optimization",
+            "Neighbour label averaging in stochastic gradient updates"
+          ],
+          "expected_target_node_name": [
+            "Exponential convergence to optimal solution in distributed network classifier training"
+          ]
+        },
+        {
+          "title": "Smoothness assumption enables output-based cooperation",
+          "evidence": "'It is natural in applications to assume that such predictions vary slowly across adjacent nodes' and 'we shall enforce that these predictions vary smoothly over the graph' (Section 1.2)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Smooth label variation across graph neighbourhoods in heterogeneous networks"
+          ],
+          "expected_target_node_name": [
+            "Collaborative output smoothing to enforce graph-wide smoothness",
+            "Local neighbourhood label averaging for synchronized classification clusters"
+          ]
+        },
+        {
+          "title": "Challenge of classifier dynamics motivates regularization term design",
+          "evidence": "'This means cooperation cannot rely on combining the classifier parameters...the dynamics that describes the evolution of the network classifier becomes more challenging than usual because the classifier parameters now appear as part of the regularization term as well' (Section 1, Introduction)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Classifier parameter dimension mismatch across agents"
+          ],
+          "expected_target_node_name": [
+            "Global graph Laplacian regularization in distributed optimization"
+          ]
+        },
+        {
+          "title": "Distributed optimization framework prevents centralized solutions",
+          "evidence": "'These techniques are centralized and do not exploit any underlying graph structure' (Section 1.1 on boosting); authors propose distributed approach",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Inaccurate classification by heterogeneous distributed agents"
+          ],
+          "expected_target_node_name": [
+            "Design rationale for distributed approach (missing node)"
+          ]
+        },
+        {
+          "title": "Representation learning embedding requirement avoided",
+          "evidence": "'The main issue with these methods is that we must first learn an embedding of the graph to generate feature vectors, before we can learning algorithms on these vectors. In our approach, we avoid the graph embeding step' (Section 1.1)",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Problem analysis node about graph embedding overhead"
+          ],
+          "expected_target_node_name": [
+            "Direct graph structure exploitation via distributed algorithms"
+          ]
+        },
+        {
+          "title": "Weather forecasting application domain",
+          "evidence": "'network classifiers can have a multitude of applications, including in weather forecasting [6], surveillance and object recognition [7], brain activity detection [8], and healthcare monitoring' (Section 1)",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing"
+          ],
+          "expected_target_node_name": [
+            "Application context for network classifiers (weather monitoring)"
+          ]
+        },
+        {
+          "title": "Assumption of smooth transitions across graph is key",
+          "evidence": "'agents in close proximity observe more or less related attributes as well as objects belonging to the same class' (Section 1, Introduction)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Smooth label variation across graph neighbourhoods in heterogeneous networks"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Testing-time inference uses neighbor consensus",
+          "evidence": "'during testing each agent estimates its label by averaging the label information from neighbours using (Eq. 4)' (Section 2, Algorithm 1 description)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Neighbour label averaging during inference for heterogeneous agents"
+          ],
+          "expected_target_node_name": []
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Distributed algorithms with graph-aware cooperation to enable multi-agent classification",
+        "nodes_to_merge": [
+          "Collaborative output smoothing to enforce graph-wide smoothness",
+          "Local neighbourhood label averaging for synchronized classification clusters"
+        ]
+      },
+      {
+        "new_node_name": "Heterogeneous feature spaces prevent direct parameter combination across agents",
+        "nodes_to_merge": [
+          "Insufficient per-agent feature dimensions in heterogeneous networks",
+          "Classifier parameter dimension mismatch across agents"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Aggregate neighbour predictions during deployment to improve classification reliability",
+        "target_node_name": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+        "reason": "Violates knowledge fabric direction: interventions should be validated-by evidence, not provide validation. This edge should be reversed."
+      },
+      {
+        "source_node_name": "Neighbour label averaging during inference for heterogeneous agents",
+        "target_node_name": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+        "reason": "Redundant with parallel validation path through implementation mechanism; consolidate to single validation edge"
+      },
+      {
+        "source_node_name": "Global graph Laplacian regularization in distributed optimization",
+        "target_node_name": "Neighbour label averaging in stochastic gradient updates",
+        "reason": "Edge type 'refined_by' with confidence 2 is speculative and creates circular conceptual relationship; these are distinct implementation approaches for different scenarios"
+      },
+      {
+        "source_node_name": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+        "target_node_name": "Neighbour label averaging during inference for heterogeneous agents",
+        "reason": "This edge duplicates information already captured in the design→implementation→inference flow; removes redundancy"
+      },
+      {
+        "source_node_name": "Inaccurate classification by heterogeneous distributed agents",
+        "target_node_name": "Collaborative output smoothing to enforce graph-wide smoothness",
+        "reason": "Risk should not connect directly to design rationale; should route through problem analysis and theoretical insight nodes"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 3 (Fine-Tuning/RL): Algorithm 1 operates during the training phase where gradient updates are performed with Laplacian regularization term added to loss function; classified as fine-tuning because it assumes pre-trained initial weights and refines through regularized optimization. Evidence: Section 2 'Distributed Classification Algorithms' and Algorithm 1 listing show training-time application.\"",
+        "reason": "Schema requires intervention_lifecycle_rationale; current node missing this field"
+      },
+      {
+        "node_name": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 3 (Prototype/Pilot Studies): Algorithm 1 has been validated through systematic experiments on 50-node synthetic networks and real 139-sensor weather dataset with measurable accuracy improvements. Evidence: Section 4 shows controlled experimental setup with data splits (70% train, 30% test) and comparative metrics, establishing pilot-study level validation but not yet large-scale operational deployment.\"",
+        "reason": "Schema requires intervention_maturity_rationale; current node missing this field"
+      },
+      {
+        "node_name": "Train distributed classifiers with neighbour label averaging algorithm",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 3 (Fine-Tuning/RL): Algorithm 2 operates during training phase where predicted labels are computed via averaging (Eq. 4) before gradient updates occur. Classified as fine-tuning due to assumption of initialized weights and iterative refinement. Evidence: Section 2 'Distributed Classification Algorithms' and Algorithm 2 listing show gradient updates wk,i←wk,i−1−μgk,n during training.\"",
+        "reason": "Schema requires intervention_lifecycle_rationale; current node missing this field"
+      },
+      {
+        "node_name": "Train distributed classifiers with neighbour label averaging algorithm",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 3 (Prototype/Pilot Studies): Algorithm 2 validated through synthetic experiments with uniform labels scenario showing faster convergence than Algorithm 1. Evidence: Section 4 states 'Algorithm 1 is run both with and without (ρ=0)' and 'the former converges faster', indicating controlled comparative studies. Systematic evaluation but limited to simulation environments.\"",
+        "reason": "Schema requires intervention_maturity_rationale; current node missing this field"
+      },
+      {
+        "node_name": "Aggregate neighbour predictions during deployment to improve classification reliability",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "\"Lifecycle 5 (Deployment): This intervention applies at inference/testing time when classifiers are already trained and being applied to new data. Agents use Eq. 4 to average neighbour predictions for final label estimates. Evidence: Section 2 states 'once the network is trained, then during testing each agent estimates its label by averaging the label information from neighbours using (Eq. 4)'.\"",
+        "reason": "Schema requires intervention_lifecycle_rationale; current node missing this field"
+      },
+      {
+        "node_name": "Aggregate neighbour predictions during deployment to improve classification reliability",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "\"Maturity 2 (Experimental/Proof-of-Concept): Deployment-time averaging validated in proof-of-concept simulations with synthetic networks; weather dataset shows 0.1079 testing error on July 1, 2013, demonstrating applicability. Evidence: Section 4 shows controlled experiments but this specific deployment mechanism has not been validated at large scale in operational systems.\"",
+        "reason": "Schema requires intervention_maturity_rationale; current node missing this field"
+      },
+      {
+        "node_name": "Inaccurate classification by heterogeneous distributed agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Top-level risk in multi-agent classification systems where agents with heterogeneous feature sets must cooperate; motivates entire research direction. Evidence: Section 1 'Introduction and Related Work' identifies this as core problem: 'the problem of classification by a collection of networked agents' where 'feature sizes can vary from one agent to another, with some agents observing insufficient attributes'.\"",
+        "reason": "Schema requires node_rationale field for all nodes; risk node is entry point to fabric"
+      },
+      {
+        "node_name": "Sufficient per-agent feature dimensions in heterogeneous networks",
+        "field": "node_rationale",
+        "json_new_value": "\"Core problem analysis explaining why individual agents fail to classify reliably in isolation. Evidence: Section 1 'Introduction' states 'some agents observing insufficient attributes to make reliable decisions on their own' and 'As a result, cooperation with neighbours is necessary'.\"",
+        "reason": "Schema requires node_rationale for all nodes; this is fundamental problem analysis"
+      },
+      {
+        "node_name": "Classifier parameter dimension mismatch across agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Secondary problem analysis: heterogeneous feature sizes create incompatible classifier parameters, preventing standard parameter-averaging cooperation methods. Evidence: Section 1 explicitly states 'the feature dimensions are different across the agents, their classifier dimensions will also be different. This means that cooperation cannot rely on combining the classifier parameters'.\"",
+        "reason": "Schema requires node_rationale; this explains why output smoothing (not parameter smoothing) is necessary"
+      },
+      {
+        "node_name": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+        "field": "node_rationale",
+        "json_new_value": "\"Key theoretical assumption enabling output-based cooperation: justifies that regularization on predicted labels (not parameters) can coordinate heterogeneous agents. Evidence: Section 1.2 states 'It is natural in applications to assume that such predictions vary slowly across adjacent nodes' and 'we shall enforce that these predictions vary smoothly over the graph'.\"",
+        "reason": "Schema requires node_rationale; this assumption enables entire design approach"
+      },
+      {
+        "node_name": "Global graph Laplacian regularization in distributed optimization",
+        "field": "node_rationale",
+        "json_new_value": "\"Core implementation mechanism: adds Laplacian penalty term ½ρ γⁿᵀ L γⁿ to enforce graph-wide smoothness during training. Evidence: Section 1.2 'Contribution' specifies exact formulation in Eq. 3 and Section 2 describes integration into Algorithm 1.\"",
+        "reason": "Schema requires node_rationale; this is central technical contribution"
+      },
+      {
+        "node_name": "Neighbour label averaging in stochastic gradient updates",
+        "field": "node_rationale",
+        "json_new_value": "\"Alternative implementation mechanism: replaces each agent's prediction with average from same-label neighbours (Eq. 4) before applying gradient updates. Evidence: Section 1.2 specifies γ̂k(n)=1/|Ck|∑ℓ∈Ck aℓk hℓ,nᵀ wℓ, and Section 2 describes integration into Algorithm 2.\"",
+        "reason": "Schema requires node_rationale; this is technical variant for synchronized clusters"
+      },
+      {
+        "node_name": "Neighbour label averaging during inference for heterogeneous agents",
+        "field": "node_rationale",
+        "json_new_value": "\"Deployment-phase mechanism: each agent uses Eq. 4 to average neighbour predictions at test time when local features insufficient for reliable single-agent classification. Evidence: Section 2 states 'once the network is trained, then during testing each agent estimates its label by averaging the label information from neighbours using (Eq. 4)'.\"",
+        "reason": "Schema requires node_rationale; necessary for deployment-phase operation"
+      },
+      {
+        "node_name": "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence: Algorithm 1 evaluated on 50-agent synthetic network and 139-sensor weather dataset, showing error reduction vs non-cooperative baseline. Synthetic: non-cooperative (ρ=0) worse than cooperative approach. Weather: non-cooperative 0.2001 error vs Algorithm 1 0.1851 error (7.5% improvement). Evidence: Section 4 'Experimental Results' with Figures 2-5.\"",
+        "reason": "Schema requires node_rationale; provides empirical validation metrics"
+      },
+      {
+        "node_name": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+        "field": "node_rationale",
+        "json_new_value": "\"Validation evidence: Algorithm 2 tested on 50-node synthetic network with uniform labels across network. Shows faster convergence than Algorithm 1 in uniform-label scenario. Evidence: Section 4 states 'Comparing Algorithms 1 and 2, we see that the former converges faster' in Fig 3(a).\"",
+        "reason": "Schema requires node_rationale; provides empirical comparison"
+      },
+      {
+        "node_name": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+        "field": "node_rationale",
+        "json_new_value": "\"Primary intervention: during training, optimize Eq. 3 using Algorithm 1 with stochastic gradient updates incorporating Laplacian regularization term. Enables network-wide smoothness enforcement for heterogeneous agents. Evidence: Section 2 'Distributed Classification Algorithms' presents Algorithm 1; validated by experiments in Section 4.\"",
+        "reason": "Schema requires node_rationale for all nodes including interventions"
+      },
+      {
+        "node_name": "Train distributed classifiers with neighbour label averaging algorithm",
+        "field": "node_rationale",
+        "json_new_value": "\"Secondary intervention: during training, replace predicted labels with averages from same-class neighbours (Eq. 4) before gradient steps in Algorithm 2. Enables local synchronization for cluster scenarios. Evidence: Section 2 presents Algorithm 2; Section 1.2 notes 'suitable for scenarios where the entire network acts as a cluster'.\"",
+        "reason": "Schema requires node_rationale for all nodes including interventions"
+      },
+      {
+        "node_name": "Aggregate neighbour predictions during deployment to improve classification reliability",
+        "field": "node_rationale",
+        "json_new_value": "\"Deployment intervention: at test time, agents use Eq. 4 to average neighbour predictions, compensating for insufficient local features. Necessary for heterogeneous agents that cannot classify independently. Evidence: Section 2 states this happens 'once the network is trained, then during testing'.\"",
+        "reason": "Schema requires node_rationale for all nodes including interventions"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Insufficient per-agent feature dimensions in heterogeneous networks",
+        "type": "concept",
+        "description": "Each agent sees only a subset of relevant features, making stand-alone classification unreliable.",
+        "aliases": [
+          "limited local attributes",
+          "incomplete information per node"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Collaborative output smoothing to enforce graph-wide smoothness",
+        "type": "concept",
+        "description": "Design idea: instead of combining parameters, agents regularise or average their predicted labels so they vary smoothly over the network.",
+        "aliases": [
+          "cooperative prediction smoothing",
+          "graph-regularised output sharing"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Local neighbourhood label averaging for synchronized classification clusters",
+        "type": "concept",
+        "description": "Alternate design that averages only neighbours sharing the same true label, suitable when the whole network observes one class at a time.",
+        "aliases": [
+          "cluster-level smoothing",
+          "label averaging within same-class neighbours"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Inaccurate classification by heterogeneous distributed agents",
+        "type": "concept",
+        "description": "The overall risk that individual agents with different feature sets misclassify inputs, reducing system reliability.",
+        "aliases": [
+          "misclassification in heterogeneous sensor networks",
+          "low accuracy in multi-agent classifiers"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Classifier parameter dimension mismatch across agents",
+        "type": "concept",
+        "description": "Because feature vectors differ in length, the learned classifier weights have incompatible dimensions, preventing direct parameter averaging.",
+        "aliases": [
+          "heterogeneous classifier sizes",
+          "unequal model dimensions"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+        "type": "concept",
+        "description": "Key assumption that neighbouring agents typically observe the same class, so predicted labels should change slowly along edges.",
+        "aliases": [
+          "label smoothness assumption",
+          "slowly varying labels over graph"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Global graph Laplacian regularization in distributed optimization",
+        "type": "concept",
+        "description": "Implementation adds a Laplacian penalty on predicted labels to the loss, inducing global smoothness during stochastic-gradient updates (Algorithm 1).",
+        "aliases": [
+          "Laplacian smoothing term",
+          "graph-wide regulariser ρ γ^T L γ"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Neighbour label averaging in stochastic gradient updates",
+        "type": "concept",
+        "description": "Implementation where each agent replaces its predicted label with the average of neighbours that share the same class before gradient update (Algorithm 2).",
+        "aliases": [
+          "Ck-based averaging",
+          "local smoothing update rule"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Neighbour label averaging during inference for heterogeneous agents",
+        "type": "concept",
+        "description": "During testing/deployment, agents average neighbours’ predictions (Eq. 4) to obtain final labels when local features are insufficient.",
+        "aliases": [
+          "testing-time prediction averaging",
+          "deployment neighbour consensus"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing",
+        "type": "concept",
+        "description": "Simulations on 50-node synthetic network and 139-sensor weather data show lower test error versus non-cooperative baseline.",
+        "aliases": [
+          "global smoothing empirical results",
+          "Algorithm 1 validation"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+        "type": "concept",
+        "description": "Synthetic experiments (uniform-label scenario) show Algorithm 2 outperforms non-cooperative training.",
+        "aliases": [
+          "local smoothing empirical results",
+          "Algorithm 2 validation"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+        "type": "intervention",
+        "description": "During model training (fine-tuning phase), add Laplacian penalty ρ γ^T L γ and perform the stochastic-gradient updates of Algorithm 1.",
+        "aliases": [
+          "Algorithm 1 training",
+          "graph-wide smoothing training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Train distributed classifiers with neighbour label averaging algorithm",
+        "type": "intervention",
+        "description": "During model training, replace each agent’s prediction with the average over same-label neighbours (Eq. 4) before gradient update, as in Algorithm 2.",
+        "aliases": [
+          "Algorithm 2 training",
+          "local smoothing training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Aggregate neighbour predictions during deployment to improve classification reliability",
+        "type": "intervention",
+        "description": "At inference/deployment, each agent replaces its own prediction with the average of its neighbours’ predictions to compensate for limited features.",
+        "aliases": [
+          "testing-time label averaging",
+          "deployment-phase neighbour consensus"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "implemented_by",
+        "source_node": "Local neighbourhood label averaging for synchronized classification clusters",
+        "target_node": "Neighbour label averaging in stochastic gradient updates",
+        "description": "Implements local smoothing via averaging rule Ck in Algorithm 2.",
+        "edge_confidence": 5,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Neighbour label averaging in stochastic gradient updates",
+        "target_node": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+        "description": "Simulations verify performance gain of local averaging approach.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing",
+        "target_node": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+        "description": "Positive empirical evidence motivates adopting the global Laplacian training procedure.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+        "target_node": "Train distributed classifiers with neighbour label averaging algorithm",
+        "description": "Simulation results motivate employing local-averaging training.",
+        "edge_confidence": 3,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "e3c52cb2092ec9ff278e2dd6e9140f3f"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.434297"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Missing required schema fields intervention_lifecycle_rationale and intervention_maturity_rationale on all 3 intervention nodes (nodes[11,12,13]). Schema explicitly requires these for interventions. Section 2 'Distributed Classification Algorithms' and Section 4 'Experimental Results' provide justification basis.",
+      "BLOCKER: All nodes missing required node_rationale field per schema specification. Each node must explain why essential to fabric with source section reference.",
+      "MAJOR: All edges missing required edge_confidence_rationale and edge_rationale fields per schema specification. These are mandatory attributes.",
+      "MAJOR: Edge validation direction error at nodes[15] creates reversal: 'Aggregate neighbour predictions during deployment' should be validated-by evidence, not validated-by pointing from intervention. Violates knowledge fabric principle that interventions receive validation edges.",
+      "MAJOR: Convergence theorem (Theorem 1, Section 3) provides mathematical validation evidence but is not captured as node or validation edge. Source explicitly states convergence guarantees: 'E∥W̃i∥² converges exponentially fast' (Eq. 9-11).",
+      "MAJOR: Graph embedding overhead avoidance (Section 1.1 'Previous Work': 'In our approach, we avoid the graph embeding step') is stated design principle but not captured as design rationale node or edge.",
+      "MAJOR: Comparative baseline validation (Section 4: weather data 0.2001 non-cooperative vs 0.1851 Algorithm 1; synthetic 'non-cooperative performs the worst') not explicitly captured as validation evidence node.",
+      "MINOR: Duplicate/redundant edges: both 'Neighbour label averaging during inference' and 'Aggregate neighbour predictions at deployment' validate to same evidence node via same validation evidence, representing same mechanism.",
+      "MINOR: Two design rationales merged into single node but should remain separate with scenario context; source distinguishes use cases: global for non-uniform labels, local 'when sensing networks are tasked with monitoring a common environment' (Section 1).",
+      "MINOR: Edge (Global Laplacian → Local averaging) marked 'refined_by' with confidence 2 is speculative and creates circular relationship; these are scenario-dependent variants, not refinements.",
+      "COVERAGE: Source provides Theorem 1 convergence proof (Section 3, Eq. 5-11) proving exponential convergence of Algorithm 1; this is high-confidence validation evidence not captured in current graph.",
+      "COVERAGE: Source explicitly contrasts with representation learning approaches requiring graph embedding preprocessing (Section 1.1); design principle of direct graph exploitation is not captured as design rationale advantage.",
+      "CONSISTENCY: All nodes and edges follow naming conventions for granularity (not too atomic, not too coarse), successfully capturing context. Node names are mergeable across domains (e.g., 'Heterogeneous feature spaces' is general).",
+      "COMPLETENESS: Knowledge fabric successfully captures: (1) risk→problem analysis chain (feature/parameter heterogeneity), (2) theoretical insight (smoothness assumption), (3) two design rationale paths (global vs local), (4) implementation mechanisms (Laplacian regularization vs neighbor averaging), (5) validation evidence (synthetic and weather experiments), (6) interventions (training algorithms and deployment averaging). When schema fields added, graph will be complete.",
+      "MERGEABILITY: Nodes use canonical naming allowing cross-source merging: 'Distributed algorithms', 'Heterogeneous networks', 'Convergence', 'Label prediction', 'Stochastic gradient' are standard terminology in ML literature."
+    ]
+  },
+  "url": "https://arxiv.org/abs/1911.04870",
+  "paper_id": "a5e77e7f5ec7af3978d715a4300f333e",
+  "ard_file_source": "arxiv",
+  "errors": null
+}

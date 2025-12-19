@@ -1,0 +1,559 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has critical schema violations and structural issues. All edges are missing mandatory edge_confidence_rationale and edge_rationale fields. Concept nodes lack node_rationale attributes. Intervention nodes lack lifecycle and maturity rationale fields. Several key causal pathways from the source text are missing, including the role of alignment/deployment as insufficient conditions, geographic concentration of AI development, timeline urgency factors, and labor market disruption mechanisms. The causal flow contains logical reversals (validation evidence flowing FROM rather than TO mechanisms). The merge of 'adaptation gap' concepts with theoretical insight obscures the problem-solution distinction. With the proposed fixes applied (adding missing fields, correcting edge directions, adding 8 missing concept nodes and 1 missing intervention node, merging 1 duplicate node pair, and adjusting intervention lifecycle/maturity values), the graph would achieve schema compliance, referential integrity, and substantially improved coverage of source content. The core reasoning fabric is sound but incompletely articulated."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Intervention nodes missing required edge_confidence_rationale and edge_rationale attributes in edges pointing to them",
+        "where": "edges[*] where target_node is intervention type",
+        "suggestion": "Add edge_confidence_rationale and edge_rationale to all edges, including those targeting intervention nodes. These fields are mandatory per final_output_format specification."
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing edge_confidence_rationale and edge_rationale attributes",
+        "where": "edges[*]",
+        "suggestion": "Add edge_confidence_rationale (with closest preceding section title reference) and edge_rationale (with section title reference) to every edge per schema specification."
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes lack intervention_lifecycle_rationale and intervention_maturity_rationale",
+        "where": "nodes[11,12,13] (intervention nodes)",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale with section title references for each intervention node per schema."
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "All concept nodes lack node_rationale attribute",
+        "where": "nodes[0-10]",
+        "suggestion": "Add node_rationale to every concept node explaining why it is essential to the fabric with section title reference."
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Unnecessary 'embedding' field present in all nodes and edges",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove embedding field as it is not part of the specified JSON schema and adds no value."
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge source_node/target_node references do not exactly match node names due to case/punctuation sensitivity",
+        "names": [
+          "All edges appear correctly matched upon careful verification"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "Global policy mechanisms to redistribute AI dividends quickly",
+        "reason": "This theoretical insight node has no incoming edges and only outgoing edges to implementation mechanisms. It serves as intermediate concept but is not properly anchored in the causal chain from problems.",
+        "suggested_fix": "Add edge from 'Inevitability of adaptation gap even with aligned AI' (theoretical insight) with edge_type 'enabled_by' or 'refined_by' to connect it to the main reasoning chain."
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Inevitability of adaptation gap even with aligned AI",
+          "Global policy mechanisms to redistribute AI dividends quickly"
+        ],
+        "merge_strategy": "These are distinct nodes - first is a theoretical insight about the problem, second is about solutions. Retain both but improve differentiation and edge structure."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge type 'refined_by' used bidirectionally (e.g., problem analysis refined by theoretical insight) is semantically awkward",
+        "evidence": "edges with type 'refined_by' from problem analysis to theoretical insight",
+        "fix": "Change edge_type to 'motivated_by' or 'clarified_by' or 'explained_by' to better capture the causal direction from theoretical insight to problem understanding."
+      },
+      {
+        "issue": "Implementation mechanism nodes (UBI, safety nets, disruption fund) flow into intervention nodes via 'specified_by' edge, but specification should flow FROM theoretical design TO implementation, not vice versa",
+        "evidence": "edges with type 'specified_by' where implementation mechanism is source and intervention is target",
+        "fix": "Reverse edge direction: Implementation mechanism nodes should have incoming 'specified_by' edges FROM interventions, OR change 'specified_by' semantics. Better: keep as-is but rename to 'implemented_by' at mechanism level."
+      },
+      {
+        "issue": "Edge from 'Delay in equitable distribution' to 'Inevitability of adaptation gap' uses 'refined_by' but these nodes represent the SAME core problem at different levels of abstraction",
+        "evidence": "The data source treats the 'uncanny valley' as a unified concept, not two separate problems; Section: 'Fifth, and most importantly, I believe there will be an uncanny valley...'",
+        "fix": "Either merge these two problem analysis nodes into one, or clarify the distinction. Current framing obscures that they are describing the same phenomenon."
+      },
+      {
+        "issue": "Validation evidence nodes (historical pattern, climate analogy) positioned as validating implementation mechanisms directly, but logically should validate the need for the design rationale",
+        "evidence": "edges from validation evidence to implementation mechanisms like UBI and safety nets",
+        "fix": "Add intermediate edge layer: validation evidence → design rationale → implementation mechanism. Currently skips design rationale."
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Alignment and deployment are necessary but insufficient",
+          "evidence": "Even if one can assume that: Transformative AI systems are likely to be technically aligned...These systems are likely to be deployed in a fashion that is not intentionally harmful. There is still considerable work to be done...",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Technical alignment of AI systems",
+            "Responsible deployment of AI systems"
+          ],
+          "expected_target_node_name": [
+            "Develop AI adaptation strategies to protect vulnerable populations"
+          ]
+        },
+        {
+          "title": "Under-attention to adaptation in current research",
+          "evidence": "I believe an important aspect of research that is still under-considered is the disruptive economic and political impact of transformative artificial intelligence",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Focus on alignment and deployment in AI safety community"
+          ],
+          "expected_target_node_name": [
+            "Develop AI adaptation strategies to protect vulnerable populations"
+          ]
+        },
+        {
+          "title": "Transformative AI assumptions as enabling the risk",
+          "evidence": "First, I am assuming that transformative artificial intelligence is most likely to emerge...Second...I am assuming that the actor who develops this system has fairly good intentions...Third, I assume that the development of such an AI system will be...transformative, and rapidly claim immense amounts of economic and technological value",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Rapid economic disruption from transformative AI market dominance"
+          ],
+          "expected_target_node_name": [
+            "Mass economic suffering in vulnerable populations during transformative AI deployment"
+          ]
+        },
+        {
+          "title": "Geographic vulnerability concentration",
+          "evidence": "As someone who has grown up and spent most of his life in a non-Western country without significant international influence, I am acutely concerned about this uncanny valley...mass economic disruption is likely to inflict suffering on likely hundreds of millions of people who are least responsible for the technology's creation, least proximate to its benefits, and most vulnerable to its disruptive effects",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Geographic concentration of AI development in wealthy nations"
+          ],
+          "expected_target_node_name": [
+            "Mass economic suffering in vulnerable populations during transformative AI deployment"
+          ]
+        },
+        {
+          "title": "Risk factors that strengthen adaptation case",
+          "evidence": "Section: 'Some Other Relevant Factors' - lists 5 aggravating factors: soon timeline, fast takeoff, transformative before superintelligent, wide uncanny valley, misalignment/poor deployment",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Early arrival of transformative AI",
+            "Hard/fast AI takeoff dynamics",
+            "Wide adaptation gap duration",
+            "Misalignment or poor deployment of AI systems"
+          ],
+          "expected_target_node_name": [
+            "Develop AI adaptation strategies to protect vulnerable populations"
+          ]
+        },
+        {
+          "title": "Policy alternatives and tractability concerns",
+          "evidence": "As those focused on global governance, economics, politics...are aware, each of these proposals has significant problems and likely much greater issues with tractability",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Implementation mechanisms (UBI, safety nets, fund)"
+          ],
+          "expected_target_node_name": [
+            "Tractability constraints in AI adaptation policy implementation"
+          ]
+        },
+        {
+          "title": "Broad coalition appeal",
+          "evidence": "I believe such a project would be of interest to those vested in reducing the risks from emerging technologies, as well as those dedicating their lives to reducing global poverty and improving global health",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Develop AI adaptation strategies to protect vulnerable populations"
+          ],
+          "expected_target_node_name": [
+            "Convergence between AI safety and global poverty reduction communities"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "intervention",
+        "name": "Fund and establish AI adaptation research agenda at major institutions",
+        "edges": [
+          {
+            "type": "enabled_by",
+            "target_node": "Fund and establish AI adaptation research agenda at major institutions",
+            "description": "Research agenda provides knowledge and frameworks for designing adaptation strategies",
+            "edge_confidence": 3
+          }
+        ],
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1
+      }
+    ],
+    "merges": [
+      {
+        "new_node_name": "Adaptation gap between transformative AI creation and equitable benefit distribution",
+        "nodes_to_merge": [
+          "Delay in equitable distribution of AI-generated economic value",
+          "Inevitability of adaptation gap even with aligned AI"
+        ]
+      }
+    ],
+    "deletions": [
+      {
+        "node_name": "Global policy mechanisms to redistribute AI dividends quickly",
+        "reason": "This node is redundant with 'Develop AI adaptation strategies to protect vulnerable populations' and adds no distinct conceptual content. The design rationale is better captured in the design_rationale node which already exists."
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Universal basic income funded by AI-driven revenues",
+        "target_node_name": "Historical pattern of technological cataclysms disproportionately harming vulnerable groups",
+        "reason": "Direction is backwards - validation evidence should flow TO mechanisms, not FROM them. Remove and replace with forward edge from validation evidence to mechanism."
+      },
+      {
+        "source_node_name": "Universal basic income funded by AI-driven revenues",
+        "target_node_name": "Climate adaptation literature analogy to adaptation necessity",
+        "reason": "Direction is backwards - validation evidence should flow TO mechanisms. Remove and replace with forward edge."
+      },
+      {
+        "source_node_name": "Expansion of national and global social safety nets",
+        "target_node_name": "Historical pattern of technological cataclysms disproportionately harming vulnerable groups",
+        "reason": "Direction is backwards; remove."
+      },
+      {
+        "source_node_name": "Expansion of national and global social safety nets",
+        "target_node_name": "Climate adaptation literature analogy to adaptation necessity",
+        "reason": "Direction is backwards; remove."
+      },
+      {
+        "source_node_name": "Global fund for economic disruption assistance",
+        "target_node_name": "Climate adaptation literature analogy to adaptation necessity",
+        "reason": "Direction is backwards; remove."
+      },
+      {
+        "source_node_name": "Global fund for economic disruption assistance",
+        "target_node_name": "Historical pattern of technological cataclysms disproportionately harming vulnerable groups",
+        "reason": "Direction is backwards; remove."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Implement global universal basic income prior to transformative AI",
+        "field": "intervention_lifecycle",
+        "json_new_value": "5",
+        "reason": "UBI implementation is deployment-phase policy (phase 5), not model design. Must be enacted before or concurrently with TAI deployment."
+      },
+      {
+        "node_name": "Establish AI-triggered social safety nets within national budgets",
+        "field": "intervention_lifecycle",
+        "json_new_value": "5",
+        "reason": "Policy implementation and deployment phase - national governments enact these during AI transition."
+      },
+      {
+        "node_name": "Create international AI economic disruption fund via World Bank model",
+        "field": "intervention_lifecycle",
+        "json_new_value": "5",
+        "reason": "International fund creation and deployment is phase 5 activity."
+      },
+      {
+        "node_name": "Implement global universal basic income prior to transformative AI",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Global UBI is theoretical/foundational as no operational precedent exists at required scale; change from 2 to 1."
+      },
+      {
+        "node_name": "Establish AI-triggered social safety nets within national budgets",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "AI-specific safety nets are foundational concept; similar to UBI, no operational precedent; change from 2 to 1."
+      },
+      {
+        "node_name": "Create international AI economic disruption fund via World Bank model",
+        "field": "intervention_maturity",
+        "json_new_value": "2",
+        "reason": "World Bank FIF provides partial precedent, making this experimental/PoC level (2) rather than foundational (1)."
+      },
+      {
+        "node_name": "Mass economic suffering in vulnerable populations during transformative AI deployment",
+        "field": "description",
+        "json_new_value": "Risk that rapid, AI-induced economic changes harm hundreds of millions of people, particularly outside the US and Western Europe, before AI dividends are equitably shared. Concentrated on those least responsible for technology creation and most vulnerable to disruption.",
+        "reason": "Add specificity about geographic concentration and vulnerability factors explicitly stated in source."
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Delay in equitable distribution of AI-generated economic value",
+        "type": "concept",
+        "description": "A period between creation of TAI and the point when its economic benefits reach the global poor, due to political, logistical and coordination hurdles.",
+        "aliases": [
+          "distribution lag of AI dividends",
+          "AI value allocation delay"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Rapid economic disruption from transformative AI market dominance",
+        "type": "concept",
+        "description": "TAI may quickly concentrate wealth and restructure labor markets, outpacing governments' ability to respond.",
+        "aliases": [
+          "sudden AI-driven economic upheaval",
+          "hard AI takeoff disruption"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Inevitability of adaptation gap even with aligned AI",
+        "type": "concept",
+        "description": "Author assumes that, despite alignment and good intentions, structural delays will create a harmful gap requiring proactive planning.",
+        "aliases": [
+          "uncanny valley between AI creation and benefit sharing",
+          "adaptation gap assumption"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Historical pattern of technological cataclysms disproportionately harming vulnerable groups",
+        "type": "concept",
+        "description": "Evidence from previous technological and global catastrophes shows marginalized communities bear the brunt of disruption.",
+        "aliases": [
+          "history of unequal tech disruption",
+          "past economic shocks effect on poor"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Climate adaptation literature analogy to adaptation necessity",
+        "type": "concept",
+        "description": "The post analogizes AI adaptation to widely-accepted need for climate adaptation, offering conceptual validation.",
+        "aliases": [
+          "climate adaptation comparison",
+          "analogous adaptation scholarship"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Develop AI adaptation strategies to protect vulnerable populations",
+        "type": "concept",
+        "description": "Proposed body of work to design policies and structures that moderate harm during the adaptation gap.",
+        "aliases": [
+          "AI adaptation research agenda",
+          "planning for AI socioeconomic disruption"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Universal basic income funded by AI-driven revenues",
+        "type": "concept",
+        "description": "Mechanism: provide every human a purchasing-power-adjusted stipend financed by dues from affluent governments and leading AI companies.",
+        "aliases": [
+          "AI-financed global UBI",
+          "worldwide basic stipend from AI dividends"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Expansion of national and global social safety nets",
+        "type": "concept",
+        "description": "Mechanism: redirect national budgets and multinational support to build larger, more adaptable welfare systems.",
+        "aliases": [
+          "enhanced welfare structures for AI disruption",
+          "strengthened social protection"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Global fund for economic disruption assistance",
+        "type": "concept",
+        "description": "Mechanism: create an expanded, well-resourced international fund to support poor communities facing AI-driven disruption.",
+        "aliases": [
+          "AI economic shock fund",
+          "World Bank-style intermediary fund for AI impacts"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Fund and establish AI adaptation research agenda at major institutions",
+        "type": "intervention",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Fund and establish AI adaptation research agenda at major institutions"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Implement global universal basic income prior to transformative AI",
+        "type": "intervention",
+        "description": "Action: legislate and operationalize a universally distributed, purchasing-power-adjusted stipend funded by AI dividend taxes or dues, before large-scale TAI deployment begins.",
+        "aliases": [
+          "deploy AI-funded UBI globally",
+          "roll out worldwide basic income ahead of TAI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Establish AI-triggered social safety nets within national budgets",
+        "type": "intervention",
+        "description": "Action: rebuild or enlarge domestic welfare programs with explicit triggers and funding lines linked to AI-related labor market shocks.",
+        "aliases": [
+          "scale national welfare for AI shocks",
+          "integrate AI contingency into social protection"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Create international AI economic disruption fund via World Bank model",
+        "type": "intervention",
+        "description": "Action: establish a multilateral fund, similar to the World Bank’s Financial Intermediary Fund, to channel resources quickly to low-income countries harmed by AI disruption.",
+        "aliases": [
+          "launch global AI shock fund",
+          "set up Financial Intermediary Fund for AI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Mass economic suffering in vulnerable populations during transformative AI deployment",
+        "type": "concept",
+        "description": "Risk that rapid, AI-induced economic changes harm hundreds of millions of people, particularly outside the US and Western Europe, before AI dividends are shared.",
+        "aliases": [
+          "mass suffering from AI economic disruption",
+          "global hardship during AI uncanny valley"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Mass economic suffering in vulnerable populations during transformative AI deployment",
+        "target_node": "Delay in equitable distribution of AI-generated economic value",
+        "description": "Distribution lag directly produces economic hardship before benefits reach the vulnerable.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Delay in equitable distribution of AI-generated economic value",
+        "target_node": "Inevitability of adaptation gap even with aligned AI",
+        "description": "The theoretical insight clarifies why the delay is expected even under best-case alignment.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Rapid economic disruption from transformative AI market dominance",
+        "target_node": "Inevitability of adaptation gap even with aligned AI",
+        "description": "Insight explains that disruption is probable despite alignment, sharpening problem analysis.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Inevitability of adaptation gap even with aligned AI",
+        "target_node": "Develop AI adaptation strategies to protect vulnerable populations",
+        "description": "Recognizing the gap motivates creation of adaptation strategies.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Historical pattern of technological cataclysms disproportionately harming vulnerable groups",
+        "target_node": "Implement global universal basic income prior to transformative AI",
+        "description": "Historical suffering motivates proactive UBI.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Climate adaptation literature analogy to adaptation necessity",
+        "target_node": "Implement global universal basic income prior to transformative AI",
+        "description": "Analogy motivates universal pre-emptive income support.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "79627ee5f59d1d5090e7fb8c93dff368"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.203741"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: Missing edge_confidence_rationale and edge_rationale on all 23 edges violates mandatory final_output_format specification.",
+      "BLOCKER: All 10 concept nodes missing node_rationale field violates schema requirement 'Node Causal-Interventional Edges' specification.",
+      "BLOCKER: All 3 intervention nodes missing intervention_lifecycle_rationale and intervention_maturity_rationale fields violates schema specification.",
+      "MAJOR: Node 'Global policy mechanisms to redistribute AI dividends quickly' is orphaned (concept_category: theoretical_insight) but has no incoming causal edges connecting it to problem analysis nodes; exists as isolated fork.",
+      "MAJOR: 6 edges have reversed directionality: validation evidence nodes should have outgoing edges TO mechanisms (via 'motivates' or 'supports'), not incoming edges FROM mechanisms (via 'validated_by').",
+      "MAJOR: Missing coverage of geographic concentration mechanism - author emphasizes 'least proximate to benefits' for non-Western populations but no explicit node captures this structural advantage in wealthy nations.",
+      "MAJOR: Missing coverage of aggravating factors in 'Some Other Relevant Factors' section - early timeline, hard takeoff, wide uncanny canyon, and misalignment scenarios all strengthen adaptation case but absent from graph.",
+      "MAJOR: Missing explicit edge showing alignment/deployment insufficiency - section 'Alignment, Deployment, Adaptation' argues these are necessary but not sufficient, but no edge captures this premise.",
+      "MAJOR: Labor market disruption mechanism conflated with general 'rapid economic disruption' - author's illustration specifically mentions employment/wage effects but this distinct causal pathway not extracted.",
+      "MINOR: 'Delay in equitable distribution' and 'Inevitability of adaptation gap' represent same phenomenon at different abstraction levels; should merge per knowledge fabric requirements to avoid duplicate nodes.",
+      "MINOR: Nodes contain unnecessary 'embedding' field not in specified schema.",
+      "Coverage gap: 'Parting Thoughts' section appeals to AI safety AND global poverty reduction communities (convergence of interests) but no node captures this coalition-building argument.",
+      "Coverage gap: Tractability concerns explicitly acknowledged ('each of these proposals has significant problems') but no constraint node limits the three policy interventions.",
+      "Inference applied conservatively: Added 'Fund and establish AI adaptation research agenda' as Lifecycle 1, Maturity 1 intervention per text arguing for 'institutional resources devoted to inquiry' - justified by foundational nature.",
+      "Edge confidence ratings: Most edges set to 2-3 because source provides qualitative reasoning rather than empirical validation; confidence never exceeds 3 except on direct textual claims.",
+      "Section reference accuracy: All proposed nodes/edges traceable to specific sections ('Alignment, Deployment, Adaptation', 'Relevant Assumptions', 'An Illustration', 'Some Other Relevant Factors', 'Some Tentative Policy Suggestions', 'Parting Thoughts')."
+    ]
+  },
+  "url": "https://forum.effectivealtruism.org/posts/bFDs7yFiEhgPt4LWt/the-case-for-ai-adaptation-the-perils-of-living-in-a-world",
+  "paper_id": "2ce01e48c7b79bfa9e2e29254e3c7159",
+  "ard_file_source": "eaforum",
+  "errors": null
+}

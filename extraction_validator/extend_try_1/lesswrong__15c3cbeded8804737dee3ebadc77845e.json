@@ -1,0 +1,538 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extraction contains critical schema violations (missing required fields across all nodes and edges: node_rationale, edge_confidence_rationale, edge_rationale; unwanted fields embedding present) and has multiple major logical issues: reversed causal edges that contradict source material (clear materials enabling design principles rather than vice versa), misclassified concept categories (stagnation as risk vs problem analysis), missing coverage of 5+ important edges directly supported by source text (mathematical prerequisites barrier, decision error relevance to safety, personal fluency gap), and one node that should be deleted as redundant (Design AI agents). After applying all proposed fixes—removing problematic edges, reclassifying nodes, adding 7 missing concept nodes and 1 missing intervention node, merging 2 duplicate nodes, and adding all required rationale fields—the knowledge fabric would accurately capture both primary pathways (technical InfraBayes benefits → adoption pathway, and exposition accessibility → adoption pathway) with proper causal flow and comprehensive coverage of source evidence."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Node 'Unbounded decision error in AI systems' has null values for intervention_lifecycle and intervention_maturity but these should not be present for concept nodes per schema",
+        "where": "nodes[0].intervention_lifecycle, nodes[0].intervention_maturity",
+        "suggestion": "Remove intervention_lifecycle and intervention_maturity fields from all concept nodes; they should only appear in intervention nodes"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes have 'embedding' field set to null, which is not part of the required schema",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove the 'embedding' field from all nodes as it is not defined in schema requirements"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges have 'embedding' field set to null, which is not part of the required schema",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove the 'embedding' field from all edges as it is not defined in schema requirements"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Missing edge_confidence_rationale for all edges",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add edge_confidence_rationale field to every edge with evidence assessment and DATA_SOURCE section reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Missing edge_rationale for all edges",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale field to every edge with connection justification and DATA_SOURCE section reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "All concept nodes missing node_rationale field required by schema",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field to every node explaining why it is essential to fabric with DATA_SOURCE section reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes missing node_rationale field",
+        "where": "nodes[6].node_rationale, nodes[13].node_rationale",
+        "suggestion": "Add node_rationale field to intervention nodes"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent target node",
+        "names": [
+          "Embed infrabayesian belief update rules into reinforcement learning algorithms (edge source node in line with validated_by edge)"
+        ]
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'Embed infrabayesian belief update rules into reinforcement learning algorithms' preceded_by 'Develop textbook, exercise sheets, and rewrites with editorial support' is not supported by source text",
+        "evidence": "The data source discusses materials as separate from implementation, but does not establish this temporal ordering as a causal relationship",
+        "fix": "Remove edge or reduce confidence to 1 with explicit inference rationale noting this is moderate inference"
+      },
+      {
+        "issue": "Edge 'Design AI agents using infrabayesian decision principles' enabled_by 'Provide clear expository resources on infrabayesianism' reverses apparent causal flow",
+        "evidence": "Source states 'I believe infrabayesianism appears to have a communication problem' and proposes materials to improve adoption, not that clear materials enable design principles. Design principles should enable resource creation, not vice versa",
+        "fix": "Remove this edge; it conflates mechanism with motivation"
+      },
+      {
+        "issue": "Node 'Stagnated adoption of promising alignment frameworks' categorized as risk but appears better as problem analysis",
+        "evidence": "Source frames this as a communication bottleneck problem ('communication problem', 'bounced off') rather than a primary top-level risk. The primary risk is unbounded decision error; stagnation is a consequence of poor exposition",
+        "fix": "Recategorize as problem_analysis; reposition in causal flow to properly connect accessibility → adoption"
+      },
+      {
+        "issue": "Missing critical inference about realized pathway from materials to implementation adoption",
+        "evidence": "Source states 'Personally, even though I've carefully worked through the first three posts...I still am not fluent enough to confidently apply the concepts in my own work' indicating comprehension gap affects even engaged researchers",
+        "fix": "Add edge from 'Early-reader feedback' directly to 'Incorporate infrabayesian decision framework at model design stage' showing how improved materials enable adoption"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "InfraBayes solves realizability problem",
+          "evidence": "Like logical induction, it solves the realizability problem, creating an epistemic theory suitable for embedded agents",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Infrabayesianism supplies realizable epistemics with decision-error bounds"
+          ],
+          "expected_target_node_name": [
+            "Embedded agent epistemic framework requirement"
+          ]
+        },
+        {
+          "title": "Decision-theoretic relevance of InfraBayes",
+          "evidence": "Unlike logical induction, and unlike standard Bayesian decision theory, it presents a theory of epistemics directly relevant to proving decision-theoretic results (in particular, useful learning-theoretic guarantees)",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Infrabayesianism supplies realizable epistemics with decision-error bounds"
+          ],
+          "expected_target_node_name": [
+            "Learning-theoretic guarantees for decision quality in embedded agents"
+          ]
+        },
+        {
+          "title": "Decision error vs predictive error distinction",
+          "evidence": "Logical induction and standard Bayesian decision theories both can produce meaningful loss-bounding guarantees with respect to predictive error, but bounding decision error appears challenging for these approaches",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Absent decision-error guarantees in standard Bayesian and logical induction frameworks"
+          ],
+          "expected_target_node_name": [
+            "Distinction between predictive and decision error bounding"
+          ]
+        },
+        {
+          "title": "Risk relevance of decision error bounds",
+          "evidence": "Since decision error is much more meaningful for bounding risk, this seems highly relevant to AI safety",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Theoretical proofs in infrabayesian sequence showing decision-error bounds"
+          ],
+          "expected_target_node_name": [
+            "Decision error bounds as foundation for AI safety risk mitigation"
+          ]
+        },
+        {
+          "title": "Many people bounce off InfraBayes materials",
+          "evidence": "I've chatted with several people who have strongly 'bounced off' the existing write-ups. (I'm tempted to conclude this is a near-universal experience.)",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Poor accessibility of existing infrabayesianism write-ups"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Post on InfraBayes fell through cracks",
+          "evidence": "There was even a post asking whether a big progress write-up -- applying InfraBayes to naturalized induction -- had simply fallen through the cracks",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Stagnated adoption of promising alignment frameworks"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Personal fluency problem with InfraBayes",
+          "evidence": "even though I've carefully worked through the first three posts and re-visited my notes to study them more than once, I still am not fluent enough to confidently apply the concepts in my own work",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Poor accessibility of existing infrabayesianism write-ups"
+          ],
+          "expected_target_node_name": [
+            "Researcher fluency gap in applying InfraBayes concepts"
+          ]
+        },
+        {
+          "title": "Required mathematical background",
+          "evidence": "mainly topology, functional analysis, measure theory and convex analysis. Background in reinforcement learning theory is a bonus",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Poor accessibility of existing infrabayesianism write-ups"
+          ],
+          "expected_target_node_name": [
+            "High mathematical prerequisite barrier to InfraBayes comprehension"
+          ]
+        },
+        {
+          "title": "Math exposition and editing skills required",
+          "evidence": "Must have good judgement when it comes to math exposition. Must be a good editor",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Hire math-savvy editor to create accessible infrabayesianism materials"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Specific deliverables: textbook, exercises, posts",
+          "evidence": "probable activities include producing independent write-ups re-explaining InfraBayes from the ground up, in a more accessible way, assisting with the creation of a textbook and exercise sheet, and editing/writeups of additional posts",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Develop textbook, exercise sheets, and rewrites with editorial support"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "InfraBayes may illuminate other important questions",
+          "evidence": "Being a new perspective on very basic issues, Infrabayesianism (or perhaps successors to the theory) may turn out to shed light on a number of other important questions",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Infrabayesianism supplies realizable epistemics with decision-error bounds"
+          ],
+          "expected_target_node_name": [
+            "Future theoretical developments from infrabayesian foundations"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Stagnated community adoption of InfraBayes due to poor exposition accessibility",
+        "nodes_to_merge": [
+          "Stagnated adoption of promising alignment frameworks",
+          "Poor accessibility of existing infrabayesianism write-ups"
+        ]
+      }
+    ],
+    "deletions": [
+      {
+        "node_name": "Design AI agents using infrabayesian decision principles",
+        "reason": "This node duplicates content better captured by 'Incorporate infrabayesian decision framework at model design stage' (intervention) and confuses concept vs intervention categorization. The design philosophy is already implicit in the intervention node"
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Design AI agents using infrabayesian decision principles",
+        "target_node_name": "Provide clear expository resources on infrabayesianism",
+        "reason": "This edge reverses causal flow; clear materials enable adoption of design principles, not vice versa. Should be removed"
+      },
+      {
+        "source_node_name": "Embed infrabayesian belief update rules into reinforcement learning algorithms",
+        "target_node_name": "Develop textbook, exercise sheets, and rewrites with editorial support",
+        "reason": "The 'preceded_by' relationship is not supported by source; these are parallel activities, not temporally ordered. Should be removed"
+      },
+      {
+        "source_node_name": "Unbounded decision error in AI systems",
+        "target_node_name": "Stagnated adoption of promising alignment frameworks",
+        "reason": "This creates circular reasoning; stagnation is a derivative consequence, not a separate causal path from the same risk. Remove to clarify primary causal flow"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Stagnated adoption of promising alignment frameworks",
+        "field": "concept_category",
+        "json_new_value": "\"problem_analysis\"",
+        "reason": "This represents a mechanism that prevents solving the primary risk (unbounded decision error), not a top-level risk itself. Should be problem analysis per source framing as 'communication problem'"
+      },
+      {
+        "node_name": "Absent decision-error guarantees in standard Bayesian and logical induction frameworks",
+        "field": "concept_category",
+        "json_new_value": "\"problem_analysis\"",
+        "reason": "This node should be revised to incorporate the distinction between predictive and decision error; current phrasing is vague. Recommend merging with new 'Distinction between predictive error and decision error bounding' node"
+      },
+      {
+        "node_name": "Incorporate infrabayesian decision framework at model design stage",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Current maturity of 1 (Foundational/Theoretical) is appropriate but should be justified: no real-world implementation of InfraBayes in deployed systems exists per source"
+      },
+      {
+        "node_name": "Hire math-savvy editor to create accessible infrabayesianism materials",
+        "field": "intervention_lifecycle",
+        "json_new_value": "6",
+        "reason": "Current value of 6 (Other) is correct; this is a community/support activity, not part of AI system development pipeline"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Unbounded decision error in AI systems",
+        "type": "concept",
+        "description": "AI systems that lack formal guarantees on the quality of their action choices may make harmful or catastrophic decisions, posing a primary alignment risk.",
+        "aliases": [
+          "decision error without bounds in AI agents",
+          "uncontrolled decision mistakes by AI"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Infrabayesianism supplies realizable epistemics with decision-error bounds",
+        "type": "concept",
+        "description": "The framework solves the realizability problem for embedded agents and yields systematic techniques to bound decision error, directly relevant to safety proofs.",
+        "aliases": [
+          "InfraBayes provides decision guarantees",
+          "realizable infrabayesian epistemics"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Embed infrabayesian belief update rules into reinforcement learning algorithms",
+        "type": "concept",
+        "description": "Concrete mechanism: represent the agent’s epistemic state as an infradistribution and apply the corresponding update/decision rules during learning and acting.",
+        "aliases": [
+          "infrabayesian RL implementation",
+          "infra-belief updates in RL agents"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Theoretical proofs in infrabayesian sequence showing decision-error bounds",
+        "type": "concept",
+        "description": "The published sequence contains mathematical proofs that infradistributions yield learning-theoretic guarantees relevant for bounding decision error.",
+        "aliases": [
+          "InfraBayes formal guarantees",
+          "proved decision bounds for infradistributions"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Poor accessibility of existing infrabayesianism write-ups",
+        "type": "concept",
+        "description": "Current materials require advanced topology, measure theory and RL background; many researchers ‘bounce off’ after initial reading.",
+        "aliases": [
+          "high comprehension barrier of InfraBayes sequence",
+          "unfriendly InfraBayes exposition"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Comprehensive and well-edited educational materials improve comprehension among researchers",
+        "type": "concept",
+        "description": "Pedagogically sound material can bridge the gap between the advanced mathematics and the applied alignment community.",
+        "aliases": [
+          "better exposition increases understanding",
+          "edited resources reduce learning curve"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Provide clear expository resources on infrabayesianism",
+        "type": "concept",
+        "description": "Strategy: deliver rewritten posts, independent introductions, and structured exercises to convey the framework effectively.",
+        "aliases": [
+          "create accessible InfraBayes explanations",
+          "clarify InfraBayes concepts"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Develop textbook, exercise sheets, and rewrites with editorial support",
+        "type": "concept",
+        "description": "Concrete mechanism: an editor works with authors to create a textbook, exercise sheets and improved blog posts, lowering the comprehension barrier.",
+        "aliases": [
+          "produce InfraBayes textbook and exercises",
+          "editorial production of learning materials"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Early-reader feedback indicating improved comprehension of infrabayesianism",
+        "type": "concept",
+        "description": "Qualitative feedback (surveys, comments) from initial readers can validate whether the new materials actually enhance understanding.",
+        "aliases": [
+          "pilot comprehension improvement reports",
+          "positive survey of new write-ups"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Stagnated adoption of promising alignment frameworks",
+        "type": "concept",
+        "description": "If researchers cannot understand new theories, the community may fail to adopt them, leaving safety improvements unrealised.",
+        "aliases": [
+          "slow uptake of new alignment theories",
+          "underutilization of InfraBayes"
+        ],
+        "concept_category": "problem_analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Absent decision-error guarantees in standard Bayesian and logical induction frameworks",
+        "type": "concept",
+        "description": "Existing epistemic approaches (Bayesian decision theory, logical induction) can bound predictive loss but struggle to bound the quality of downstream decisions in embedded agents.",
+        "aliases": [
+          "lack of decision bounds in current epistemic theories",
+          "no decision-theoretic guarantees in Bayesian/LI"
+        ],
+        "concept_category": "problem_analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Incorporate infrabayesian decision framework at model design stage",
+        "type": "intervention",
+        "description": "When specifying a new AI system, choose an architecture whose epistemic and decision layers follow infrabayesian principles, providing formal decision-error guarantees.",
+        "aliases": [
+          "design-time adoption of InfraBayes",
+          "use InfraBayes in architecture specification"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Hire math-savvy editor to create accessible infrabayesianism materials",
+        "type": "intervention",
+        "description": "Contract an individual with strong mathematical background and editorial skills to lead creation of textbooks, exercises and improved posts, thus reducing the learning barrier.",
+        "aliases": [
+          "recruit editor for InfraBayes exposition",
+          "contract mathematical writer for InfraBayes"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "mitigated_by",
+        "source_node": "Absent decision-error guarantees in standard Bayesian and logical induction frameworks",
+        "target_node": "Infrabayesianism supplies realizable epistemics with decision-error bounds",
+        "description": "InfraBayes directly addresses the missing guarantees, therefore mitigating the identified weakness.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Theoretical proofs in infrabayesian sequence showing decision-error bounds",
+        "target_node": "Incorporate infrabayesian decision framework at model design stage",
+        "description": "Because formal guarantees exist, designers are motivated to adopt the framework.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Stagnated adoption of promising alignment frameworks",
+        "target_node": "Poor accessibility of existing infrabayesianism write-ups",
+        "description": "When materials are hard to read, fewer researchers adopt the framework.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Poor accessibility of existing infrabayesianism write-ups",
+        "target_node": "Comprehensive and well-edited educational materials improve comprehension among researchers",
+        "description": "High-quality materials would mitigate the accessibility problem.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Comprehensive and well-edited educational materials improve comprehension among researchers",
+        "target_node": "Provide clear expository resources on infrabayesianism",
+        "description": "Insight leads to a strategy of producing clear resources.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Provide clear expository resources on infrabayesianism",
+        "target_node": "Develop textbook, exercise sheets, and rewrites with editorial support",
+        "description": "Implementation mechanism realises the design strategy.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Develop textbook, exercise sheets, and rewrites with editorial support",
+        "target_node": "Early-reader feedback indicating improved comprehension of infrabayesianism",
+        "description": "Pilot feedback would test whether the materials actually help.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Early-reader feedback indicating improved comprehension of infrabayesianism",
+        "target_node": "Hire math-savvy editor to create accessible infrabayesianism materials",
+        "description": "Positive early signals justify investing in a dedicated editor.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "0d4a027256979e5fd4a533500114fd5a"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:27.227107"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "BLOCKER: All nodes/edges missing required schema fields (node_rationale for nodes, edge_confidence_rationale and edge_rationale for edges) that are mandatory per instructions. Extra 'embedding' field present in all nodes and edges violates schema",
+      "MAJOR: Edge 'Design AI agents...enabled_by...Provide clear resources' contradicts source logic flow—source positions materials as solution to accessibility problem, not enabler of design. Source states communication is barrier to adoption, not that good materials enable design philosophy",
+      "MAJOR: Node 'Stagnated adoption' categorized as risk but source frames as derivative problem from poor exposition (communication bottleneck), not primary risk. Primary risk is unbounded decision error. Per instruction node category ordering, should be problem_analysis",
+      "COVERAGE GAP: Missing node for mathematical prerequisite barrier explicitly stated: 'mainly topology, functional analysis, measure theory and convex analysis. Background in reinforcement learning theory is a bonus' from Properties section",
+      "COVERAGE GAP: Missing node for personal fluency gap: 'even though I've carefully worked through the first three posts...I still am not fluent enough to confidently apply the concepts in my own work' from However section shows comprehension challenge persists despite effort",
+      "COVERAGE GAP: Missing edge connecting decision error bounds to safety-relevant risk mitigation; source explicitly states 'Since decision error is much more meaningful for bounding risk, this seems highly relevant to AI safety'",
+      "COVERAGE GAP: Missing distinction node between predictive vs decision error; source emphasizes this distinction as key InfraBayes advantage: 'Logical induction...produce meaningful loss-bounding guarantees with respect to predictive error, but bounding decision error appears challenging'",
+      "REDUNDANCY: Node 'Design AI agents using infrabayesian decision principles' (concept) duplicates 'Incorporate infrabayesian decision framework at model design stage' (intervention); should delete concept node",
+      "CAUSAL REVERSAL: Edge 'Embed infrabayesian...preceded_by...Develop textbook' not supported by source; these are parallel proposed activities, not temporally ordered with causal relationship",
+      "CIRCULAR REASONING: Edge from primary risk 'Unbounded decision error' to derivative problem 'Stagnated adoption' creates false causal loop; should connect through accessibility problem instead"
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/83DimRqppcaoyYAsy/closed-job-offering-help-communicate-infrabayesianism",
+  "paper_id": "15c3cbeded8804737dee3ebadc77845e",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

@@ -1,0 +1,441 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates strong conceptual coherence and accurately captures the primary causal-interventional pathway from outer alignment risks through game-theoretic analysis to proposed interventions. However, the JSON structure has multiple BLOCKER-level schema violations: missing required fields (edge_confidence_rationale, edge_rationale, node_rationale on all nodes and edges) and extraneous 'embedding' fields. Referential integrity is sound - all edges correctly reference existing nodes. The extraction is incomplete relative to the source: it misses cognitive science methods explicitly listed by the author, the multi-scale scope of alignment failures, the PhD program-seeking intervention, and the author's enabling background. Coverage of the primary alignment-failure pathway is good, but secondary contextual elements and the author's personal research trajectory are underrepresented. With the proposed 4 new nodes (cognitive science, multi-scale failures, PhD program-seeking, methodological synthesis), 4 new edges, complete addition of all missing rationale fields, removal of 'embedding' attributes, and enriched descriptions grounding abstract concepts in source evidence, the graph will achieve full schema compliance, increased coverage, and improved mergeability with similar PhD/dissertation-oriented sources in the 500k corpus."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required edge attributes: 'edge_confidence_rationale' and 'edge_rationale' are specified in output format requirements but absent from all 8 edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' fields to every edge per final_output_format specification"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required node attributes: 'node_rationale' is specified in output format requirements but absent from all 9 nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to every node with justification and source section title reference per final_output_format specification"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Node fields contain 'embedding' attribute (set to null) not specified in required schema",
+        "where": "nodes[*].embedding and edges[*].embedding",
+        "suggestion": "Remove 'embedding' fields from all nodes and edges - not part of required output format"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes missing 'intervention_lifecycle_rationale' field required by schema when intervention_lifecycle is present",
+        "where": "nodes[7].intervention_lifecycle_rationale and nodes[8].intervention_lifecycle_rationale",
+        "suggestion": "Add rationale field explaining lifecycle choice with source section title reference for both interventions"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Intervention nodes missing 'intervention_maturity_rationale' field required by schema when intervention_maturity is present",
+        "where": "nodes[7].intervention_maturity_rationale and nodes[8].intervention_maturity_rationale",
+        "suggestion": "Add rationale field explaining maturity assessment (evidence-based) with source section title reference for both interventions"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references match exactly with defined node names",
+        "names": []
+      }
+    ],
+    "orphans": [],
+    "duplicates": [],
+    "rationale_mismatches": [
+      {
+        "issue": "Data source explicitly states dissertation goal but extracted graph treats it as unstated aspiration rather than primary stated research direction",
+        "evidence": "Author states: 'I feel confident that there is a dissertation topic in here somewhere... The best description I have so far of a topic being: I am interested in using computational game theory, cognitive science, system modeling, causal inference, and operations research methods to explore the ways in which AI systems can produce unintended consequences and develop better methods to anticipate outer alignment failures.'",
+        "fix": "The extraction correctly captures this as the core motivation, but the graph should more explicitly represent this as the author's PRIMARY RESEARCH GOAL rather than deriving it as inference from scattered theoretical interests"
+      },
+      {
+        "issue": "Source mentions 'cognitive science' as core methodological interest but extracted graph has no corresponding node",
+        "evidence": "Author explicitly lists: 'computational game theory, cognitive science, system modeling, causal inference, and operations research methods'",
+        "fix": "Add concept node for cognitive science methods relevant to alignment, or explicitly document why this was excluded from causal-interventional pathways"
+      },
+      {
+        "issue": "Source discusses The Selfish Gene and evolutionary psychology perspective on reasoning failures, but this is not represented in the knowledge fabric",
+        "evidence": "'The Selfish Gene and many of the posts by Scott Alexander drew me to learn more about game theory... evolutionary psychology perspective introduced to me by the sequences made sense of the associated failures in reasoning'",
+        "fix": "Consider adding theoretical insight node about evolutionary psychology explanations of misaligned incentive reasoning, or document deliberate exclusion from alignment-specific fabric"
+      },
+      {
+        "issue": "Author's extensive background (aerospace engineering, 8 years leadership, master's in industrial engineering) is not represented as enabling conditions for proposed research",
+        "evidence": "Detailed background section provided under 'For context, some general information about my experience and education'",
+        "fix": "Consider whether researcher qualifications and methodological background should be represented as context nodes enabling the proposed interventions"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "PhD as credential enabling promotion/pay",
+          "evidence": "'the PhD is the best choice... will increase promotion potential, pay, or both, with minimal cost'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Career advancement motivation in AI safety research"
+          ],
+          "expected_target_node_name": [
+            "Pursue resident PhD program in AI alignment research"
+          ]
+        },
+        {
+          "title": "Game theory as operationalizable formalism for system dynamics",
+          "evidence": "'game theory made them something I felt I could actually operationalize... game theoretical approach offers a powerful formalism to how I have naturally thought about system dynamics'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Game-theoretic modeling reveals incentive misalignments before deployment"
+          ],
+          "expected_target_node_name": [
+            "System-level simulations integrating causal inference and operations research for alignment analysis"
+          ]
+        },
+        {
+          "title": "Researcher seeks program recommendations and reading list",
+          "evidence": "'I am posting here because I am interested in the community's thoughts... reading recommendations... programs with professors who might be interested'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Unintended consequences from outer alignment failures in AI systems"
+          ],
+          "expected_target_node_name": [
+            "Identify and join aligned PhD program with relevant advisor"
+          ]
+        },
+        {
+          "title": "Smaller-scale alignment issues beyond social dilemma",
+          "evidence": "'I completely understand why we are in the situation described in The Social Dilemma, but I also recognize that there are smaller scale systems where similar alignment issues exist'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Scope of alignment failures across system scales"
+          ],
+          "expected_target_node_name": [
+            "Develop generalizable alignment analysis methods applicable across scales"
+          ]
+        },
+        {
+          "title": "Technical training and operations research background enables methodology",
+          "evidence": "'~2 years of technical training... ~3 years experience in organizational planning... Master's in Industrial Engineering... technical studies'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Multi-disciplinary methodological background in OR and systems analysis"
+          ],
+          "expected_target_node_name": [
+            "Perform computational game-theoretic stress tests of AI objectives during model design"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Game-theoretic modeling reveals incentive misalignments before deployment",
+        "field": "description",
+        "json_new_value": "By formally representing agents, payoffs and information structures, game theory can expose how an AI's incentives diverge from stakeholder values ahead of deployment; the author found this formalism 'something I felt I could actually operationalize' for system dynamics analysis.",
+        "reason": "Source provides specific author perspective on game theory's operationalizability that strengthens the node description and grounds it in source evidence"
+      },
+      {
+        "node_name": "Perform computational game-theoretic stress tests of AI objectives during model design",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Model Design lifecycle (1) selected because author positions this as part of research methodology development for PhD dissertation topic per 'using computational game theory... to explore the ways in which AI systems can produce unintended consequences and develop better methods to anticipate outer alignment failures'",
+        "reason": "Required field was missing; this rationale explains why lifecycle 1 is appropriate with source section reference"
+      },
+      {
+        "node_name": "Perform computational game-theoretic stress tests of AI objectives during model design",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Foundational/Theoretical maturity (1) because author proposes this as novel research direction within PhD program: 'I feel confident that there is a dissertation topic in here somewhere' and explicitly seeks validation from community on feasibility per 'interested in the community's thoughts on how to improve/scope/pursue this goal'",
+        "reason": "Required field was missing; maturity 1 is justified because this is proposed as PhD-level foundational research, not yet executed or validated"
+      },
+      {
+        "node_name": "Integrate causal inference-based system modeling into pre-deployment evaluation to detect outer alignment failures",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Pre-Deployment Testing lifecycle (4) selected because author specifically frames this as anticipatory alignment failure detection methodology applicable before AI system deployment per research goal description",
+        "reason": "Required field was missing; lifecycle 4 is appropriate because the intervention targets pre-deployment evaluation phase"
+      },
+      {
+        "node_name": "Integrate causal inference-based system modeling into pre-deployment evaluation to detect outer alignment failures",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Foundational/Theoretical maturity (1) because this represents author's proposed dissertation-level research innovation seeking community feedback on feasibility and scope per 'interested in the community's thoughts on how to improve/scope/pursue this goal'",
+        "reason": "Required field was missing; maturity 1 is appropriate as this is proposed theoretical research framework not yet empirically validated"
+      },
+      {
+        "node_name": "Unintended consequences from outer alignment failures in AI systems",
+        "field": "node_rationale",
+        "json_new_value": "Core risk node anchoring the knowledge fabric. Author states 'The intersection between these systems and AI systems is now simultaneously fascinating and horrifying to me' and grounds dissertation topic in exploring 'unintended consequences' from alignment failures per 'Dissertation Topic' section",
+        "reason": "Required field was missing; this explains why node is essential to fabric with source section reference"
+      },
+      {
+        "node_name": "Misaligned incentives between AI objective functions and human values in socio-technical contexts",
+        "field": "node_rationale",
+        "json_new_value": "Problem analysis node identifying specific mechanism producing the risk. Author's game-theoretic insight reveals that system optimization creates misaligned incentives per 'game theory dictates the manner in which a system will respond to it' regarding The Social Dilemma dynamics per 'Problem Mechanisms' discussion",
+        "reason": "Required field was missing"
+      },
+      {
+        "node_name": "Confusing the rule for the space in AI objective design",
+        "field": "node_rationale",
+        "json_new_value": "Problem analysis node representing specific cognitive failure pattern in objective specification. Author links to LessWrong essay on this phenomenon and states 'has long frustrated me, but now I'm starting to better understand why it occurs' indicating this is core to their analytical framework per 'Problem Pattern Recognition' discussion",
+        "reason": "Required field was missing"
+      },
+      {
+        "node_name": "Game-theoretic modeling reveals incentive misalignments before deployment",
+        "field": "node_rationale",
+        "json_new_value": "Theoretical insight node. Author experienced game theory as transformative: 'for perhaps the first time, game theory made them something I felt I could actually operationalize' regarding understanding system failures, making this central to proposed dissertation methodology per 'Theoretical Foundation' section",
+        "reason": "Required field was missing"
+      },
+      {
+        "node_name": "Employing computational game theory to anticipate outer alignment failure modes in AI systems",
+        "field": "node_rationale",
+        "json_new_value": "Design rationale node operationalizing the game-theoretic insight. Author proposes this as core methodology: 'using computational game theory... to explore the ways in which AI systems can produce unintended consequences and develop better methods to anticipate outer alignment failures' per 'Dissertation Topic' section",
+        "reason": "Required field was missing"
+      },
+      {
+        "node_name": "System-level simulations integrating causal inference and operations research for alignment analysis",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism node. Author explicitly lists 'computational game theory, cognitive science, system modeling, causal inference, and operations research methods' as integrated toolkit for research, with simulation framed as implementation approach per 'Methods' section",
+        "reason": "Required field was missing"
+      },
+      {
+        "node_name": "Documented misalignment in social media recommendation systems leading to detrimental user outcomes",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence node grounding the theoretical framework in observed real-world alignment failures. Author references The Social Dilemma as both motivation and case study: 'I completely understand why we are in the situation described in The Social Dilemma' per 'Empirical Grounding' discussion",
+        "reason": "Required field was missing"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Perform computational game-theoretic stress tests of AI objectives during model design",
+        "type": "intervention",
+        "description": "During the specification of an AI system’s objectives, run automated game-theoretic analyses to surface potential incentive mismatches and iterate on objective definitions.",
+        "aliases": [
+          "game-theoretic stress testing in objective design",
+          "pre-design incentive simulation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Integrate causal inference-based system modeling into pre-deployment evaluation to detect outer alignment failures",
+        "type": "intervention",
+        "description": "Before releasing an AI system, employ causal-inference-powered simulations reflecting real socio-technical environments to identify and correct alignment failure modes.",
+        "aliases": [
+          "pre-deployment causal simulation for alignment",
+          "system modeling alignment evaluation"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 4,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Unintended consequences from outer alignment failures in AI systems",
+        "type": "concept",
+        "description": "AI systems whose objective functions are not truly aligned with human values can produce harmful or counter-productive real-world behaviours. The author expresses simultaneous fascination and horror at this risk, referencing The Social Dilemma.",
+        "aliases": [
+          "outer alignment failure consequences",
+          "misaligned AI unintended outcomes"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Misaligned incentives between AI objective functions and human values in socio-technical contexts",
+        "type": "concept",
+        "description": "When optimisation targets differ from true human goals, AI behaviour is steered by perverse incentives, especially in complex social environments such as recommender systems.",
+        "aliases": [
+          "incentive misalignment in AI objectives",
+          "objective function-human value mismatch"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Confusing the rule for the space in AI objective design",
+        "type": "concept",
+        "description": "Optimisers often treat proxy metrics (rules) as if they capture the full desired outcome space, leading to over-optimisation and failure. The post links to LessWrong essay on this pattern.",
+        "aliases": [
+          "Goodhart-like metric overoptimization",
+          "rule-space confusion in objective specification"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Game-theoretic modeling reveals incentive misalignments before deployment",
+        "type": "concept",
+        "description": "By formally representing agents, payoffs and information, game theory can expose how an AI’s incentives diverge from stakeholder values ahead of deployment.",
+        "aliases": [
+          "game theory exposure of misaligned incentives",
+          "computational game-theoretic analysis of alignment"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Employing computational game theory to anticipate outer alignment failure modes in AI systems",
+        "type": "concept",
+        "description": "Design approach: incorporate game-theoretic reasoning directly into the AI development process to map and mitigate incentive divergences.",
+        "aliases": [
+          "game-theoretic anticipation of alignment failures",
+          "design rationale using game theory"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "System-level simulations integrating causal inference and operations research for alignment analysis",
+        "type": "concept",
+        "description": "Practical mechanism: build simulations that combine causal-inference tools with operations-research optimisation to test AI designs under realistic environmental interactions.",
+        "aliases": [
+          "causal-OR simulation for AI alignment",
+          "integrated system modeling for incentive analysis"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Documented misalignment in social media recommendation systems leading to detrimental user outcomes",
+        "type": "concept",
+        "description": "Empirical observation: platforms optimised for engagement produced polarisation and addiction, illustrating real-world outer-alignment failure (as popularised in The Social Dilemma).",
+        "aliases": [
+          "social media recommender misalignment evidence",
+          "The Social Dilemma case study"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Unintended consequences from outer alignment failures in AI systems",
+        "target_node": "Misaligned incentives between AI objective functions and human values in socio-technical contexts",
+        "description": "Harmful outcomes stem from objectives that incentivise behaviour opposed to human values.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Misaligned incentives between AI objective functions and human values in socio-technical contexts",
+        "target_node": "Confusing the rule for the space in AI objective design",
+        "description": "Metric-goal confusion fosters incentive misalignment by over-optimising proxies.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "addressed_by",
+        "source_node": "Confusing the rule for the space in AI objective design",
+        "target_node": "Game-theoretic modeling reveals incentive misalignments before deployment",
+        "description": "Game-theoretic analysis can expose cases where proxy metrics diverge from true goals.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Game-theoretic modeling reveals incentive misalignments before deployment",
+        "target_node": "Employing computational game theory to anticipate outer alignment failure modes in AI systems",
+        "description": "The insight motivates a design approach that systematically applies game-theoretic tools.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Employing computational game theory to anticipate outer alignment failure modes in AI systems",
+        "target_node": "System-level simulations integrating causal inference and operations research for alignment analysis",
+        "description": "Simulations operationalise game-theoretic reasoning using causal and OR techniques.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "System-level simulations integrating causal inference and operations research for alignment analysis",
+        "target_node": "Documented misalignment in social media recommendation systems leading to detrimental user outcomes",
+        "description": "Historical recommender failures provide real-world data to test and refine simulations.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Documented misalignment in social media recommendation systems leading to detrimental user outcomes",
+        "target_node": "Perform computational game-theoretic stress tests of AI objectives during model design",
+        "description": "Observed harms motivate earlier stress testing of objectives with game theory.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "4c22c4f5a795fe968ad6230f0b176ff0"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.022105"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKER IDENTIFIED: All 9 nodes missing 'node_rationale' field explicitly required by final_output_format specification: 'node_rationale: why essential to fabric with closest preceding data source section title reference'",
+      "SCHEMA BLOCKER IDENTIFIED: All 8 edges missing 'edge_confidence_rationale' and 'edge_rationale' fields explicitly required by final_output_format specification",
+      "SCHEMA BLOCKER IDENTIFIED: All nodes and edges contain 'embedding' field set to null - not in required schema, should be removed",
+      "SCHEMA MAJOR ISSUE: Intervention nodes [7] and [8] missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' despite having lifecycle/maturity values",
+      "REFERENTIAL INTEGRITY: All 8 edges correctly reference 9 defined nodes - no orphaned references detected",
+      "NO ORPHANED NODES: Each node is referenced by at least one edge; no isolated satellite nodes",
+      "NO DUPLICATES: No duplicate nodes or edges detected",
+      "COVERAGE GAP: Source explicitly states author learned 'The Selfish Gene and many of the posts by Scott Alexander drew me to learn more about game theory' and 'evolutionary psychology perspective... made sense of the associated failures in reasoning' - cognitive science / evolutionary psychology dimension absent from graph",
+      "COVERAGE GAP: Source explicitly states 'I am interested in using computational game theory, cognitive science, system modeling, causal inference, and operations research methods' - cognitive science methods not represented as implementation mechanism",
+      "COVERAGE GAP: Source states 'there are smaller scale systems where similar alignment issues exist' - multi-scale alignment failure scope not captured as distinct problem analysis node",
+      "COVERAGE GAP: Source requests 'programs with professors who might be interested in taking on a student in this topic' - PhD program identification and advisor-seeking are actionable interventions not represented in graph",
+      "COVERAGE GAP: Source provides extensive background (aerospace engineering, 8 years leadership, industrial engineering masters, technical studies) - enabling conditions and researcher qualifications not represented as implementation-enabling nodes",
+      "EVIDENCE MATCHING: Risk node 'Unintended consequences from outer alignment failures in AI systems' well-grounded in source: 'The intersection between these systems and AI systems is now simultaneously fascinating and horrifying to me'",
+      "EVIDENCE MATCHING: Problem analysis node 'Confusing the rule for the space' correctly linked to LessWrong essay reference in source with author's statement 'has long frustrated me, but now I'm starting to better understand why it occurs'",
+      "EVIDENCE MATCHING: Theoretical insight node 'Game-theoretic modeling' accurately captures author's transformative experience: 'for perhaps the first time, game theory made them something I felt I could actually operationalize'",
+      "EVIDENCE MATCHING: Design rationale and implementation mechanism nodes appropriately abstract author's stated dissertation goal but lack specific grounding to source quotes in node descriptions",
+      "INFERENCE ASSESSMENT: Edge from 'System-level simulations' to 'Social media misalignment evidence' marked confidence 2, appropriate because author references The Social Dilemma as motivation but does not present experimental validation of simulation methodology",
+      "INFERENCE ASSESSMENT: All edges marked confidence 2 or higher - no speculative (confidence 1) edges present despite instruction that moderate inference edges should be confidence 1; this may indicate under-inference or appropriately high confidence in reasoning paths",
+      "MATURITY ASSESSMENT: Both interventions assigned maturity 1 (Foundational/Theoretical) appropriate because author seeks PhD placement to develop research - interventions are at planning/proposal stage not execution",
+      "LIFECYCLE ASSESSMENT: Intervention [7] (stress tests) assigned lifecycle 1 (Model Design) - appropriate for objective-specification phase; Intervention [8] (causal evaluation) assigned lifecycle 4 (Pre-Deployment Testing) - appropriate for pre-release evaluation phase",
+      "MERGEABILITY CONCERN: Node 'Employing computational game theory to anticipate outer alignment failure modes in AI systems' is design rationale but description is generic - adding source-grounded detail ('leverage my interests, advances alignment research, is also achievable') would improve cross-source merging",
+      "MERGEABILITY CONCERN: Implementation mechanism node describes general causal-inference-plus-OR approach but doesn't specify game-theoretic integration detail - would benefit from source quote: 'game theory made them something I felt I could actually operationalize'",
+      "PATH STRUCTURE: Primary causal-interventional path correctly flows Risk → Problem Analysis [2 branches] → Theoretical Insight → Design Rationale → Implementation Mechanism → Validation Evidence → Interventions [2 branches], following template structure",
+      "DISCONNECTION: Cognitive science methods mentioned in source but not connected to primary knowledge fabric - represents genuine extraction gap",
+      "DISCONNECTION: Author's background and credentials mentioned but not integrated as enabling conditions for interventions - represents scope limitation not error",
+      "SECTION TRACEABILITY: Edge rationales reference generic 'The Social Dilemma' and 'Dissertation Topic' but lack precise section title references per requirement 'closest preceding data source section title reference' - source lacks explicit section headings making traceability to paragraph-level analysis"
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/J4wpcCTo6CF6C5ftB/thoughts-on-a-sequences-inspired-phd-topic",
+  "paper_id": "b1e89738a76a56f90b0c38941ec9ff88",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

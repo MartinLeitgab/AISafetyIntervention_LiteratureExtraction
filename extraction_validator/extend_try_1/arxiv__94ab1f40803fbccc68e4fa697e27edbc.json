@@ -1,0 +1,834 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": false,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates good structural integrity with all nodes connected and appropriate causal flows from risks through design rationales to interventions. However, schema compliance issues exist: missing aliases fields in all concept nodes (per requirements), non-standard 'embedding' fields in all nodes/edges that should be removed, and one reversed causal edge (Instability→Hyperparameter_sensitivity should be reversed). Two missing nodes were identified from source text: validation loss unreliability evidence and TD learning advantage on random datasets. Edge confidence for the Hyperparameter_sensitivity mitigation should be reduced from 4 to 3 due to required inference. The intervention nodes lack detailed implementation rationale linking to specific Algorithm 1 details and hyperparameter recommendations from Table 1. After applying proposed fixes, the graph will achieve schema compliance and complete coverage of major causal pathways in the source document."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "MINOR",
+        "issue": "Node 'Instability and unsafe performance in offline RL due to algorithmic complexity' has no aliases field (required per schema)",
+        "where": "nodes[0].aliases",
+        "suggestion": "Add aliases array with 2-3 alternative phrasings"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Several nodes missing aliases field entirely",
+        "where": "nodes[various].aliases",
+        "suggestion": "Verify all nodes have aliases array populated"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Edge objects have 'embedding' field set to null which is not in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove embedding field from all edges as it is not required"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Node objects have 'embedding' field set to null which is not in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove embedding field from all nodes as it is not required"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Edge references non-existent source node",
+        "names": [
+          "Edge at index 0 has target_node 'Hyperparameter sensitivity of value-based offline RL algorithms' but source is 'Instability and unsafe performance in offline RL due to algorithmic complexity' - source/target appear reversed logically (should be caused_by indicates target causes source)"
+        ]
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None detected",
+        "reason": "All nodes are connected to edges",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Apply conditional behavior cloning (RvS-G) with goal conditioning and high-capacity feedforward networks during offline RL fine-tuning",
+          "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning"
+        ],
+        "merge_strategy": "Keep both - they represent distinct interventions (RvS-G vs RvS-R) with different conditioning approaches, not duplicates"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Edge 'caused_by' between 'Instability' and 'Hyperparameter sensitivity' - causality direction appears reversed per source text",
+        "evidence": "Source states: 'they tend to require complex tricks to stabilise learning and delicate tuning of many hyperparameters' - hyperparameter sensitivity is consequence of instability, not cause",
+        "fix": "Reverse to 'caused_by' with Instability as target, Hyperparameter_sensitivity as source, or use 'manifests_as' edge type"
+      },
+      {
+        "issue": "Node 'Lack of clear essential components in RvS methods' framed as problem but represents conflicting hypotheses from prior work, not a risk",
+        "evidence": "Source: 'prior work has put forward conflicting hypotheses about which factors are essential...The first question we study is: what elements are essential for effective RvS learning?'",
+        "fix": "Recategorize as 'problem analysis' (it is a problem causing uncertainty) rather than risk. Actually it IS already problem_analysis - this is correct"
+      },
+      {
+        "issue": "Edge confidence for 'mitigated_by' between Hyperparameter_sensitivity and Simple_supervised_learning marked as 4 (strong) but relies on inference",
+        "evidence": "Source shows empirical results but does not explicitly state this as mitigation of brittleness",
+        "fix": "Reduce confidence to 3 (medium) as connection requires moderate inference"
+      },
+      {
+        "issue": "Node 'Use conditional behavior cloning...' categorized as design_rationale but description reads as implementation principle",
+        "evidence": "Source Section 3 frames this as design approach; implementation details in Algorithm 1",
+        "fix": "Keep as design_rationale - this is correct positioning"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Value-based methods complexity causes performance brittleness",
+          "evidence": "Introduction: 'such methods can be difficult to apply in practice; they tend to require complex tricks to stabilise learning and delicate tuning'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Hyperparameter sensitivity of value-based offline RL algorithms"
+          ],
+          "expected_target_node_name": [
+            "Instability and unsafe performance in offline RL due to algorithmic complexity"
+          ]
+        },
+        {
+          "title": "Temporal compositionality challenge in sparse optimal data",
+          "evidence": "Introduction: 'temporal compositionality...is an important component for solving offline RL when there are few near-optimal trajectories present in the data (e.g., the Franka Kitchen and AntMaze tasks)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Need for temporal compositionality in tasks with few optimal trajectories"
+          ],
+          "expected_target_node_name": [
+            "Instability and unsafe performance in offline RL due to algorithmic complexity"
+          ]
+        },
+        {
+          "title": "RvS methods can work without advantage weighting or Transformers",
+          "evidence": "Main contribution: 'pure supervised learning...performs as well as conservative TD learning in every task...simple feedforward models can match the performance of more complex sequence models'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Simple supervised learning can match conservative TD methods in offline RL"
+          ],
+          "expected_target_node_name": [
+            "Use conditional behavior cloning with feedforward networks to reduce complexity"
+          ]
+        },
+        {
+          "title": "Goal conditioning addresses compositionality in Kitchen/AntMaze",
+          "evidence": "Section 6: 'RvS-G outperforms RvS-R' on Kitchen mixed and AntMaze; 'the spatial information encoded by goal information helps RvS-G generalize'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Conditioning variable choice affects RvS performance domain-specifically"
+          ],
+          "expected_target_node_name": [
+            "Need for temporal compositionality in tasks with few optimal trajectories"
+          ]
+        },
+        {
+          "title": "Capacity and regularization interact - larger networks with dropout",
+          "evidence": "Section 5: 'larger networks perform better...Larger networks perform better on hopper-medium-expert and kitchen-complete, suggesting the importance of high-capacity policy networks. However, dropout also usually boosts performance'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Policy capacity and regularization trade-off is critical in RvS"
+          ],
+          "expected_target_node_name": [
+            "Lack of clear essential components in RvS methods"
+          ]
+        },
+        {
+          "title": "Reward target must be tuned per task",
+          "evidence": "Section 6, Analysis of reward conditioning: 'it is not obvious a priori that a reward target of 100 will lead to a return of 70, whereas a reward target of 110 will lead to a return of 105...we tune the reward target for every task'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Walker2d reward target analysis reveals lack of interpolation between reward modes"
+          ],
+          "expected_target_node_name": [
+            "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks"
+          ]
+        },
+        {
+          "title": "Validation loss is unreliable for hyperparameter selection",
+          "evidence": "Section 5: 'validation loss does not provide a reliable approach for hyperparameter tuning'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Validation loss unreliability as hyperparameter selection metric in RvS"
+          ],
+          "expected_target_node_name": [
+            "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks"
+          ]
+        },
+        {
+          "title": "Categorical distributions improve capacity on low-dim GCSL tasks",
+          "evidence": "Section 5, Output distributions: 'categorical distributions either match or outperform Gaussian distributions' on GCSL",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Categorical action distributions to increase model capacity in low-dimensional tasks"
+          ],
+          "expected_target_node_name": [
+            "Categorical vs Gaussian output experiments show categorical better on GCSL"
+          ]
+        },
+        {
+          "title": "RvS-G can reach arbitrary goals from random offline data",
+          "evidence": "Section 6, Reaching arbitrary goals: 'RvS-G can successfully reach many different goals entirely from randomly collected offline data'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "RvS-G algorithm with goal conditioning via concatenation"
+          ],
+          "expected_target_node_name": [
+            "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks"
+          ]
+        },
+        {
+          "title": "TD learning outperforms RvS on random datasets",
+          "evidence": "Section 6, Random datasets: 'While on average RvS-R is competitive...TD learning performs better on the random datasets; indeed, CQL performs especially well on halfcheetah-random'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "RvS-R algorithm with reward-to-go conditioning via concatenation"
+          ],
+          "expected_target_node_name": [
+            "Limitation of RvS on purely random exploration datasets"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+        "target_node_name": "Hyperparameter sensitivity of value-based offline RL algorithms",
+        "reason": "Causality is reversed - hyperparameter sensitivity is caused by instability, not vice versa. Should be reverse direction."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+        "field": "aliases",
+        "json_new_value": "[\"offline RL algorithmic instability\",\"complex offline RL safety risk\"]",
+        "reason": "Add missing aliases field per schema requirement"
+      },
+      {
+        "node_name": "Hyperparameter sensitivity of value-based offline RL algorithms",
+        "field": "aliases",
+        "json_new_value": "[\"delicate tuning requirements\",\"value-based offline RL hyper-parameter brittleness\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Need for temporal compositionality in tasks with few optimal trajectories",
+        "field": "aliases",
+        "json_new_value": "[\"sub-trajectory stitching requirement\",\"temporal compositionality challenge\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Lack of clear essential components in RvS methods",
+        "field": "aliases",
+        "json_new_value": "[\"uncertain design factors in RvS\",\"ambiguous essential ingredients\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Simple supervised learning can match conservative TD methods in offline RL",
+        "field": "aliases",
+        "json_new_value": "[\"pure behaviour cloning sufficiency\",\"supervised RvS parity with TD\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Policy capacity and regularization trade-off is critical in RvS",
+        "field": "aliases",
+        "json_new_value": "[\"capacity-regularisation balance\",\"over/under-fitting tension in RvS\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Conditioning variable choice affects RvS performance domain-specifically",
+        "field": "aliases",
+        "json_new_value": "[\"importance of goal vs reward conditioning\",\"task-dependent conditioning variable\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+        "field": "aliases",
+        "json_new_value": "[\"feed-forward conditional BC design choice\",\"simple conditional imitation approach\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Increase model capacity and apply task-appropriate regularization",
+        "field": "aliases",
+        "json_new_value": "[\"capacity scaling with dropout\",\"tune width plus dropout\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Select conditioning on goals or rewards according to task structure",
+        "field": "aliases",
+        "json_new_value": "[\"task-aligned conditioning selection\",\"goal/reward conditioning policy\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "RvS-G algorithm with goal conditioning via concatenation",
+        "field": "aliases",
+        "json_new_value": "[\"goal-conditioned RvS\",\"RvS-G implementation\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+        "field": "aliases",
+        "json_new_value": "[\"reward-conditioned RvS\",\"RvS-R implementation\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Categorical action distributions to increase model capacity in low-dimensional tasks",
+        "field": "aliases",
+        "json_new_value": "[\"discretised action logits\",\"categorical policy output\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+        "field": "aliases",
+        "json_new_value": "[\"light dropout regularization\",\"dropout 0.1 implementation\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+        "field": "aliases",
+        "json_new_value": "[\"RvS benchmark parity\",\"RvS performance evidence\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+        "field": "aliases",
+        "json_new_value": "[\"capacity+dropout ablation evidence\",\"kitchen-complete ablation result\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+        "field": "aliases",
+        "json_new_value": "[\"output distribution ablation evidence\",\"categorical policy advantage\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Walker2d reward target analysis reveals lack of interpolation between reward modes",
+        "field": "aliases",
+        "json_new_value": "[\"reward-target interpolation failure evidence\",\"bimodal target analysis\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Apply conditional behavior cloning (RvS-G) with goal conditioning and high-capacity feedforward networks during offline RL fine-tuning",
+        "field": "aliases",
+        "json_new_value": "[\"deploy RvS-G for compositional tasks\",\"goal-conditioned offline BC\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning",
+        "field": "aliases",
+        "json_new_value": "[\"deploy RvS-R for reward-maximisation tasks\",\"reward-targeted offline BC\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+        "field": "aliases",
+        "json_new_value": "[\"capacity scaling then dropout\",\"width-plus-dropout tuning procedure\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+        "field": "aliases",
+        "json_new_value": "[\"switch to categorical outputs\",\"discretised action logits intervention\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks",
+        "field": "aliases",
+        "json_new_value": "[\"auto-choose conditioning variable\",\"adaptive conditioning selection\"]",
+        "reason": "Ensure aliases field populated"
+      },
+      {
+        "node_name": "mitigated_by between Hyperparameter sensitivity and Simple supervised learning",
+        "field": "edge_confidence",
+        "json_new_value": "3",
+        "reason": "Reduce from 4 to 3 - connection requires inference that simple supervised learning specifically mitigates value-based brittleness rather than merely performing well"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+        "type": "concept",
+        "description": "Complex value-based offline reinforcement-learning algorithms with many moving parts and hyper-parameters can yield unstable learning dynamics and unreliable policies, posing deployment-time safety risks.",
+        "aliases": [
+          "offline RL algorithmic instability",
+          "complex offline RL safety risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Hyperparameter sensitivity of value-based offline RL algorithms",
+        "type": "concept",
+        "description": "Current value-based approaches (e.g. CQL) require ‘delicate tuning of many hyper-parameters’ and stabilising tricks, leading to brittleness.",
+        "aliases": [
+          "delicate tuning requirements",
+          "value-based offline RL hyper-parameter brittleness"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Need for temporal compositionality in tasks with few optimal trajectories",
+        "type": "concept",
+        "description": "Benchmarks like Franka Kitchen and AntMaze have little near-optimal data; recombining sub-trajectories is required for success, traditionally thought to favour dynamic-programming methods.",
+        "aliases": [
+          "sub-trajectory stitching requirement",
+          "temporal compositionality challenge"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Lack of clear essential components in RvS methods",
+        "type": "concept",
+        "description": "Prior RvS work proposed conflicting hypotheses (need for online data, advantage-weighting, Transformers), leaving practitioners unclear which components really matter.",
+        "aliases": [
+          "uncertain design factors in RvS",
+          "ambiguous essential ingredients"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Simple supervised learning can match conservative TD methods in offline RL",
+        "type": "concept",
+        "description": "Empirical analysis shows that maximising likelihood of logged actions using a conditional policy attains performance comparable to conservative Q-learning and TD3+BC across tasks.",
+        "aliases": [
+          "pure behaviour cloning sufficiency",
+          "supervised RvS parity with TD"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Policy capacity and regularization trade-off is critical in RvS",
+        "type": "concept",
+        "description": "Larger networks improve performance but risk overfitting; light dropout often needed, especially on small human-demo datasets like Kitchen.",
+        "aliases": [
+          "capacity-regularisation balance",
+          "over/under-fitting tension in RvS"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Conditioning variable choice affects RvS performance domain-specifically",
+        "type": "concept",
+        "description": "Choosing to condition on goals (RvS-G) or reward-to-go (RvS-R) substantially changes performance; RvS-G shines in compositional tasks, RvS-R in locomotion.",
+        "aliases": [
+          "importance of goal vs reward conditioning",
+          "task-dependent conditioning variable"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+        "type": "concept",
+        "description": "Design principle: replace complex value-based learning with behaviour cloning conditioned on outcome, implemented using simple fully-connected nets.",
+        "aliases": [
+          "feed-forward conditional BC design choice",
+          "simple conditional imitation approach"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Increase model capacity and apply task-appropriate regularization",
+        "type": "concept",
+        "description": "Design principle: scale hidden-layer width until performance saturates, then apply dropout (≈0.1) where datasets are small or human-generated.",
+        "aliases": [
+          "capacity scaling with dropout",
+          "tune width plus dropout"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Select conditioning on goals or rewards according to task structure",
+        "type": "concept",
+        "description": "Design principle: use goal conditioning when reward function is goal-based (Kitchen, AntMaze) and reward-to-go conditioning for pure reward maximisation tasks (Gym).",
+        "aliases": [
+          "task-aligned conditioning selection",
+          "goal/reward conditioning policy"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "RvS-G algorithm with goal conditioning via concatenation",
+        "type": "concept",
+        "description": "Implementation: concatenate current state with desired future goal state; train policy via supervised learning on offline data where future visited states act as goals.",
+        "aliases": [
+          "goal-conditioned RvS",
+          "RvS-G implementation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+        "type": "concept",
+        "description": "Implementation: concatenate state with scalar future average return target; train conditional policy on offline trajectories labelled by realised returns.",
+        "aliases": [
+          "reward-conditioned RvS",
+          "RvS-R implementation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Categorical action distributions to increase model capacity in low-dimensional tasks",
+        "type": "concept",
+        "description": "Replacing unimodal Gaussian outputs with categorical distributions over discretised actions enables multimodal behaviour and improves goal-conditioned performance in GCSL.",
+        "aliases": [
+          "discretised action logits",
+          "categorical policy output"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+        "type": "concept",
+        "description": "Applying 10 % dropout to hidden layers mitigates over-fitting on small, diverse human demos (Kitchen-complete) while not harming larger synthetic datasets.",
+        "aliases": [
+          "light dropout regularization",
+          "dropout 0.1 implementation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+        "type": "concept",
+        "description": "Across GCSL, Gym, Kitchen, and AntMaze suites, either RvS-G or RvS-R reaches the best reported returns compared with CQL, TD3+BC, Decision Transformer, etc.",
+        "aliases": [
+          "RvS benchmark parity",
+          "RvS performance evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+        "type": "concept",
+        "description": "Figure 4 demonstrates that 1024-width networks with dropout outperform smaller nets or no-dropout on human-demo Kitchen-complete tasks.",
+        "aliases": [
+          "capacity+dropout ablation evidence",
+          "kitchen-complete ablation result"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+        "type": "concept",
+        "description": "Figure 5 shows categorical action distributions equal or surpass Gaussian outputs in all GCSL goal-reach tasks, indicating higher representational power.",
+        "aliases": [
+          "output distribution ablation evidence",
+          "categorical policy advantage"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Walker2d reward target analysis reveals lack of interpolation between reward modes",
+        "type": "concept",
+        "description": "Figure 8 shows RvS-R trained on bimodal medium-expert data only reproduces existing modes and fails to generate intermediate returns, highlighting conditioning-variable limits.",
+        "aliases": [
+          "reward-target interpolation failure evidence",
+          "bimodal target analysis"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Apply conditional behavior cloning (RvS-G) with goal conditioning and high-capacity feedforward networks during offline RL fine-tuning",
+        "type": "intervention",
+        "description": "During the offline fine-tuning phase, train a fully-connected policy conditioned on desired goal states using Algorithm 1 (RvS-G) with ≥1024 hidden-unit width and light dropout when data are scarce.",
+        "aliases": [
+          "deploy RvS-G for compositional tasks",
+          "goal-conditioned offline BC"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning",
+        "type": "intervention",
+        "description": "Train a feedforward policy conditioned on scalar future return targets (RvS-R) using large hidden layers (≈1024) and batch size 16 k for Gym locomotion datasets.",
+        "aliases": [
+          "deploy RvS-R for reward-maximisation tasks",
+          "reward-targeted offline BC"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+        "type": "intervention",
+        "description": "In model-design phase, progressively enlarge hidden-layer width; once returns plateau, introduce 10 % dropout where over-fitting signs emerge (e.g., human demo datasets).",
+        "aliases": [
+          "capacity scaling then dropout",
+          "width-plus-dropout tuning procedure"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+        "type": "intervention",
+        "description": "Replace Gaussian action heads with categorical logits over discretised actions when action dimensionality permits (e.g., 2-DoF tasks) to capture multimodal behaviours.",
+        "aliases": [
+          "switch to categorical outputs",
+          "discretised action logits intervention"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks",
+        "type": "intervention",
+        "description": "Create meta-learning or heuristic procedures that, given an offline dataset, determine whether goal-conditioning or reward-conditioning will yield better performance, reducing manual tuning.",
+        "aliases": [
+          "auto-choose conditioning variable",
+          "adaptive conditioning selection"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "mitigated_by",
+        "source_node": "Hyperparameter sensitivity of value-based offline RL algorithms",
+        "target_node": "Simple supervised learning can match conservative TD methods in offline RL",
+        "description": "If supervised RvS matches TD learning, practitioners can avoid brittle value-based methods, reducing hyper-parameter sensitivity.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Simple supervised learning can match conservative TD methods in offline RL",
+        "target_node": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+        "description": "Conditional behaviour cloning operationalises the theoretical claim that simple supervised learning suffices.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+        "target_node": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+        "description": "Reward-conditioned RvS-R is one concrete instantiation of conditional behaviour cloning.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+        "target_node": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+        "description": "Benchmarks confirm RvS-R competitive performance.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+        "target_node": "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning",
+        "description": "Strong empirical results motivate adoption of RvS-R in practice.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Need for temporal compositionality in tasks with few optimal trajectories",
+        "target_node": "Conditioning variable choice affects RvS performance domain-specifically",
+        "description": "Choosing goal conditioning can address compositionality without dynamic programming.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Conditioning variable choice affects RvS performance domain-specifically",
+        "target_node": "Select conditioning on goals or rewards according to task structure",
+        "description": "Design rule translates insight into actionable selection.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Select conditioning on goals or rewards according to task structure",
+        "target_node": "RvS-G algorithm with goal conditioning via concatenation",
+        "description": "RvS-G realises goal-conditioning option.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Lack of clear essential components in RvS methods",
+        "target_node": "Policy capacity and regularization trade-off is critical in RvS",
+        "description": "Identifying capacity-regularisation as key clarifies essential components.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Policy capacity and regularization trade-off is critical in RvS",
+        "target_node": "Increase model capacity and apply task-appropriate regularization",
+        "description": "Design rule operationalises the capacity-regularisation insight.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Increase model capacity and apply task-appropriate regularization",
+        "target_node": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+        "description": "Using dropout is one concrete regularisation mechanism.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+        "target_node": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+        "description": "Ablation result confirms efficacy of dropout.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+        "target_node": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+        "description": "Evidence motivates the proposed tuning procedure.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Categorical action distributions to increase model capacity in low-dimensional tasks",
+        "target_node": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+        "description": "Experiments substantiate benefit of categorical outputs.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+        "target_node": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+        "description": "Positive results encourage adoption of categorical outputs where feasible.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Walker2d reward target analysis reveals lack of interpolation between reward modes",
+        "target_node": "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks",
+        "description": "Observed limitation motivates research into automated conditioning selection.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+        "target_node": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+        "description": "Categorical outputs provide an additional refinement to the capacity tuning procedure for certain action spaces.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "ac2c78a0df5cd59f1158bd72f087e79f"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.421708"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "Schema Check: All nodes and edges have required core fields (name, type, description for nodes; type, source_node, target_node for edges). However, 'aliases' field is missing from all nodes despite schema requirement 'aliases (2-3 items but not a BLOCKER)' - treating as MINOR per parenthetical. All nodes/edges contain non-schema 'embedding: null' fields requiring removal.",
+      "Referential Integrity: All edge source_node and target_node references match existing node names. No dangling references detected.",
+      "Orphan Analysis: All 23 nodes have at least one incoming or outgoing edge. No isolated nodes present. Graph is fully connected.",
+      "Duplicate Analysis: Two intervention nodes (RvS-G and RvS-R) represent distinct instantiations of conditional BC with different conditioning approaches (goals vs rewards). Not duplicates per source distinction in Section 4 and 6.",
+      "Rationale Mismatch - Edge Direction: Edge at index 0 uses 'caused_by' from Instability to Hyperparameter_sensitivity. Semantics reversed: source text states complexity CAUSES hyperparameter sensitivity (not vice versa), so target should cause source. Should reverse edge direction or use different relation type.",
+      "Rationale Mismatch - Confidence: Edge 'mitigated_by' between Hyperparameter_sensitivity → Simple_supervised_learning marked confidence 4. Source shows empirical RvS results but does not explicitly frame this as 'mitigation of hyperparameter sensitivity' - requires inference. Should be confidence 3 per edge_confidence_rationale guidance.",
+      "Coverage Gap 1: Source Section 5 states 'validation loss does not provide a reliable approach for hyperparameter tuning' (Figure 6 evidence). No node captures this validation evidence or motivates automated selection intervention. Added 'Validation loss unreliability as hyperparameter selection metric in RvS' node.",
+      "Coverage Gap 2: Source Section 6 explicitly states 'CQL performs especially well on halfcheetah-random' and 'TD learning performs better on the random datasets' vs RvS. No negative evidence node for RvS limitations on random data. Added 'TD learning outperforms RvS on purely random exploration datasets' node.",
+      "Node Descriptions: Intervention nodes (19-22) lack specific reference to Algorithm 1 pseudocode and Table 1 hyperparameter values that constitute essential implementation detail. Descriptions could be enriched with batch_size=16384, dropout=0.1, width=1024, epochs/gradient_steps values from Table 1 per instruction emphasis on 'maximum implementation detail'.",
+      "Edge Evidence: Edges consistently trace to closest preceding section titles (e.g., 'Section 5 Architecture, Capacity, and Regularization' for capacity-related edges). Compliance verified.",
+      "Inference Application: Edges marked confidence 2 appropriately indicate light inference (e.g., 'use conditional BC' → 'reduces complexity' infers safety benefit). Marked correctly per instructions.",
+      "DATA_SOURCE Citations: All major claims traceable: Introduction paragraph on value-based brittleness; Section 3 Algorithm 1 for RvS formulation; Section 4 task descriptions; Section 5 Figure 4/5/6 for ablations; Section 6 benchmark results and limitations. Coverage comprehensive.",
+      "Methodology Validation: Followed five-step extraction process - strategic analysis identified three major causal pathways (simplicity → conditional BC, capacity → performance, conditioning choice → task-dependent results); node extraction applied granularity rules (e.g., 'conditional behavior cloning' not 'RvS'); six-step concept category hierarchy applied; edges use canonical types with confidence reasoning; knowledge fabric ensures all paths converge on intervention nodes."
+    ]
+  },
+  "url": "https://arxiv.org/abs/2112.10751",
+  "paper_id": "94ab1f40803fbccc68e4fa697e27edbc",
+  "ard_file_source": "arxiv",
+  "errors": null
+}

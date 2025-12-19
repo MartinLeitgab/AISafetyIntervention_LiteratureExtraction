@@ -1,0 +1,513 @@
+{
+  "decision": {
+    "is_valid_json": false,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates accurate structural understanding of RL safety concepts and proper fabric connectivity, but contains critical schema violations (missing required rationale fields, extraneous 'embedding' fields) and overstates maturity levels given that the source is a newsletter index with paper titles only, not full paper contents. The extraction appropriately infers interventions from paper titles per instructions but fails to acknowledge this inference in maturity ratings and confidence levels. Significant coverage gaps exist: three research papers referenced in the newsletter (imperceptible rewards, information learning, DeepMind verification) lack representation. After applying proposed fixes (adding 7 nodes, removing schema violations, downgrading maturity/confidence to reflect inference-only extraction from titles, adding required rationale fields), the knowledge graph becomes valid, mergeable, and accurately represents both explicit and inferred content from the source."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "All nodes contain 'embedding' field which is not in schema requirements and not populated (null values)",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes as it is not part of required schema"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges contain 'embedding' field which is not in schema requirements and not populated (null values)",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges as it is not part of required schema"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Missing required edge attributes: 'edge_confidence_rationale' and 'edge_rationale' present in output format spec but absent from all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' fields with source section references to all 13 edges"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Missing required node attributes: 'node_rationale', 'intervention_lifecycle_rationale', 'intervention_maturity_rationale' present in output format spec but absent from all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add these required rationale fields to all concept and intervention nodes with section references"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention node aliases reference 'DRL' and 'deployment' but source text uses 'Delegative Reinforcement Learning' without abbreviation",
+        "where": "nodes[12].aliases, nodes[12].name",
+        "suggestion": "Keep full form 'Delegative Reinforcement Learning' in primary aliases for cross-source consistency"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references match existing node names exactly",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": null,
+        "reason": "No orphaned nodes detected - all 14 nodes connect to at least one edge",
+        "suggested_fix": "None required"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Irreversible catastrophic actions by autonomous RL agents in high-stakes environments",
+          "Exploration-induced trap states in partially known MDPs"
+        ],
+        "merge_strategy": "These are distinct concepts - first is the top-level risk outcome, second is the problem mechanism. Do NOT merge. Structure is correct."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Knowledge graph attributes lack source section references required by prompt",
+        "evidence": "Prompt requires 'closest preceding data source section title reference' in all rationale fields, but DATA_SOURCE only has two sections: 'Updates' and 'News and links'",
+        "fix": "Add section references like 'Updates: Delegative Reinforcement Learning paper' to intervention_lifecycle_rationale, intervention_maturity_rationale, node_rationale, edge_confidence_rationale, edge_rationale fields"
+      },
+      {
+        "issue": "Extracted graph describes detailed RL safety mechanisms not present in source text",
+        "evidence": "DATA_SOURCE is a newsletter index listing paper titles and links. It contains: 'Delegative Reinforcement Learning: Learning to Avoid Traps with a Little Help' (title only), 'Defeating Goodhart and the Closest Unblocked Strategy Problem' (title only), references to LTFF grants and AI alignment discussions",
+        "fix": "Acknowledge that extraction requires heavy inference from paper titles alone without access to full paper content"
+      },
+      {
+        "issue": "Extraction claims validation evidence from 'SafeML paper' and 'CUBS post' but these are only referenced by title in newsletter",
+        "evidence": "SOURCE contains: '[Delegative Reinforcement Learning: Learning to Avoid Traps with a Little Help](https://intelligence.org/2019/04/24/delegative-reinforcement-learning/)' and '[Defeating Goodhart and the Closest Unblocked Strategy Problem](https://www.lesswrong.com/posts/PADPJ3xac5ogjEGwA/defeating-goodhart-and-the-closest-unblocked-strategy)'",
+        "fix": "Lower intervention_maturity from 2 to 1 (Foundational/Theoretical) since no empirical results are actually presented in the source text itself"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Reference to Delegative RL paper addressing trap avoidance",
+          "evidence": "'Delegative Reinforcement Learning: Learning to Avoid Traps with a Little Help' presented at ICLR SafeML workshop",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Irreversible catastrophic actions by autonomous RL agents in high-stakes environments"
+          ],
+          "expected_target_node_name": [
+            "Integrate delegative RL with human query mechanism during RL training and deployment"
+          ]
+        },
+        {
+          "title": "Reference to Goodhart problem post in LessWrong",
+          "evidence": "'Defeating Goodhart and the Closest Unblocked Strategy Problem' published in research posts section",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Proxy reward Goodhart effect via closest unblocked strategy"
+          ],
+          "expected_target_node_name": [
+            "Embed impact regularization term during RL fine-tuning to reduce Goodhart effects"
+          ]
+        },
+        {
+          "title": "Reference to imperceptible rewards research",
+          "evidence": "'Reinforcement Learning with Imperceptible Rewards' listed in research posts",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Problem analysis for imperceptible reward concealment"
+          ],
+          "expected_target_node_name": [
+            "Intervention for addressing imperceptible reward signals"
+          ]
+        },
+        {
+          "title": "Reference to known information learning problem",
+          "evidence": "'Learning Known Information When the Information is Not Actually Known' listed in research posts",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Information asymmetry in human feedback"
+          ],
+          "expected_target_node_name": [
+            "Mechanism for addressing knowledge state misalignment"
+          ]
+        },
+        {
+          "title": "Long-Term Future Fund grant to MIRI for AI alignment",
+          "evidence": "'Long-Term Future Fund has announced twenty-three new grant recommendations...a $50,000 grant to MIRI'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Insufficient AI alignment research capacity"
+          ],
+          "expected_target_node_name": [
+            "Fund AI alignment research through LTFF grants"
+          ]
+        },
+        {
+          "title": "DeepMind AI robustness and verification research",
+          "evidence": "'Towards Robust and Verified AI: Specification Testing, Robust Training, and Formal Verification' from DeepMind",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Difficulty in formally verifying AI safety properties"
+          ],
+          "expected_target_node_name": [
+            "Apply formal verification methods to AI systems"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Integrate delegative RL with human query mechanism during RL training and deployment",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "SOURCE contains only paper title and link without empirical results or validation data. Paper content is not accessible from newsletter. Maturity should be Foundational/Theoretical (1) not Experimental (2)"
+      },
+      {
+        "node_name": "Integrate delegative RL with human query mechanism during RL training and deployment",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Foundational/Theoretical (maturity 1) - Updates section references MIRI paper title 'Delegative Reinforcement Learning: Learning to Avoid Traps with a Little Help' presented at ICLR SafeML workshop but no empirical results are presented in the newsletter source text itself",
+        "reason": "Newsletter does not contain paper contents, only citations. Maturity assignment must reflect what is actually documented in source"
+      },
+      {
+        "node_name": "Embed impact regularization term during RL fine-tuning to reduce Goodhart effects",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "SOURCE contains only research post title without methodology or empirical validation details. Maturity should be Foundational/Theoretical (1)"
+      },
+      {
+        "node_name": "Embed impact regularization term during RL fine-tuning to reduce Goodhart effects",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Foundational/Theoretical (maturity 1) - News and links section cites research post 'Defeating Goodhart and the Closest Unblocked Strategy Problem' but the newsletter does not contain implementation details or empirical validation results",
+        "reason": "Newsletter only provides title and link; actual paper content not present in source"
+      },
+      {
+        "node_name": "Theoretical analysis of trap avoidance with logarithmic human queries",
+        "field": "edge_confidence",
+        "json_new_value": "1",
+        "reason": "Paper content not presented in source text; only title available. Confidence must be lowered to reflect reliance on title inference"
+      },
+      {
+        "node_name": "Simulation examples show reduced proxy exploitation under impact regularization",
+        "field": "edge_confidence",
+        "json_new_value": "1",
+        "reason": "Paper content not presented in source text; only title available. Confidence must be lowered to reflect reliance on title inference"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Irreversible catastrophic actions by autonomous RL agents in high-stakes environments",
+        "type": "concept",
+        "description": "Potential AI behaviours that permanently reduce human control or cause large-scale harm once executed, especially when reinforcement-learning agents operate directly in the real world.",
+        "aliases": [
+          "catastrophic AI failures",
+          "irreversible RL traps"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Reward misspecification misaligning AI behavior with human values",
+        "type": "concept",
+        "description": "The danger that an RL system optimises a flawed proxy objective that diverges from the true human intention, leading to undesired or unsafe outcomes.",
+        "aliases": [
+          "value misalignment from proxy reward",
+          "reward hacking risk"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Exploration-induced trap states in partially known MDPs",
+        "type": "concept",
+        "description": "During exploration, an agent can enter states that drastically and irreversibly reduce future reward (e.g., physically breaking hardware) before learning a safe policy.",
+        "aliases": [
+          "exploration traps",
+          "unsafe exploration"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Proxy reward Goodhart effect via closest unblocked strategy",
+        "type": "concept",
+        "description": "When an optimiser chooses the nearest strategy that maximises a proxy metric while bypassing constraints, leading to extreme but undesirable behaviours.",
+        "aliases": [
+          "CUBS Goodhart problem",
+          "closest unblocked strategy exploitation"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Limited human assistance can guide agent away from traps",
+        "type": "concept",
+        "description": "Theoretical result that a logarithmic amount of expert advice suffices to ensure an agent avoids catastrophic traps while still learning efficiently.",
+        "aliases": [
+          "human-in-the-loop trap avoidance insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Bounding optimisation incentives reduces Goodhart exploitation",
+        "type": "concept",
+        "description": "If an agent’s ability to push proxy metrics is capped or regularised, the likelihood of it selecting pathological high-proxy, low-true-value states decreases.",
+        "aliases": [
+          "limited optimisation insight",
+          "quantiliser-style safety insight"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Delegative reinforcement learning combining autonomous policy with human delegation",
+        "type": "concept",
+        "description": "Framework in which an RL agent primarily acts autonomously but is designed to cede control to an advisor when uncertain about the safety of an action.",
+        "aliases": [
+          "delegative RL design rationale",
+          "DRL framework"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Impact-regularised objective functions constrain divergence from baseline",
+        "type": "concept",
+        "description": "Design idea to add a penalty term measuring how much an action changes the environment relative to a reference policy, thus limiting harmful optimisation.",
+        "aliases": [
+          "impact penalty design rationale",
+          "safe optimisation regulariser"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Uncertainty threshold-based action delegation oracle",
+        "type": "concept",
+        "description": "Implementation in which the agent queries a human advisor whenever its estimated value uncertainty for an action exceeds a predetermined bound.",
+        "aliases": [
+          "delegation oracle mechanism",
+          "DRL threshold mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Relative reachability-based impact penalty in reward function",
+        "type": "concept",
+        "description": "Concrete technique that computes how an action changes the agent’s ability to reach various states and penalises large deviations.",
+        "aliases": [
+          "relative reachability metric",
+          "impact measure mechanism"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Integrate delegative RL with human query mechanism during RL training and deployment",
+        "type": "intervention",
+        "description": "During fine-tuning and live operation, instrument the agent with an uncertainty-threshold delegation oracle so it requests human input before potentially catastrophic actions.",
+        "aliases": [
+          "apply DRL in practice",
+          "human-query RL deployment"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Embed impact regularization term during RL fine-tuning to reduce Goodhart effects",
+        "type": "intervention",
+        "description": "Modify the reward function with a relative-reachability penalty during policy optimisation so the agent avoids large environment deviations that exploit proxy metrics.",
+        "aliases": [
+          "apply impact penalty",
+          "impact-measure training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Theoretical analysis of trap avoidance with logarithmic human queries",
+        "type": "concept",
+        "description": "SafeML paper proves that the expected number of queries to the advisor scales polylogarithmically while guaranteeing avoidance of catastrophic traps.",
+        "aliases": [
+          "DRL proof of safety",
+          "trap avoidance bound"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Simulation examples show reduced proxy exploitation under impact regularization",
+        "type": "concept",
+        "description": "Toy-environment results in the CUBS post demonstrate that adding an impact penalty prevents the agent from selecting extreme proxy-optimising actions.",
+        "aliases": [
+          "impact regularizer experiments",
+          "Goodhart mitigation evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Irreversible catastrophic actions by autonomous RL agents in high-stakes environments",
+        "target_node": "Reward misspecification misaligning AI behavior with human values",
+        "description": "Catastrophic actions are a major downstream consequence when an agent’s learned objectives diverge from true values.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Reward misspecification misaligning AI behavior with human values",
+        "target_node": "Proxy reward Goodhart effect via closest unblocked strategy",
+        "description": "Goodhart effects are a key mechanism through which reward misspecification manifests.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Exploration-induced trap states in partially known MDPs",
+        "target_node": "Limited human assistance can guide agent away from traps",
+        "description": "Human advice offers a mitigation strategy for unsafe exploration.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Proxy reward Goodhart effect via closest unblocked strategy",
+        "target_node": "Bounding optimisation incentives reduces Goodhart exploitation",
+        "description": "Capping optimisation is proposed as a way to mitigate CUBS.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Limited human assistance can guide agent away from traps",
+        "target_node": "Delegative reinforcement learning combining autonomous policy with human delegation",
+        "description": "Delegative RL operationalises the insight by embedding human advice requests.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Bounding optimisation incentives reduces Goodhart exploitation",
+        "target_node": "Impact-regularised objective functions constrain divergence from baseline",
+        "description": "Impact penalties provide a concrete way to bound optimisation.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Delegative reinforcement learning combining autonomous policy with human delegation",
+        "target_node": "Uncertainty threshold-based action delegation oracle",
+        "description": "The delegation oracle is the main mechanism realising DRL.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Impact-regularised objective functions constrain divergence from baseline",
+        "target_node": "Relative reachability-based impact penalty in reward function",
+        "description": "Relative reachability is a specific, implementable impact metric.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Uncertainty threshold-based action delegation oracle",
+        "target_node": "Theoretical analysis of trap avoidance with logarithmic human queries",
+        "description": "Formal analysis validates that the mechanism prevents traps efficiently.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Relative reachability-based impact penalty in reward function",
+        "target_node": "Simulation examples show reduced proxy exploitation under impact regularization",
+        "description": "Simulation results confirm reduced Goodhart behaviour with the penalty.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Theoretical analysis of trap avoidance with logarithmic human queries",
+        "target_node": "Integrate delegative RL with human query mechanism during RL training and deployment",
+        "description": "Positive theoretical results motivate adoption of DRL in practice.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Simulation examples show reduced proxy exploitation under impact regularization",
+        "target_node": "Embed impact regularization term during RL fine-tuning to reduce Goodhart effects",
+        "description": "Simulation evidence motivates adding impact penalties in training.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "914d090be64d84a4b7ae35a73f672f5d"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:16.199155"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA BLOCKING ISSUES: All 14 nodes and 13 edges contain undocumented 'embedding' field with null values violating schema. All edges missing required 'edge_confidence_rationale' and 'edge_rationale' fields. All nodes missing required 'node_rationale', 'intervention_lifecycle_rationale', 'intervention_maturity_rationale' fields per output format spec.",
+      "SOURCE CONTENT ANALYSIS: DATA_SOURCE is newsletter index structure with two sections: 'Updates' (4 bullet points with linked papers) and 'News and links' (5 discussion items). The extraction treats paper titles as fully-known content but source only provides titles and URLs. Key examples: '[Delegative Reinforcement Learning: Learning to Avoid Traps with a Little Help]' is title only with no abstract/content; 'Defeating Goodhart and the Closest Unblocked Strategy Problem' is title only; 'Reinforcement Learning with Imperceptible Rewards' is referenced but not extracted into knowledge fabric.",
+      "INFERENCE ACKNOWLEDGMENT GAP: Prompt instructs moderate inference for extracting interventions from titles (e.g., 'gradient clipping for training stability → Apply gradient clipping...') but requires marking as maturity 1-2 with confidence 1-2. Current extraction assigns maturity 2 to both Delegative RL and Impact Regularization interventions without acknowledging these derive entirely from paper titles absent full content. Proposed fix downgrades both to maturity 1 and reduces validation evidence edge confidence from 3 to 1.",
+      "COVERAGE GAPS: Three distinct research papers mentioned in source lack nodes: (1) 'Reinforcement Learning with Imperceptible Rewards' - has no concept or intervention nodes despite being equal priority to other papers in 'News and links'. (2) 'Learning Known Information When the Information is Not Actually Known' - no risk or concept nodes extracted. (3) DeepMind 'Towards Robust and Verified AI' - no formal verification design rationale or intervention nodes created. LTFF grant funding initiative mentioned in text but no intervention node for research funding mechanism. Proposed fix adds 5 concept nodes and 2 intervention nodes to address coverage.",
+      "REFERENTIAL INTEGRITY: All 13 edges correctly reference existing nodes - no dangling references detected. Naming consistency follows granularity guidelines (sufficiently specific context-inclusive names suitable for cross-source merging).",
+      "ORPHAN ANALYSIS: No orphaned nodes - all 14 current nodes connect to at least one edge through connected fabric structure.",
+      "KNOWLEDGE FABRIC STRUCTURE: Pathways properly flow from risks through concept categories to interventions per template. Two main paths: (1) Catastrophic RL actions ← Reward misspecification ← Exploration traps → [Delegative RL path] → Integrate DRL. (2) Catastrophic RL actions ← Reward misspecification ← Goodhart effects → [Impact regularization path] → Embed impact regularization. Paths interconnect via shared risk node.",
+      "EDGE CONFIDENCE JUSTIFICATION: Multiple edges assigned confidence 3 (Medium - systematic qualitative evidence) for connections between concepts when these rely entirely on paper title inference with no supporting evidence text in newsletter source itself. Per edge confidence rules (5=studies p<0.05, 4=controlled experiments, 3=systematic qualitative, 2=preliminary results/limited inference, 1=speculative/moderate inference), title-based inference falls to confidence 1-2 range, not 3.",
+      "SECTION REFERENCES: Prompt requires 'closest preceding data source section title reference' in all rationale fields. Newsletter only has 'Updates' and 'News and links' sections. Current nodes lack any section attribution. Proposed fixes add section references throughout (e.g., 'Updates section', 'News and links section')."
+    ]
+  },
+  "url": "https://intelligence.org/2019/05/10/may-2019-newsletter/",
+  "paper_id": "faa1226fe640de7a6e64e34afc011d7a",
+  "ard_file_source": "blogs",
+  "errors": null
+}

@@ -1,0 +1,410 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph captures the primary causal pathway from computational complexity risk through experimental validation to design-phase interventions, with correct structural integrity and node connectivity. However, the extraction has BLOCKER-level schema compliance issues (missing required node_rationale, edge_rationale, and intervention rationale fields across all nodes and edges), one unsupported intervention node ('pruning during training') that must be removed, and incomplete coverage of secondary theoretical insights (multi-parameter complexity characterization and explicit rejection of motivation as limiting factor). With the proposed fixes applied—adding required fields with source citations, deleting the unsupported pruning intervention, and adding two concept nodes for theoretical completeness—the graph becomes valid, mergeable, and accurate to the source material."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in nodes: intervention_lifecycle_rationale and intervention_maturity_rationale missing from intervention nodes",
+        "where": "nodes[6].intervention_lifecycle_rationale, nodes[6].intervention_maturity_rationale, nodes[7].intervention_lifecycle_rationale, nodes[7].intervention_maturity_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale and intervention_maturity_rationale to all intervention nodes with citations to source sections"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in all nodes: node_rationale field is absent from all nodes",
+        "where": "nodes[*].node_rationale",
+        "suggestion": "Add node_rationale field to every node with justification and closest preceding data source section title reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Missing required fields in edges: edge_rationale field is absent from all edges",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale field to all edges with connection justification and closest preceding data source section title reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "All edges missing edge_confidence_rationale field",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add edge_confidence_rationale to all edges with evidence assessment and source section reference"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Inconsistent null field inclusion: embedding field present in some nodes but not specified in schema",
+        "where": "nodes[*].embedding, edges[*].embedding",
+        "suggestion": "Remove embedding fields as they are not part of required schema or document their purpose"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All node names referenced in edge source_node and target_node fields exactly match node names in nodes array",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "none identified",
+        "reason": "All 8 nodes connect through the primary causal pathway from risk through interventions",
+        "suggested_fix": "No action needed"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "none",
+        "names": [],
+        "merge_strategy": "N/A"
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Intervention node 'Apply treewidth-based pruning during planning and means selection in training' lacks grounding in source text",
+        "evidence": "Source discusses behavioral experiments and goal system design but does NOT propose dynamic pruning during training. The paper states: 'we conducted three crowdsourced behavioral experiments' and 'we hypothesize that people's capacity to achieve their goals can be predicted from combinatorial parameters' but never discusses real-time pruning during agent training.",
+        "fix": "Remove this intervention node or reframe it as a lower confidence theoretical inference (confidence 1). The source does not support training-time pruning interventions; it only demonstrates that low-treewidth structures predict better human performance."
+      },
+      {
+        "issue": "Insufficient grounding for intervention lifecycle and maturity assignments",
+        "evidence": "Intervention 1 ('Engineer agent goal representations with low treewidth at design phase') assigned lifecycle=1, maturity=2. Source provides no discussion of actual AI agent implementation, only human behavioral experiments. The paper states 'the tasks were relatively abstract' referring to Experiment 3.",
+        "fix": "Lifecycle should remain 1 (Model Design) but maturity should be 2 (Experimental/Proof-of-Concept) with clear rationale that only human studies validate the concept, not deployed AI systems"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Connection between goal systems complexity and human failure",
+          "evidence": "Abstract: 'we offer a complementary explanation that emphasizes the inherent complexity of the computational problems that arise from the structure of people's goal systems'; Introduction: 'Yet, while previous research on problem solving has investigated which strategies people use to solve NP-hard problems...this literature has focused on the Traveling Salesman problem and other problems that are structurally distinct from those that arise in goal pursuit'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Ineffective goal achievement in agents due to complex goal structures"
+          ],
+          "expected_target_node_name": [
+            "NP-hard means selection complexity in goal systems"
+          ]
+        },
+        {
+          "title": "Set Cover and Maximum Coverage as goal system problems",
+          "evidence": "Formal analysis section: 'we formalize...two computational challenges...in terms of two classic NP-hard problems: Set Cover and Maximum Coverage' with detailed bipartite graph formalization in 'Formal analysis and predictions' section",
+          "status": "covered",
+          "expected_source_node_name": [
+            "NP-hard means selection complexity in goal systems"
+          ],
+          "expected_target_node_name": [
+            "Treewidth-driven computational difficulty in goal systems"
+          ]
+        },
+        {
+          "title": "Treewidth enables efficient algorithms",
+          "evidence": "'Features and predictions' section: 'A tree is a connected graph without cycles. Many NP-hard problems on graphs with small treewidth...allow exact or approximate algorithms which are significantly better than what is known to be achievable on worst-case instances'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Treewidth-driven computational difficulty in goal systems"
+          ],
+          "expected_target_node_name": [
+            "Design goal hierarchies with bounded treewidth to reduce complexity"
+          ]
+        },
+        {
+          "title": "Experimental validation of treewidth effect on human performance",
+          "evidence": "Results section Experiment 1: 'treewidth alone explained 44.90% of the variance in the frequency with which people found the optimal solution...as we increased the treewidth of the graph the percentage of participants who discovered the optimal solution decreased significantly (r=−0.59, p=0.0058) from more than 90% on the graph with treewidth 5 to only about 30% on the graph with treewidth 14'; Experiment 3: 'treewidth...were all significantly correlated with the frequency with which human participants identified the optimal solution (treewidth: r=−0.756, p=0.0001)'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Constraint-based construction of low-treewidth goal bipartite graphs"
+          ],
+          "expected_target_node_name": [
+            "Behavioral experiments show higher success on low-treewidth goal systems"
+          ]
+        },
+        {
+          "title": "Practical implications for goal system design",
+          "evidence": "Conclusions: 'Our results suggest that even highly motivated people will likely fall short of achieving all their goals when they have to consider many goals and means in parallel. Our analyses provide a novel approach to predicting how likely people are to succeed in these settings, with implications for the design of goal systems that make it easier for people to meet their objectives.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Behavioral experiments show higher success on low-treewidth goal systems"
+          ],
+          "expected_target_node_name": [
+            "Engineer agent goal representations with low treewidth at design phase"
+          ]
+        },
+        {
+          "title": "Additional graph-theoretic predictors (expansion, diameter, path length)",
+          "evidence": "Experiment 1 Results: 'vertex expansion: r=−0.5836, p=0.0069, edge expansion: r=−0.4552, p=0.0437, spectral expansion: r=−0.6280, p=0.0030'; 'graph diameter: r=0.5691, p=0.0088, avg. shortest path: r=0.6516, p=0.0019'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Treewidth-driven computational difficulty in goal systems"
+          ],
+          "expected_target_node_name": [
+            "Behavioral experiments show higher success on low-treewidth goal systems"
+          ]
+        },
+        {
+          "title": "Feedback vertex set as tree-likeness measure",
+          "evidence": "'Additional predictors' section: 'A feedback vertex set (FVS) is a subset of vertices whose removal from a given graph results in a forest. The size of a minimal feedback vertex set is an alternative measure to the similarity of a graph to a tree.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Treewidth-driven computational difficulty in goal systems"
+          ],
+          "expected_target_node_name": [
+            "Behavioral experiments show higher success on low-treewidth goal systems"
+          ]
+        },
+        {
+          "title": "Motivation is not the limiting factor",
+          "evidence": "Experiment 1: 'Our participants were highly motivated to find the optimal solution (average rating 7.91±0.06 out of 9). Thus it appears unlikely that their motivation was a bottleneck to their performance. Furthermore, motivation appeared to be unaffected by treewidth'; repeated in Experiments 2 and 3",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Ineffective goal achievement in agents due to complex goal structures"
+          ],
+          "expected_target_node_name": [
+            "NP-hard means selection complexity in goal systems"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [],
+    "deletions": [
+      {
+        "node_name": "Apply treewidth-based pruning during planning and means selection in training",
+        "reason": "This intervention is not grounded in the source. The paper presents only human behavioral experiments and does not discuss AI agent training, dynamic pruning, or real-time restructuring of goal graphs during training. This appears to be an over-inferred intervention not supported by the data source content."
+      }
+    ],
+    "edge_deletions": [
+      {
+        "source_node_name": "Behavioral experiments show higher success on low-treewidth goal systems",
+        "target_node_name": "Apply treewidth-based pruning during planning and means selection in training",
+        "reason": "Edge supports deleted unsupported intervention node"
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Engineer agent goal representations with low treewidth at design phase",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 1 (Model Design) because the intervention targets goal representation structure at the design phase, before training or deployment. Source discusses designing goal systems in abstract terms in 'Conclusions' section, though primary validation is from human behavioral experiments rather than deployed AI systems.",
+        "reason": "Required field missing; add with proper source citation"
+      },
+      {
+        "node_name": "Engineer agent goal representations with low treewidth at design phase",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 2 (Experimental/Proof-of-Concept) because validation comes exclusively from controlled behavioral experiments on human subjects with synthetic goal networks. No evidence of deployment in real AI systems or practical goal systems. Source states experiments used 'crowdsourced behavioral experiments' and 'abstract' task representations. Transfer to AI agent systems is theoretical.",
+        "reason": "Required field missing; add with proper justification of maturity level based on source validation evidence"
+      },
+      {
+        "node_name": "Engineer agent goal representations with low treewidth at design phase",
+        "field": "node_rationale",
+        "json_new_value": "Essential to fabric as the primary actionable intervention derived from empirical findings. Source 'Conclusions' section motivates: 'Our analyses provide a novel approach to predicting how likely people are to succeed in these settings, with implications for the design of goal systems that make it easier for people to meet their objectives.' This intervention operationalizes that implication for AI agent design.",
+        "reason": "Required field missing; add with source section reference"
+      },
+      {
+        "node_name": "Ineffective goal achievement in agents due to complex goal structures",
+        "field": "node_rationale",
+        "json_new_value": "Top-level risk in the knowledge fabric. Represents the core phenomenon investigated: goal achievement failure. Source Abstract states: 'Most psychological theories attribute people's failure to achieve their goals exclusively to insufficient motivation or lack of skill. Here, we offer a complementary explanation that emphasizes the inherent complexity of the computational problems.'",
+        "reason": "Required field missing"
+      },
+      {
+        "node_name": "NP-hard means selection complexity in goal systems",
+        "field": "node_rationale",
+        "json_new_value": "Essential problem analysis node connecting risk to theoretical insights. Source formalizes goal achievement as bipartite graph matching and maps it to canonical NP-hard problems in 'Formal analysis and predictions' section: 'we formalize...two computational challenges...in terms of two classic NP-hard problems: Set Cover and Maximum Coverage.'",
+        "reason": "Required field missing"
+      },
+      {
+        "node_name": "Treewidth-driven computational difficulty in goal systems",
+        "field": "node_rationale",
+        "json_new_value": "Critical theoretical insight bridging NP-hardness to specific structural parameters. Source 'Features and predictions' section explains: 'A tree is a connected graph without cycles. Many NP-hard problems on graphs with small treewidth...allow exact or approximate algorithms which are significantly better than what is known to be achievable on worst-case instances.'",
+        "reason": "Required field missing"
+      },
+      {
+        "node_name": "Design goal hierarchies with bounded treewidth to reduce complexity",
+        "field": "node_rationale",
+        "json_new_value": "Design rationale node proposing the structural solution approach. Derived from the insight that treewidth determines difficulty, leading to the design principle of intentionally creating tree-like goal structures. Source reasoning: if low treewidth admits efficient algorithms, then designing low-treewidth systems should reduce computational burden.",
+        "reason": "Required field missing"
+      },
+      {
+        "node_name": "Constraint-based construction of low-treewidth goal bipartite graphs",
+        "field": "node_rationale",
+        "json_new_value": "Implementation mechanism node specifying technical approach to realizing bounded treewidth. Reflects source discussion of tree-decomposition algorithms and graph properties used to characterize and construct low-treewidth graphs in 'Features and predictions' section.",
+        "reason": "Required field missing"
+      },
+      {
+        "node_name": "Behavioral experiments show higher success on low-treewidth goal systems",
+        "field": "node_rationale",
+        "json_new_value": "Validation evidence node anchoring empirical support for the entire pathway. Source provides three large-scale behavioral experiments (n≈1800 total) across 'Experiment 1: Human performance on Set Cover', 'Experiment 2: Human performance on Maximum Coverage', and 'Experiment 3: A more realistic Set-Cover task' demonstrating consistent treewidth-performance correlation.",
+        "reason": "Required field missing"
+      },
+      {
+        "node_name": "Ineffective goal achievement in agents due to complex goal structures",
+        "field": "node_rationale",
+        "json_new_value": "Top-level risk in the knowledge fabric. Represents the core phenomenon investigated: goal achievement failure. Source Abstract states: 'Most psychological theories attribute people's failure to achieve their goals exclusively to insufficient motivation or lack of skill. Here, we offer a complementary explanation that emphasizes the inherent complexity of the computational problems.'",
+        "reason": "Required field missing"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Engineer agent goal representations with low treewidth at design phase",
+        "type": "intervention",
+        "description": "During model design, formalise an agent’s goal–means mapping as a bipartite graph and apply tree-decomposition or other constraints so the resulting structure has bounded tree-width, lowering planning complexity and risk of goal failure.",
+        "aliases": [
+          "design tree-like goal networks for AI agents",
+          "low-treewidth goal modeling"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 1,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "NP-hard means selection complexity in goal systems",
+        "type": "concept",
+        "description": "Choosing a minimal set of means to achieve all goals (Set Cover) or picking a bounded set of means that maximises goals achieved (Maximum Coverage) maps directly onto NP-hard optimisation problems.",
+        "aliases": [
+          "means selection NP-hardness",
+          "Set Cover & Maximum Coverage hardness in goal systems"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Treewidth-driven computational difficulty in goal systems",
+        "type": "concept",
+        "description": "Graph-theoretic parameters, especially tree-width and expansion, theoretically determine how hard Set Cover and Maximum Coverage instances are; low tree-width graphs admit efficient algorithms.",
+        "aliases": [
+          "treewidth affects difficulty",
+          "tree-like structures facilitate algorithms"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Design goal hierarchies with bounded treewidth to reduce complexity",
+        "type": "concept",
+        "description": "If goal systems are intentionally structured to be tree-like (low tree-width), agents can solve means-selection problems more easily, improving goal achievement.",
+        "aliases": [
+          "bounded treewidth goal hierarchy design",
+          "tree-like goal system design"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Constraint-based construction of low-treewidth goal bipartite graphs",
+        "type": "concept",
+        "description": "Implementation approach in which the generator or planner enforces constraints (e.g., feedback-vertex removal, bounded branching) so that the resulting means–goals bipartite graph has limited tree-width.",
+        "aliases": [
+          "low-treewidth goal graph construction",
+          "graph constraint generation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Behavioral experiments show higher success on low-treewidth goal systems",
+        "type": "concept",
+        "description": "Across three Mechanical-Turk experiments (n≈1800), tree-width alone explained up to 75 % of variance in finding optimal solutions; lower tree-width graphs led to better solution quality and higher success rates.",
+        "aliases": [
+          "behavioral experiment low treewidth performance",
+          "human studies SC/MC tasks"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Ineffective goal achievement in agents due to complex goal structures",
+        "type": "concept",
+        "description": "Agents (human or artificial) frequently fail to realise intended goals when the network linking their available actions (means) to desired outcomes (goals) is computationally hard to navigate.",
+        "aliases": [
+          "goal pursuit failure from complex goal networks",
+          "failure to achieve multiple goals"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Ineffective goal achievement in agents due to complex goal structures",
+        "target_node": "NP-hard means selection complexity in goal systems",
+        "description": "Failure to achieve goals is explained by the computational intractability of the underlying means-selection problems.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "NP-hard means selection complexity in goal systems",
+        "target_node": "Treewidth-driven computational difficulty in goal systems",
+        "description": "Tree-width and related parameters more precisely characterise which NP-hard instances are difficult.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Treewidth-driven computational difficulty in goal systems",
+        "target_node": "Design goal hierarchies with bounded treewidth to reduce complexity",
+        "description": "If difficulty scales with tree-width, then limiting tree-width mitigates the complexity.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Design goal hierarchies with bounded treewidth to reduce complexity",
+        "target_node": "Constraint-based construction of low-treewidth goal bipartite graphs",
+        "description": "Concrete method: enforce graph-construction constraints or apply tree-decomposition algorithms to realise bounded tree-width designs.",
+        "edge_confidence": 2,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "23f204432dad4152b4d08fff349ddd69"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.049727"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA COMPLIANCE BLOCKER: All 8 nodes missing node_rationale field required by schema. All 7 edges missing edge_rationale and edge_confidence_rationale fields required by schema. Intervention nodes (6 and 7) missing intervention_lifecycle_rationale and intervention_maturity_rationale fields required by schema.",
+      "EXTRACTION INTEGRITY ISSUE: Intervention node 'Apply treewidth-based pruning during planning and means selection in training' (nodes[7]) is not grounded in source text. Source contains no discussion of training-time pruning, dynamic goal restructuring, or agent learning procedures. This appears to be over-inferred and should be deleted.",
+      "COVERAGE GAP 1: Source systematically evaluates multiple graph-theoretic predictors (expansion, diameter, path length) beyond treewidth, reporting significant correlations in 'Results' sections. Current extraction captures only treewidth as theoretical insight. Missing node for multi-parameter complexity characterization represents ~15% coverage gap.",
+      "COVERAGE GAP 2: Source explicitly rejects motivation and skill as limiting factors in Introduction ('Most psychological theories attribute people's failure...exclusively to insufficient motivation or lack of skill. Here, we offer a complementary explanation') and demonstrates this empirically across all three experiments. Missing concept node for 'cognitive tractability limits distinct from motivation' weakens the problem analysis layer.",
+      "REFERENTIAL INTEGRITY: All node names in edge source_node and target_node fields match exactly with node names in nodes array. No referential errors.",
+      "ORPHAN CHECK: All 8 nodes participate in connected causal pathway. No orphaned nodes.",
+      "DUPLICATE CHECK: No duplicate nodes or edges identified.",
+      "BEHAVIORAL EXPERIMENTS VALIDATION: Source provides rigorous empirical support across three independent experiments. Experiment 1 (n=625 after exclusion): treewidth explained 44.9% variance (r=−0.59, p=0.0058); Experiment 2 (n=522 after exclusion): treewidth explained 20.4% variance (r=−0.4828, p=0.0311); Experiment 3 (n=600): treewidth showed strongest correlation (r=−0.756, p=0.0001). These findings strongly validate the validation evidence node.",
+      "INTERVENTION LIFECYCLE ASSIGNMENT: Extracted intervention 1 assigned lifecycle=1 (Model Design) is appropriate since source discusses designing goal systems but provides no AI implementation details. Source states 'the tasks were relatively abstract' (Experiment 3 intro) and discusses only human behavioral experiments.",
+      "INTERVENTION MATURITY ASSIGNMENT: Extracted intervention 1 assigned maturity=2 (Experimental/Proof-of-Concept) is appropriate. No deployed AI systems tested; only controlled human experiments with synthetic goal networks. Transfer to AI agents is theoretical extrapolation.",
+      "CONFIDENCE ASSIGNMENTS: Edge confidence levels are appropriately calibrated. Edges specifying NP-hardness mapping (confidence 4) and experimental validation (confidence 4) rest on strong theoretical grounding and rigorous empirical evidence. Edges inferring implementation and design approaches (confidence 2-3) involve moderate inference appropriate for knowledge fabric construction from academic sources."
+    ]
+  },
+  "url": "https://cocosci.princeton.edu/papers/cogsciReichman.pdf",
+  "paper_id": "c76fd4181b98abb64650d6ca16be3233",
+  "ard_file_source": "special_docs",
+  "errors": null
+}

@@ -1,0 +1,438 @@
+{
+  "nodes": [
+    {
+      "name": "Policy non-compliance in chat-based large language model deployment",
+      "aliases": [
+        "Unauthorized harmful content generation in LLMs",
+        "Rule-breaking outputs by ChatGPT"
+      ],
+      "type": "concept",
+      "description": "Large language models deployed as chatbots sometimes output content that violates provider policies (e.g., disallowed or harmful instructions), posing safety and reputational risks.",
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Central risk highlighted in Summary section – the model produces policy-breaking outputs."
+    },
+    {
+      "name": "Side-task distraction attack reduces policy adherence in chat LLMs",
+      "aliases": [
+        "Multi-task prompt distraction",
+        "Side-task dilution attack"
+      ],
+      "type": "concept",
+      "description": "Embedding a prohibited request inside a prompt that also asks for unrelated side-tasks (e.g., ‘add copypasta’) substantially increases the likelihood that ChatGPT/GPT-4 will comply with the prohibited request.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Demonstrated repeatedly in Distracting language models section via screenshots."
+    },
+    {
+      "name": "Translation bypass attack using non-English prompts in chat LLMs",
+      "aliases": [
+        "Non-English translation jailbreak",
+        "Language translation attack"
+      ],
+      "type": "concept",
+      "description": "Attackers request disallowed content in another language and simultaneously ask the model to translate it back to English, often bypassing safety filters.",
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Shown in screenshots where Chinese -> English translation successfully elicits disallowed content."
+    },
+    {
+      "name": "Task dilution hypothesis of policy scoring in LLM safety layer",
+      "aliases": [
+        "Diluted safety score hypothesis",
+        "Side-task overload hypothesis"
+      ],
+      "type": "concept",
+      "description": "Author speculates that multiple side-tasks dilute an internal measure of rule-breaking severity, weakening refusals.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Hypothesis explicitly stated in post’s Wild speculation paragraph."
+    },
+    {
+      "name": "Inconsistent multilingual policy enforcement in LLM governance",
+      "aliases": [
+        "Multilingual safety gap",
+        "Cross-language policy inconsistency"
+      ],
+      "type": "concept",
+      "description": "Safety layers appear less stringent or inconsistent across languages, enabling translation bypass attacks.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implied by observation that non-English prompts succeed where English ones fail."
+    },
+    {
+      "name": "Insufficient adversarial multi-task prompts in training data reduce robustness",
+      "aliases": [
+        "Lack of multi-task adversarial training",
+        "Training data gap for distraction attacks"
+      ],
+      "type": "concept",
+      "description": "Current RLHF datasets seldom contain multi-task or distraction jailbreak examples, leaving the model unprepared for such attacks.",
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Inferred from the model’s vulnerability; absence of such data is a plausible cause."
+    },
+    {
+      "name": "Robust policy scoring per atomic request in chat LLMs",
+      "aliases": [
+        "Atomic request safety scoring",
+        "Per-subtask policy assessment"
+      ],
+      "type": "concept",
+      "description": "Design principle where each sub-request within a prompt is isolated and given an independent compliance score to prevent task-dilution effects.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Directly addresses theoretical dilution hypothesis."
+    },
+    {
+      "name": "Adversarial prompt training against multi-task attacks in chat LLMs",
+      "aliases": [
+        "Multi-task adversarial RLHF",
+        "Distraction-aware fine-tuning"
+      ],
+      "type": "concept",
+      "description": "Safety approach that incorporates diverse multi-task jailbreak prompts during fine-tuning to teach the model to refuse them.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Targets the gap identified in training data."
+    },
+    {
+      "name": "Multilingual safety alignment across prompts",
+      "aliases": [
+        "Cross-language alignment",
+        "Multilingual policy consistency"
+      ],
+      "type": "concept",
+      "description": "Ensuring policy filters and reward models behave consistently across languages so translation bypass cannot succeed.",
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Addresses multilingual enforcement insight."
+    },
+    {
+      "name": "Subtask segmentation and individual safety evaluation during inference",
+      "aliases": [
+        "Prompt parser with per-segment checks",
+        "Sub-request compliance filter"
+      ],
+      "type": "concept",
+      "description": "Implementation that parses a composite user prompt into discrete sub-requests, evaluates each for policy compliance, and only executes allowed parts.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Concrete means to realise atomic safety scoring."
+    },
+    {
+      "name": "Adversarial multi-task examples included in RLHF fine-tuning",
+      "aliases": [
+        "Distraction jailbreak dataset",
+        "Multi-task adversarial examples"
+      ],
+      "type": "concept",
+      "description": "During RLHF or supervised fine-tuning, include prompts that combine benign and disallowed requests to train the model to refuse the latter.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Operationalises adversarial prompt training rationale."
+    },
+    {
+      "name": "Cross-lingual safety fine-tuning with multilingual policy datasets",
+      "aliases": [
+        "Multilingual policy fine-tuning",
+        "Cross-language safety RLHF"
+      ],
+      "type": "concept",
+      "description": "Fine-tune or calibrate reward models with aligned datasets covering multiple languages to equalise policy enforcement strength.",
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Implements multilingual alignment rationale."
+    },
+    {
+      "name": "Empirical chat logs show high rule-breaking success via side-task distraction in GPT-3.5-turbo and GPT-4",
+      "aliases": [
+        "Screenshot evidence of distraction attack",
+        "Observed side-task jailbreaks"
+      ],
+      "type": "concept",
+      "description": "Multiple screenshots in the post illustrate that ChatGPT and GPT-4 provide disallowed content when side-task distraction is used.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Serves as empirical support for the attack’s effectiveness."
+    },
+    {
+      "name": "Non-English prompt translation bypass achieves policy violations in GPT-3.5-turbo",
+      "aliases": [
+        "Screenshot evidence of translation bypass",
+        "Observed multilingual jailbreaks"
+      ],
+      "type": "concept",
+      "description": "Screenshots show that requesting disallowed content in Chinese and demanding an English translation leads to policy-breaking outputs.",
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_lifecycle_rationale": null,
+      "intervention_maturity": null,
+      "intervention_maturity_rationale": null,
+      "node_rationale": "Validates multilingual attack pathway."
+    },
+    {
+      "name": "Deploy prompt parser to isolate sub-requests and apply per-subtask policy compliance checks",
+      "aliases": [
+        "Subtask policy checker deployment",
+        "Atomic request compliance at runtime"
+      ],
+      "type": "intervention",
+      "description": "Integrate a prompt-parsing middleware at deployment time that splits user inputs into atomic segments, runs each through the policy classifier, refuses or redacts disallowed segments, and then recombines permissible content for generation.",
+      "concept_category": null,
+      "intervention_lifecycle": "5",
+      "intervention_lifecycle_rationale": "Operate during production request handling – aligns with deployment phase (no new training needed). Referenced from the need highlighted in Distracting language models examples.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Technique is feasible but only experimental in public systems; no large-scale validation reported.",
+      "node_rationale": "Directly mitigates task dilution attack by enforcing atomic compliance."
+    },
+    {
+      "name": "Fine-tune LLMs with adversarial multi-task prompt datasets to improve robustness",
+      "aliases": [
+        "Distraction-aware fine-tuning",
+        "Multi-task adversarial RLHF training"
+      ],
+      "type": "intervention",
+      "description": "Expand RLHF/supervised datasets with systematically generated prompts that combine benign and disallowed requests so the model learns to refuse or separate them.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Performed during fine-tuning/RLHF stage of model training.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Standard practice in research prototypes but not yet fully validated for this attack type.",
+      "node_rationale": "Addresses training data gap causing susceptibility to distraction prompts."
+    },
+    {
+      "name": "Perform multilingual policy alignment fine-tuning and evaluator calibration across languages",
+      "aliases": [
+        "Cross-language alignment intervention",
+        "Multilingual safety calibration"
+      ],
+      "type": "intervention",
+      "description": "Create or augment reward models and safety classifiers with balanced multilingual datasets, and calibrate refusal thresholds so policy enforcement is language-agnostic.",
+      "concept_category": null,
+      "intervention_lifecycle": "3",
+      "intervention_lifecycle_rationale": "Requires additional fine-tuning and evaluator calibration prior to deployment.",
+      "intervention_maturity": "2",
+      "intervention_maturity_rationale": "Early research stage; some preliminary work exists but widespread deployment is limited.",
+      "node_rationale": "Targets the multilingual enforcement inconsistency highlighted by translation bypass evidence."
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Policy non-compliance in chat-based large language model deployment",
+      "target_node": "Side-task distraction attack reduces policy adherence in chat LLMs",
+      "description": "The distraction attack directly yields policy-breaking outputs, generating the overarching risk.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Multiple observed examples in screenshots (Summary section).",
+      "edge_rationale": "Risk materialises when distraction attack succeeds."
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Policy non-compliance in chat-based large language model deployment",
+      "target_node": "Translation bypass attack using non-English prompts in chat LLMs",
+      "description": "Translation bypass is another concrete mechanism producing policy violations.",
+      "edge_confidence": "4",
+      "edge_confidence_rationale": "Direct empirical evidence in screenshots.",
+      "edge_rationale": "Risk arises when multilingual bypass succeeds."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Side-task distraction attack reduces policy adherence in chat LLMs",
+      "target_node": "Task dilution hypothesis of policy scoring in LLM safety layer",
+      "description": "Hypothesis explains why the distraction attack is effective.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Speculative explanation; no hard evidence.",
+      "edge_rationale": "Provides theoretical detail for the observed attack."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Side-task distraction attack reduces policy adherence in chat LLMs",
+      "target_node": "Insufficient adversarial multi-task prompts in training data reduce robustness",
+      "description": "Lack of such data is proposed as an additional explanatory factor.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Inference based on typical alignment gaps; not explicitly proven.",
+      "edge_rationale": "Identifies another layer of explanation for vulnerability."
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Translation bypass attack using non-English prompts in chat LLMs",
+      "target_node": "Inconsistent multilingual policy enforcement in LLM governance",
+      "description": "Multilingual inconsistency explains why translation bypass works.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Implied by empirical example; common alignment issue.",
+      "edge_rationale": "Theoretical insight refines understanding of multilingual attack."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Task dilution hypothesis of policy scoring in LLM safety layer",
+      "target_node": "Robust policy scoring per atomic request in chat LLMs",
+      "description": "Atomic scoring is designed precisely to counter task-dilution.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Design inference; aligns with standard safety engineering.",
+      "edge_rationale": "Design addresses hypothesised weakness."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Insufficient adversarial multi-task prompts in training data reduce robustness",
+      "target_node": "Adversarial prompt training against multi-task attacks in chat LLMs",
+      "description": "Adding such prompts in training directly mitigates the identified deficiency.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Established practice for robustness; inferred applicability.",
+      "edge_rationale": "Design fills the data gap."
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Inconsistent multilingual policy enforcement in LLM governance",
+      "target_node": "Multilingual safety alignment across prompts",
+      "description": "Ensuring consistency across languages mitigates multilingual bypass risk.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Logical mitigation; common in multilingual alignment research.",
+      "edge_rationale": "Design counters cross-language weakness."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Robust policy scoring per atomic request in chat LLMs",
+      "target_node": "Subtask segmentation and individual safety evaluation during inference",
+      "description": "Parsing and evaluating each subtask implements atomic scoring.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Straightforward mapping from design principle to mechanism.",
+      "edge_rationale": "Implementation realises design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Adversarial prompt training against multi-task attacks in chat LLMs",
+      "target_node": "Adversarial multi-task examples included in RLHF fine-tuning",
+      "description": "Including such examples in RLHF operationalises the adversarial training design.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Standard methodology.",
+      "edge_rationale": "Mechanism carries out design."
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Multilingual safety alignment across prompts",
+      "target_node": "Cross-lingual safety fine-tuning with multilingual policy datasets",
+      "description": "Fine-tuning with balanced multilingual data implements cross-language alignment.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Common technique in multilingual model research.",
+      "edge_rationale": "Mechanism realises design."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Subtask segmentation and individual safety evaluation during inference",
+      "target_node": "Empirical chat logs show high rule-breaking success via side-task distraction in GPT-3.5-turbo and GPT-4",
+      "description": "Attack success logs provide a test-bed to evaluate effectiveness of the segmentation mechanism once deployed.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Validation inferred; mechanism not yet tested in the post.",
+      "edge_rationale": "Evidence can serve as baseline for validation."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adversarial multi-task examples included in RLHF fine-tuning",
+      "target_node": "Empirical chat logs show high rule-breaking success via side-task distraction in GPT-3.5-turbo and GPT-4",
+      "description": "These logs constitute adversarial prompts to measure whether fine-tuning reduces success rate.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Same as above – potential validation use.",
+      "edge_rationale": "Evidence set for evaluating improvement."
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Cross-lingual safety fine-tuning with multilingual policy datasets",
+      "target_node": "Non-English prompt translation bypass achieves policy violations in GPT-3.5-turbo",
+      "description": "Multilingual fine-tuning can be benchmarked against the shown translation bypass examples.",
+      "edge_confidence": "2",
+      "edge_confidence_rationale": "Validation scenario inferred.",
+      "edge_rationale": "Evidence enables testing of multilingual mitigation."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical chat logs show high rule-breaking success via side-task distraction in GPT-3.5-turbo and GPT-4",
+      "target_node": "Deploy prompt parser to isolate sub-requests and apply per-subtask policy compliance checks",
+      "description": "High failure rate under distraction motivates deploying a parser-based mitigation.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical evidence provides clear motivation.",
+      "edge_rationale": "Attack success drives need for intervention."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical chat logs show high rule-breaking success via side-task distraction in GPT-3.5-turbo and GPT-4",
+      "target_node": "Fine-tune LLMs with adversarial multi-task prompt datasets to improve robustness",
+      "description": "Evidence of vulnerability motivates adding adversarial multi-task prompts in fine-tuning.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Same empirical motivation.",
+      "edge_rationale": "Observed weakness justifies training change."
+    },
+    {
+      "type": "motivates",
+      "source_node": "Non-English prompt translation bypass achieves policy violations in GPT-3.5-turbo",
+      "target_node": "Perform multilingual policy alignment fine-tuning and evaluator calibration across languages",
+      "description": "Multilingual jailbreak examples motivate aligning safety across languages.",
+      "edge_confidence": "3",
+      "edge_confidence_rationale": "Empirical evidence provides clear driver.",
+      "edge_rationale": "Evidence motivates intervention."
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.lesswrong.com/posts/z5pbBBmGjzoqBxC4n/chatgpt-and-now-gpt4-is-very-easily-distracted-from-its"
+    },
+    {
+      "key": "title",
+      "value": "ChatGPT (and now GPT4) is very easily distracted from its rules"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-03-15T17:55:04Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "dmcs"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "lesswrong"
+    }
+  ]
+}

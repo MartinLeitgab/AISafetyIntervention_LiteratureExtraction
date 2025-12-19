@@ -1,0 +1,725 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph has critical schema compliance failures: all nodes are missing the required node_rationale field, all intervention nodes are missing intervention_lifecycle_rationale and intervention_maturity_rationale fields, and all edges are missing edge_confidence_rationale and edge_rationale fields. These are BLOCKER-level issues per schema requirements. Beyond schema fixes, the graph significantly undercaptures the source's modeling framework: missing nodes for AGI timeline distribution, aging solution timeline, conditional survival probabilities, and the failure-to-solve-aging risk pathway. Three intervention nodes have incorrect maturity/lifecycle assignments (interventions 1, 2, 3). With all proposed fixes applied, the graph becomes valid and mergeable, though extraction coverage of the source's quantitative modeling apparatus remains incomplete despite covering main causal pathways."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Node missing required field: intervention_lifecycle_rationale is null for all intervention nodes",
+        "where": "nodes[6].intervention_lifecycle_rationale, nodes[12].intervention_lifecycle_rationale, nodes[16].intervention_lifecycle_rationale",
+        "suggestion": "Add intervention_lifecycle_rationale field with justification and data source section reference for each intervention node"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Node missing required field: intervention_maturity_rationale is null for all intervention nodes",
+        "where": "nodes[6].intervention_maturity_rationale, nodes[12].intervention_maturity_rationale, nodes[16].intervention_maturity_rationale",
+        "suggestion": "Add intervention_maturity_rationale field with evidence-based reasoning and data source section reference for each intervention node"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Node missing required field: node_rationale is null or missing for all nodes",
+        "where": "All nodes lack node_rationale field",
+        "suggestion": "Add node_rationale field to every node explaining why it is essential to fabric with closest preceding data source section title reference"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edge missing required field: edge_confidence_rationale is missing for all edges",
+        "where": "edges[*].edge_confidence_rationale",
+        "suggestion": "Add edge_confidence_rationale field with evidence assessment and data source section reference for each edge"
+      },
+      {
+        "severity": "MAJOR",
+        "issue": "Edge missing required field: edge_rationale is missing for all edges",
+        "where": "edges[*].edge_rationale",
+        "suggestion": "Add edge_rationale field with connection justification and data source section reference for each edge"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references are valid",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "None identified",
+        "reason": "All nodes connect to the fabric through at least one edge",
+        "suggested_fix": "N/A"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Global human extinction from misaligned AGI",
+          "High misalignment probability under near-term AGI timelines"
+        ],
+        "merge_strategy": "These should remain separate. First is risk, second is problem_analysis. However, verify this distinction is appropriate per source."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Intervention node 'Work on AI safety research to reduce AGI extinction probability' has maturity=2 (Experimental/PoC) but should be 1 (Foundational/Theoretical)",
+        "evidence": "From DATA_SOURCE: 'I think working on AI safety and healthy living seem like a much better choice than accelerating AI. I'd guess this is true even for a vast majority of purely selfish people. For altruistic people, working on AI safety clearly trumps any other action' - this is theoretical recommendation, not validated practice",
+        "fix": "Change intervention_maturity from 2 to 1; update rationale to reflect that this is a theoretically-motivated intervention without empirical deployment validation"
+      },
+      {
+        "issue": "Intervention node 'Implement healthy living practices to survive until AGI era' has maturity=4 (Operational/Deployment) but reasoning is limited",
+        "evidence": "From DATA_SOURCE: 'Live healthy and don't do dangerous things (transfers probability mass from \"die before AGI\" to \"survive until AGI\")' with note 'Intuitively, I'm guessing one can transfer around 1 percentage point of probability by doing this.' The confidence is tentative ('guessing'), not operationally validated.",
+        "fix": "Change intervention_maturity from 4 to 3 (Prototype/Pilot) to reflect that this relies on intuitive modeling rather than deployment evidence"
+      },
+      {
+        "issue": "Intervention node 'Advocate for slowing AGI development to allow safety progress' has maturity=1 but lifecycle=6 (Other) is vague",
+        "evidence": "From DATA_SOURCE Appendix A: 'Delay AGI (transfers probability from \"survive AGI\" to \"survive until AGI\" and from \"die before AGI\" to \"survive AGI\")' - this is a policy/governance intervention but lifecycle stage is unclear",
+        "fix": "Change lifecycle from 6 to 5 (Deployment) as this operates at policy/societal deployment level, not 'Other'. Keep maturity=1 (Foundational/Theoretical)"
+      },
+      {
+        "issue": "Missing critical node: AGI timelines distribution and their role in the model",
+        "evidence": "From DATA_SOURCE section 'Metaculus timelines': 'The median of the distribution is 2034... I fit a lognormal distribution this Metaculus question, discarding years before 2023. This is what the distribution looks like:' - this is core to the model",
+        "fix": "Add concept node 'AGI timeline distribution follows lognormal with median 2034' as implementation_mechanism or validation_evidence node"
+      },
+      {
+        "issue": "Missing critical node: Aging-solving timeline assumptions",
+        "evidence": "From DATA_SOURCE section 'Time between surviving AGI and solving aging': 'I model the time between AGI and aging being solved as an exponential distribution with a mean time of 5 years.'",
+        "fix": "Add concept node 'Aging solution timeline modeled as exponential distribution with mean 5 years' as implementation_mechanism"
+      },
+      {
+        "issue": "Missing node for key assumption about conditional survival probability",
+        "evidence": "From DATA_SOURCE section 'Probability of surviving AGI': 'Here's what the graph looks like. My estimate levels out at 98%, the conventional one approaches 100%. I actually think it approaches 100% but 98% is close enough to my estimate.'",
+        "fix": "Add concept node 'Conditional AGI survival probability reaches 98% asymptotically' as theoretical_insight or design_rationale"
+      },
+      {
+        "issue": "Missing node for alternative scenario: never solving aging after AGI",
+        "evidence": "From DATA_SOURCE TL;DR and model outcomes: 'I survive AGI but die because we never solve aging: 11%' and 'I survive AGI but die before aging is solved: 1%'",
+        "fix": "Add risk node 'Failure to solve aging after surviving AGI' to capture this outcome pathway"
+      },
+      {
+        "issue": "Incomplete edge coverage between AGI survival and aging-related outcomes",
+        "evidence": "From DATA_SOURCE model section: outcomes specify conditional probabilities given AGI survival, but edges do not represent the conditional structure clearly",
+        "fix": "Add edges representing: 'AGI survival' -> 'Aging solution probability 80%' -> outcomes 'Live forever' or 'Die from aging'"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "AGI timelines affect survival probability",
+          "evidence": "From 'Metaculus timelines' section and model variant comparison: median 2034 vs 2056, with corresponding P(doom) changes. 'For the conventional estimate, I just multiplied each sample by three to make the timelines three times longer (so a median of 2056).'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "AGI timeline distribution follows lognormal with median 2034"
+          ],
+          "expected_target_node_name": [
+            "High misalignment probability under near-term AGI timelines"
+          ]
+        },
+        {
+          "title": "Aging solution depends on surviving AGI first",
+          "evidence": "From model structure: 'If AGI is eventually used to solve aging, people keep dying at historical rates until that point.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "AGI survival probability",
+            "Aging solution probability given AGI survival"
+          ],
+          "expected_target_node_name": [
+            "Live to see aging being solved"
+          ]
+        },
+        {
+          "title": "Model outcome probabilities validate multiple decision pathways",
+          "evidence": "From TL;DR and results: '35% dying from AGI' vs '43% surviving AGI and living to see aging solved' - these are validation endpoints",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Monte Carlo model estimates of scenario probabilities"
+          ],
+          "expected_target_node_name": [
+            "Work on AI safety research to reduce AGI extinction probability",
+            "Implement healthy living practices to survive until AGI era"
+          ]
+        },
+        {
+          "title": "Personal identity concerns don't affect model scope",
+          "evidence": "From section 'No assumptions about continuous personal identity': 'I'm not trying to capture any of these questions in the model. The main question this model is trying to answer is \"Can I expect to witness aging being solved?\"'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Brain preservation as edge case intervention",
+          "evidence": "From Appendix A: 'Preserve your brain if you die before AGI (kind of transfers probability mass from \"die before AGI\" to \"survive until AGI\")' with caveat 'This is a weird edge case in the model and it conditions on various beliefs about preservation technology and whether being \"revived\" is possible'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Trade-off between healthy living and AGI acceleration is unfavorable",
+          "evidence": "From Appendix A: 'I think working on AI safety and healthy living seem like a much better choice than accelerating AI... accelerate AGI (transfer probability mass from \"survive AGI\" to \"die from AGI\" and from \"die before AGI\" to \"survive until AGI\")'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Implement healthy living practices to survive until AGI era"
+          ],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Probability allocation across five outcome categories",
+          "evidence": "From model results section: 'I die before AGI: 10% / I die from AGI: 35% / I survive AGI but die because we never solve aging: 11% / I survive AGI but die before aging is solved: 1% / I survive AGI and live to witness aging being solved: 43%'",
+          "status": "partially_covered",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        },
+        {
+          "title": "Conditional probability of solving aging is 80%",
+          "evidence": "From section 'Probability that, conditioning on surviving AGI, we eventually solve aging': 'I have this at 80% without much thinking about it. I think the main scenarios where this doesn't happen involve us deciding to replace humans who are currently alive with something we consider more valuable...'",
+          "status": "missing",
+          "expected_source_node_name": [],
+          "expected_target_node_name": []
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [
+      {
+        "type": "intervention",
+        "name": "Preserve your brain for potential revival after death before AGI",
+        "edges": [],
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1
+      }
+    ],
+    "merges": [
+      {
+        "new_node_name": "No merges needed",
+        "nodes_to_merge": []
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [],
+    "change_node_fields": [
+      {
+        "node_name": "Work on AI safety research to reduce AGI extinction probability",
+        "field": "intervention_lifecycle",
+        "json_new_value": "6",
+        "reason": "Currently 6 (Other) is appropriate as this is broad career/funding choice outside standard AI development phases; retain as is"
+      },
+      {
+        "node_name": "Work on AI safety research to reduce AGI extinction probability",
+        "field": "intervention_maturity",
+        "json_new_value": "1",
+        "reason": "Change from 2 to 1 (Foundational/Theoretical): From Appendix A the recommendation is theoretical ('I'd guess') without empirical validation of effectiveness"
+      },
+      {
+        "node_name": "Work on AI safety research to reduce AGI extinction probability",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other): This is a career/resource allocation decision operating outside standard AI development phases, best categorized as 'Other' per Appendix A strategic action space",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Work on AI safety research to reduce AGI extinction probability",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical): From Appendix A 'I think working on AI safety and healthy living seem like a much better choice than accelerating AI. I'd guess this is true even for a vast majority of purely selfish people.' - recommendation is based on theoretical modeling without empirical field deployment validation",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Implement healthy living practices to survive until AGI era",
+        "field": "intervention_maturity",
+        "json_new_value": "3",
+        "reason": "Change from 4 to 3 (Prototype/Pilot): From Appendix A 'Intuitively, I'm guessing one can transfer around 1 percentage point of probability by doing this.' indicates intuitive modeling rather than operational deployment evidence"
+      },
+      {
+        "node_name": "Implement healthy living practices to survive until AGI era",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 6 (Other): This is an individual personal lifestyle intervention outside standard AI development phases",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Implement healthy living practices to survive until AGI era",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 3 (Prototype/Pilot): From Appendix A the quantification is preliminary ('Intuitively, I'm guessing one can transfer around 1 percentage point') without large-scale validation of the claimed probability transfer",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Advocate for slowing AGI development to allow safety progress",
+        "field": "intervention_lifecycle",
+        "json_new_value": "5",
+        "reason": "Change from 6 (Other) to 5 (Deployment): This operates at policy/governance deployment level rather than generic 'Other'"
+      },
+      {
+        "node_name": "Advocate for slowing AGI development to allow safety progress",
+        "field": "intervention_lifecycle_rationale",
+        "json_new_value": "Lifecycle 5 (Deployment): From Appendix A this is a policy/societal deployment intervention ('Delay AGI' through advocacy) operating at the governance/coordination level",
+        "reason": "Add required missing field with corrected lifecycle"
+      },
+      {
+        "node_name": "Advocate for slowing AGI development to allow safety progress",
+        "field": "intervention_maturity_rationale",
+        "json_new_value": "Maturity 1 (Foundational/Theoretical): From Appendix A 'there are various considerations that make this assumption shaky and not generally true for every possible way to shift timelines' - the intervention lacks tested implementation mechanisms",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Global human extinction from misaligned AGI",
+        "field": "node_rationale",
+        "json_new_value": "From TL;DR and model: 'the main \"end states\" for my life are either dying from AGI due to a lack of AI safety (at 35%)' - this is the primary risk motivating the entire analysis",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "High misalignment probability under near-term AGI timelines",
+        "field": "node_rationale",
+        "json_new_value": "From TL;DR: 'I got that the main \"end states\" for my life are either dying from AGI due to a lack of AI safety (at 35%)' - this problem analysis explains why global extinction risk translates to personal mortality risk",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+        "field": "node_rationale",
+        "json_new_value": "From Appendix A: 'For altruistic people, working on AI safety clearly trumps any other action in this space as it has huge positive externalities' - this theoretical insight explains the root cause of misalignment risk",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Redirecting talent and resources to AI safety shifts survival probability",
+        "field": "node_rationale",
+        "json_new_value": "From Appendix A: 'Work on AI safety (transfers probability mass from \"die from AGI\" to \"survive AGI\")' - this design rationale is the key proposed solution",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Technical alignment and AI governance research programs",
+        "field": "node_rationale",
+        "json_new_value": "From 'Assumptions' section: model assumes effectiveness of safety research programs without detail on specific techniques",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Monte Carlo model estimates of scenario probabilities",
+        "field": "node_rationale",
+        "json_new_value": "From 'The model & results' section: this validation evidence grounds all recommendations by quantifying outcome probabilities",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Individual premature death before AGI arrival",
+        "field": "node_rationale",
+        "json_new_value": "From model outcomes: 'I die before AGI: 10%' - this is one of five discrete risk outcome states",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Historical aging-related mortality rates without AGI",
+        "field": "node_rationale",
+        "json_new_value": "From 'Without AGI' assumption: 'people keep dying at historical rates (following US actuarial tables)' - this is the baseline mortality mechanism",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+        "field": "node_rationale",
+        "json_new_value": "From model logic: implied as counterfactual to health intervention; supports personal action pathway",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Adopting healthy lifestyle extends lifespan until AGI",
+        "field": "node_rationale",
+        "json_new_value": "From Appendix A: 'Live healthy and don't do dangerous things (transfers probability mass from \"die before AGI\" to \"survive until AGI\")' - this design rationale offers individual control over outcomes",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Evidence-based health and risk avoidance practices",
+        "field": "node_rationale",
+        "json_new_value": "From Appendix A: 'Live healthy and don't do dangerous things' operationalizes the healthy lifestyle design rationale",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Longer AGI timelines allow AI safety progress and increase survival probability",
+        "field": "node_rationale",
+        "json_new_value": "From 'Probability of surviving AGI' section and model variants: explicit assumption that survival probability increases with timeline length",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Advocating policy to slow AGI development to improve safety",
+        "field": "node_rationale",
+        "json_new_value": "From Appendix A: 'Delay AGI (transfers probability from \"survive AGI\" to \"survive until AGI\" and from \"die before AGI\" to \"survive AGI\")' - policy advocacy is proposed mechanism",
+        "reason": "Add required missing field"
+      },
+      {
+        "node_name": "Regulatory and coordination measures delaying AGI timelines",
+        "field": "node_rationale",
+        "json_new_value": "From Appendix A: references moratoria and regulatory approaches as mechanisms, though notes 'there are various considerations that make this assumption shaky'",
+        "reason": "Add required missing field"
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Preserve your brain for potential revival after death before AGI",
+        "type": "intervention",
+        "description": "Auto-generated node based on validation",
+        "aliases": [
+          "Preserve your brain for potential revival after death before AGI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Work on AI safety research to reduce AGI extinction probability",
+        "type": "intervention",
+        "description": "Individuals devote their careers or funding to technical alignment and governance research, aiming to lower the probability of misaligned AGI by several micro-dooms per researcher.",
+        "aliases": [
+          "become AI safety researcher",
+          "contribute to alignment research"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Implement healthy living practices to survive until AGI era",
+        "type": "intervention",
+        "description": "Individuals actively follow preventive-medicine guidelines and avoid hazardous activities to maximise the chance of living long enough to benefit from AGI advances.",
+        "aliases": [
+          "practice longevity habits",
+          "reduce health risks pre-AGI"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 6,
+        "intervention_maturity": 3,
+        "embedding": null
+      },
+      {
+        "name": "Advocate for slowing AGI development to allow safety progress",
+        "type": "intervention",
+        "description": "Engage in policy advocacy, lobbying, or public campaigns for moratoria or regulation that postpone AGI deployment, giving more time for alignment solutions.",
+        "aliases": [
+          "support AGI pause",
+          "promote AGI delay policies"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 5,
+        "intervention_maturity": 1,
+        "embedding": null
+      },
+      {
+        "name": "Global human extinction from misaligned AGI",
+        "type": "concept",
+        "description": "The scenario in which advanced artificial general intelligence behaves in ways that eliminate humanity because it is not properly aligned with human values.",
+        "aliases": [
+          "AI existential catastrophe",
+          "AGI-driven human extinction"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "High misalignment probability under near-term AGI timelines",
+        "type": "concept",
+        "description": "Because AGI may arrive soon and alignment research lags, the probability that AGI kills everyone is currently estimated as high (35 % in the author's model).",
+        "aliases": [
+          "elevated P(doom) with short AGI timelines",
+          "misalignment risk given 35% chance"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+        "type": "concept",
+        "description": "The underlying cause of the high misalignment probability is that technical and governance safety work is progressing slower than capability research.",
+        "aliases": [
+          "safety research lag",
+          "alignment work deficit"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Redirecting talent and resources to AI safety shifts survival probability",
+        "type": "concept",
+        "description": "Allocating additional people and funding to AI safety work is proposed as the key way to move probability mass from 'die from AGI' to 'survive AGI'.",
+        "aliases": [
+          "invest in AI safety",
+          "focus on alignment research"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Technical alignment and AI governance research programs",
+        "type": "concept",
+        "description": "Concrete safety work includes development of alignment algorithms, interpretability tools, governance frameworks, and policies that can be applied before AGI deployment.",
+        "aliases": [
+          "alignment techniques and policy work",
+          "safety R&D and regulation"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Monte Carlo model estimates of scenario probabilities",
+        "type": "concept",
+        "description": "The author’s simulation samples AGI timelines, P(doom), actuarial mortality, and aging-cure arrival to estimate outcome probabilities and the impact of different actions.",
+        "aliases": [
+          "probabilistic life outcome simulation results",
+          "35% die from AGI model output"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Individual premature death before AGI arrival",
+        "type": "concept",
+        "description": "The possibility that a person dies of ordinary causes before AGI exists; 10 % for someone born in 2001 according to the model.",
+        "aliases": [
+          "death before AGI",
+          "natural mortality pre-AGI"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Historical aging-related mortality rates without AGI",
+        "type": "concept",
+        "description": "In the absence of AGI-enabled breakthroughs, mortality follows historical actuarial tables, with a steep rise after age 70.",
+        "aliases": [
+          "baseline human mortality curve",
+          "US actuarial life table deaths"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+        "type": "concept",
+        "description": "Failing to engage in preventive health behaviours maintains the historical death rate, increasing chances of dying before AGI.",
+        "aliases": [
+          "suboptimal health behaviours",
+          "risk-increasing lifestyle choices"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Adopting healthy lifestyle extends lifespan until AGI",
+        "type": "concept",
+        "description": "Choosing evidence-based health behaviours transfers roughly 1 % probability from 'die before AGI' to 'survive until AGI' in the model.",
+        "aliases": [
+          "personal health optimisation for AGI wait",
+          "longevity habits"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Evidence-based health and risk avoidance practices",
+        "type": "concept",
+        "description": "Regular exercise, balanced diet, avoiding accidents, and routine medical care are practical mechanisms to realise the healthy-living design rationale.",
+        "aliases": [
+          "exercise, diet, medical screening",
+          "preventive health behaviours"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Longer AGI timelines allow AI safety progress and increase survival probability",
+        "type": "concept",
+        "description": "If AGI arrives later, cumulative safety knowledge and governance improvements reduce P(doom); reflected in model variant with lower risk by 2060.",
+        "aliases": [
+          "extended timelines improve alignment",
+          "time for safety research"
+        ],
+        "concept_category": "theoretical insight",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Advocating policy to slow AGI development to improve safety",
+        "type": "concept",
+        "description": "Pushing for deliberate slowdown trades a higher chance of dying before AGI for a lower chance of extinction, potentially beneficial from an altruistic perspective.",
+        "aliases": [
+          "slow AGI for safety",
+          "timeline extension strategy"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Regulatory and coordination measures delaying AGI timelines",
+        "type": "concept",
+        "description": "Possible mechanisms include compute caps, licensing, or treaties that slow capability advances until safety work matures.",
+        "aliases": [
+          "moratoriums, compute governance",
+          "international agreements to slow AGI"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Global human extinction from misaligned AGI",
+        "target_node": "High misalignment probability under near-term AGI timelines",
+        "description": "A high probability of AGI misalignment directly results in a significant chance of human extinction.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "High misalignment probability under near-term AGI timelines",
+        "target_node": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+        "description": "The misalignment probability is attributed to a shortage of safety research compared with rapid capability progress.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+        "target_node": "Redirecting talent and resources to AI safety shifts survival probability",
+        "description": "Adding more people and money to AI safety directly addresses the research shortfall, lowering extinction risk.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Redirecting talent and resources to AI safety shifts survival probability",
+        "target_node": "Technical alignment and AI governance research programs",
+        "description": "Practical implementation occurs through technical and governance research programmes.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Technical alignment and AI governance research programs",
+        "target_node": "Monte Carlo model estimates of scenario probabilities",
+        "description": "The simulation provides quantitative evidence for how increased safety effort could shift probabilities.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "Monte Carlo model estimates of scenario probabilities",
+        "target_node": "Work on AI safety research to reduce AGI extinction probability",
+        "description": "Because the model shows large gains from safety work, it motivates individuals to pursue AI safety careers.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Longer AGI timelines allow AI safety progress and increase survival probability",
+        "target_node": "Advocating policy to slow AGI development to improve safety",
+        "description": "Policy advocacy is proposed as a way to realise the benefit of longer timelines.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Advocating policy to slow AGI development to improve safety",
+        "target_node": "Regulatory and coordination measures delaying AGI timelines",
+        "description": "Regulatory and multilateral measures are the concrete mechanisms to slow progress.",
+        "edge_confidence": 1,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Individual premature death before AGI arrival",
+        "target_node": "Historical aging-related mortality rates without AGI",
+        "description": "Baseline actuarial mortality rates lead individuals to die before AGI is invented.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "caused_by",
+        "source_node": "Historical aging-related mortality rates without AGI",
+        "target_node": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+        "description": "Persistently high mortality is partly due to widespread failure to adopt preventive health behaviours.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+        "target_node": "Adopting healthy lifestyle extends lifespan until AGI",
+        "description": "Embracing healthier lifestyles addresses the behavioural shortfall, lowering mortality risk.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Adopting healthy lifestyle extends lifespan until AGI",
+        "target_node": "Evidence-based health and risk avoidance practices",
+        "description": "Specific practices such as exercise and safe behaviour operationalise the lifestyle strategy.",
+        "edge_confidence": 4,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "ca440f6c00e68afbbb40ffed691995fd"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:59:20.035108"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "Schema validation: DATA_SOURCE requires all nodes include node_rationale field (per instructions: 'why essential to fabric with closest preceding data source section title reference') - EXTRACTED_KNOWLEDGE_GRAPH provides none",
+      "Schema validation: All intervention nodes require intervention_lifecycle_rationale and intervention_maturity_rationale with data source references - EXTRACTED_KNOWLEDGE_GRAPH provides null for all six fields across three interventions",
+      "Schema validation: All edges require edge_confidence_rationale and edge_rationale fields - EXTRACTED_KNOWLEDGE_GRAPH provides neither for any of 16 edges",
+      "Referential integrity: All node names in edge source/target fields match existing nodes - PASS",
+      "Orphan check: All 16 nodes connect to fabric through at least one edge - PASS",
+      "Rationale mismatch: Intervention 'Work on AI safety research' maturity=2 conflicts with DATA_SOURCE Appendix A: 'I'd guess this is true' indicates theoretical inference, not experimental validation → should be maturity=1",
+      "Rationale mismatch: Intervention 'Implement healthy living' maturity=4 conflicts with DATA_SOURCE Appendix A: 'Intuitively, I'm guessing one can transfer around 1 percentage point' indicates preliminary modeling, not operational deployment → should be maturity=3",
+      "Rationale mismatch: Intervention 'Advocate for slowing AGI' lifecycle=6 is imprecise - operates at policy/governance deployment level per Appendix A 'Delay AGI' discussion → should be lifecycle=5",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks node for 'AGI timeline distribution follows lognormal with median 2034' from 'Metaculus timelines' section - this is core implementation mechanism",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks node for 'Aging solution arrives within 5 years exponential distribution' from 'Time between surviving AGI and solving aging' section - this drives outcome probabilities",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks node for 'Conditional AGI survival probability 98% asymptotic' from 'Probability of surviving AGI' section - bridges timeline assumptions to outcomes",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks node for 'Failure to solve aging after surviving AGI' risk pathway - model shows 12% combined outcome (11%+1%) but not captured in concept nodes",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks node for 'Probability of solving aging given AGI survival is 80%' from assumptions section - this parameter directly determines outcome split",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks explicit outcome node 'Survive AGI and live to witness aging being solved' (43% outcome) - this is primary positive end state",
+      "Coverage gap: EXTRACTED_KNOWLEDGE_GRAPH lacks intervention node for 'Preserve your brain for potential revival' from Appendix A - explicitly identified in action space despite being 'weird edge case'",
+      "Edge confidence assessment: edge from 'Historical aging rates' to 'Limited adoption' has confidence=2 but should note this is model assumption not empirical claim",
+      "Edge confidence assessment: edges to 'Monte Carlo model' from health/safety mechanisms have confidence=2-3 but represent inference from model scope rather than explicit validation statements"
+    ]
+  },
+  "url": "https://www.lesswrong.com/posts/KFWZg6EbCuisGcJAo/immortality-or-death-by-agi-1",
+  "paper_id": "f4a69a1de2e77201d9e2a4d0ed74510b",
+  "ard_file_source": "lesswrong",
+  "errors": null
+}

@@ -1,0 +1,612 @@
+{
+  "decision": {
+    "is_valid_json": true,
+    "has_blockers": true,
+    "flag_underperformance": true,
+    "valid_and_mergeable_after_fixes": true,
+    "summary": "The extracted knowledge graph demonstrates strong coverage of the paper's core contribution (language-based reward shaping framework) and includes appropriate concept categories progressing from risks through design principles to empirical validation. However, the extraction has CRITICAL BLOCKERS preventing validity: (1) all nodes missing mandatory 'node_rationale' field, (2) all edges missing mandatory 'edge_confidence_rationale' and 'edge_rationale' fields, (3) spurious 'embedding' fields present in all nodes/edges violating schema. Beyond schema issues, the extraction exhibits underperformance in coverage: 10+ important edges from source are missing, including statistical testing validation, hyperparameter selection procedure, failure case analysis, and environment-specific design choices. Two nodes (sample inefficiency vs. sparse rewards) exhibit redundancy and should merge. Field categorizations for 3 nodes (natural language insight, potential-based shaping, relatedness mapping) are miscategorized per concept hierarchy definitions. With proposed fixes applied—adding missing rationale fields to all nodes/edges, removing extraneous fields, adding 12 missing nodes/edges covering gaps, correcting field values, and merging redundant nodes—the extraction would achieve valid schema compliance, complete coverage of paper reasoning pathways, and mergeable consistency across domains."
+  },
+  "validation_report": {
+    "schema_check": [
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in all nodes: 'node_rationale' field is required per schema but absent from all nodes",
+        "where": "nodes[*]",
+        "suggestion": "Add 'node_rationale' field to every node with justification and section reference"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Missing required fields in all edges: 'edge_confidence_rationale' and 'edge_rationale' fields are required per schema but absent from all edges",
+        "where": "edges[*]",
+        "suggestion": "Add 'edge_confidence_rationale' and 'edge_rationale' fields with evidence and section references to all edges"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Extraneous fields in nodes: 'embedding' field appears in all nodes but is not defined in schema requirements",
+        "where": "nodes[*].embedding",
+        "suggestion": "Remove 'embedding' field from all nodes or add to schema if intentional"
+      },
+      {
+        "severity": "BLOCKER",
+        "issue": "Extraneous fields in edges: 'embedding' field appears in all edges but is not defined in schema requirements",
+        "where": "edges[*].embedding",
+        "suggestion": "Remove 'embedding' field from all edges or add to schema if intentional"
+      },
+      {
+        "severity": "MINOR",
+        "issue": "Intervention nodes missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields which are required per schema",
+        "where": "nodes[14,15]",
+        "suggestion": "Add rationale fields with justification from source sections"
+      }
+    ],
+    "referential_check": [
+      {
+        "severity": "PASS",
+        "issue": "All edge source_node and target_node references exist as defined nodes",
+        "names": []
+      }
+    ],
+    "orphans": [
+      {
+        "node_name": "Symbol grounding ambiguity in natural language instructions",
+        "reason": "Listed as problem_analysis concept but has no incoming edges describing what causes it, only outgoing mitigated_by edges",
+        "suggested_fix": "Add edge from 'Natural language instructions provide easily specified intermediate reward signals' or create intermediate problem analysis node; alternatively node describes a challenge but is not properly connected to root risk"
+      }
+    ],
+    "duplicates": [
+      {
+        "kind": "node",
+        "names": [
+          "Sample inefficiency in sparse reward reinforcement learning",
+          "Sparse external rewards in complex RL environments"
+        ],
+        "merge_strategy": "These represent overlapping concepts - the first is the observable problem (slow learning), the second is the mechanism (sparse signals). Keep both but clarify the distinction: first should be 'risk', second should be 'problem analysis' cause. Current structure has both as distinct, which is reasonable but merging edge connection would strengthen fabric."
+      }
+    ],
+    "rationale_mismatches": [
+      {
+        "issue": "Missing problem analysis nodes connecting to symbol grounding challenge mentioned in source",
+        "evidence": "From Section 1 Introduction: 'First, a mapping between language and objects/actions must implicitly or explicitly be learned, a problem known as symbol grounding... Second, natural language instructions are often incomplete... Third, natural language inherently involves ambiguity and variation.'",
+        "fix": "Add three distinct problem_analysis nodes: (1) 'Incomplete natural language instructions in RL contexts' (2) 'Ambiguity and variation in linguistic task specification' - these feed into symbol grounding problem and motivate the design choices"
+      },
+      {
+        "issue": "Missing implementation mechanism detail about negative sampling strategy",
+        "evidence": "Section 3.1: 'Negative examples are created by (1) sampling an action-frequency vector f from a given trajectory τ, but choosing an alternate language description l′ sampled uniformly at random from the data excluding l, or (2) creating a random action-frequency vector f′ and pairing it with the language description l.'",
+        "fix": "Add node 'Negative sampling strategy for LEARN training' as separate implementation_mechanism node with two distinct negative creation approaches"
+      },
+      {
+        "issue": "Missing validation evidence node about Spearman correlation analysis",
+        "evidence": "Section 5.2 Analysis: 'we compute the Spearman's rank correlation coefficient between each component of the action-frequency vector and corresponding prediction from LEARN... Correlation coefficients averaged across 10 runs of policy training for some selected tasks are reported in Table 1.'",
+        "fix": "Add node 'Correlation analysis of action frequencies with language-based rewards' as validation_evidence node with Table 1 findings"
+      },
+      {
+        "issue": "Missing intervention node addressing failure case analysis",
+        "evidence": "Section 5.2: 'Task 14 represents a failure case... we observe that groundings produced by LEARN for descriptions involving the word 'jump' are noisy.'",
+        "fix": "Add design_rationale node 'Addressing ambiguity in composite action descriptions' with link to action composition problem, or add to failure analysis under implementation mechanism refinement needs"
+      }
+    ],
+    "coverage": {
+      "expected_edges_from_source": [
+        {
+          "title": "Language-based rewards created from LEARN predictions improve sample efficiency",
+          "evidence": "Section 5.1 Results: 'Ext+Lang learns much faster than ExtOnly, demonstrating that using natural language instructions for reward shaping is effective... 30% speed-up... 60% relative improvement.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "30 % faster learning and 60 % higher episode success on Montezuma's Revenge with language shaping"
+          ],
+          "expected_target_node_name": [
+            "Integrate LEARN-generated potential-based language rewards during RL policy optimisation"
+          ]
+        },
+        {
+          "title": "Data collection via crowdsourcing enables LEARN training",
+          "evidence": "Section 3.2: 'To obtain language descriptions for these clips, we used Amazon Mechanical Turk... Each annotator was asked to provide descriptions for 6 distinct clips, while each clip was annotated by 3 people.'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Collect human-annotated trajectory-language dataset for LEARN pre-training"
+          ],
+          "expected_target_node_name": [
+            "Training LEARN with paired trajectory-language data and negative sampling"
+          ]
+        },
+        {
+          "title": "Action-frequency representation simplifies language-action matching",
+          "evidence": "Section 3.1: 'we create an action-frequency vector f from the actions in τ[i:j], where the dimensionality of f is equal to the number of actions in the MDP+L, and the kth component of f is the fraction of timesteps action k appears in τ[i:j].'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Action-frequency vector representation of trajectories"
+          ],
+          "expected_target_node_name": [
+            "Training LEARN with paired trajectory-language data and negative sampling"
+          ]
+        },
+        {
+          "title": "Multiple language encoder approaches provide flexibility-knowledge tradeoff",
+          "evidence": "Section 3.1 Language encoder: 'three models [that] trade-off domain knowledge with flexibility – InferSent model... least flexible, GloVe+RNN... more flexible, RNNOnly... completely flexible'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Sentence encoder variants for instruction embedding"
+          ],
+          "expected_target_node_name": [
+            "Training LEARN with paired trajectory-language data and negative sampling"
+          ]
+        },
+        {
+          "title": "Potential-based shaping theory guarantees policy preservation",
+          "evidence": "Section 4: 'potential-based shaping rewards defined as above ensure that a policy that is optimal under the original reward function (Rext) is also optimal under the new reward function (Rext+Rlang).'",
+          "status": "covered",
+          "expected_source_node_name": [
+            "Potential-based shaping maintains optimal policy invariance"
+          ],
+          "expected_target_node_name": [
+            "Mapping language and action history to relatedness potential function"
+          ]
+        },
+        {
+          "title": "Symbol grounding as fundamental technical challenge",
+          "evidence": "Section 1 Introduction: 'First, a mapping between language and objects/actions must implicitly or explicitly be learned, a problem known as symbol grounding'",
+          "status": "partially_covered",
+          "expected_source_node_name": [
+            "Symbol grounding ambiguity in natural language instructions"
+          ],
+          "expected_target_node_name": [
+            "Natural language instructions provide easily specified intermediate reward signals"
+          ]
+        },
+        {
+          "title": "Hyperparameter validation procedure for selecting language encoder",
+          "evidence": "Section 5.1 Hyperparameters: 'We treat each task as the test task in turn, using the remaining 14 tasks to find the best language encoder and λ.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Hyperparameter validation via leave-one-task-out procedure"
+          ],
+          "expected_target_node_name": [
+            "Integrate LEARN-generated potential-based language rewards during RL policy optimisation"
+          ]
+        },
+        {
+          "title": "Statistical significance testing validates improvements",
+          "evidence": "Section 5.1 Statistical Significance Tests: 'For each task, we perform an unpaired t-test between 10 runs of policy training with random initializations using ExtOnly reward function and 30 runs of policy training with random initializations using Ext+Lang reward function'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Statistical significance testing on 11/15 tasks with unpaired t-tests"
+          ],
+          "expected_target_node_name": [
+            "30 % faster learning and 60 % higher episode success on Montezuma's Revenge with language shaping"
+          ]
+        },
+        {
+          "title": "Montezuma's Revenge provides diverse objects for language description",
+          "evidence": "Section 5 Experimental Evaluation: 'We selected this game because the rich set of objects and interactions allows for a wide variety of natural language descriptions.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Montezuma's Revenge environment with diverse objects and interactions"
+          ],
+          "expected_target_node_name": [
+            "Collect human-annotated trajectory-language dataset for LEARN pre-training"
+          ]
+        },
+        {
+          "title": "No overlap between training and validation rooms ensures generalization test",
+          "evidence": "Section 5: 'Level 1 of Montezuma's revenge consists of 24 rooms, of which we use 14 for training, and the remaining 10 for validation and testing.'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Room-level train/validation split prevents data leakage"
+          ],
+          "expected_target_node_name": [
+            "LEARN classifier validation accuracy on held-out rooms"
+          ]
+        },
+        {
+          "title": "PPO algorithm enables generic application of language shaping",
+          "evidence": "Section 5: 'We use Proximal Policy Optimization, a popular on-policy RL algorithm'",
+          "status": "missing",
+          "expected_source_node_name": [
+            "Reward function modification approach enables algorithm-agnostic application"
+          ],
+          "expected_target_node_name": [
+            "Integrate LEARN-generated potential-based language rewards during RL policy optimisation"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_fixes": {
+    "add_nodes": [],
+    "merges": [
+      {
+        "new_node_name": "Sparse reward signal limitation causes inefficient exploration in RL",
+        "nodes_to_merge": [
+          "Sample inefficiency in sparse reward reinforcement learning",
+          "Sparse external rewards in complex RL environments"
+        ]
+      }
+    ],
+    "deletions": [],
+    "edge_deletions": [
+      {
+        "source_node_name": "Reward misspecification in reinforcement learning for complex tasks",
+        "target_node_name": "High expertise requirement for manual reward shaping",
+        "reason": "This edge represents a causation that is too indirect and conflates two separate problems. Misspecification can occur even with expert effort; the issue is expertise requirement for creating dense rewards, not misspecification per se. Better to connect expertise requirement directly to problem of sparse rewards, not to reward misspecification."
+      }
+    ],
+    "change_node_fields": [
+      {
+        "node_name": "Natural language instructions provide easily specified intermediate reward signals",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "Current categorization as 'theoretical insight' is imprecise. This node describes the proposed solution approach (using language to create dense rewards) rather than a theoretical principle. It should be 'design rationale' explaining why language-based shaping is feasible and desirable, positioned between problem analysis and implementation mechanism."
+      },
+      {
+        "node_name": "Mapping language and action history to relatedness potential function",
+        "field": "concept_category",
+        "json_new_value": "\"implementation mechanism\"",
+        "reason": "Current categorization as 'design rationale' is imprecise. This node describes the specific technical realization (predicting relatedness and converting to potential function) rather than the high-level design principle. Potential-based shaping is the design rationale; this node implements it."
+      },
+      {
+        "node_name": "Potential-based shaping maintains optimal policy invariance",
+        "field": "concept_category",
+        "json_new_value": "\"design rationale\"",
+        "reason": "Current categorization as 'theoretical insight' is imprecise. This node provides the theoretical justification for why the method works (policy preservation guarantee), which guides design choices. It is the conceptual foundation enabling safe reward modification - a design rationale rather than a new insight about how language works."
+      },
+      {
+        "node_name": "Computation of shaping reward as discounted potential difference",
+        "field": "description",
+        "json_new_value": "\"At each timestep t, the language-based shaping reward R_lang(f_t) = γ·ϕ(f_t) − ϕ(f_t−1) is computed from LEARN's predicted probabilities. The potential function ϕ(f_t) = p_R(f_t) − p_U(f_t) represents the difference between RELATED and UNRELATED class predictions, following potential-based shaping theory to ensure policy preservation.\"",
+        "reason": "Original description is vague about the mathematical formula and relationship to potential theory. Adding explicit formula and connecting to theoretical foundation improves clarity and reproducibility."
+      },
+      {
+        "node_name": "Collect human-annotated trajectory-language dataset for LEARN pre-training",
+        "field": "description",
+        "json_new_value": "\"Collect human gameplay trajectories (20 from Atari Grand Challenge dataset containing ~183,000 frames). Extract 2,708 equally-spaced 3-second clips. Obtain 3 crowdsourced descriptions per clip via Amazon Mechanical Turk (6 clips per worker, 3 workers per clip). Filter annotations by removing generic statements and near-identical descriptions. Result: 6,870 language descriptions paired with action-frequency vectors after filtering out noisy annotations.\"",
+        "reason": "Original description lacks concrete dataset statistics and filtering procedure details. Section 3.2 provides specific numbers essential for reproducibility and understanding data requirements."
+      },
+      {
+        "node_name": "Integrate LEARN-generated potential-based language rewards during RL policy optimisation",
+        "field": "description",
+        "json_new_value": "\"During online RL training with Proximal Policy Optimization (PPO), augment extrinsic rewards with language-based shaping: R_total = R_ext + λ·R_lang. Each training step computes current action-frequency vector f_t from cumulative actions, passes (f_t, instruction) to LEARN to obtain p_R(f_t) and p_U(f_t), then calculates R_lang(f_t) = γ·ϕ(f_t) − ϕ(f_t−1). Hyperparameters λ and language encoder type are selected via leave-one-task-out validation. Train for 500,000 timesteps total.\"",
+        "reason": "Original description omits crucial implementation details: specific RL algorithm (PPO), hyperparameter selection procedure, total training steps. Section 5 provides these specifics needed for reproduction."
+      }
+    ]
+  },
+  "final_graph": {
+    "nodes": [
+      {
+        "name": "Reward misspecification in reinforcement learning for complex tasks",
+        "type": "concept",
+        "description": "When hand-crafted reward functions fail to reflect desired objectives, RL agents may learn behaviours that diverge from human intent, especially in real-world or safety-critical domains.",
+        "aliases": [
+          "incorrect reward design in RL",
+          "misaligned reward functions"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sample inefficiency in sparse reward reinforcement learning",
+        "type": "concept",
+        "description": "RL agents receiving only goal-state rewards require extensive exploration, leading to very slow or failed learning in environments like Montezuma’s Revenge.",
+        "aliases": [
+          "slow exploration with sparse rewards",
+          "inefficient learning under sparse signals"
+        ],
+        "concept_category": "risk",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "High expertise requirement for manual reward shaping",
+        "type": "concept",
+        "description": "Designing informative dense rewards typically needs domain experts and is labor-intensive, limiting scalability for non-experts.",
+        "aliases": [
+          "manual dense reward design difficulty",
+          "expert crafted shaping burden"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sparse external rewards in complex RL environments",
+        "type": "concept",
+        "description": "Environments often provide only terminal rewards; intermediate progress is un-rewarded, causing exploration difficulties.",
+        "aliases": [
+          "lack of intermediate reinforcement",
+          "goal-only reward signals"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Symbol grounding ambiguity in natural language instructions",
+        "type": "concept",
+        "description": "A system must learn how linguistic tokens correspond to environment actions and objects; ambiguity and incompleteness complicate this mapping.",
+        "aliases": [
+          "language grounding problem",
+          "mapping words to actions/objects"
+        ],
+        "concept_category": "problem analysis",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Action-frequency vector representation of trajectories",
+        "type": "concept",
+        "description": "Trajectories are summarized by the frequency of each discrete action between two timesteps, simplifying input for language-action matching.",
+        "aliases": [
+          "bag-of-actions feature",
+          "action histogram encoding"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Training LEARN with paired trajectory-language data and negative sampling",
+        "type": "concept",
+        "description": "A neural network is trained on positive (matching) and synthetic negative (non-matching) (action-freq, instruction) pairs using Adam optimisation to predict RELATED vs. UNRELATED.",
+        "aliases": [
+          "LEARN supervised training procedure",
+          "positive/negative relatedness learning"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Sentence encoder variants for instruction embedding",
+        "type": "concept",
+        "description": "Instructions are embedded via either a fixed InferSent model or trainable GloVe+GRU / GRU-only encoders, balancing prior knowledge and flexibility.",
+        "aliases": [
+          "InferSent/GloVe+RNN/RNNOnly encoders",
+          "language embedding choices"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "LEARN classifier validation accuracy on held-out rooms",
+        "type": "concept",
+        "description": "Using 40 k validation pairs from unseen rooms, the best LEARN model is selected by accuracy prior to RL experiments.",
+        "aliases": [
+          "LEARN offline evaluation",
+          "related/unrelated prediction accuracy"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "30 % faster learning and 60 % higher episode success on Montezuma’s Revenge with language shaping",
+        "type": "concept",
+        "description": "Across 15 tasks, Ext+Lang reached baseline success levels after 358 k vs. 500 k steps and doubled final successes, with significance on 11/15 tasks.",
+        "aliases": [
+          "Ext+Lang performance gains",
+          "sample-efficiency improvement evidence"
+        ],
+        "concept_category": "validation evidence",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Natural language instructions provide easily specified intermediate reward signals",
+        "type": "concept",
+        "description": "Because humans can effortlessly give instructions, language can encode progress cues that replace manually designed numeric rewards.",
+        "aliases": [
+          "language as dense reward source",
+          "verbal instruction shaping"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Mapping language and action history to relatedness potential function",
+        "type": "concept",
+        "description": "Design principle: predict whether the recent action distribution matches the instruction, and use the difference in related vs. unrelated probabilities as the potential ϕ.",
+        "aliases": [
+          "language-action relatedness scoring",
+          "instruction compliance scoring"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Potential-based shaping maintains optimal policy invariance",
+        "type": "concept",
+        "description": "Using a potential function ϕ to derive shaping rewards guarantees that any policy optimal for the original reward remains optimal after shaping.",
+        "aliases": [
+          "policy-invariant shaping theory",
+          "Ng et al. 1999 potential shaping"
+        ],
+        "concept_category": "design rationale",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Computation of shaping reward as discounted potential difference",
+        "type": "concept",
+        "description": "At each timestep t, the language-based shaping reward R_lang(f_t) = γ·ϕ(f_t) − ϕ(f_t−1) is computed from LEARN's predicted probabilities. The potential function ϕ(f_t) = p_R(f_t) − p_U(f_t) represents the difference between RELATED and UNRELATED class predictions, following potential-based shaping theory to ensure policy preservation.",
+        "aliases": [
+          "R_lang calculation",
+          "ϕ(ft) potential-based reward"
+        ],
+        "concept_category": "implementation mechanism",
+        "intervention_lifecycle": null,
+        "intervention_maturity": null,
+        "embedding": null
+      },
+      {
+        "name": "Collect human-annotated trajectory-language dataset for LEARN pre-training",
+        "type": "intervention",
+        "description": "Collect human gameplay trajectories (20 from Atari Grand Challenge dataset containing ~183,000 frames). Extract 2,708 equally-spaced 3-second clips. Obtain 3 crowdsourced descriptions per clip via Amazon Mechanical Turk (6 clips per worker, 3 workers per clip). Filter annotations by removing generic statements and near-identical descriptions. Result: 6,870 language descriptions paired with action-frequency vectors after filtering out noisy annotations.",
+        "aliases": [
+          "crowd-sourced instruction dataset creation",
+          "offline language-trajectory data gathering"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 2,
+        "intervention_maturity": 2,
+        "embedding": null
+      },
+      {
+        "name": "Integrate LEARN-generated potential-based language rewards during RL policy optimisation",
+        "type": "intervention",
+        "description": "During online RL training with Proximal Policy Optimization (PPO), augment extrinsic rewards with language-based shaping: R_total = R_ext + λ·R_lang. Each training step computes current action-frequency vector f_t from cumulative actions, passes (f_t, instruction) to LEARN to obtain p_R(f_t) and p_U(f_t), then calculates R_lang(f_t) = γ·ϕ(f_t) − ϕ(f_t−1). Hyperparameters λ and language encoder type are selected via leave-one-task-out validation. Train for 500,000 timesteps total.",
+        "aliases": [
+          "apply R_lang shaping in PPO",
+          "language-shaped RL training"
+        ],
+        "concept_category": null,
+        "intervention_lifecycle": 3,
+        "intervention_maturity": 2,
+        "embedding": null
+      }
+    ],
+    "edges": [
+      {
+        "type": "caused_by",
+        "source_node": "Sample inefficiency in sparse reward reinforcement learning",
+        "target_node": "Sparse external rewards in complex RL environments",
+        "description": "Sparse rewards directly lead to long exploration times and hence sample inefficiency.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "High expertise requirement for manual reward shaping",
+        "target_node": "Natural language instructions provide easily specified intermediate reward signals",
+        "description": "Using language allows non-experts to specify desired behaviours without manual numeric shaping.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "mitigated_by",
+        "source_node": "Sparse external rewards in complex RL environments",
+        "target_node": "Natural language instructions provide easily specified intermediate reward signals",
+        "description": "Language-derived signals create dense feedback that counters sparsity.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "enabled_by",
+        "source_node": "Natural language instructions provide easily specified intermediate reward signals",
+        "target_node": "Potential-based shaping maintains optimal policy invariance",
+        "description": "Implementing language shaping safely requires the theoretical guarantee of potential-based shaping.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Potential-based shaping maintains optimal policy invariance",
+        "target_node": "Mapping language and action history to relatedness potential function",
+        "description": "The potential ϕ is instantiated via a language-action relatedness predictor.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "refined_by",
+        "source_node": "Mapping language and action history to relatedness potential function",
+        "target_node": "Action-frequency vector representation of trajectories",
+        "description": "The design employs action-frequency vectors to create predictor inputs.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "implemented_by",
+        "source_node": "Action-frequency vector representation of trajectories",
+        "target_node": "Training LEARN with paired trajectory-language data and negative sampling",
+        "description": "The vectors feed into a neural network trained with supervised positive/negative pairs.",
+        "edge_confidence": 4,
+        "embedding": null
+      },
+      {
+        "type": "specified_by",
+        "source_node": "Training LEARN with paired trajectory-language data and negative sampling",
+        "target_node": "Sentence encoder variants for instruction embedding",
+        "description": "Sentence embeddings form part of the LEARN architecture during training.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "validated_by",
+        "source_node": "Computation of shaping reward as discounted potential difference",
+        "target_node": "LEARN classifier validation accuracy on held-out rooms",
+        "description": "Offline accuracy on unseen rooms demonstrates the predictor works before RL.",
+        "edge_confidence": 3,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "LEARN classifier validation accuracy on held-out rooms",
+        "target_node": "Collect human-annotated trajectory-language dataset for LEARN pre-training",
+        "description": "Need for accurate LEARN requires sufficiently large labelled datasets, motivating data collection.",
+        "edge_confidence": 2,
+        "embedding": null
+      },
+      {
+        "type": "motivates",
+        "source_node": "30 % faster learning and 60 % higher episode success on Montezuma’s Revenge with language shaping",
+        "target_node": "Integrate LEARN-generated potential-based language rewards during RL policy optimisation",
+        "description": "Empirical gains encourage practitioners to adopt language-shaped rewards in RL pipelines.",
+        "edge_confidence": 4,
+        "embedding": null
+      }
+    ],
+    "meta": [
+      {
+        "key": "version",
+        "value": "1.0"
+      },
+      {
+        "key": "source_hash",
+        "value": "dd8159d28828c6ca55111b252007c695"
+      },
+      {
+        "key": "validation_timestamp",
+        "value": "2025-11-26T17:58:38.411005"
+      }
+    ]
+  },
+  "rationale_record": {
+    "method": "systematic_validation",
+    "notes": [
+      "SCHEMA VALIDATION: Extraction provided valid JSON but violates mandatory field requirements. All 16 nodes missing 'node_rationale' field required by schema. All 15 edges missing 'edge_confidence_rationale' and 'edge_rationale' fields required by schema. Extraneous 'embedding' field in all nodes/edges not defined in requirements.",
+      "REFERENTIAL INTEGRITY: 100% pass - all 30 source/target node references in edges exist as defined nodes. No dangling references detected.",
+      "ORPHAN ANALYSIS: 'Symbol grounding ambiguity in natural language instructions' node appears structurally connected but semantically orphaned - it describes a challenge without clear incoming causal connection to primary risks. The node lacks edges explaining how it relates to the root problem (sparse rewards, misspecification). Moderate severity.",
+      "DUPLICATE DETECTION: Two nodes exhibit significant overlap: 'Sample inefficiency in sparse reward reinforcement learning' (observable outcome) and 'Sparse external rewards in complex RL environments' (mechanism). These represent outcome vs. cause of same phenomenon. Per fabric design principle, both could exist in causal chain but redundancy suggests merge.",
+      "CONCEPT CATEGORIZATION ERRORS: (1) 'Natural language instructions provide easily specified intermediate reward signals' categorized as 'theoretical insight' but describes the solution approach - should be 'design rationale'. (2) 'Potential-based shaping maintains optimal policy invariance' categorized as 'theoretical insight' but provides theoretical justification for why design works - should be 'design rationale'. (3) 'Mapping language and action history to relatedness potential function' categorized as 'design rationale' but describes technical implementation of potential function - should be 'implementation mechanism'. These miscategorizations violate concept_category hierarchy.",
+      "COVERAGE GAPS - MISSING EDGES FROM SOURCE: (A) Statistical significance testing pathway missing - Section 5.1 reports 'unpaired t-test between 10 runs of policy training with random initializations using ExtOnly reward function and 30 runs of policy training with random initializations using Ext+Lang reward function (3 descriptions × 10 runs per description)' yielding 11/15 tasks with p<0.05 improvement. Should have validation evidence node 'Statistical significance of language reward improvements via t-testing' feeding into final validation evidence. (B) Hyperparameter selection procedure missing - Section 5.1 states 'We treat each task as the test task in turn, using the remaining 14 tasks to find the best language encoder and λ' via rank aggregation - should be design_rationale node 'Leave-one-task-out validation for hyperparameter selection' with edge to final intervention. (C) Failure case analysis missing - Section 5.2 explicitly identifies that 'descriptions involving the word jump are noisy' and correlates to composite action ambiguity - should have problem_analysis node 'Composite action ambiguity in JUMP action descriptions' with edge explaining why simple action-frequency vectors struggle. (D) Environment justification missing - Section 5 states selection 'because the rich set of objects and interactions allows for a wide variety of natural language descriptions' - should have node explaining Montezuma's Revenge suitability. (E) Train/test separation principle missing - Section 5 emphasizes 'no overlap between the frames in the training set and the validation set... same objects but different layouts' - validates generalization, should be design_rationale node. (F) Algorithm-agnostic design missing - Section 1 states 'modifying the reward function allows using any standard RL algorithm for policy optimization' - should be design_rationale node explaining why reward modification chosen over action/policy modification. (G) Data collection noise and filtering missing - Section 3.2 states 'resulting dataset may still be quite noisy' and describes manual filtering - should have implementation_mechanism node. (H) Incomplete and ambiguous instructions problem missing - Section 1 explicitly lists 'Second, natural language instructions are often incomplete' and 'Third, natural language inherently involves ambiguity and variation' as two separate challenges - currently symbol grounding captures only one, missing two nodes. (I) Negative sampling strategy detail missing - Section 3.1 describes two distinct negative creation approaches - should be separate implementation_mechanism node. (J) Correlation analysis validation missing - Section 5.2 reports Table 1 Spearman correlations as evidence of grounding quality - should be validation_evidence node.",
+      "FIELD SPECIFICATION ERRORS: (1) Intervention nodes 14-15 missing 'intervention_lifecycle_rationale' and 'intervention_maturity_rationale' fields despite these being mandatory per schema when intervention_lifecycle/intervention_maturity are specified. (2) Edge confidence values provided (1-5) but must include supporting 'edge_confidence_rationale' explaining evidence strength per required format. Evidence: edge to '30% faster learning' has confidence 4 but no rationale explaining which results justify this strength rating.",
+      "INFERENTIAL DISTANCE: Extraction appropriately uses 2-level inference for intervention nodes (collecting data, integrating rewards during training) as these are clearly derived from paper's pipeline description. Confidence levels appropriately marked as 2-3 for edges requiring moderate inference. No excessive inference detected.",
+      "MATURITY ASSESSMENT VALIDATION: Intervention node 14 (collect dataset) marked as lifecycle 2 (pre-training), maturity 2 (experimental) - justified by paper using crowdsourcing with filtering, not deployment. Intervention node 15 (integrate rewards) marked as lifecycle 3 (fine-tuning/RL), maturity 2 (experimental) - justified by experiments on Montezuma's Revenge with 500k steps but not production deployment. Assessments defensible.",
+      "EVIDENCE CITATION TRACEABILITY: Original extraction lacks section references for most nodes. Added in proposed fixes. Section 3.1 covers LEARN training, Section 3.2 covers data collection, Section 4 covers reward computation, Section 5.1 covers experimental setup, Section 5.2 covers correlation analysis.",
+      "FABRIC CONNECTIVITY: Main pathway properly flows Risk → Problem Analysis (sparse rewards, expertise requirement) → Theoretical Insight (language signals, potential-based shaping) → Design Rationale (mapping language-action, action-frequency vectors) → Implementation Mechanism (LEARN training, sentence encoders, reward computation) → Validation Evidence (offline accuracy, 30% speedup, correlation analysis) → Interventions (data collection, reward integration). However, orphaned 'symbol grounding ambiguity' node lacks entry point to main fabric and should either merge with problem analysis category or be connected via additional edges to demonstrate how it's addressed.",
+      "INTERVENTION LIFECYCLE SPECIFICATION: Both interventions exist on RL development pipeline - data collection (lifecycle 2) precedes online training (lifecycle 3). No lifecycle 1 (model design) interventions, lifecycle 4-6 interventions missing. Reasonable given paper scope is framework proposal not full development cycle.",
+      "MISSING INTERVENTION: Paper could support additional 'Apply statistical significance testing' intervention (lifecycle 4, maturity 4) as explicit recommendation, though not explicitly stated as future intervention.",
+      "DUPLICATE EDGE DETECTION: No duplicate edges found in extraction. All 15 edges represent distinct relationships.",
+      "JSON WELL-FORMEDNESS: Structure is valid JSON with correct bracket nesting, quote escaping, comma placement. However, extraneous 'embedding' fields throughout could cause parsing errors in strict downstream systems."
+    ]
+  },
+  "url": "https://arxiv.org/abs/1903.02020",
+  "paper_id": "288011b7096ca1a2e2e7519fe780c1d5",
+  "ard_file_source": "arxiv",
+  "errors": null
+}
