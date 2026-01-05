@@ -139,6 +139,7 @@ class JudgeInput:
     original_text: str
     kg_output: PaperSchema
     data_source: DataSource
+    file_name: str
 
 
 @dataclass
@@ -253,7 +254,8 @@ class KGJudge:
                 ))
             else:
                 request = AnthropicCompletionsRequest(request=MessageCreateParamsNonStreaming(
-                    model="claude-haiku-4-5",
+                    # model="claude-haiku-4-5",
+                    model="claude-sonnet-4-5",
                     max_tokens=MAX_TOKENS,
                     system=SYSTEM_PROMPT,
                     messages=[
@@ -1119,6 +1121,7 @@ def get_judge_inputs(
                         data_source=DataSource(
                             url=url, paper_id=paper_id, ard_file_source=ard_file_source
                         ),
+                        file_name=Path(json_file).stem,
                     )
                 )
                 # debug_test.append({
