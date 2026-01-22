@@ -18,6 +18,7 @@ from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import cosine
 import community as community_louvain
 import networkx as nx
+from umap import UMAP
 
 try:
     from hdbscan import HDBSCAN
@@ -46,6 +47,7 @@ NODE_TYPES = [
 
 N_CLUSTERS_TARGET = (40, 60)
 MIN_CLUSTER_SIZE = 5
+K_VALUES = [20, 30, 40, 50, 60]  # Test multiple cluster counts
 
 # ============================================================================
 # DATABASE QUERIES WITH RETRY
@@ -390,10 +392,10 @@ def cluster_config(config_tuple):
 
     if edge_config == "EDGE":
         config_label = f"EDGE_{mode}_{node_type}"
-        path_file = f"paths_{mode}_edge_only.jsonl"
+        path_file = f"phase1_rawpathsfiles/paths_{mode}_edge_only.jsonl"
     else:
         config_label = f"SIM{edge_config}_{mode}_{node_type}"
-        path_file = f"paths_{mode}_sim{edge_config}.jsonl"
+        path_file = f"phase1_rawpathsfiles/paths_{mode}_sim{edge_config}.jsonl"
 
     output_file = f"clusters_{config_label}.json"
 
@@ -424,7 +426,7 @@ def cluster_config(config_tuple):
 
     # Step 1: Load nodes
     with step(1, f"[1/7] Loading nodes - {config_label}") as log:
-        edge_path_file = f"paths_{mode}_edge_only.jsonl"
+        edge_path_file = f"phase1_rawpathsfiles/paths_{mode}_edge_only.jsonl"
         edge_only_nodes = identify_edge_only_nodes(edge_path_file)
         log(f"EDGE validation: {len(edge_only_nodes):,} nodes")
 
@@ -465,6 +467,12 @@ def cluster_config(config_tuple):
         embeddings_matrix = np.array([embeddings_dict[nid] for nid in node_ids])
         log(f"✓ {embeddings_matrix.shape}")
 
+    # Step 4.5: UMAP dimensionality reduction
+    with step(4.5, "[4.5/7] UMAP reduction 1536D→150D") as log:
+        reducer = UMAP(n_components=150, random_state=42, n_neighbors=15, min_dist=0.1)
+        embeddings_matrix = reducer.fit_transform(embeddings_matrix)
+        log(f"✓ Reduced to {embeddings_matrix.shape}")
+
     # Step 5: Clustering
     with step(5, "[5/7] Clustering") as log:
         results = {}
@@ -475,10 +483,9 @@ def cluster_config(config_tuple):
                 log(f"HDBSCAN: {n_hdbscan} clusters")
                 results["hdbscan"] = {"labels": labels_hdbscan, "n_clusters": n_hdbscan}
 
-        n_agg = int(np.mean(N_CLUSTERS_TARGET))
-        labels_agg, _ = cluster_agglomerative(embeddings_matrix, n_clusters=n_agg)
-        log(f"Agglomerative: {n_agg} clusters")
-        results["agglomerative"] = {"labels": labels_agg, "n_clusters": n_agg}
+        labels_agg, _ = cluster_agglomerative(embeddings_matrix, n_clusters=40)
+        log("Agglomerative k=40: 40 clusters")
+        results["agglomerative"] = {"labels": labels_agg, "n_clusters": 40}
 
         labels_louvain, n_louvain = cluster_louvain(embeddings_matrix, node_ids)
         log(f"Louvain: {n_louvain} clusters")
@@ -576,6 +583,8 @@ def run_all_clustering():
     )
 
     all_configs = []
+    # all_configs = [(0.85, 'unconstrained', 'risk', 1, 1)]
+
     idx = 1
     for edge_config in EDGE_CONFIGS:
         for mode in MODES:
@@ -585,7 +594,7 @@ def run_all_clustering():
 
     print("\n4 workers with retry + small batches...")
 
-    n_workers = 4
+    n_workers = 4  # 4 prod, 1 for deubg/test
 
     def print_progress():
         while True:
