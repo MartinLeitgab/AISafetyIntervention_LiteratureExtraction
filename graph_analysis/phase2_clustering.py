@@ -18,7 +18,7 @@ from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import cosine
 import community as community_louvain
 import networkx as nx
-from umap import UMAP
+import umap
 
 try:
     from hdbscan import HDBSCAN
@@ -47,7 +47,21 @@ NODE_TYPES = [
 
 N_CLUSTERS_TARGET = (40, 60)
 MIN_CLUSTER_SIZE = 5
-K_VALUES = [20, 30, 40, 50, 60]  # Test multiple cluster counts
+K_VALUES = [20, 30, 40, 50, 60]  # deprecated: Tested multiple cluster counts
+UMAP_DIMS_TO_TEST = [
+    50,
+    100,
+    150,
+    200,
+    250,
+]  # deprecated: test different UMAP output dims
+TEST_CONFIGS_ONLY = [
+    ("EDGE", "unconstrained", "risk"),
+    ("EDGE", "unconstrained", "intervention"),
+    (0.85, "unconstrained", "all_concepts"),
+    (0.9, "single_risk", "risk"),
+    (0.95, "monotonic", "intervention"),
+]
 
 # ============================================================================
 # DATABASE QUERIES WITH RETRY
@@ -96,7 +110,7 @@ def fetch_node_metadata(node_ids, batch_size=100):
 
 
 def fetch_embeddings_batch(node_ids, metadata_dict, batch_size=100):
-    """Fetch embeddings in small batches with retry"""
+    """Fetch embeddings in small batches with retry, Fetch ORIGINAL 1536D embeddings"""
     embeddings = {}
     node_list = list(node_ids)
     missing_by_category = defaultdict(int)
@@ -167,7 +181,32 @@ def load_nodes_from_paths(path_file, node_type):
 
             path_count += 1
 
-    return nodes, path_count
+    # FILTER out EDGE degree == 0/local graph satellite nodes/extraction failures
+    print(f"  Pre-filter: {len(nodes)} nodes")
+    filtered_nodes = set()
+    batch_size = 100
+    node_list = list(nodes)
+
+    for i in range(0, len(node_list), batch_size):
+        batch = node_list[i : i + batch_size]
+        id_str = ",".join(str(nid) for nid in batch)
+
+        q = f"""
+        MATCH (n)-[:EDGE]-()
+        WHERE id(n) IN [{id_str}]
+        WITH DISTINCT n
+        RETURN id(n)
+        """
+
+        result = query_with_retry(q)
+        for row in result:
+            filtered_nodes.add(int(row[0]))
+
+    print(
+        f"  Post-filter: {len(filtered_nodes)} nodes (removed {len(nodes) - len(filtered_nodes)} EDGE deg=0)"
+    )
+
+    return filtered_nodes, path_count
 
 
 def identify_edge_only_nodes(edge_path_file):
@@ -388,13 +427,16 @@ def compute_validation_metrics(
 def cluster_config(config_tuple):
     """Process one configuration with step-level buffering"""
     edge_config, mode, node_type, config_idx, total_configs = config_tuple
+    # edge_config, mode, node_type, config_idx, total_configs, umap_dim = config_tuple # for umap testing
     worker_id = os.getpid() % 10
 
     if edge_config == "EDGE":
         config_label = f"EDGE_{mode}_{node_type}"
+        # config_label = f"EDGE_{mode}_{node_type}_UMAP{umap_dim}" # for umap testing
         path_file = f"phase1_rawpathsfiles/paths_{mode}_edge_only.jsonl"
     else:
         config_label = f"SIM{edge_config}_{mode}_{node_type}"
+        # config_label = f"SIM{edge_config}_{mode}_{node_type}_UMAP{umap_dim}" # for umap testing
         path_file = f"phase1_rawpathsfiles/paths_{mode}_sim{edge_config}.jsonl"
 
     output_file = f"clusters_{config_label}.json"
@@ -462,16 +504,20 @@ def cluster_config(config_tuple):
             }
 
     # Step 4: Prepare matrix
-    with step(4, "[4/7] Preparing matrix") as log:
+    with step(4, "[4/7] UMAP 150D") as log:
         node_ids = list(embeddings_dict.keys())
-        embeddings_matrix = np.array([embeddings_dict[nid] for nid in node_ids])
-        log(f"✓ {embeddings_matrix.shape}")
+        emb_1536 = np.array([embeddings_dict[nid] for nid in node_ids])
 
-    # Step 4.5: UMAP dimensionality reduction
-    with step(4.5, "[4.5/7] UMAP reduction 1536D→150D") as log:
-        reducer = UMAP(n_components=150, random_state=42, n_neighbors=15, min_dist=0.1)
-        embeddings_matrix = reducer.fit_transform(embeddings_matrix)
-        log(f"✓ Reduced to {embeddings_matrix.shape}")
+        # reducer = umap.UMAP(n_components=umap_dim, metric='cosine', n_neighbors=15, min_dist=0.1, random_state=42) # umap testing
+        reducer = umap.UMAP(
+            n_components=150,
+            metric="cosine",
+            n_neighbors=15,
+            min_dist=0.1,
+            random_state=42,
+        )
+        embeddings_matrix = reducer.fit_transform(emb_1536)
+        log(f"✓ {emb_1536.shape} → {embeddings_matrix.shape}")
 
     # Step 5: Clustering
     with step(5, "[5/7] Clustering") as log:
@@ -583,9 +629,11 @@ def run_all_clustering():
     )
 
     all_configs = []
-    # all_configs = [(0.85, 'unconstrained', 'risk', 1, 1)]
-
     idx = 1
+    # for edge_config, mode, node_type in TEST_CONFIGS_ONLY #umap and k testing:
+    #    for umap_dim in UMAP_DIMS_TO_TEST:
+    #        all_configs.append((edge_config, mode, node_type, idx, total_configs, umap_dim))
+    #        idx += 1
     for edge_config in EDGE_CONFIGS:
         for mode in MODES:
             for node_type in NODE_TYPES:
