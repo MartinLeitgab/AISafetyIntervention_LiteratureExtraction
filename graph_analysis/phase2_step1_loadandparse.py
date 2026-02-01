@@ -77,7 +77,7 @@ def compute_graph_metrics(node_attrs: Dict, edge_data: List[Dict]) -> Dict:
     import networkx as nx
 
     if TEST_MODE:
-        print("\n⚠ TEST MODE: Skipping graph metrics (requires full dataset)")
+        print("\nâš  TEST MODE: Skipping graph metrics (requires full dataset)")
         return node_attrs
 
     print("\n" + "=" * 80)
@@ -97,7 +97,7 @@ def compute_graph_metrics(node_attrs: Dict, edge_data: List[Dict]) -> Dict:
         if edge["source"] in node_attrs and edge["target"] in node_attrs:
             G.add_edge(edge["source"], edge["target"])
 
-    print(f"  ✓ Graph: {len(G.nodes())} nodes, {len(G.edges())} edges")
+    print(f"  âœ“ Graph: {len(G.nodes())} nodes, {len(G.edges())} edges")
 
     # Compute PageRank
     print("Computing PageRank...")
@@ -105,24 +105,32 @@ def compute_graph_metrics(node_attrs: Dict, edge_data: List[Dict]) -> Dict:
     for node_id, pr in pagerank.items():
         if node_id in node_attrs:
             node_attrs[node_id]["pagerank"] = pr
-    print("  ✓ PageRank computed")
+    print("  âœ“ PageRank computed")
 
-    # Compute Betweenness (sample if too large)
+    # Compute Betweenness (full calculation with NetworKit, very high CPU load (computer becomes unusable) but complete betweenness calculation done in 10 minutes)
     print("Computing Betweenness...")
-    if len(G.nodes()) > 10000:
-        print("  (sampling 5000 nodes for performance)")
-        import random
+    import networkit as nk
+    nk_graph = nk.nxadapter.nx2nk(G, weightAttr=None)
+    bc_calc = nk.centrality.Betweenness(nk_graph)
+    bc_calc.run()
 
-        sample_nodes = random.sample(list(G.nodes()), 5000)
-        betweenness = nx.betweenness_centrality(G, k=5000)
-    else:
-        betweenness = nx.betweenness_centrality(G)
+    node_list = list(G.nodes())
+    betweenness = {node_list[i]: bc_calc.score(i) for i in range(len(node_list))}
 
     for node_id, bc in betweenness.items():
         if node_id in node_attrs:
             node_attrs[node_id]["betweenness"] = bc
-    print("  ✓ Betweenness computed")
+    print("  âœ“ Betweenness computed")
 
+    # Compute degree metrics
+    print("Computing Degree metrics...")
+    for node_id in node_attrs:
+        if node_id in G:
+            node_attrs[node_id]["degree"] = G.degree(node_id)
+            node_attrs[node_id]["in_degree"] = G.in_degree(node_id)
+            node_attrs[node_id]["out_degree"] = G.out_degree(node_id)
+    print("  ✓ Degree metrics computed")
+    
     # Compute clustering coefficient
     print("Computing Clustering Coefficient...")
     G_undirected = G.to_undirected()
@@ -130,7 +138,7 @@ def compute_graph_metrics(node_attrs: Dict, edge_data: List[Dict]) -> Dict:
     for node_id, cc in clustering.items():
         if node_id in node_attrs:
             node_attrs[node_id]["clustering_coefficient"] = cc
-    print("  ✓ Clustering coefficient computed")
+    print("  âœ“ Clustering coefficient computed")
 
     return node_attrs
 
@@ -147,10 +155,10 @@ def connect_falkordb():
             host=REDIS_HOST, port=REDIS_PORT, decode_responses=True, socket_timeout=300
         )
         client.ping()
-        print(f"✓ Connected to FalkorDB at {REDIS_HOST}:{REDIS_PORT}")
+        print(f"âœ“ Connected to FalkorDB at {REDIS_HOST}:{REDIS_PORT}")
         return client
     except Exception as e:
-        print(f"✗ Failed to connect to FalkorDB: {e}")
+        print(f"âœ— Failed to connect to FalkorDB: {e}")
         print(f"  Make sure Redis/FalkorDB is running on {REDIS_HOST}:{REDIS_PORT}")
         return None
 
@@ -358,7 +366,7 @@ def load_all_cluster_files(
     print(f"Found path files: {len(path_files)}")
 
     missing_configs = []
-    path_cache = {}  # Cache: (edge, mode) → path_stats
+    path_cache = {}  # Cache: (edge, mode) â†’ path_stats
 
     for config_num, (edge_config, mode, node_type) in enumerate(expected_configs, 1):
         print(f"\n[{config_num}/{total_configs}] {edge_config} / {mode} / {node_type}")
@@ -366,7 +374,7 @@ def load_all_cluster_files(
         cluster_filepath = cluster_files.get((edge_config, mode, node_type))
 
         if cluster_filepath is None:
-            print("  ✗ Cluster file not found")
+            print("  âœ— Cluster file not found")
             missing_configs.append((edge_config, mode, node_type))
             records.append(
                 {
@@ -403,7 +411,7 @@ def load_all_cluster_files(
                             key = (edge_config, mode, node_type, algo_key, cluster_id)
                             cluster_memberships[key] = members
         except Exception as e:
-            print(f"  ⚠ Failed to extract cluster members: {e}")
+            print(f"  âš  Failed to extract cluster members: {e}")
 
         # Load path stats with caching
         path_key = (edge_config, mode)
@@ -417,7 +425,7 @@ def load_all_cluster_files(
             path_stats = load_path_file_stats(path_filepath)
             path_cache[path_key] = path_stats
         else:
-            print("  ⚠ Path file not found")
+            print("  âš  Path file not found")
             path_stats = {}
 
         # Create record combining both sources
@@ -496,7 +504,7 @@ def load_all_cluster_files(
 
         records.append(record)
 
-        print(f"  ✓ {record['n_clusters']} clusters, {record['n_pathways']:,} pathways")
+        print(f"  âœ“ {record['n_clusters']} clusters, {record['n_pathways']:,} pathways")
         if record["silhouette_mean"] is not None:
             sil_str = f"{record['silhouette_mean']:.3f}"
             edge_str = (
@@ -507,7 +515,7 @@ def load_all_cluster_files(
             print(f"    Silhouette: {sil_str}, EDGE validation: {edge_str}")
 
         if TEST_MODE and config_num >= 5:  # First 5 configs
-            print(f"\n⚠ TEST MODE: Stopping after {config_num} configs")
+            print(f"\nâš  TEST MODE: Stopping after {config_num} configs")
             break
 
     df = pd.DataFrame(records)
@@ -519,7 +527,7 @@ def load_all_cluster_files(
     print(f"  Path files found: {df['path_file_found'].sum()}")
     print(f"  Missing: {len(missing_configs)}")
     print(
-        f"  Cluster members extracted: {len(cluster_memberships):,} cluster→member mappings"
+        f"  Cluster members extracted: {len(cluster_memberships):,} clusterâ†’member mappings"
     )
 
     if missing_configs:
@@ -555,7 +563,7 @@ def load_node_attributes(client) -> Dict[int, Dict[str, Any]]:
         print("Getting node ID range...")
         result = query_graph(client, "MATCH (n) RETURN min(id(n)), max(id(n))")
         if not result:
-            print("  ✗ Failed to get node range")
+            print("  âœ— Failed to get node range")
             return node_attrs
 
         min_id, max_id = int(result[0][0]), int(result[0][1])
@@ -570,7 +578,7 @@ def load_node_attributes(client) -> Dict[int, Dict[str, Any]]:
             while current_id <= max_id:
                 end_id = min(current_id + batch_size - 1, max_id)
 
-                # Query for node attributes, Must have ≥1 EDGE edge, excluding satellite nodes/extraction failures
+                # Query for node attributes, Must have â‰¥1 EDGE edge, excluding satellite nodes/extraction failures
                 query = f"""
                 MATCH (n)-[:EDGE]-() 
                 WHERE id(n) >= {current_id} AND id(n) <= {end_id}
@@ -592,10 +600,7 @@ def load_node_attributes(client) -> Dict[int, Dict[str, Any]]:
                        n.semantic_cluster,
                        n.community_cluster,
                        n.pagerank,
-                       n.betweenness,
-                       n.degree,
-                       n.in_degree,
-                       n.out_degree
+                       n.betweenness
                 """
 
                 result = query_graph(client, query)
@@ -618,9 +623,10 @@ def load_node_attributes(client) -> Dict[int, Dict[str, Any]]:
                         "community_cluster": row[13] if len(row) > 13 else None,
                         "pagerank": row[14] if len(row) > 14 else None,
                         "betweenness": row[15] if len(row) > 15 else None,
-                        "degree": row[16] if len(row) > 16 else None,
-                        "in_degree": row[17] if len(row) > 17 else None,
-                        "out_degree": row[18] if len(row) > 18 else None,
+                        # Degree fields not in graph - will be computed from edges
+                        "degree": None,
+                        "in_degree": None,
+                        "out_degree": None,
                     }
                     node_attrs[node_id] = attrs
 
@@ -660,10 +666,10 @@ def load_node_attributes(client) -> Dict[int, Dict[str, Any]]:
                 batch_count += 1
 
                 if TEST_MODE and batch_count >= TEST_BATCHES:
-                    print(f"\n⚠ TEST MODE: Stopping after {TEST_BATCHES} batches")
+                    print(f"\nâš  TEST MODE: Stopping after {TEST_BATCHES} batches")
                     break
 
-        print(f"\n✓ Loaded {len(node_attrs):,} nodes")
+        print(f"\nâœ“ Loaded {len(node_attrs):,} nodes")
 
         # Statistics
         node_types = Counter(
@@ -705,7 +711,7 @@ def load_node_attributes(client) -> Dict[int, Dict[str, Any]]:
         return node_attrs
 
     except Exception as e:
-        print(f"✗ Error loading node attributes: {e}")
+        print(f"âœ— Error loading node attributes: {e}")
         import traceback
 
         traceback.print_exc()
@@ -728,7 +734,7 @@ def load_edge_data(client) -> List[Dict[str, Any]]:
         # Get node ID range first
         result = query_graph(client, "MATCH (n) RETURN min(id(n)), max(id(n))")
         if not result:
-            print("  ✗ Failed to get node range")
+            print("  âœ— Failed to get node range")
             return edges
 
         min_id, max_id = int(result[0][0]), int(result[0][1])
@@ -787,7 +793,7 @@ def load_edge_data(client) -> List[Dict[str, Any]]:
                 pbar.update(end_id - current_id + 1)
                 current_id = end_id + 1
 
-        print(f"\n✓ Loaded {len(edges):,} edges")
+        print(f"\nâœ“ Loaded {len(edges):,} edges")
 
         # Statistics
         edge_types = Counter(edge["type"] for edge in edges)
@@ -808,7 +814,7 @@ def load_edge_data(client) -> List[Dict[str, Any]]:
         return edges
 
     except Exception as e:
-        print(f"✗ Error loading edge data: {e}")
+        print(f"âœ— Error loading edge data: {e}")
         import traceback
 
         traceback.print_exc()
@@ -829,28 +835,28 @@ def save_checkpoints(df_metrics, node_attrs, edge_data, cluster_memberships):
     # Checkpoint 1: Cluster metrics DataFrame
     print(f"Saving cluster metrics to: {CHECKPOINT_METRICS}")
     df_metrics.to_csv(CHECKPOINT_METRICS, index=False)
-    print(f"  ✓ Saved {len(df_metrics)} configuration records")
+    print(f"  âœ“ Saved {len(df_metrics)} configuration records")
     print(f"  File size: {CHECKPOINT_METRICS.stat().st_size / 1024:.1f} KB")
 
     # Checkpoint 2: Node attributes
     print(f"\nSaving node attributes to: {CHECKPOINT_NODES}")
     with open(CHECKPOINT_NODES, "wb") as f:
         pickle.dump(node_attrs, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"  ✓ Saved {len(node_attrs):,} node records")
+    print(f"  âœ“ Saved {len(node_attrs):,} node records")
     print(f"  File size: {CHECKPOINT_NODES.stat().st_size / (1024 * 1024):.1f} MB")
 
     # Checkpoint 3: Edge data
     print(f"\nSaving edge data to: {CHECKPOINT_EDGES}")
     with open(CHECKPOINT_EDGES, "wb") as f:
         pickle.dump(edge_data, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"  ✓ Saved {len(edge_data):,} edge records")
+    print(f"  âœ“ Saved {len(edge_data):,} edge records")
     print(f"  File size: {CHECKPOINT_EDGES.stat().st_size / (1024 * 1024):.1f} MB")
 
     # Checkpoint 4: Cluster memberships
     print(f"\nSaving cluster memberships to: {CHECKPOINT_MEMBERS}")
     with open(CHECKPOINT_MEMBERS, "wb") as f:
         pickle.dump(cluster_memberships, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"  ✓ Saved {len(cluster_memberships):,} cluster→member mappings")
+    print(f"  âœ“ Saved {len(cluster_memberships):,} clusterâ†’member mappings")
     print(f"  File size: {CHECKPOINT_MEMBERS.stat().st_size / (1024 * 1024):.1f} MB")
 
 
@@ -890,10 +896,10 @@ def generate_summary(
         summary_lines.append(f"\nTotal clusters: {total_clusters:,}")
         summary_lines.append(f"Total pathways: {total_pathways:,}")
         summary_lines.append(
-            f"Clusters per config: {avg_clusters:.1f} ± {std_clusters:.1f}"
+            f"Clusters per config: {avg_clusters:.1f} Â± {std_clusters:.1f}"
         )
         summary_lines.append(
-            f"Pathways per config: {avg_pathways:.1f} ± {std_pathways:.1f}"
+            f"Pathways per config: {avg_pathways:.1f} Â± {std_pathways:.1f}"
         )
         summary_lines.append(
             "  Note: High variance expected - unconstrained mode has ~60x more paths than 'both' mode"
@@ -960,7 +966,7 @@ def generate_summary(
 
     # Cluster Memberships
     summary_lines.append("\n## CLUSTER MEMBERSHIPS")
-    summary_lines.append(f"Total cluster→member mappings: {len(cluster_memberships):,}")
+    summary_lines.append(f"Total clusterâ†’member mappings: {len(cluster_memberships):,}")
     if cluster_memberships:
         total_nodes_in_clusters = sum(
             len(members) for members in cluster_memberships.values()
@@ -1157,7 +1163,7 @@ def main():
         and CHECKPOINT_EDGES.exists()
         and CHECKPOINT_MEMBERS.exists()
     ):
-        print("\n✓ All checkpoints exist")
+        print("\nâœ“ All checkpoints exist")
         response = (
             input("Regenerate summary only (skip loading)? [y/N]: ").strip().lower()
         )
@@ -1179,7 +1185,7 @@ def main():
 
     # Check for existing outputs
     if OUTPUT_DIR.exists() and any(OUTPUT_DIR.iterdir()):
-        print(f"\n⚠ Output directory exists: {OUTPUT_DIR}")
+        print(f"\nâš  Output directory exists: {OUTPUT_DIR}")
         response = input("Overwrite existing outputs? [y/N]: ").strip().lower()
         if response != "y":
             print("Aborted.")
@@ -1205,7 +1211,7 @@ def main():
         with open(CHECKPOINT_EDGES, "rb") as f:
             edge_data = pickle.load(f)
         print(
-            f"✓ Loaded {len(node_attrs):,} nodes and {len(edge_data):,} edges from cache"
+            f"âœ“ Loaded {len(node_attrs):,} nodes and {len(edge_data):,} edges from cache"
         )
     else:
         client = connect_falkordb()
