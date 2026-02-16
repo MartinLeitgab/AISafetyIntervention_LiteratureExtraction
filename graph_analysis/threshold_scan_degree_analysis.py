@@ -1,0 +1,1629 @@
+import redis
+from collections import Counter
+import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")  # Use non-GUI backend to avoid Qt errors
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+# Global configuration for embeddings and similarity edges
+embeddings_type = "narrow"  # "narrow" or "wide"
+if embeddings_type == "narrow":
+    similarity_edge_name = "SIMILARITY_ABOVE_POINT_EIGHT_1300_NEAREST"
+else:
+    similarity_edge_name = "SIMILARITY_ABOVE_POINT_EIGHT_2150_NEAREST"
+
+
+class GraphEdgeAnalyzer:
+    def __init__(self, host="localhost", port=6379, graph_name="AISafetyIntervention"):
+        """
+        Initialize connection to FalkorDB
+
+        Args:
+            host: Redis host
+            port: Redis port
+            graph_name: Name of the graph in FalkorDB
+        """
+        self.client = redis.Redis(host=host, port=port, decode_responses=True)
+        self.graph_name = graph_name
+
+    def get_node_type_counts(self):
+        """
+        Get counts of each node type in the graph
+
+        Returns:
+            dict: Node type to count mapping
+        """
+        print("\nCounting node types...")
+
+        # Try to get node labels/types
+        try:
+            query = "CALL db.labels()"
+            result = self.client.execute_command("GRAPH.QUERY", self.graph_name, query)
+
+            labels = []
+            if len(result) > 1:
+                for row in result[1]:
+                    labels.append(row[0])
+
+            print(f"Found {len(labels)} node types/labels: {labels}")
+
+            # Count each type
+            type_counts = {}
+            for label in labels:
+                count_query = f"MATCH (n:{label}) RETURN count(n)"
+                count_result = self.client.execute_command(
+                    "GRAPH.QUERY", self.graph_name, count_query
+                )
+                if len(count_result) > 1 and len(count_result[1]) > 0:
+                    type_counts[label] = int(count_result[1][0][0])
+
+            return type_counts
+
+        except Exception as e:
+            print(f"Error getting node types: {e}")
+            return {}
+
+    def discover_relationship_types(self):
+        """
+        Discover all relationship types in the graph
+
+        Returns:
+            list: List of relationship type names
+        """
+        print("\nDiscovering relationship types in the graph...")
+
+        # Query to get all relationship types
+        query = "CALL db.relationshipTypes()"
+
+        try:
+            result = self.client.execute_command("GRAPH.QUERY", self.graph_name, query)
+
+            rel_types = []
+            if len(result) > 1:
+                for row in result[1]:
+                    rel_types.append(row[0])
+
+            print(f"Found {len(rel_types)} relationship types:")
+            for rel_type in rel_types:
+                print(f"  - {rel_type}")
+
+            return rel_types
+        except Exception as e:
+            print(f"Error discovering relationship types: {e}")
+            print("Trying alternative method...")
+
+            # Alternative: sample edges and get their types
+            query_alt = "MATCH ()-[r]->() RETURN DISTINCT type(r) LIMIT 100"
+            result = self.client.execute_command(
+                "GRAPH.QUERY", self.graph_name, query_alt
+            )
+
+            rel_types = []
+            if len(result) > 1:
+                for row in result[1]:
+                    rel_types.append(row[0])
+
+            print(f"Found {len(rel_types)} relationship types:")
+            for rel_type in rel_types:
+                print(f"  - {rel_type}")
+
+            return rel_types
+
+    def get_node_degrees_by_edge_type_batched(
+        self,
+        within_doc_rel,
+        cross_doc_rel,
+        node_types=["Concept", "Intervention"],
+        batch_size=10000,
+        euclidean_threshold=None,
+    ):
+        """
+        OPTIMIZED: Batched version for large graphs using ID-based partitioning
+        Does TWO separate passes - one for each edge type
+        Uses smaller batch sizes and simpler queries for score filtering
+
+        Args:
+            within_doc_rel: Relationship type name for within-document edges
+            cross_doc_rel: Relationship type name for cross-document edges
+            node_types: List of node type labels to include (e.g., ['Concept', 'Intervention'])
+            batch_size: Number of nodes per batch (reduced to 5000 for similarity edges)
+            euclidean_threshold: Optional threshold for similarity edge scores (Euclidean distance)
+                               Keeps edges where score < euclidean_threshold (more similar)
+
+        Returns:
+            dict: Dictionary with three degree lists
+        """
+        # Build WHERE clause for node types
+        if node_types:
+            type_conditions = " OR ".join([f"'{nt}' IN labels(n)" for nt in node_types])
+            where_clause_full = f"WHERE ({type_conditions})"
+            where_clause_and = f"AND ({type_conditions})"
+        else:
+            where_clause_full = ""
+            where_clause_and = ""
+
+        # Get total node count for these types
+        count_query = f"""
+        MATCH (n)
+        {where_clause_full}
+        RETURN count(n) as total
+        """
+        count_result = self.client.execute_command(
+            "GRAPH.QUERY", self.graph_name, count_query
+        )
+
+        total_nodes = 0
+        if len(count_result) > 1 and len(count_result[1]) > 0:
+            total_nodes = int(count_result[1][0][0])
+
+        print(f"Total nodes of types {node_types}: {total_nodes:,}")
+
+        # Get node ID range for these types
+        id_query = f"""
+        MATCH (n)
+        {where_clause_full}
+        RETURN min(id(n)) as min_id, max(id(n)) as max_id
+        """
+        result = self.client.execute_command("GRAPH.QUERY", self.graph_name, id_query)
+
+        if len(result) > 1 and len(result[1]) > 0:
+            min_id = int(result[1][0][0])
+            max_id = int(result[1][0][1])
+            print(f"Node ID range: {min_id} to {max_id}")
+        else:
+            raise Exception("Could not determine node ID range")
+
+        # PASS 1: Get within-document edge degrees
+        print(f"\nPass 1: Extracting '{within_doc_rel}' degrees in batches...")
+        within_doc_degrees = {}
+        current_id = min_id
+        batch_num = 1
+
+        while current_id <= max_id:
+            query = f"""
+            MATCH (n)
+            WHERE id(n) >= {current_id} AND id(n) < {current_id + batch_size} {where_clause_and}
+            RETURN id(n) as node_id, SIZE((n)-[:{within_doc_rel}]-()) as degree
+            """
+
+            result = self.client.execute_command("GRAPH.QUERY", self.graph_name, query)
+
+            if len(result) > 1 and len(result[1]) > 0:
+                for row in result[1]:
+                    node_id = int(row[0])
+                    degree = int(row[1])
+                    within_doc_degrees[node_id] = degree
+
+                progress = len(within_doc_degrees)
+                progress_pct = 100 * progress / total_nodes if total_nodes > 0 else 0
+                print(
+                    f"  Batch {batch_num}: {progress:,}/{total_nodes:,} nodes ({progress_pct:.1f}%)"
+                )
+                batch_num += 1
+
+            current_id += batch_size
+
+        print(f"✓ Pass 1 complete: {len(within_doc_degrees):,} nodes")
+
+        # PASS 2: Get cross-document similarity degrees with optional score threshold
+        # OPTIMIZATION: Use smaller batch size and simplified query for better performance
+        similarity_batch_size = 2000 if euclidean_threshold is not None else batch_size
+
+        threshold_msg = (
+            f" (score < {euclidean_threshold:.4f})"
+            if euclidean_threshold is not None
+            else ""
+        )
+        print(
+            f"\nPass 2: Extracting '{cross_doc_rel}' degrees{threshold_msg} in batches..."
+        )
+        if euclidean_threshold is not None:
+            print(
+                f"  Using smaller batch size ({similarity_batch_size}) for score filtering"
+            )
+
+        cross_doc_degrees = {}
+        current_id = min_id
+        batch_num = 1
+
+        while current_id <= max_id:
+            # OPTIMIZATION: Simplified query structure
+            if euclidean_threshold is not None:
+                # With score threshold: use explicit MATCH and WHERE
+                query = f"""
+                MATCH (n)
+                WHERE id(n) >= {current_id} AND id(n) < {current_id + similarity_batch_size} {where_clause_and}
+                WITH n
+                MATCH (n)-[r:{cross_doc_rel}]-(m)
+                WHERE m <> n AND r.score < {euclidean_threshold}
+                RETURN id(n) as node_id, count(DISTINCT m) as degree
+                """
+            else:
+                # Without score threshold: original simple query
+                query = f"""
+                MATCH (n)
+                WHERE id(n) >= {current_id} AND id(n) < {current_id + similarity_batch_size} {where_clause_and}
+                RETURN id(n) as node_id, SIZE((n)-[:{cross_doc_rel}]-()) as degree
+                """
+
+            try:
+                result = self.client.execute_command(
+                    "GRAPH.QUERY", self.graph_name, query
+                )
+
+                if len(result) > 1 and len(result[1]) > 0:
+                    for row in result[1]:
+                        node_id = int(row[0])
+                        degree = int(row[1])
+                        cross_doc_degrees[node_id] = degree
+
+                    progress = len(cross_doc_degrees)
+                    progress_pct = (
+                        100 * progress / total_nodes if total_nodes > 0 else 0
+                    )
+                    print(
+                        f"  Batch {batch_num}: {progress:,}/{total_nodes:,} nodes ({progress_pct:.1f}%)"
+                    )
+                    batch_num += 1
+            except Exception as e:
+                print(f"  ⚠ Warning: Batch {batch_num} failed: {e}")
+                print("    Retrying with even smaller batch size...")
+                # Fallback: process nodes individually if batch fails
+                retry_batch_size = 100
+                for retry_id in range(
+                    current_id,
+                    min(current_id + similarity_batch_size, max_id + 1),
+                    retry_batch_size,
+                ):
+                    try:
+                        if euclidean_threshold is not None:
+                            retry_query = f"""
+                            MATCH (n)
+                            WHERE id(n) >= {retry_id} AND id(n) < {retry_id + retry_batch_size} {where_clause_and}
+                            WITH n
+                            MATCH (n)-[r:{cross_doc_rel}]-(m)
+                            WHERE m <> n AND r.score < {euclidean_threshold}
+                            RETURN id(n) as node_id, count(DISTINCT m) as degree
+                            """
+                        else:
+                            retry_query = f"""
+                            MATCH (n)
+                            WHERE id(n) >= {retry_id} AND id(n) < {retry_id + retry_batch_size} {where_clause_and}
+                            RETURN id(n) as node_id, SIZE((n)-[:{cross_doc_rel}]-()) as degree
+                            """
+
+                        retry_result = self.client.execute_command(
+                            "GRAPH.QUERY", self.graph_name, retry_query
+                        )
+
+                        if len(retry_result) > 1 and len(retry_result[1]) > 0:
+                            for row in retry_result[1]:
+                                node_id = int(row[0])
+                                degree = int(row[1])
+                                cross_doc_degrees[node_id] = degree
+                    except Exception as retry_e:
+                        print(
+                            f"    Retry also failed for IDs {retry_id}-{retry_id + retry_batch_size}: {retry_e}"
+                        )
+                        continue
+
+                progress = len(cross_doc_degrees)
+                progress_pct = 100 * progress / total_nodes if total_nodes > 0 else 0
+                print(
+                    f"  Batch {batch_num} (after retry): {progress:,}/{total_nodes:,} nodes ({progress_pct:.1f}%)"
+                )
+                batch_num += 1
+
+            current_id += similarity_batch_size
+
+        print(f"✓ Pass 2 complete: {len(cross_doc_degrees):,} nodes")
+
+        # Combine results - ensure all node IDs are covered
+        all_node_ids = sorted(
+            set(within_doc_degrees.keys()) | set(cross_doc_degrees.keys())
+        )
+
+        within_doc_list = []
+        cross_doc_list = []
+        combined_list = []
+
+        for node_id in all_node_ids:
+            within_deg = within_doc_degrees.get(node_id, 0)
+            cross_deg = cross_doc_degrees.get(node_id, 0)
+
+            within_doc_list.append(within_deg)
+            cross_doc_list.append(cross_deg)
+            combined_list.append(within_deg + cross_deg)
+
+        print(f"\n✓ Extracted degrees for {len(combined_list):,} nodes")
+
+        return {
+            "within_document": within_doc_list,
+            "cross_document": cross_doc_list,
+            "combined": combined_list,
+        }
+
+    def plot_similarity_threshold_overlay(
+        self, threshold_results, cosine_thresholds, embeddings_type, save_path=None
+    ):
+        if save_path is None:
+            save_path = f"similarity_threshold_overlay_{embeddings_type}.png"
+
+        # Extract data for saving
+        plot_data = {
+            "embeddings_type": embeddings_type,
+            "cosine_thresholds": cosine_thresholds,
+            "data": [],
+        }
+
+        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+        colors = ["#9B59B6", "#3498DB", "#F39C12", "#E74C3C"]
+        markers = ["o", "s", "^", "D"]
+
+        # FIX: Create list pairing euclidean thresholds with their cosine values
+        # Sort by euclidean DESCENDING (which means cosine ASCENDING: 0.8, 0.85, 0.9, 0.95)
+        # This matches the visual top-to-bottom order in the plot
+        euclidean_thresholds = sorted(threshold_results.keys(), reverse=True)
+        cosine_sorted = sorted(cosine_thresholds)  # Ascending: 0.8, 0.85, 0.9, 0.95
+
+        # 1. Log-Log Scatter with Power Law Fits
+        ax1 = axes[0]
+
+        for i, eucl_threshold in enumerate(euclidean_thresholds):
+            cosine_thresh = cosine_sorted[i]  # Now correctly paired
+            degrees_dict = threshold_results[eucl_threshold]
+            cross_doc = degrees_dict["cross_document"]
+            degree_counts = Counter(cross_doc)
+            unique_degrees = sorted([d for d in degree_counts.keys() if d > 0])
+            frequencies = [degree_counts[d] for d in unique_degrees]
+
+            # Save data for this threshold
+            plot_data["data"].append(
+                {
+                    "cosine_threshold": cosine_thresh,
+                    "euclidean_threshold": eucl_threshold,
+                    "unique_degrees": unique_degrees,
+                    "frequencies": frequencies,
+                    "color": colors[i % len(colors)],
+                    "marker": markers[i % len(markers)],
+                }
+            )
+
+            if len(unique_degrees) > 0:
+                color = colors[i % len(colors)]
+                marker = markers[i % len(markers)]
+
+                ax1.scatter(
+                    unique_degrees,
+                    frequencies,
+                    alpha=0.6,
+                    s=60,
+                    label=f"Cosine ≥{cosine_thresh}",
+                    color=color,
+                    marker=marker,
+                    edgecolors="black",
+                    linewidth=0.5,
+                )
+
+                # Fit power law with Poisson weighting
+                fit_result = self.fit_power_law_weighted(
+                    unique_degrees, frequencies, degree_min=2, degree_max=100
+                )
+                if fit_result is not None:
+                    ax1.plot(
+                        fit_result["fit_x"],
+                        fit_result["fit_y"],
+                        "--",
+                        linewidth=2.5,
+                        color=color,
+                        alpha=0.8,
+                        label=f"≥{cosine_thresh} fit: γ={-fit_result['slope']:.2f}±{fit_result['slope_err']:.2f}, R²={fit_result['r_squared']:.3f}",
+                    )
+
+        ax1.set_xscale("log")
+        ax1.set_yscale("log")
+        ax1.set_xlabel("Degree (log scale)", fontsize=14, fontweight="bold")
+        ax1.set_ylabel("Frequency (log scale)", fontsize=14, fontweight="bold")
+        ax1.set_title(
+            "Similarity Edge Degree Distribution (Log-Log)",
+            fontsize=16,
+            fontweight="bold",
+        )
+        ax1.legend(fontsize=10, loc="best")
+        ax1.grid(True, alpha=0.3, which="both")
+
+        # 2. CCDF (Complementary Cumulative Distribution Function)
+        ax2 = axes[1]
+
+        for i, eucl_threshold in enumerate(euclidean_thresholds):
+            cosine_thresh = cosine_sorted[i]  # Same pairing
+            degrees_dict = threshold_results[eucl_threshold]
+            cross_doc = degrees_dict["cross_document"]
+            sorted_degrees = np.sort(cross_doc)
+            sorted_degrees = sorted_degrees[sorted_degrees > 0]
+
+            if len(sorted_degrees) > 0:
+                color = colors[i % len(colors)]
+                marker = markers[i % len(markers)]
+                ccdf = 1 - np.arange(1, len(sorted_degrees) + 1) / len(sorted_degrees)
+                ax2.scatter(
+                    sorted_degrees,
+                    ccdf,
+                    alpha=0.6,
+                    s=40,
+                    label=f"Cosine ≥{cosine_thresh}",
+                    color=color,
+                    marker=marker,
+                    edgecolors="black",
+                    linewidth=0.5,
+                )
+
+        ax2.set_xscale("log")
+        ax2.set_yscale("log")
+        ax2.set_xlabel("Degree (log scale)", fontsize=14, fontweight="bold")
+        ax2.set_ylabel("P(Degree ≥ k)", fontsize=14, fontweight="bold")
+        ax2.set_title(
+            "CCDF - Complementary Cumulative Distribution",
+            fontsize=16,
+            fontweight="bold",
+        )
+        ax2.legend(fontsize=10, loc="best")
+        ax2.grid(True, alpha=0.3, which="both")
+
+        # Save plot data
+        import pickle
+
+        data_path = save_path.replace(".png", "_data.pkl")
+        with open(data_path, "wb") as f:
+            pickle.dump(plot_data, f)
+        print(f"Plot data saved to {data_path}")
+
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"Overlay figure saved to {save_path}")
+        plt.close()
+
+    def plot_wide_narrow_comparison(
+        self,
+        wide_data_path,
+        narrow_data_path,
+        save_path="similarity_comparison_wide_narrow.png",
+    ):
+        """
+        Plot wide (filled) and narrow (hollow) embeddings overlay.
+
+        Args:
+            wide_data_path: Path to wide embeddings data pickle
+            narrow_data_path: Path to narrow embeddings data pickle
+            save_path: Output figure path
+        """
+        import pickle
+
+        # Load data
+        with open(wide_data_path, "rb") as f:
+            wide_data = pickle.load(f)
+        with open(narrow_data_path, "rb") as f:
+            narrow_data = pickle.load(f)
+
+        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+        ax1, ax2 = axes
+
+        # Plot wide embeddings (filled symbols)
+        for item in wide_data["data"]:
+            unique_degrees = item["unique_degrees"]
+            frequencies = item["frequencies"]
+            color = item["color"]
+            marker = item["marker"]
+            cosine_thresh = item["cosine_threshold"]
+
+            if len(unique_degrees) > 0:
+                # Log-log scatter
+                ax1.scatter(
+                    unique_degrees,
+                    frequencies,
+                    alpha=0.6,
+                    s=60,
+                    label=f"Wide ≥{cosine_thresh}",
+                    color=color,
+                    marker=marker,
+                    edgecolors="black",
+                    linewidth=0.5,
+                )
+
+                # Fit and plot (recompute)
+                fit_result = self.fit_power_law_weighted(unique_degrees, frequencies)
+                if fit_result is not None:
+                    ax1.plot(
+                        fit_result["fit_x"],
+                        fit_result["fit_y"],
+                        "--",
+                        linewidth=2.5,
+                        color=color,
+                        alpha=0.8,
+                        label=f"Wide ≥{cosine_thresh} fit: γ={fit_result['gamma']:.2f}±{fit_result['gamma_err']:.2f}",
+                    )
+
+                # CCDF
+                sorted_degrees = np.sort(unique_degrees)
+                ccdf = 1 - np.arange(1, len(sorted_degrees) + 1) / len(sorted_degrees)
+                ax2.scatter(
+                    sorted_degrees,
+                    ccdf,
+                    alpha=0.6,
+                    s=40,
+                    label=f"Wide ≥{cosine_thresh}",
+                    color=color,
+                    marker=marker,
+                    edgecolors="black",
+                    linewidth=0.5,
+                )
+
+        # Plot narrow embeddings (hollow symbols)
+        for item in narrow_data["data"]:
+            unique_degrees = item["unique_degrees"]
+            frequencies = item["frequencies"]
+            color = item["color"]
+            marker = item["marker"]
+            cosine_thresh = item["cosine_threshold"]
+
+            if len(unique_degrees) > 0:
+                # Log-log scatter (hollow = facecolors='none')
+                ax1.scatter(
+                    unique_degrees,
+                    frequencies,
+                    alpha=0.8,
+                    s=60,
+                    label=f"Narrow ≥{cosine_thresh}",
+                    facecolors="none",
+                    edgecolors=color,
+                    marker=marker,
+                    linewidth=1.5,
+                )
+
+                # Fit and plot
+                fit_result = self.fit_power_law_weighted(unique_degrees, frequencies)
+                if fit_result is not None:
+                    ax1.plot(
+                        fit_result["fit_x"],
+                        fit_result["fit_y"],
+                        ":",
+                        linewidth=2.5,
+                        color=color,
+                        alpha=0.8,
+                        label=f"Narrow ≥{cosine_thresh} fit: γ={fit_result['gamma']:.2f}±{fit_result['gamma_err']:.2f}",
+                    )
+
+                # CCDF (hollow)
+                sorted_degrees = np.sort(unique_degrees)
+                ccdf = 1 - np.arange(1, len(sorted_degrees) + 1) / len(sorted_degrees)
+                ax2.scatter(
+                    sorted_degrees,
+                    ccdf,
+                    alpha=0.8,
+                    s=40,
+                    label=f"Narrow ≥{cosine_thresh}",
+                    facecolors="none",
+                    edgecolors=color,
+                    marker=marker,
+                    linewidth=1.5,
+                )
+
+        # Format axes
+        ax1.set_xscale("log")
+        ax1.set_yscale("log")
+        ax1.set_xlabel("Degree (log scale)", fontsize=14, fontweight="bold")
+        ax1.set_ylabel("Frequency (log scale)", fontsize=14, fontweight="bold")
+        ax1.set_title(
+            "Wide vs Narrow Embeddings (Log-Log)", fontsize=16, fontweight="bold"
+        )
+        ax1.legend(fontsize=8, loc="best", ncol=2)
+        ax1.grid(True, alpha=0.3, which="both")
+
+        ax2.set_xscale("log")
+        ax2.set_yscale("log")
+        ax2.set_xlabel("Degree (log scale)", fontsize=14, fontweight="bold")
+        ax2.set_ylabel("P(Degree ≥ k)", fontsize=14, fontweight="bold")
+        ax2.set_title("CCDF Comparison", fontsize=16, fontweight="bold")
+        ax2.legend(fontsize=8, loc="best", ncol=2)
+        ax2.grid(True, alpha=0.3, which="both")
+
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"Comparison figure saved to {save_path}")
+        plt.close()
+
+    def fit_power_law_weighted(
+        self, unique_degrees, frequencies, degree_min=2, degree_max=100
+    ):
+        """
+        Fit power law with Poisson uncertainties and masked range.
+
+        Args:
+            unique_degrees: Sorted list of unique degree values
+            frequencies: Corresponding frequency counts
+            degree_min: Minimum degree to include (default: 2)
+            degree_max: Maximum degree to include (default: 100)
+
+        Returns:
+            dict with 'slope', 'intercept', 'r_squared', 'fit_x', 'fit_y', or None
+        """
+        if len(unique_degrees) < 5:
+            return None
+
+        log_degrees = np.log10(unique_degrees)
+        log_freqs = np.log10(frequencies)
+        mask = (log_degrees >= np.log10(degree_min)) & (
+            log_degrees <= np.log10(degree_max)
+        )
+
+        if np.sum(mask) < 5:
+            return None
+
+        weights = np.array(frequencies)
+
+        def power_law(x, slope, intercept):
+            return intercept + slope * x
+
+        try:
+            popt, pcov = curve_fit(
+                power_law,
+                log_degrees[mask],
+                log_freqs[mask],
+                sigma=1 / np.sqrt(weights[mask]),
+                absolute_sigma=True,
+            )
+            slope, intercept = popt
+
+            # Extract uncertainties from covariance matrix
+            slope_err, intercept_err = np.sqrt(np.diag(pcov))
+            gamma_err = slope_err  # γ = -slope, so uncertainty is same
+
+            residuals = log_freqs[mask] - power_law(log_degrees[mask], slope, intercept)
+            ss_res = np.sum(weights[mask] * residuals**2)
+            ss_tot = np.sum(
+                weights[mask] * (log_freqs[mask] - np.mean(log_freqs[mask])) ** 2
+            )
+            r_squared = 1 - (ss_res / ss_tot)
+
+            fit_x = np.array(unique_degrees)[mask]
+            fit_y = 10 ** (intercept) * fit_x**slope
+
+            return {
+                "slope": slope,
+                "slope_err": slope_err,
+                "gamma": -slope,
+                "gamma_err": gamma_err,  # Add uncertainty
+                "intercept": intercept,
+                "r_squared": r_squared,
+                "fit_x": fit_x,
+                "fit_y": fit_y,
+            }
+        except Exception:
+            print("⚠ Warning: Power law fit failed.")
+            return None
+
+    def plot_degree_comparison(self, degrees_dict, embeddings_type, save_path):
+        """
+        Plot three distributions overlaid: within-doc, cross-doc, and combined
+        Creates 3 subplots: lin-lin, log-log, and CCDF
+
+        Args:
+            degrees_dict: Dictionary with 'within_document', 'cross_document', 'combined' degree lists
+            embeddings_type: Type of embeddings used ("narrow" or "wide")
+            save_path: Path to save the figure
+        """
+        fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+
+        # Colors and labels for the three distributions
+        configs = [
+            ("combined", "Combined (Local + Similarity)", "#2E86AB", "o"),
+            ("within_document", "Within-document (Local only)", "#A23B72", "s"),
+            ("cross_document", "Cross-document (Similarity only)", "#F18F01", "^"),
+        ]
+
+        # 1. Linear-Linear Histogram (limited to degree 50)
+        ax1 = axes[0]
+        for key, label, color, marker in configs:
+            degrees = degrees_dict[key]
+            # Filter to degrees <= 50 for better resolution
+            degrees_filtered = [d for d in degrees if d <= 50]
+            ax1.hist(
+                degrees_filtered,
+                bins=50,
+                range=(0, 50),
+                alpha=0.5,
+                label=label,
+                color=color,
+                edgecolor="black",
+            )
+
+        ax1.set_xlabel("Degree", fontsize=12)
+        ax1.set_ylabel("Frequency", fontsize=12)
+        ax1.set_title(
+            "Degree Distribution (Linear Scale, 0-50)", fontsize=14, fontweight="bold"
+        )
+        ax1.set_xlim(0, 50)
+        ax1.legend(fontsize=10)
+        ax1.grid(True, alpha=0.3)
+
+        # 2. Log-Log Scatter
+        ax2 = axes[1]
+        for key, label, color, marker in configs:
+            degrees = degrees_dict[key]
+            degree_counts = Counter(degrees)
+            unique_degrees = sorted([d for d in degree_counts.keys() if d > 0])
+            frequencies = [degree_counts[d] for d in unique_degrees]
+
+            if len(unique_degrees) > 0:
+                ax2.scatter(
+                    unique_degrees,
+                    frequencies,
+                    alpha=0.6,
+                    s=50,
+                    label=label,
+                    color=color,
+                    marker=marker,
+                )
+
+                # Fit power law ONLY for cross-document and combined (not for within-document)
+                if key in ["cross_document", "combined"]:
+                    fit_result = self.fit_power_law_weighted(
+                        unique_degrees, frequencies, degree_min=2, degree_max=100
+                    )
+                    if fit_result is not None:
+                        ax2.plot(
+                            fit_result["fit_x"],
+                            fit_result["fit_y"],
+                            "--",
+                            linewidth=2,
+                            color=color,
+                            alpha=0.7,
+                            label=f"{label} fit: γ={-fit_result['slope']:.2f}±{fit_result['slope_err']:.2f}, R²={fit_result['r_squared']:.3f}",
+                        )
+
+        ax2.set_xscale("log")
+        ax2.set_yscale("log")
+        ax2.set_xlabel("Degree (log scale)", fontsize=12)
+        ax2.set_ylabel("Frequency (log scale)", fontsize=12)
+        ax2.set_title(
+            "Degree Distribution (Log-Log Plot)", fontsize=14, fontweight="bold"
+        )
+        ax2.legend(fontsize=8)
+        ax2.grid(True, alpha=0.3, which="both")
+
+        # 3. CCDF (Complementary Cumulative Distribution Function)
+        ax3 = axes[2]
+        for key, label, color, marker in configs:
+            degrees = degrees_dict[key]
+            if len(degrees) == 0:
+                continue
+
+            sorted_degrees = np.sort(degrees)
+            # Remove zeros for log scale
+            sorted_degrees = sorted_degrees[sorted_degrees > 0]
+
+            if len(sorted_degrees) > 0:
+                ccdf = 1 - np.arange(1, len(sorted_degrees) + 1) / len(sorted_degrees)
+                ax3.scatter(
+                    sorted_degrees,
+                    ccdf,
+                    alpha=0.5,
+                    s=20,
+                    label=label,
+                    color=color,
+                    marker=marker,
+                )
+
+        ax3.set_xscale("log")
+        ax3.set_yscale("log")
+        ax3.set_xlabel("Degree (log scale)", fontsize=12)
+        ax3.set_ylabel("P(Degree ≥ k)", fontsize=12)
+        ax3.set_title(
+            "CCDF - Complementary Cumulative Distribution",
+            fontsize=14,
+            fontweight="bold",
+        )
+        ax3.legend(fontsize=10)
+        ax3.grid(True, alpha=0.3, which="both")
+
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"Figure saved to {save_path}")
+        plt.close()
+
+    def print_statistics(self, degrees_dict, similarity_only=False):
+        """
+        Print summary statistics for all three degree distributions
+        """
+        print("\n" + "=" * 80)
+        print("DEGREE DISTRIBUTION STATISTICS")
+        print("=" * 80)
+
+        for key, label in [
+            ("within_document", "Within-Document (Local)"),
+            ("cross_document", "Cross-Document (Similarity)"),
+            ("combined", "Combined (Local + Similarity)"),
+        ]:
+            degrees = degrees_dict[key]
+
+            if len(degrees) == 0:
+                print(f"\n{label}: No data")
+                continue
+
+            # Calculate statistics
+            zero_count = sum(1 for d in degrees if d == 0)
+            non_zero_degrees = [d for d in degrees if d > 0]
+
+            print(f"\n{label}:")
+            print(f"  Total nodes: {len(degrees):,}")
+
+            # Only show mean/median for within-document (peaked distribution)
+            # Skip for power law distributions (cross-document and combined)
+            if key == "within_document":
+                print(f"  Mean degree (all nodes): {np.mean(degrees):.2f}")
+                if non_zero_degrees:
+                    print(
+                        f"  Mean degree (non-zero only): {np.mean(non_zero_degrees):.2f}"
+                    )
+                print(f"  Median degree: {np.median(degrees):.2f}")
+
+            print(f"  Std deviation: {np.std(degrees):.2f}")
+            print(f"  Min degree: {np.min(degrees)}")
+            print(f"  Max degree: {np.max(degrees)}")
+            print(
+                f"  Nodes with degree 0: {zero_count:,} ({100 * zero_count / len(degrees):.1f}%)"
+            )
+            if non_zero_degrees:
+                print(
+                    f"  Nodes with degree > 0: {len(non_zero_degrees):,} ({100 * len(non_zero_degrees) / len(degrees):.1f}%)"
+                )
+
+            # Most common degrees
+            degree_counts = Counter(degrees)
+            most_common = degree_counts.most_common(5)
+            print("  Most common degrees:")
+            for degree, count in most_common:
+                print(
+                    f"    Degree {degree}: {count:,} nodes ({100 * count / len(degrees):.1f}%)"
+                )
+
+            # Power law fit - only for cross-document and combined
+            if key in ["cross_document", "combined"] and len(non_zero_degrees) > 5:
+                degree_counts_nz = Counter(non_zero_degrees)
+                unique_degrees = sorted(degree_counts_nz.keys())
+                frequencies = [degree_counts_nz[d] for d in unique_degrees]
+
+                fit_result = self.fit_power_law_weighted(
+                    unique_degrees, frequencies, degree_min=2, degree_max=100
+                )
+
+                if fit_result is not None:
+                    print("  Power law fit (degrees 2-100, Poisson weighted):")
+                    print(
+                        f"    Exponent (γ): {-fit_result['slope']:.3f} ± {fit_result['gamma_err']:.3f}"
+                    )
+                    print(f"    R² value: {fit_result['r_squared']:.3f}")
+                    print(
+                        f"    Fitted range: {int(min(fit_result['fit_x']))} to {int(max(fit_result['fit_x']))} degrees"
+                    )
+
+                    # Interpretation
+                    gamma = -fit_result["slope"]
+                    if gamma < 2:
+                        print(
+                            "    Note: γ < 2 indicates EXTREME hub concentration (very heavy-tailed)"
+                        )
+                    elif gamma < 3:
+                        print("    Note: 2 < γ < 3 is typical scale-free behavior")
+                    else:
+                        print("    Note: γ > 3 indicates more uniform distribution")
+
+    def analyze_similarity_link_diversity_stepwise(
+        self,
+        cross_doc_rel=None,
+        node_types=["Concept", "Intervention"],
+        sample_size=50,
+        min_degree=100,
+    ):
+        """
+        Analyze what fraction of similarity connections go to unique data sources.
+
+        For each node:
+        - Count total similarity connections (degree)
+        - Count unique data sources among those connections
+        - Calculate ratio: unique_sources / total_connections
+
+        A high ratio (close to 1.0) means each connection is to a different source.
+        A low ratio means multiple connections to nodes from the same sources (concentration).
+
+        Only reports nodes with diversity ratio < 1.0 (non-perfect diversity).
+
+        Args:
+            cross_doc_rel: Relationship type name for cross-document edges (default: global similarity_edge_name)
+            node_types: List of node type labels to check
+            sample_size: Number of nodes to analyze (will attempt to find this many with >min_degree)
+            min_degree: Minimum similarity degree to include in sample
+
+        Returns:
+            dict: Statistics about link diversity and concentration
+        """
+        if cross_doc_rel is None:
+            cross_doc_rel = similarity_edge_name
+
+        print("\n" + "=" * 80)
+        print("SIMILARITY LINK DIVERSITY ANALYSIS")
+        print("=" * 80)
+        print(
+            f"\nFinding nodes with >{min_degree} similarity edges (may take a moment)...\n"
+        )
+
+        # Build WHERE clause for node types
+        if node_types:
+            type_conditions = " OR ".join([f"'{nt}' IN labels(n)" for nt in node_types])
+            where_type = f"AND ({type_conditions})"
+        else:
+            where_type = ""
+
+        # STEP 1: Get candidate node IDs (simple query, no counting yet)
+        print("Step 1: Getting candidate node IDs...")
+
+        # Get a large pool of candidates - we'll filter by degree in the per-node queries
+        id_query = f"""
+        MATCH (n)-[:{cross_doc_rel}]-()
+        WHERE id(n) >= 0 {where_type}
+        RETURN DISTINCT id(n) as node_id
+        LIMIT {sample_size * 5}
+        """
+
+        try:
+            result = self.client.execute_command(
+                "GRAPH.QUERY", self.graph_name, id_query
+            )
+
+            if len(result) <= 1 or len(result[1]) == 0:
+                print("⚠ No nodes found with similarity edges")
+                return None
+
+            candidate_ids = [int(row[0]) for row in result[1]]
+            print(f"✓ Got {len(candidate_ids)} candidate nodes")
+
+        except Exception as e:
+            print(f"✗ Error getting node IDs: {e}")
+            return None
+
+        # STEP 2: For each candidate, check degree and analyze if it qualifies
+        print(f"\nStep 2: Filtering and analyzing nodes with >{min_degree} edges...")
+
+        nodes_analyzed = []
+        nodes_checked = 0
+
+        for node_id in candidate_ids:
+            if len(nodes_analyzed) >= sample_size:
+                break
+
+            try:
+                # Build node type filter for neighbors
+                if node_types:
+                    type_conditions_m = " OR ".join(
+                        [f"'{nt}' IN labels(m)" for nt in node_types]
+                    )
+                    where_type_m = f"AND ({type_conditions_m})"
+                else:
+                    where_type_m = ""
+
+                # Simple query: count connections and check if >= min_degree
+                # DIAGNOSTIC: Check for unexpected edge patterns
+                node_query = f"""
+                MATCH (n)
+                WHERE id(n) = {node_id}
+                MATCH (n)-[:FROM]->(s:Source)
+                WITH n, s.url as source_url
+                MATCH (n)-[r:{cross_doc_rel}]-(m)
+                WHERE m <> n {where_type_m}
+                WITH n, source_url, m, COUNT(r) as edge_count
+                MATCH (m)-[:FROM]->(target:Source)
+                WHERE target.url <> source_url
+                WITH n.name as node_name,
+                     source_url,
+                     COUNT(DISTINCT m) as total_connections,
+                     SUM(edge_count) as total_edges,
+                     COLLECT(DISTINCT target.url) as unique_target_sources
+                WHERE total_connections > {min_degree}
+                RETURN node_name, 
+                       source_url, 
+                       total_connections,
+                       total_edges,
+                       SIZE(unique_target_sources) as unique_sources,
+                       unique_target_sources
+                """
+
+                node_result = self.client.execute_command(
+                    "GRAPH.QUERY", self.graph_name, node_query
+                )
+                nodes_checked += 1
+
+                if len(node_result) > 1 and len(node_result[1]) > 0:
+                    row = node_result[1][0]
+                    node_name = row[0] if row[0] else "No name"
+                    source_url = row[1] if row[1] else "Unknown"
+                    total_connections = int(row[2]) if len(row) > 2 else 0
+                    total_edges = int(row[3]) if len(row) > 3 else 0
+                    unique_sources = int(row[4]) if len(row) > 4 else 0
+                    target_sources = row[5] if len(row) > 5 else []
+
+                    # DIAGNOSTIC: Check if total_edges != total_connections
+                    if total_edges != total_connections:
+                        print(
+                            f"  ⚠ WARNING: Node {node_id} has {total_edges} edges but {total_connections} unique neighbors!"
+                        )
+                        print(
+                            "    This suggests multiple edges between same node pairs or bidirectional edges."
+                        )
+
+                    if total_connections > 0 and unique_sources > 0:
+                        diversity_ratio = unique_sources / total_connections
+
+                        # Only include nodes with non-perfect diversity
+                        if diversity_ratio < 1.0:
+                            nodes_analyzed.append(
+                                {
+                                    "node_id": node_id,
+                                    "name": node_name,
+                                    "source": source_url,
+                                    "total_connections": total_connections,
+                                    "unique_sources": unique_sources,
+                                    "diversity_ratio": diversity_ratio,
+                                    "target_sources": target_sources,
+                                }
+                            )
+
+                # Progress update
+                if nodes_checked % 10 == 0:
+                    print(
+                        f"  Checked {nodes_checked} nodes, found {len(nodes_analyzed)} qualifying nodes with concentration..."
+                    )
+
+            except Exception as e:
+                print(f"  Warning: Query failed for node {node_id}: {e}")
+                continue
+
+        print(f"\n✓ Checked {nodes_checked} nodes total")
+
+        if len(nodes_analyzed) == 0:
+            print(
+                f"✓ All analyzed nodes with >{min_degree} edges have perfect diversity (100% unique sources)!"
+            )
+            print(
+                "  No concentration detected - each similarity connection goes to a different source."
+            )
+            return {
+                "nodes_sampled": nodes_checked,
+                "nodes_with_concentration": 0,
+                "mean_diversity_ratio": 1.0,
+                "message": "All nodes have perfect diversity",
+            }
+
+        print(
+            f"\n✓ Found {len(nodes_analyzed)} nodes with concentration (< 100% diversity)"
+        )
+        print(
+            f"  ({nodes_checked - len(nodes_analyzed)} nodes had perfect diversity or didn't qualify)"
+        )
+
+        # Calculate statistics
+        diversity_ratios = [n["diversity_ratio"] for n in nodes_analyzed]
+        total_connections_list = [n["total_connections"] for n in nodes_analyzed]
+        unique_sources_list = [n["unique_sources"] for n in nodes_analyzed]
+
+        print("\n" + "=" * 80)
+        print("DIVERSITY RATIO STATISTICS (Unique Sources / Total Connections)")
+        print("=" * 80)
+        print(f"  Nodes checked: {nodes_checked}")
+        print(
+            f"  Nodes with >{min_degree} edges and concentration: {len(nodes_analyzed)} ({100 * len(nodes_analyzed) / nodes_checked:.1f}%)"
+        )
+        print("\nAmong nodes with concentration:")
+        print(f"  Mean ratio: {np.mean(diversity_ratios):.3f}")
+        print(f"  Median ratio: {np.median(diversity_ratios):.3f}")
+        print(f"  Std Dev: {np.std(diversity_ratios):.3f}")
+        print(f"  Min ratio: {np.min(diversity_ratios):.3f}")
+        print(f"  Max ratio: {np.max(diversity_ratios):.3f}")
+
+        print("\nInterpretation:")
+        print(
+            "  Ratio = 1.0 means all connections go to different sources (maximum diversity)"
+        )
+        print(
+            "  Ratio < 0.5 means high concentration (>2 connections per source on average)"
+        )
+        print(
+            "  Ratio < 0.2 means extreme concentration (>5 connections per source on average)"
+        )
+
+        print("\n" + "=" * 80)
+        print("CONNECTION STATISTICS (Nodes with Concentration Only)")
+        print("=" * 80)
+        print("Total Connections Per Node:")
+        print(f"  Mean: {np.mean(total_connections_list):.1f}")
+        print(f"  Median: {np.median(total_connections_list):.1f}")
+        print(f"  Max: {np.max(total_connections_list)}")
+
+        print("\nUnique Sources Per Node:")
+        print(f"  Mean: {np.mean(unique_sources_list):.1f}")
+        print(f"  Median: {np.median(unique_sources_list):.1f}")
+        print(f"  Max: {np.max(unique_sources_list)}")
+
+        # Distribution of diversity ratios
+        from collections import Counter
+
+        # Bin diversity ratios
+        ratio_bins = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        binned_ratios = []
+        for ratio in diversity_ratios:
+            for i in range(len(ratio_bins) - 1):
+                if ratio <= ratio_bins[i + 1]:
+                    binned_ratios.append(f"{ratio_bins[i]:.1f}-{ratio_bins[i + 1]:.1f}")
+                    break
+
+        distribution = Counter(binned_ratios)
+        print("\nDiversity Ratio Distribution:")
+        for bin_range in [
+            f"{ratio_bins[i]:.1f}-{ratio_bins[i + 1]:.1f}"
+            for i in range(len(ratio_bins) - 1)
+        ]:
+            count = distribution[bin_range]
+            pct = 100 * count / len(nodes_analyzed)
+            print(f"  {bin_range}: {count} nodes ({pct:.1f}%)")
+
+        # Find nodes with high concentration (low diversity ratio)
+        nodes_high_concentration = sorted(
+            nodes_analyzed, key=lambda x: x["diversity_ratio"]
+        )[:5]
+
+        print("\n" + "=" * 80)
+        print("TOP 5 NODES WITH HIGHEST CONCENTRATION (Lowest Diversity Ratio)")
+        print("=" * 80)
+        for i, node in enumerate(nodes_high_concentration, 1):
+            avg_connections_per_source = (
+                node["total_connections"] / node["unique_sources"]
+            )
+            print(f"\n  {i}. Node {node['node_id']}")
+            print(f"     Name: {node['name'][:80]}...")
+            print(f"     Total connections: {node['total_connections']}")
+            print(f"     Unique sources: {node['unique_sources']}")
+            print(f"     Diversity ratio: {node['diversity_ratio']:.3f}")
+            print(f"     Avg connections per source: {avg_connections_per_source:.1f}")
+            if node["source"] != "Unknown":
+                print(f"     From: {node['source'][:60]}...")
+
+        return {
+            "nodes_sampled": nodes_checked,
+            "nodes_with_concentration": len(nodes_analyzed),
+            "concentration_percentage": 100 * len(nodes_analyzed) / nodes_checked,
+            "mean_diversity_ratio": np.mean(diversity_ratios),
+            "median_diversity_ratio": np.median(diversity_ratios),
+            "mean_total_connections": np.mean(total_connections_list),
+            "mean_unique_sources": np.mean(unique_sources_list),
+            "ratio_distribution": dict(distribution),
+        }
+
+    def inspect_node_edges(self, node_id, rel_type=None):
+        """
+        Diagnostic function to inspect all edges of a specific node
+
+        Args:
+            node_id: The node ID to inspect
+            rel_type: Relationship type to inspect (default: global similarity_edge_name)
+        """
+        if rel_type is None:
+            rel_type = similarity_edge_name
+
+        print("\n" + "=" * 80)
+        print(f"INSPECTING NODE {node_id} EDGES")
+        print("=" * 80)
+
+        # Check FROM relationships
+        from_query = f"""
+        MATCH (n)-[r:FROM]->(s)
+        WHERE id(n) = {node_id}
+        RETURN type(r) as rel_type, id(s) as source_id, s.url as source_url
+        """
+
+        print(f"\nFROM relationships for node {node_id}:")
+        result = self.client.execute_command("GRAPH.QUERY", self.graph_name, from_query)
+        if len(result) > 1 and len(result[1]) > 0:
+            for i, row in enumerate(result[1]):
+                print(f"  {i + 1}. {row[0]} -> Source {row[1]}: {row[2]}")
+        else:
+            print("  None found")
+
+        # Get all similarity edges with details
+        edge_query = f"""
+        MATCH (n)-[r:{rel_type}]-(m)
+        WHERE id(n) = {node_id}
+        RETURN id(m) as target_id,
+               type(r) as rel_type,
+               startNode(r) = n as is_outgoing,
+               labels(m) as target_labels,
+               m.name as target_name
+        ORDER BY target_id
+        """
+
+        print(f"\nAll {rel_type} edges for node {node_id}:")
+        result = self.client.execute_command("GRAPH.QUERY", self.graph_name, edge_query)
+
+        if len(result) > 1 and len(result[1]) > 0:
+            print(f"  Total edge matches: {len(result[1])}")
+
+            # Count by target
+            from collections import Counter
+
+            target_counts = Counter([int(row[0]) for row in result[1]])
+            unique_targets = len(target_counts)
+
+            print(f"  Unique target nodes: {unique_targets}")
+            print(f"  Edges per target ratio: {len(result[1]) / unique_targets:.2f}")
+
+            # Find duplicates
+            duplicates = {
+                tid: count for tid, count in target_counts.items() if count > 1
+            }
+            if duplicates:
+                print(f"\n  Found {len(duplicates)} targets with multiple edges:")
+                for tid, count in sorted(duplicates.items(), key=lambda x: -x[1])[:10]:
+                    print(f"    Target {tid}: {count} edges")
+                    # Show details for this target
+                    for row in result[1]:
+                        if int(row[0]) == tid:
+                            direction = (
+                                "outgoing (n->m)" if row[2] else "incoming (m->n)"
+                            )
+                            print(
+                                f"      - {direction}, labels: {row[3]}, name: {row[4]}"
+                            )
+            else:
+                print("  No duplicates - each target appears exactly once")
+
+            # Sample first 10 edges
+            print("\n  Sample of first 10 edges:")
+            for i, row in enumerate(result[1][:10]):
+                direction = "n->m" if row[2] else "m->n"
+                print(
+                    f"    {i + 1}. Target {row[0]} ({direction}), labels: {row[3]}, name: {row[4][:50] if row[4] else 'None'}..."
+                )
+        else:
+            print("  No edges found")
+
+    def verify_cross_document_edges(
+        self,
+        cross_doc_rel=None,
+        node_types=["Concept", "Intervention"],
+        sample_size=1000,
+    ):
+        """
+        Verify that similarity edges only connect nodes from different data sources
+        Uses the 'url' property from Source nodes to distinguish data sources
+
+        Args:
+            cross_doc_rel: Relationship type name for cross-document edges (default: global similarity_edge_name)
+            node_types: List of node type labels to check
+            sample_size: Number of edges to sample for verification
+
+        Returns:
+            dict: Statistics about same-source vs different-source connections
+        """
+        if cross_doc_rel is None:
+            cross_doc_rel = similarity_edge_name
+
+        print("\n" + "=" * 80)
+        print("CROSS-DOCUMENT EDGE VERIFICATION")
+        print("=" * 80)
+        print(
+            f"\nChecking if '{cross_doc_rel}' edges connect nodes from different data sources..."
+        )
+        print(f"Sampling up to {sample_size} edges for verification...\n")
+
+        # Build WHERE clause for node types
+        if node_types:
+            type_conditions_n = " OR ".join(
+                [f"'{nt}' IN labels(n)" for nt in node_types]
+            )
+            type_conditions_m = " OR ".join(
+                [f"'{nt}' IN labels(m)" for nt in node_types]
+            )
+            where_clause_both = f"AND ({type_conditions_n}) AND ({type_conditions_m})"
+        else:
+            where_clause_both = ""
+
+        # Check if edges connect different sources
+        query = f"""
+        MATCH (n)-[:{cross_doc_rel}]-(m)
+        WHERE id(n) < id(m) {where_clause_both}
+        MATCH (n)-[:FROM]->(s1:Source)
+        MATCH (m)-[:FROM]->(s2:Source)
+        RETURN id(n), id(m), s1.url, s2.url
+        LIMIT {sample_size}
+        """
+
+        try:
+            result = self.client.execute_command("GRAPH.QUERY", self.graph_name, query)
+
+            if len(result) <= 1 or len(result[1]) == 0:
+                print(
+                    "⚠ WARNING: No edges found or nodes don't have Source relationships"
+                )
+                print("Cannot verify cross-document property.")
+                return None
+
+            # Analyze results
+            same_source_count = 0
+            different_source_count = 0
+            same_source_examples = []
+
+            for row in result[1]:
+                node1_id = int(row[0])
+                node2_id = int(row[1])
+                source1_url = row[2] if len(row) > 2 else None
+                source2_url = row[3] if len(row) > 3 else None
+
+                if source1_url and source2_url:
+                    if source1_url == source2_url:
+                        same_source_count += 1
+                        if len(same_source_examples) < 5:
+                            same_source_examples.append(
+                                {
+                                    "node1": node1_id,
+                                    "node2": node2_id,
+                                    "source": source1_url,
+                                }
+                            )
+                    else:
+                        different_source_count += 1
+
+            total_edges = same_source_count + different_source_count
+
+            # Print results
+            print(f"Total edges sampled: {total_edges:,}")
+            print(
+                f"Edges connecting DIFFERENT sources: {different_source_count:,} ({100 * different_source_count / total_edges:.1f}%)"
+            )
+            print(
+                f"Edges connecting SAME source: {same_source_count:,} ({100 * same_source_count / total_edges:.1f}%)"
+            )
+
+            if same_source_count > 0:
+                print(
+                    f"\n⚠ WARNING: Found {same_source_count} similarity edges connecting nodes within the SAME document!"
+                )
+                print(
+                    "This suggests the similarity threshold may be creating intra-document connections."
+                )
+                print("\nExamples of same-source connections:")
+                for i, example in enumerate(same_source_examples, 1):
+                    print(f"  {i}. Nodes {example['node1']} ↔ {example['node2']}")
+                    print(f"     Source: {example['source'][:80]}...")
+            else:
+                print(
+                    "\n✓ VERIFIED: All sampled similarity edges connect nodes from DIFFERENT sources"
+                )
+
+            return {
+                "total_sampled": total_edges,
+                "different_source": different_source_count,
+                "same_source": same_source_count,
+                "different_source_pct": 100 * different_source_count / total_edges
+                if total_edges > 0
+                else 0,
+            }
+
+        except Exception as e:
+            print(f"✗ Error during verification: {e}")
+            print("This might be due to:")
+            print("  - Nodes not having FROM relationships to Source nodes")
+            print("  - Source nodes not having 'url' property")
+            print("  - Different property name (check your schema)")
+            return None
+
+
+def main():
+    # Initialize analyzer
+    analyzer = GraphEdgeAnalyzer(
+        host="localhost", port=6379, graph_name="AISafetyIntervention"
+    )
+
+    print("Connecting to FalkorDB...")
+    print(f"Embeddings type: {embeddings_type}")
+    print(f"Similarity edge type: {similarity_edge_name}")
+
+    try:
+        # Test connection
+        analyzer.client.ping()
+        print("✓ Connected to FalkorDB")
+
+        # Get node type counts
+        type_counts = analyzer.get_node_type_counts()
+        if type_counts:
+            print("\nNode type counts:")
+            for node_type, count in sorted(
+                type_counts.items(), key=lambda x: x[1], reverse=True
+            ):
+                print(f"  {node_type}: {count:,} nodes")
+
+        # Discover relationship types
+        rel_types = analyzer.discover_relationship_types()
+
+        if len(rel_types) == 0:
+            print("\n✗ No relationship types found in the graph!")
+            return
+
+        # Use specified relationship types
+        within_doc_rel = "EDGE"
+        cross_doc_rel = similarity_edge_name  # Use global variable
+
+        # Verify these relationship types exist
+        if within_doc_rel not in rel_types:
+            print(
+                f"\n✗ ERROR: Relationship type '{within_doc_rel}' not found in graph!"
+            )
+            print("Available types:", rel_types)
+            return
+
+        if cross_doc_rel not in rel_types:
+            print(f"\n✗ ERROR: Relationship type '{cross_doc_rel}' not found in graph!")
+            print("Available types:", rel_types)
+            return
+
+        print("\n✓ Using relationship types:")
+        print(f"  Within-document edges: '{within_doc_rel}'")
+        print(f"  Cross-document edges: '{cross_doc_rel}'")
+
+        # Specify node types to analyze (Concept and Intervention only)
+        node_types_to_analyze = ["Concept", "Intervention"]
+        print(f"\n✓ Filtering to node types: {node_types_to_analyze}")
+
+        # Define cosine similarity thresholds to scan
+        cosine_thresholds = [0.8, 0.85, 0.9, 0.95]
+
+        # Convert cosine similarity to Euclidean distance: euclidean = sqrt(2 * (1 - cosine))
+        euclidean_thresholds = [np.sqrt(2 * (1 - cos_t)) for cos_t in cosine_thresholds]
+
+        print("\n" + "=" * 80)
+        print("THRESHOLD CONVERSION")
+        print("=" * 80)
+        for cos_t, eucl_t in zip(cosine_thresholds, euclidean_thresholds):
+            print(f"  Cosine similarity ≥ {cos_t} → Euclidean distance < {eucl_t:.6f}")
+
+        # Store results for each threshold
+        threshold_results = {}
+
+        print("\n" + "=" * 80)
+        print("SCANNING SIMILARITY THRESHOLDS")
+        print("=" * 80)
+
+        # Run analysis for each threshold
+        for cos_thresh, eucl_thresh in zip(cosine_thresholds, euclidean_thresholds):
+            print(f"\n{'=' * 80}")
+            print(
+                f"ANALYZING COSINE THRESHOLD ≥ {cos_thresh} (Euclidean < {eucl_thresh:.6f})"
+            )
+            print(f"{'=' * 80}")
+
+            degrees_dict = analyzer.get_node_degrees_by_edge_type_batched(
+                within_doc_rel,
+                cross_doc_rel,
+                node_types=node_types_to_analyze,
+                euclidean_threshold=eucl_thresh,
+            )
+
+            # Check if we actually got data
+            if all(max(degrees_dict[key]) == 0 for key in degrees_dict):
+                print(
+                    f"\n✗ WARNING: All degrees are 0 for cosine threshold ≥{cos_thresh}!"
+                )
+                continue
+
+            # Find node with max combined degree (inline)
+            combined_degrees = degrees_dict["combined"]
+            max_degree = max(combined_degrees)
+            max_idx = combined_degrees.index(max_degree)
+            print("\n  Node with max combined degree:")
+            print(f"    Index in degree list: {max_idx}")
+            print(f"    Combined degree: {max_degree}")
+            threshold_results[eucl_thresh] = degrees_dict
+
+            # Print similarity statistics for this threshold
+            analyzer.print_statistics(degrees_dict, similarity_only=True)
+
+            # Create individual 1x3 plot for this threshold
+            print(f"\nCreating plot for cosine threshold ≥{cos_thresh}...")
+            analyzer.plot_degree_comparison(
+                degrees_dict,
+                embeddings_type,
+                f"degree_comparison_{embeddings_type}_cosine_{cos_thresh}.png",
+            )
+
+        if len(threshold_results) == 0:
+            print("\n✗ ERROR: No valid results for any threshold!")
+            return
+
+        # Print full statistics for default threshold (0.8)
+        default_eucl_thresh = euclidean_thresholds[0]
+        if default_eucl_thresh in threshold_results:
+            print("\n" + "=" * 80)
+            print(
+                f"FULL STATISTICS FOR DEFAULT THRESHOLD (Cosine ≥ {cosine_thresholds[0]})"
+            )
+            print("=" * 80)
+            analyzer.print_statistics(
+                threshold_results[default_eucl_thresh], similarity_only=False
+            )
+
+        # Create overlay plot with all thresholds (1x2: log-log + CCDF)
+        print("\n" + "=" * 80)
+        print("CREATING SIMILARITY THRESHOLD OVERLAY PLOT")
+        print("=" * 80)
+        analyzer.plot_similarity_threshold_overlay(
+            threshold_results, cosine_thresholds, embeddings_type
+        )
+
+        # Verify cross-document edges connect different sources (only for default threshold)
+        print("\n" + "=" * 80)
+        print(f"CROSS-DOCUMENT VERIFICATION (Cosine ≥ {cosine_thresholds[0]})")
+        print("=" * 80)
+        _verification_result = analyzer.verify_cross_document_edges(
+            cross_doc_rel=cross_doc_rel,
+            node_types=node_types_to_analyze,
+            sample_size=1000,
+        )
+
+        # Analyze similarity link diversity (only for default threshold)
+        print("\n" + "=" * 80)
+        print(f"DIVERSITY ANALYSIS (Cosine ≥ {cosine_thresholds[0]})")
+        print("=" * 80)
+        _diversity_result = analyzer.analyze_similarity_link_diversity_stepwise(
+            cross_doc_rel=cross_doc_rel,
+            node_types=node_types_to_analyze,
+            sample_size=50,
+            min_degree=100,
+        )
+
+        # Generate comparison plot wide vs narrow cosine threshold degree plots
+        analyzer.plot_wide_narrow_comparison(
+            "similarity_threshold_overlay_wide_data.pkl",
+            "similarity_threshold_overlay_narrow_data.pkl",
+            "similarity_comparison_wide_narrow.png",
+        )
+
+        print("\n✓ Analysis complete!")
+        print(f"\nEmbeddings type: {embeddings_type}")
+        print(f"Similarity edge type: {similarity_edge_name}")
+        print(f"Cosine similarity thresholds analyzed: {cosine_thresholds}")
+        print(
+            f"Corresponding Euclidean distance thresholds: {[f'{e:.6f}' for e in euclidean_thresholds]}"
+        )
+        print("\nOutput files:")
+        print("  Individual threshold plots (1x3):")
+        for cos_t in cosine_thresholds:
+            print(f"    - degree_comparison_{embeddings_type}_cosine_{cos_t}.png")
+        print(
+            f"  Overlay plot (1x2): similarity_threshold_overlay_{embeddings_type}.png"
+        )
+
+    except redis.exceptions.ConnectionError as e:
+        print(f"✗ Connection error: {e}")
+        print("Make sure FalkorDB is running on localhost:6379")
+    except redis.exceptions.ResponseError as e:
+        print(f"✗ Query error: {e}")
+        print("Make sure the graph name is correct and edge types exist")
+    except Exception as e:
+        print(f"✗ Error: {e}")
+        import traceback
+
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
