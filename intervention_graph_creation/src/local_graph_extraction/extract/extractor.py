@@ -456,8 +456,9 @@ class Extractor:
                         f"Error for {error_result['custom_id']}: {error_result['error']}"
                     )
 
-
-    def get_output_text_from_response_body(self, response_body: Dict) -> (str, Optional[Dict]):
+    def get_output_text_from_response_body(
+        self, response_body: Dict
+    ) -> (str, Optional[Dict]):
         """Get the output text from an openAI response body from a batch api request"""
         if "output" not in response_body:
             raise ValueError("Response body does not contain 'output' field")
@@ -467,19 +468,21 @@ class Extractor:
             raise ValueError(f"Message status is not completed: {message['status']}")
         output_text = self._find_output_text(message["content"])
         return output_text["text"]
+
     def _find_message(self, output: List[Dict]):
         """Helper function for `get_output_text_from_response_body`."""
         for item in output:
             if "type" in item and item["type"] == "message":
                 return item
         raise ValueError("No message found in output list")
+
     def _find_output_text(self, content: List[Dict]):
         """Helper function for `get_output_text_from_response_body`."""
         for item in content:
             if "type" in item and item["type"] == "output_text":
                 return item
         raise ValueError("No output_text found in content")
-    
+
     def write_batch_outputs(
         self, out_dir: Path, stem: str, response_body: Dict, meta: Dict
     ) -> None:
@@ -890,12 +893,11 @@ if __name__ == "__main__":
     batch_size = 10
 
     async def main():
-
         await extractor.process_dir_batch_async(
             input_dir=input_dir,
             first_n=total_articles,
             batch_size=batch_size,
-            description=f"Paper extraction (100, {batch_size} per batch)"
+            description=f"Paper extraction (100, {batch_size} per batch)",
         )
 
     asyncio.run(main())

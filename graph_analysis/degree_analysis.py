@@ -1030,7 +1030,7 @@ class GraphEdgeAnalyzer:
                 frequencies = [degree_counts_nz[d] for d in unique_degrees]
 
                 log_degrees = np.log10(unique_degrees)
-                # limit fit to low noise range with sufficient statistics
+                # limit fit to low noise range with sufficient statistics < 100 degrees
                 log_freqs = np.log10(frequencies)
                 # Create mask and apply to both arrays
                 mask = log_degrees <= 2

@@ -29,43 +29,45 @@ class AttributeAnalyzer:
         result = self.client.execute_command("GRAPH.QUERY", self.graph, cypher)
         return result[1] if len(result) > 1 else []
 
-    def query_all(self, base_query):
-        """Query all results by batching"""
-        all_results = []
-        batch_size = 10000
-        skip = 0
-
-        print("  Batching query...")
-        while True:
-            query = f"{base_query} SKIP {skip} LIMIT {batch_size}"
-            batch = self.query(query)
-            if not batch:
-                break
-            all_results.extend(batch)
-            skip += batch_size
-            print(f"    Retrieved {len(all_results)} rows...")
-            if len(batch) < batch_size:
-                break
-
-        return all_results
-
     def intervention_distributions(self):
         """Get intervention maturity and lifecycle distributions"""
-        base_query = """
+        print("  Getting intervention ID range...")
+        id_query = """
         MATCH (i:Intervention)
-        RETURN i.intervention_maturity, i.intervention_lifecycle, i.name
+        RETURN min(id(i)), max(id(i))
         """
-        rows = self.query_all(base_query)
+        id_result = self.query(id_query)
+
+        if not id_result or not id_result[0]:
+            return [], []
+
+        min_id = int(id_result[0][0])
+        max_id = int(id_result[0][1])
 
         maturities = []
         lifecycles = []
-        for row in rows:
-            if row[0] is not None:
-                maturities.append(int(row[0]))
-            if row[1] is not None:
-                lifecycles.append(int(row[1]))
+        current_id = min_id
+        batch_size = 5000
 
-        print(f"Interventions: {len(rows)}")
+        while current_id <= max_id:
+            query = f"""
+            MATCH (i:Intervention)
+            WHERE id(i) >= {current_id} AND id(i) < {current_id + batch_size}
+            RETURN i.intervention_maturity, i.intervention_lifecycle
+            """
+            batch = self.query(query)
+
+            for row in batch:
+                if row[0] is not None:
+                    maturities.append(int(row[0]))
+                if row[1] is not None:
+                    lifecycles.append(int(row[1]))
+
+            current_id += batch_size
+
+        print(
+            f"Interventions: {len(maturities)} with maturity, {len(lifecycles)} with lifecycle"
+        )
         print(f"  Maturity: {dict(Counter(maturities))}")
         print(f"  Lifecycle: {dict(Counter(lifecycles))}")
 
@@ -73,12 +75,36 @@ class AttributeAnalyzer:
 
     def concept_categories(self):
         """Get concept category distribution"""
-        base_query = """
+        print("  Getting concept ID range...")
+        id_query = """
         MATCH (c:Concept)
-        RETURN c.concept_category
+        RETURN min(id(c)), max(id(c))
         """
-        rows = self.query_all(base_query)
-        categories = [row[0] for row in rows if row[0]]
+        id_result = self.query(id_query)
+
+        if not id_result or not id_result[0]:
+            return []
+
+        min_id = int(id_result[0][0])
+        max_id = int(id_result[0][1])
+
+        categories = []
+        current_id = min_id
+        batch_size = 5000
+
+        while current_id <= max_id:
+            query = f"""
+            MATCH (c:Concept)
+            WHERE id(c) >= {current_id} AND id(c) < {current_id + batch_size}
+            RETURN c.concept_category
+            """
+            batch = self.query(query)
+
+            for row in batch:
+                if row[0]:
+                    categories.append(row[0])
+
+            current_id += batch_size
 
         print(f"\nConcept categories: {len(categories)} total")
         print(f"  Distribution: {dict(Counter(categories))}")
@@ -87,12 +113,37 @@ class AttributeAnalyzer:
 
     def edge_confidence(self):
         """Get edge confidence distribution (all)"""
-        base_query = """
-        MATCH ()-[e:EDGE]->()
-        RETURN e.edge_confidence
+        print("  Getting node ID range for EDGE edges...")
+        # Get ID range of all nodes to batch edge queries
+        id_query = """
+        MATCH (n)
+        RETURN min(id(n)), max(id(n))
         """
-        rows = self.query_all(base_query)
-        confidences = [int(row[0]) for row in rows if row[0] is not None]
+        id_result = self.query(id_query)
+
+        if not id_result or not id_result[0]:
+            return []
+
+        min_id = int(id_result[0][0])
+        max_id = int(id_result[0][1])
+
+        confidences = []
+        current_id = min_id
+        batch_size = 5000
+
+        while current_id <= max_id:
+            query = f"""
+            MATCH (n)-[e:EDGE]->()
+            WHERE id(n) >= {current_id} AND id(n) < {current_id + batch_size}
+            RETURN e.edge_confidence
+            """
+            batch = self.query(query)
+
+            for row in batch:
+                if row[0] is not None:
+                    confidences.append(int(row[0]))
+
+            current_id += batch_size
 
         print(f"\nEDGE edges: {len(confidences)}")
         print(f"  Distribution: {dict(Counter(confidences))}")
