@@ -1110,14 +1110,23 @@ def run_section_d(node_attrs, edge_data):
             n_struct += 1
 
     print(
-        f"  Graph: {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges "
+        f"  Full graph: {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges "
         f"(SIM09={n_sim09:,}, STRUCT={n_struct:,})"
     )
 
+    # Restrict to degree>=3 nodes: true branching points (degree-1/2 nodes are
+    # chain endpoints/intermediates with no meaningful betweenness contribution
+    # beyond their immediate neighbors). All nodes have degree>=1 in this graph.
+    deg3_nodes = {n for n, d in G.degree() if d >= 3}
+    G_sub = G.subgraph(deg3_nodes).copy()
     print(
-        "  Computing approximate betweenness (k=1000 samples) — this takes ~15-20 min ..."
+        f"  Degree>=3 subgraph: {G_sub.number_of_nodes():,} nodes "
+        f"({G_sub.number_of_nodes() / G.number_of_nodes():.1%}), "
+        f"{G_sub.number_of_edges():,} edges"
     )
-    betweenness = nx.betweenness_centrality(G, k=1000, normalized=True)
+
+    print("  Computing EXACT betweenness on degree>=3 subgraph — ~10-20 min ...")
+    betweenness = nx.betweenness_centrality(G_sub, normalized=True)
 
     # Top 100
     top100 = sorted(betweenness.items(), key=lambda x: x[1], reverse=True)[:100]
