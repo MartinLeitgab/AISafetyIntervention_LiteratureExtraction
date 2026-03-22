@@ -227,23 +227,48 @@ Storage floor: max score = 0.6325 = SIM 0.80. All stored SIM edges have cos_sim 
 
 ## Next Steps (Step 3 — updated 2026-03-21)
 
-**CRITICAL (must complete for workshop):**
-1. Multi-criteria config scoring (substep #23): silhouette 25% + EDGE% 30% + cluster count 20% + ARI 15% + interpretability 10% — produces ranked table of all 160 configs
-2. Final optimal config selection with full transparency: expected SIM≥0.9 + "both" mode confirmed, or corrected by scoring
-3. Confirm "both" is the best mode for unique risk-intervention pathway grouping (not just silhouette/EDGE balance) — if another mode scores better on pathway uniqueness, use that for hub clustering analysis
+### CRITICAL (must complete for workshop acceptance)
 
-**ESSENTIAL (Step 3):**
-4. Cluster top-100 hubs (by SIM≥0.9 degree) by cosine similarity → name hub themes across risk, intervention, concept node types; report hub #1 and hub #100 degree per node type
-5. Recompute betweenness on SIM≥0.9-filtered graph; cluster top-50 betweenness nodes to find unique bridge themes (accounts for near-duplicates)
-6. Edge threshold sensitivity confirmation: document SIM 0.9 as "sweet spot" entry point using ARI evidence
+| # | Substep | Goal | Status |
+|---|---------|------|--------|
+| #20 | Algorithm comparison (Agglomerative vs Louvain vs HDBSCAN) | Goal 3 ⭐ | ✅ DONE in Step 2b |
+| #23 | Multi-criteria scoring: rank all 160 configs (silhouette 25% + EDGE% 30% + cluster count 20% + ARI 15% + interpretability 10%) | Goal 4 ⭐ | ⬜ TODO |
 
-**ENRICHMENT (Step 3):**
-7. EDGE-only vs SIM≥0.9 cluster quality comparison (substep #22)
-8. Held-out test set validation (substep #24)
+Output of #23: ranked config table + final optimal config selection with full justification. Expected result: SIM≥0.9 + "both" confirmed, or updated if scoring says otherwise.
 
-**Step 4 (Taxonomy Construction — after optimal config locked):**
-1. Cluster naming + manual validation (substep #26) — CRITICAL for workshop (Goal 6)
-2. Risk→Concept→Intervention triplet formation (substep #17)
-3. Exemplar path extraction per cluster (substep #18)
-4. Risk-intervention connectivity matrix (substep #28)
-5. Simulation-ready prompt templates (substeps #33–34)
+### ESSENTIAL (required for complete story)
+
+| # | Substep | Goal | Status |
+|---|---------|------|--------|
+| #21 | Edge threshold sensitivity: confirm SIM 0.9 as "sweet spot" entry point to stable regime | Goal 1 ⭐ | ⬜ TODO |
+| #22 | EDGE-only configuration validation: compare EDGE-only vs SIM≥0.9 cluster quality | Goal 2 ⭐ | ⬜ TODO |
+
+### ENRICHMENT (strengthens paper, not critical)
+
+| # | Substep | Goal | Status |
+|---|---------|------|--------|
+| #24 | Held-out test set validation | Goal 3 | ⬜ TODO |
+| #25 | EDGE subgraph consistency check | Goal 2 | ⬜ TODO |
+| — | Recompute betweenness on SIM≥0.9-filtered graph; cluster top-50 by cosine similarity to find unique bridge themes (accounts for near-duplicates without requiring deduplication) | Goal 6 | ⬜ TODO |
+
+**Note:** Hub clustering removed — covered by Step 4 substep #26 (cluster naming). The clustering step already groups near-duplicate nodes; the cluster exemplar serves as the hub representative.
+
+---
+
+## Step 4 Plan — Taxonomy Construction (after optimal config locked)
+
+### CRITICAL
+
+| # | Substep | Goal | Status |
+|---|---------|------|--------|
+| #26 | Cluster naming + manual validation (40–60 mechanism families, coherence 1–5 scale) | Goal 6 ⭐ | ⬜ TODO |
+
+### ENRICHMENT
+
+| # | Substep | Goal | Status |
+|---|---------|------|--------|
+| #17 | Risk→Concept→Intervention triplet formation | Goal 6 | ⬜ TODO |
+| #18 | Exemplar path extraction per cluster | Goals 5, 6 | ⬜ TODO |
+| #28 | Risk-intervention connectivity matrix | Goal 6 | ⬜ TODO |
+| #32 | Inter-rater agreement (manual) | Goal 6 | ⬜ TODO |
+| #33–34 | Simulation-ready prompt templates + output formatting | Goal 6 | ⬜ TODO |
