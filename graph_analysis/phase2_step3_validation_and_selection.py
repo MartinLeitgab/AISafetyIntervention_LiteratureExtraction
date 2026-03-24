@@ -1176,7 +1176,7 @@ def run_section_d(node_attrs, edge_data):
             dict(
                 node_id=nid,
                 name=attrs.get("name", ""),
-                category=attrs.get("type", attrs.get("concept_category", "")),
+                category=attrs.get("concept_category") or attrs.get("type", ""),
                 betweenness_sim09=btw,
                 rank_sim09=rank,
                 rank_sim08=old_rank.get(nid, -1),
@@ -1223,7 +1223,7 @@ def run_section_d(node_attrs, edge_data):
                 dict(
                     node_id=nid,
                     name=attrs.get("name", ""),
-                    category=attrs.get("type", ""),
+                    category=attrs.get("concept_category") or attrs.get("type", ""),
                     cluster_id=int(cid),
                 )
             )
@@ -1236,7 +1236,7 @@ def run_section_d(node_attrs, edge_data):
                 dict(
                     node_id=nid,
                     name=attrs.get("name", ""),
-                    category=attrs.get("type", ""),
+                    category=attrs.get("concept_category") or attrs.get("type", ""),
                     cluster_id=0,
                 )
             )
@@ -1291,6 +1291,243 @@ def _plot_betweenness_comparison(df_btw, old_rank):
     fig.savefig(STEP3_DIR / "betweenness_comparison.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
     print("  Saved betweenness_comparison.png")
+
+
+# ─── FIX CATEGORIES: relabel existing full-graph betweenness CSVs ────────────
+
+
+def fix_betweenness_categories(node_attrs):
+    """Reload betweenness_sim09.csv and betweenness_bridge_clusters.csv,
+    replace generic 'concept'/'intervention' category with concept_category
+    where available, and resave in-place."""
+    import sys
+
+    node_attrs_str = {str(k): v for k, v in node_attrs.items()}
+
+    def _get_category(nid):
+        attrs = node_attrs_str.get(str(nid), {})
+        return attrs.get("concept_category") or attrs.get("type", "")
+
+    btw_path = STEP3_DIR / "betweenness_sim09.csv"
+    if btw_path.exists():
+        df = pd.read_csv(btw_path)
+        df["category"] = df["node_id"].apply(lambda nid: _get_category(nid))
+        df.to_csv(btw_path, index=False)
+        print(f"  Fixed betweenness_sim09.csv ({len(df)} rows)")
+        print(f"  Category distribution:\n{df['category'].value_counts().to_string()}")
+        sys.stdout.flush()
+    else:
+        print("  betweenness_sim09.csv not found — skipping")
+
+    bc_path = STEP3_DIR / "betweenness_bridge_clusters.csv"
+    if bc_path.exists():
+        df = pd.read_csv(bc_path)
+        df["category"] = df["node_id"].apply(lambda nid: _get_category(nid))
+        df.to_csv(bc_path, index=False)
+        print(f"  Fixed betweenness_bridge_clusters.csv ({len(df)} rows)")
+        print(f"  Category distribution:\n{df['category'].value_counts().to_string()}")
+        sys.stdout.flush()
+    else:
+        print("  betweenness_bridge_clusters.csv not found — skipping")
+
+    # Reload old_rank for plot regeneration
+    old_btw_file = STEP2_DIR / "mechanism_transfer_betweenness.csv"
+    old_rank = {}
+    if old_btw_file.exists():
+        df_old = pd.read_csv(old_btw_file)
+        id_col = "node_id" if "node_id" in df_old.columns else df_old.columns[0]
+        for rank, (_, row) in enumerate(df_old.iterrows(), 1):
+            old_rank[str(row[id_col])] = rank
+
+    df_btw = pd.read_csv(btw_path)
+    _plot_betweenness_comparison(df_btw, old_rank)
+    print("  Regenerated betweenness_comparison.png")
+
+
+# ─── BETWEENNESS ON BOTH-MODE SUBGRAPH ───────────────────────────────────────
+
+
+def run_betweenness_both(node_attrs, edge_data, cluster_memberships):
+    """Exact betweenness on the SIM>=0.9+EDGE induced subgraph of all nodes
+    assigned to any cluster under mode=both, ec=0.9, agglomerative.
+    Saves to betweenness_both09.csv / betweenness_both09_bridge_clusters.csv /
+    betweenness_both09_comparison.png — does NOT touch full-graph outputs."""
+    import sys
+    import threading
+    import pickle as _pickle
+
+    print("\n" + "=" * 70)
+    print("BETWEENNESS — Both-mode SIM>=0.9 subgraph")
+    print("=" * 70)
+
+    # Collect all nodes in both-mode ec=0.9 agglomerative clusters
+    both_nodes = set()
+    for key, members in cluster_memberships.items():
+        if len(key) == 5:
+            ec, mode, node_type, algo, cluster_id = key
+            if (
+                str(ec) == "0.9"
+                and str(mode) == "both"
+                and str(algo) == "agglomerative"
+            ):
+                both_nodes.update(str(m) for m in members)
+
+    print(f"  Both-mode nodes (ec=0.9, all node_types): {len(both_nodes):,}")
+
+    # Build induced subgraph: SIM>=0.9 + structural EDGE edges between both_nodes
+    G = nx.Graph()
+    n_sim, n_edge = 0, 0
+    for e in edge_data:
+        src, tgt = str(e.get("source", "")), str(e.get("target", ""))
+        if src not in both_nodes or tgt not in both_nodes:
+            continue
+        etype = str(e.get("type", "")).upper()
+        if etype == "SIMILARITY":
+            score = e.get("similarity_score")
+            if score is not None and cos_sim_from_score(score) >= 0.90:
+                G.add_edge(src, tgt)
+                n_sim += 1
+        elif etype == "EDGE":
+            G.add_edge(src, tgt)
+            n_edge += 1
+
+    print(
+        f"  Subgraph: {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges "
+        f"(SIM09={n_sim:,}, EDGE={n_edge:,})"
+    )
+    sys.stdout.flush()
+
+    _btw_done = threading.Event()
+
+    def _heartbeat():
+        interval = 1800
+        elapsed = 0
+        while not _btw_done.wait(timeout=interval):
+            elapsed += interval
+            print(
+                f"  [heartbeat] both-mode betweenness still running — "
+                f"{elapsed // 3600}h {(elapsed % 3600) // 60}m elapsed"
+            )
+            sys.stdout.flush()
+
+    _hb_thread = threading.Thread(target=_heartbeat, daemon=True)
+    _hb_thread.start()
+
+    print("  Computing EXACT betweenness on both-mode subgraph ...")
+    sys.stdout.flush()
+    betweenness = nx.betweenness_centrality(G, normalized=True)
+    _btw_done.set()
+
+    # Checkpoint immediately
+    ckpt = STEP3_DIR / "betweenness_both09_raw_checkpoint.pkl"
+    with open(ckpt, "wb") as _f:
+        _pickle.dump(betweenness, _f, protocol=4)
+    print(f"  Checkpoint saved: {ckpt} ({len(betweenness):,} nodes)")
+    sys.stdout.flush()
+
+    node_attrs_str = {str(k): v for k, v in node_attrs.items()}
+
+    def _get_category(nid):
+        attrs = node_attrs_str.get(str(nid), {})
+        return attrs.get("concept_category") or attrs.get("type", "")
+
+    # Top 100
+    top100 = sorted(betweenness.items(), key=lambda x: x[1], reverse=True)[:100]
+
+    old_btw_file = STEP2_DIR / "mechanism_transfer_betweenness.csv"
+    old_rank = {}
+    if old_btw_file.exists():
+        df_old = pd.read_csv(old_btw_file)
+        id_col = "node_id" if "node_id" in df_old.columns else df_old.columns[0]
+        for rank, (_, row) in enumerate(df_old.iterrows(), 1):
+            old_rank[str(row[id_col])] = rank
+
+    rows = []
+    for rank, (nid, btw) in enumerate(top100, 1):
+        attrs = node_attrs_str.get(str(nid), {})
+        rows.append(
+            dict(
+                node_id=nid,
+                name=attrs.get("name", ""),
+                category=_get_category(nid),
+                betweenness_both09=btw,
+                rank_both09=rank,
+                rank_sim08=old_rank.get(nid, -1),
+            )
+        )
+
+    df_btw = pd.DataFrame(rows)
+    df_btw.to_csv(STEP3_DIR / "betweenness_both09.csv", index=False)
+    print(f"  Saved betweenness_both09.csv (top {len(df_btw)} nodes)")
+
+    # Cluster top-50 by embedding
+    top50_ids = [r["node_id"] for r in rows[:50]]
+    embeddings_50, valid_ids = [], []
+    for nid in top50_ids:
+        attrs = node_attrs_str.get(str(nid), {})
+        emb = attrs.get("embedding")
+        if emb is not None:
+            if isinstance(emb, str):
+                try:
+                    emb = np.array(
+                        [float(x) for x in emb.strip("<>").split(",")], dtype=np.float32
+                    )
+                except Exception:
+                    continue
+            emb = np.array(emb, dtype=np.float32)
+            norm = np.linalg.norm(emb)
+            if norm > 0:
+                embeddings_50.append(emb / norm)
+                valid_ids.append(nid)
+
+    bridge_rows = []
+    if len(embeddings_50) >= 10:
+        X = np.stack(embeddings_50)
+        clust = AgglomerativeClustering(n_clusters=min(12, len(embeddings_50)))
+        labels = clust.fit_predict(X)
+        for nid, cid in zip(valid_ids, labels):
+            attrs = node_attrs_str.get(str(nid), {})
+            bridge_rows.append(
+                dict(
+                    node_id=nid,
+                    name=attrs.get("name", ""),
+                    category=_get_category(nid),
+                    cluster_id=int(cid),
+                )
+            )
+
+    df_bridge = pd.DataFrame(bridge_rows)
+    df_bridge.to_csv(STEP3_DIR / "betweenness_both09_bridge_clusters.csv", index=False)
+    print(f"  Saved betweenness_both09_bridge_clusters.csv ({len(df_bridge)} nodes)")
+
+    # Plot — reuse comparison plot with both09 column name
+    fig, ax = plt.subplots(figsize=(10, 8))
+    colors = {"risk": "#e74c3c", "intervention": "#2ecc71", "concept": "#3498db"}
+    for _, row in df_btw.iterrows():
+        c = colors.get(str(row["category"]).lower(), "#95a5a6")
+        if row["rank_sim08"] > 0:
+            old_btw_approx = 1.0 / max(row["rank_sim08"], 1)
+            ax.scatter(
+                old_btw_approx, row["betweenness_both09"], color=c, alpha=0.7, s=40
+            )
+    ax.set_xlabel("SIM>=0.8 betweenness (approx, 1/rank proxy)")
+    ax.set_ylabel("Both-mode SIM>=0.9 betweenness (exact)")
+    ax.set_title("Betweenness comparison: SIM>=0.8 approx vs Both-mode SIM>=0.9 exact")
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="o", color="w", markerfacecolor=c, markersize=8, label=lab
+        )
+        for lab, c in colors.items()
+    ]
+    ax.legend(handles=handles)
+    plt.tight_layout()
+    fig.savefig(
+        STEP3_DIR / "betweenness_both09_comparison.png", dpi=150, bbox_inches="tight"
+    )
+    plt.close(fig)
+    print("  Saved betweenness_both09_comparison.png")
+    sys.stdout.flush()
+    return df_btw
 
 
 # ─── SECTION E: Held-Out Validation (#24) ────────────────────────────────────
@@ -1560,6 +1797,16 @@ def main():
         action="store_true",
         help="Run only Section D (betweenness) — skips A-C, E-F",
     )
+    parser.add_argument(
+        "--fix-categories",
+        action="store_true",
+        help="Relabel category column in existing full-graph betweenness CSVs using concept_category",
+    )
+    parser.add_argument(
+        "--betweenness-both",
+        action="store_true",
+        help="Run exact betweenness on both-mode SIM>=0.9 subgraph; saves to betweenness_both09.* files",
+    )
     args = parser.parse_args()
 
     import time
@@ -1605,6 +1852,13 @@ def main():
     node_attrs = load_pkl(STEP1_DIR / "graph_node_attributes.pkl")
     edge_data = load_pkl(STEP1_DIR / "graph_edge_data.pkl")
 
+    if args.fix_categories:
+        print(f"  node_attrs: {len(node_attrs):,} nodes")
+        fix_betweenness_categories(node_attrs)
+        elapsed = time.time() - t0
+        print(f"\n--fix-categories complete in {elapsed:.1f}s")
+        return
+
     if args.betweenness_only:
         print(f"  node_attrs: {len(node_attrs):,} nodes")
         print(f"  edge_data: {len(edge_data):,} edges")
@@ -1614,6 +1868,15 @@ def main():
         return
 
     cluster_memberships = load_pkl(STEP1_DIR / "cluster_memberships.pkl")
+
+    if args.betweenness_both:
+        print(f"  node_attrs: {len(node_attrs):,} nodes")
+        print(f"  edge_data: {len(edge_data):,} edges")
+        print(f"  cluster_memberships: {len(cluster_memberships):,} keys")
+        run_betweenness_both(node_attrs, edge_data, cluster_memberships)
+        elapsed = time.time() - t0
+        print(f"\n--betweenness-both complete in {elapsed / 60:.1f} min")
+        return
     print(f"  node_attrs: {len(node_attrs):,} nodes")
     print(f"  edge_data: {len(edge_data):,} edges")
     print(f"  cluster_memberships: {len(cluster_memberships):,} keys")

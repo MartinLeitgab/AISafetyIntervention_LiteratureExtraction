@@ -187,18 +187,6 @@ All nodes included as both sources and potential path intermediates. Brandes O(V
 | 9 | Adversarial vulnerability | ~3 | "Adversarial vulnerability in neural network image classifiers" × 3 |
 | 10 | Unsafe RL exploration | ~1 | "Unsafe exploration by RL agents in safety-critical environments" |
 
-### Methodology History (three runs)
-
-| Run | Method | FDT result | Validity |
-|-----|--------|-----------|----------|
-| Run 1 | Approximate k=1000, full graph | FDT ranks 2–8 | ⚠️ k=1000 = 0.5% sampling, noisy |
-| Run 2 | Exact, degree≥3 induced subgraph | FDT ABSENT | ❌ Induced subgraph severs paths through deg-1/2 nodes; 16K WCC fragments |
-| Run 3 | Exact, full graph (200K sources) | FDT ranks 2–8 | ✅ Correct — all paths preserved, 33.1h runtime |
-
-**FDT is a genuine structural bridge.** The degree≥3 induced subgraph (Run 2) was methodologically flawed: it severed edges to low-degree nodes, fragmenting the graph into 16,423 WCCs and artificially hiding FDT. Run 1 (approximate) happened to be qualitatively correct despite low sampling, because FDT's bridge dominance is strong enough to appear even in 0.5% samples. Run 3 confirms FDT's structural role.
-
-**Why FDT bridges:** FDT nodes form a dense local cluster (from a single paper) that connects through alignment intervention nodes to the broader catastrophic risk literature. They are not chain intermediates — they have genuine cross-cluster connectivity that requires the full graph to detect.
-
 ### Key Findings
 
 **1. Existential catastrophe = confirmed dominant bridge** (clusters 1+4 together cover ~20/50 top-50 nodes). The structural hub connecting risk identification to intervention literature across the corpus.
