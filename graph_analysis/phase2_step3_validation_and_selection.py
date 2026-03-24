@@ -1114,19 +1114,46 @@ def run_section_d(node_attrs, edge_data):
         f"(SIM09={n_sim09:,}, STRUCT={n_struct:,})"
     )
 
-    # Restrict to degree>=3 nodes: true branching points (degree-1/2 nodes are
-    # chain endpoints/intermediates with no meaningful betweenness contribution
-    # beyond their immediate neighbors). All nodes have degree>=1 in this graph.
-    deg3_nodes = {n for n, d in G.degree() if d >= 3}
-    G_sub = G.subgraph(deg3_nodes).copy()
-    print(
-        f"  Degree>=3 subgraph: {G_sub.number_of_nodes():,} nodes "
-        f"({G_sub.number_of_nodes() / G.number_of_nodes():.1%}), "
-        f"{G_sub.number_of_edges():,} edges"
-    )
+    # Compute exact betweenness on the full graph so that shortest paths can
+    # traverse all nodes including degree-1/2 intermediates.  Restricting to a
+    # degree>=3 induced subgraph severs those paths and fragments the graph into
+    # 16K+ tiny components, producing biased scores.
+    import sys
+    import threading
 
-    print("  Computing EXACT betweenness on degree>=3 subgraph — ~10-20 min ...")
-    betweenness = nx.betweenness_centrality(G_sub, normalized=True)
+    print(
+        f"  Computing EXACT betweenness on full graph "
+        f"({G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges) "
+        f"— estimated 15-30 hours ..."
+    )
+    sys.stdout.flush()
+
+    _btw_done = threading.Event()
+
+    def _heartbeat():
+        interval = 1800  # 30 min
+        elapsed = 0
+        while not _btw_done.wait(timeout=interval):
+            elapsed += interval
+            print(
+                f"  [heartbeat] betweenness still running — {elapsed // 3600}h {(elapsed % 3600) // 60}m elapsed"
+            )
+            sys.stdout.flush()
+
+    _hb_thread = threading.Thread(target=_heartbeat, daemon=True)
+    _hb_thread.start()
+
+    betweenness = nx.betweenness_centrality(G, normalized=True)
+    _btw_done.set()
+
+    # Checkpoint raw betweenness immediately before any post-processing that could fail
+    checkpoint_path = STEP3_DIR / "betweenness_raw_checkpoint.pkl"
+    import pickle as _pickle
+
+    with open(checkpoint_path, "wb") as _f:
+        _pickle.dump(betweenness, _f, protocol=4)
+    print(f"  Checkpoint saved: {checkpoint_path} ({len(betweenness):,} nodes)")
+    sys.stdout.flush()
 
     # Top 100
     top100 = sorted(betweenness.items(), key=lambda x: x[1], reverse=True)[:100]
@@ -1528,6 +1555,11 @@ def main():
         action="store_true",
         help="Run only Sections A and B (no PKL loading)",
     )
+    parser.add_argument(
+        "--betweenness-only",
+        action="store_true",
+        help="Run only Section D (betweenness) — skips A-C, E-F",
+    )
     args = parser.parse_args()
 
     import time
@@ -1572,6 +1604,15 @@ def main():
     print("\nLoading PKL checkpoints ...")
     node_attrs = load_pkl(STEP1_DIR / "graph_node_attributes.pkl")
     edge_data = load_pkl(STEP1_DIR / "graph_edge_data.pkl")
+
+    if args.betweenness_only:
+        print(f"  node_attrs: {len(node_attrs):,} nodes")
+        print(f"  edge_data: {len(edge_data):,} edges")
+        run_section_d(node_attrs, edge_data)
+        elapsed = time.time() - t0
+        print(f"\nBetweenness-only mode complete in {elapsed / 60:.1f} min")
+        return
+
     cluster_memberships = load_pkl(STEP1_DIR / "cluster_memberships.pkl")
     print(f"  node_attrs: {len(node_attrs):,} nodes")
     print(f"  edge_data: {len(edge_data):,} edges")

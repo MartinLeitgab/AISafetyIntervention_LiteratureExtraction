@@ -1,9 +1,9 @@
 # Phase 2 Step 3 Review Summary
 
-**Generated:** 2026-03-22
+**Generated:** 2026-03-22; Section D updated 2026-03-24
 **Script:** `graph_analysis/phase2_step3_validation_and_selection.py`
 **Outputs:** `phase2_results/step3_validation_and_selection/`
-**Status:** Sections A–F complete ✅ (Section D betweenness: ⬜ in progress)
+**Status:** Sections A–F complete ✅ (Section D betweenness: ✅ full-graph exact, 33.1h runtime)
 
 ---
 
@@ -139,86 +139,83 @@ Saved to `edge_only_test_set.jsonl` — direct input to Step 4 simulation valida
 
 **Files:** `betweenness_sim09.csv` (top-100 nodes), `betweenness_bridge_clusters.csv` (top-50 in 12 clusters)
 **Plot:** `betweenness_comparison.png`
-**Method:** EXACT betweenness on degree≥3 induced subgraph (39,242 nodes, 163,113 edges). Runtime: 87.7 min total (82 min betweenness). All 39,242 nodes used as sources — no sampling.
+**Method:** EXACT betweenness on FULL graph (200,568 nodes, 346,224 edges). Runtime: 33.1 hours. All 200,568 nodes used as sources — no sampling, no subgraph restriction.
 
 ### Graph Used
-Full graph: SIM≥0.9 edges (144,140) + structural EDGE edges (202,149) = 346,224 total edges, 200,568 nodes.
-Betweenness computed on induced subgraph of degree≥3 nodes: 39,242 nodes (19.6%), 163,113 edges.
-Degree-1/2 nodes are chain endpoints/intermediates with no meaningful betweenness; excluded by design.
+SIM≥0.9 edges (144,140) + structural EDGE edges (202,149) = 346,224 total edges, 200,568 nodes.
+All nodes included as both sources and potential path intermediates. Brandes O(V×E) exact algorithm.
 
-### WCC Structure of Degree≥3 Subgraph
-16,423 components; largest = 9,460 nodes (24.1%); 2nd largest = 115 nodes.
-NetworkX Brandes algorithm computes exact O(V×E) betweenness; all 39,242 sources processed.
-
-### Top-20 Bridge Nodes (exact)
+### Top-20 Bridge Nodes (full-graph exact)
 
 | rank | name (truncated) | category | betweenness | rank_sim08 |
 |------|-----------------|----------|-------------|------------|
-| 1 | Global catastrophe from unsafe advanced AI systems | concept | 0.001614 | — |
-| 2 | Existential catastrophe from unaligned superintelligent AI | concept | 0.001234 | — |
-| 3 | existential catastrophe from misaligned AGI | concept | 0.001204 | — |
-| 4 | Increase funding and collaborative research on AI alignment (model design) | intervention | 0.001165 | — |
-| 5 | Existential catastrophe from uncontrolled AGI capability emergence | concept | 0.001143 | — |
-| 6 | Uncertain compute threshold for human-level cognition | concept | 0.001127 | 7036 |
-| 7 | high uncertainty in compute threshold for human-level AI capabilities | concept | 0.001103 | 10221 |
-| 8 | Opacity of neural network internal mechanisms | concept | 0.001096 | 1112 |
-| 9 | insufficient AI safety preparedness from inaccurate AI timeline estimates | concept | 0.001092 | — |
-| 10 | Existential extinction of humanity by misaligned AGI | concept | 0.001079 | — |
-| 11 | Explicit alignment of AI goals with human values | concept | 0.001068 | 2720 |
-| 12 | Emergent dangerous capabilities in foundation models | concept | 0.001053 | 4487 |
-| 13–20 | Existential risk / misalignment / interpretability variants × 8 | concept | 0.001028–0.000938 | mixed |
+| 1 | Existential catastrophe from misaligned advanced AI | concept | 0.003367 | — |
+| 2 | Faulty decision-theoretic reasoning in autonomous AI agents | concept | 0.002669 | 892 |
+| 3 | Functional decision theory enables globally optimal choices | concept | 0.002665 | 1004 |
+| 4 | Embedding FDT as AI agent decision-making framework | concept | 0.002662 | 9507 |
+| 5 | Existential catastrophe from misaligned advanced AI systems | concept | 0.002618 | — |
+| 6 | Formal agent architecture implementing FDT decision procedure | concept | 0.002615 | 44727 |
+| 7 | "Cheating Death in Damascus" — FDT outperforms CDT/EDT | concept | 0.002612 | 57141 |
+| 8 | Design AI agent core with FDT to improve alignment | intervention | 0.002608 | — |
+| 9 | Existential catastrophic outcomes from misaligned AI systems | concept | 0.002464 | — |
+| 10 | Opaque reasoning processes in large language models | concept | 0.002399 | 1698 |
+| 11 | Reward misspecification in reinforcement learning agents | concept | 0.002306 | 438 |
+| 12 | Catastrophic misalignment of advanced AI systems | concept | 0.002129 | — |
+| 13 | Catastrophic AI system failures impacting humanity | concept | 0.002119 | — |
+| 14 | Reward specification errors in RL-based AGI | concept | 0.002041 | 853 |
+| 15 | Existential catastrophe from uncontrolled AGI capability emergence | concept | 0.001995 | — |
+| 16 | Uncertain compute threshold for human-level cognition | concept | 0.001980 | 7036 |
+| 17 | Opaque reasoning in large language models | concept | 0.001969 | — |
+| 18 | high uncertainty in compute threshold for human-level AI | concept | 0.001944 | 10221 |
+| 19 | Opaque internal representations in large language models | concept | 0.001921 | — |
+| 20 | insufficient AI safety preparedness from inaccurate timeline estimates | concept | 0.001916 | — |
 
-**rank_sim08 = —** means not in top nodes of the SIM≥0.8 betweenness (Step 2b). Most top-20 are new at SIM≥0.9 threshold.
-
-### Bridge Theme Clusters (top-50 nodes, k=12 Agglomerative, exact)
+### Bridge Theme Clusters (top-50 nodes, k=12 Agglomerative, full-graph exact)
 
 | cluster_id | theme | n_nodes | representative names |
 |------------|-------|---------|---------------------|
-| 3 | Existential catastrophe (dominant) | 19 | "Global catastrophe from unsafe AI", "Existential catastrophe from unaligned superintelligent AI" |
-| 1 | Opacity / interpretability | 5 | "Opacity of neural network internal mechanisms", "Opacity of internal cognition in large neural networks" |
-| 0 | AI governance / licensing | 4 | "Government licensing regime for frontier AI development", "Implement governance constraints…" |
-| 4 | Emergent capabilities / unsafe RL | 3 | "Emergent dangerous capabilities in foundation models", "Unsafe exploration by RL agents" |
-| 10 | Misaligned utility / value drift | 3 | "Misaligned utility maximization in advanced AI systems" × 3 |
-| 11 | Reward misspecification | 3 | "Reward function misspecification in RL agents" × 3 |
-| 9 | Timeline uncertainty / safety preparedness | 3 | "Misallocation of AI safety resources due to biased AGI timeline predictions" |
-| 2 | Value alignment interventions | 2 | "Explicit alignment of AI goals with human values", "Value learning via IRL" |
-| 7 | Mechanistic interpretability | 2 | "Mechanistic interpretability enables circuit-level understanding" × 2 |
-| 6 | Compute threshold uncertainty | 2 | "Uncertain compute threshold for human-level cognition" × 2 |
-| 5 | Tightrope / risk curve compression | 2 | "Tightrope scenario necessitates proactive mitigation", "Compressing AI risk curve via safety knowledge" |
-| 8 | Funding / collaborative alignment research | 2 | "Increase funding and collaborative research on AI alignment" × 2 |
+| 1 | Existential catastrophe (dominant) | ~12 | "Existential catastrophe from misaligned advanced AI" × many |
+| 4 | Catastrophic misalignment (broader) | ~8 | "Catastrophic misalignment of advanced AI systems", "Catastrophic AI system failures" |
+| 0 | FDT / decision theory + alignment intervention | ~7 | "Faulty decision-theoretic reasoning", "Embedding FDT as AI agent framework", "Design AI agent core with FDT" |
+| 5 | FDT case studies | ~2 | "Functional decision theory enables globally optimal choices", "Cheating Death in Damascus" |
+| 2 | Opacity / opaque LLM reasoning | ~4 | "Opaque reasoning processes in LLMs", "Opaque internal representations in transformers" |
+| 11 | Reward misspecification | ~3 | "Reward misspecification in RL agents" × 3 |
+| 3 | Timeline uncertainty / safety preparedness | ~3 | "insufficient AI safety preparedness from inaccurate timeline estimates" |
+| 6 | Compute threshold uncertainty | ~2 | "Uncertain compute threshold for human-level cognition" × 2 |
+| 7 | Misaligned utility maximization | ~3 | "Misaligned utility maximization in advanced AI systems" × 3 |
+| 8 | Mechanistic interpretability | ~1 | "mechanistic interpretability tools for neuron-circuit analysis" |
+| 9 | Adversarial vulnerability | ~3 | "Adversarial vulnerability in neural network image classifiers" × 3 |
+| 10 | Unsafe RL exploration | ~1 | "Unsafe exploration by RL agents in safety-critical environments" |
 
-### Exact vs Approximate Comparison
+### Methodology History (three runs)
 
-| Aspect | Approximate (k=1000, full graph) | Exact (degree≥3 subgraph) |
-|--------|----------------------------------|---------------------------|
-| Top theme | Existential catastrophe | Existential catastrophe ✓ |
-| #2 prominent theme | Functional decision theory (FDT) | Opacity / interpretability |
-| FDT cluster | 7 nodes in top-50 | ABSENT — FDT nodes are degree≤2 chain intermediates |
-| Reward misspec | rank 4 | rank 11+ |
-| Compute uncertainty | not prominent | ranks 6-7 |
-| Governance/licensing | absent | cluster 0 (4 nodes) |
-| Mechanistic interpretability | absent | clusters 7 (2 nodes) |
+| Run | Method | FDT result | Validity |
+|-----|--------|-----------|----------|
+| Run 1 | Approximate k=1000, full graph | FDT ranks 2–8 | ⚠️ k=1000 = 0.5% sampling, noisy |
+| Run 2 | Exact, degree≥3 induced subgraph | FDT ABSENT | ❌ Induced subgraph severs paths through deg-1/2 nodes; 16K WCC fragments |
+| Run 3 | Exact, full graph (200K sources) | FDT ranks 2–8 | ✅ Correct — all paths preserved, 33.1h runtime |
 
-**FDT disappears in exact:** FDT concept nodes form linear chains (degree≤2 in the SIM≥0.9+EDGE graph) — they are path intermediates, not branching points. Degree≥3 restriction correctly excludes them from betweenness. The approximate method inflated FDT importance because it ran on all nodes including chain intermediates.
+**FDT is a genuine structural bridge.** The degree≥3 induced subgraph (Run 2) was methodologically flawed: it severed edges to low-degree nodes, fragmenting the graph into 16,423 WCCs and artificially hiding FDT. Run 1 (approximate) happened to be qualitatively correct despite low sampling, because FDT's bridge dominance is strong enough to appear even in 0.5% samples. Run 3 confirms FDT's structural role.
 
-**New bridges revealed by exact:** Opacity/interpretability, compute threshold uncertainty, AI governance/licensing, and mechanistic interpretability emerge as genuine structural bridges only visible when chain intermediates are excluded.
+**Why FDT bridges:** FDT nodes form a dense local cluster (from a single paper) that connects through alignment intervention nodes to the broader catastrophic risk literature. They are not chain intermediates — they have genuine cross-cluster connectivity that requires the full graph to detect.
 
 ### Key Findings
 
-**1. Existential catastrophe = confirmed dominant bridge (19/50 = 38% of top-50).** Both approximate and exact agree — this is the structural hub connecting risk literature to intervention literature across the corpus.
+**1. Existential catastrophe = confirmed dominant bridge** (clusters 1+4 together cover ~20/50 top-50 nodes). The structural hub connecting risk identification to intervention literature across the corpus.
 
-**2. Opacity/interpretability is the #2 bridge theme** (cluster 1, 5 nodes, rank 8). Neural network opacity bridges risk identification to alignment/interpretability interventions. This is a cleaner result than FDT which was an artifact of chain intermediates.
+**2. FDT / decision theory is the #2 bridge theme** (clusters 0+5, ~9 nodes, ranks 2–8). A dense paper-local cluster that bridges decision theory to alignment interventions and catastrophic risk framing. Rank 8 is an intervention node — the only intervention in the top-10.
 
-**3. AI governance/licensing is a distinct bridge cluster** (cluster 0, 4 nodes), connecting regulatory risk framing to deployment constraints. Not visible in approximate results.
+**3. Opacity/opaque LLM reasoning is #3** (cluster 2, ~4 nodes, rank 10). Neural network opacity bridges risk identification to alignment/interpretability interventions.
 
-**4. Exact betweenness is methodologically superior** for this corpus — degree≥3 restriction properly excludes linear chain intermediates, revealing bridges that represent genuine cross-cluster connectors rather than path pass-throughs.
+**4. Reward misspecification, adversarial vulnerability, compute uncertainty** are secondary bridges (ranks 11–20).
 
 ### Step 4 Use
 `betweenness_bridge_clusters.csv` provides seed themes for manual cluster naming in Step 4 #26:
-- Existential catastrophe cluster (19 nodes) → likely corresponds to a dense risk mechanism family
-- Opacity/interpretability → maps to transparency/interpretability intervention cluster
-- Governance/licensing → regulatory intervention mechanism cluster
-- Reward misspecification → dense risk cluster, likely single mechanism family
+- Clusters 1+4: Existential catastrophe / catastrophic misalignment → dense risk mechanism families
+- Clusters 0+5: FDT / decision theory → decision-theoretic alignment mechanism cluster
+- Cluster 2: Opacity → transparency/interpretability mechanism cluster
+- Cluster 11: Reward misspecification → RL alignment risk cluster
+- Cluster 9: Adversarial vulnerability → robustness risk cluster
 
 ---
 
