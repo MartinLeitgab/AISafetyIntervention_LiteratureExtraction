@@ -9,29 +9,53 @@
 
 ## Corrections and clarifications from Step 3 post-analysis
 
+### Path generation constraints (Phase 1)
+Paths in `phase1_rawpathsfiles/` were generated with the following mandatory filters applied at graph load time (`final_pathway_analysis_modes.py`):
+- **`edge_confidence >= 3`** on all EDGE edges (FalkorDB property `edge_confidence`)
+- **`intervention_maturity >= 3`** on all intervention endpoint nodes
+- Only sources that have at least one mature (conf≥1) intervention in `source_pathways_final.json`
+
+These constraints are applied BEFORE path traversal. The edge_data.pkl (which includes all EDGE edges from FalkorDB) was NOT filtered by confidence — it contains all edges. The path files use a filtered subgraph.
+
+### Path count structure and "overcounting"
+The path files are NOT overcounted in the sense of duplicate paths. Each path is a unique (start_node, end_node) pair. However the fan-out is large:
+- 3,751 unique start (risk) nodes × up to 648 reachable intervention endpoints each = 1,054,527 total unconstrained sim0.9 paths
+- High-connectivity risk nodes (x-risk hubs) generate 600+ paths each because SIM≥0.9 edges connect them to many interventions across papers
+
+For comparison, the EDGE-only file (`paths_unconstrained_edge_only.jsonl`) has **3,473 paths** — these are the within-source paper logic chains (risk→...→intervention where ALL edges are structural EDGE edges with confidence≥3). This is the true "per-source EDGE backbone."
+
+| Path file | Total paths | Structural interpretation |
+|-----------|------------|--------------------------|
+| `paths_unconstrained_edge_only.jsonl` | 3,473 | Within-source structural chains only |
+| `paths_unconstrained_sim0.9.jsonl` | 1,054,527 | All cross-paper SIM-augmented chains |
+| 100% EDGE throughout (in sim0.9 file) | **3,405** | Same as EDGE-only, slightly different due to filtering |
+
+The 1M sim0.9 paths represent cross-paper connections via SIM≥0.9 edges. Each is a distinct (start, end) pair but many share identical body structure — one x-risk hub connecting to many distinct intervention endpoints.
+
 ### Node coverage in path files
-The Phase 1 path files (`phase1_rawpathsfiles/paths_{mode}_sim{ec}.jsonl`) cover **42,767 unique nodes** across all 20 (mode × edge_config) combinations, and **21,553 nodes** for unconstrained sim0.9 alone. Total nodes in node_attrs.pkl = 200,525.
+The Phase 1 path files cover **42,767 unique nodes** across all 20 (mode × edge_config) combinations, and **21,553 nodes** for unconstrained sim0.9 alone. Total nodes in node_attrs.pkl = 200,525.
 
 The remaining ~158K nodes are NOT on any valid complete risk→intervention path:
 - Partial chains (paper contributes risk+mechanism nodes but no intervention endpoint, or mechanism+intervention but no risk root)
 - Nodes in EDGE components that don't span from a risk category to an intervention category
-- These are NOT a bug — the Phase 1 path generation correctly identifies complete-chain nodes
 
 The Step 3 betweenness (Section D) correctly used the **full 200,568-node graph** (from edge_data.pkl + SIM≥0.9 filter), NOT the path-file-covered subset. Cluster assignments from cluster_memberships.pkl cover 42,767 nodes across all configs.
 
 ### Path quality for Step 4 simulation
-For the 1,054,527 unconstrained sim0.9 paths:
+For the 1,054,527 unconstrained sim0.9 paths, the "max_run=0 in body" bucket (258K paths) does NOT mean EDGE-only throughout — those paths have no consecutive SIM in the body but typically still have SIM edges in the risk preamble (multiple x-risk hub nodes connected via SIM). Only the 3,405 paths with 100% EDGE across the entire path are fully structural.
 
-| Filter | Paths kept | % |
-|--------|-----------|---|
-| ≥50% EDGE fraction | 967,730 | 91.8% |
-| No two consecutive SIM in body | 451,889 | 42.9% |
-| ≥60% EDGE fraction | 671,272 | 63.7% |
-| ≥70% EDGE fraction | 275,463 | 26.1% |
+**Two options for the representative pathway filter (retain both for comparison):**
 
-**Recommended filter for representative pathways:** `max_consecutive_SIM_in_body ≤ 1` (42.9% of paths, 452K paths). This ensures every SIM-based hop is immediately followed by a structural EDGE connection — no "double-jumping" through pure semantic similarity. At SIM≥0.9, individual SIM hops are acceptable (concepts at cos_sim≥0.9 are near-identical), but consecutive SIM hops risk traversing through semantically similar but structurally ungrounded chains.
+| Filter | Paths kept | % | Interpretation |
+|--------|-----------|---|----------------|
+| 100% EDGE full path | 3,405 | 0.3% | Pure within-source structural chains (EDGE-only baseline) |
+| max_consec_SIM_body ≤ 1 | 451,889 | 42.9% | Body well-grounded; cross-paper connections via at most 1 SIM hop at a time |
+| max_consec_SIM_body ≤ 2 | 719,573 | 68.2% | Broader cross-paper connectivity; allows 2-hop SIM bridging |
+| ≥50% EDGE full path | 967,730 | 91.8% | Minimal structural requirement |
 
-EDGE fraction for this filtered set: mean=0.649 (between max_run=0 mean=0.655 and max_run=1 mean=0.647) — essentially the same structural grounding as the fully-EDGE body subset.
+**Step 4 will produce results for BOTH ≤1 and ≤2 consecutive SIM options** to show how much cross-paper connectivity broadens the risk/body/intervention cluster picture. The ≤1 option is more conservative (452K paths); the ≤2 option allows more cross-paper SIM bridging (720K paths).
+
+EDGE fraction by max_run group: mean EDGE% = 0.655 (run=0), 0.647 (run=1), 0.634 (run=2), 0.605 (run=3). Differences are small — the consecutive-SIM criterion is primarily a structural quality criterion, not an EDGE-fraction cut.
 
 ### Clustering mode for Step 4
 **Use unconstrained** for the 3-level cluster connectivity analysis (not single_risk or both).
@@ -117,11 +141,18 @@ Config: SIM≥0.9 + both, agglomerative k=40 (from `optimal_configs_final.csv`)
 
 ### E. Path Sampling for Simulation
 
-- Filter unconstrained sim0.9 paths: `max_consecutive_SIM_in_body ≤ 1` (452K paths)
+Two variants (run both, compare cluster results):
+
+**Variant A — conservative (≤1 consecutive SIM in body):** 451,889 source paths
+**Variant B — broader (≤2 consecutive SIM in body):** 719,573 source paths
+
+For each variant:
 - Sample 500–1000 representative pathways stratified by lifecycle stage (~33% design / 33% training / 33% deployment)
-- Additional stratification: sample max 3 paths per mechanism family to avoid over-representing large clusters
-- Each record: node_id_sequence, node_names, categories, source_urls, cluster_assignments, EDGE_fraction, mechanism_family_name (after #26)
-- Export: `representative_pathways.jsonl`
+- Additional stratification: max 3 paths per mechanism family to avoid over-representing large clusters; sample across diverse start nodes (not all from same x-risk hub)
+- Each record: node_id_sequence, node_names, categories, source_urls, cluster_assignments, EDGE_fraction, max_consec_SIM_body, mechanism_family_name (after #26)
+- Export: `representative_pathways_consim1.jsonl` (variant A), `representative_pathways_consim2.jsonl` (variant B)
+
+The EDGE-only baseline (3,405 fully structural paths) should also be extracted separately as the within-source ground truth: `representative_pathways_edgeonly.jsonl`.
 
 ---
 
