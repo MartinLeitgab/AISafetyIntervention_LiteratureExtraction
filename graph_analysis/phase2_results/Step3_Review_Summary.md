@@ -61,24 +61,29 @@
 The 30% EDGE validation weight structurally advantages EDGE-only configs (trivial score=1.0). For risk, the composite gap of 0.036 is narrow; SIM≥0.9+both is preferred for cross-literature coverage (10× more nodes, 90.8% structural validation). For intervention, the 0.134 gap is substantial — SIM≥0.95 is genuinely better.
 
 ### Mode Definitions
-The four clustering modes apply constraints on top of the edge_config similarity threshold:
-- **unconstrained:** no path constraints — all SIM + EDGE edges used freely
-- **monotonic:** path must follow monotonically increasing causal direction (EDGE edge direction enforced)
-- **single_risk:** each cluster can have only one risk concept entry point
-- **both:** monotonic AND single_risk combined — most restrictive mode
+The four clustering modes filter **pre-generated paths** (Phase 1 path files). Each path is a linear node sequence `[risk, body_nodes..., intervention]`. The modes define which paths are kept:
 
-"both" mode produces the most semantically coherent mechanism chains: each chain has a directed causal structure and a single risk root. It is the primary cut for risk and intervention node types.
+- **unconstrained:** all paths (1,054,527 paths at SIM≥0.9) — includes paths with 4-5 x-risk hub nodes in sequence at the start
+- **monotonic:** paths where categories go in forward order only — no backtracking from intervention back to problem_analysis etc. (336,092 paths) — BUT does NOT prevent multiple risk nodes; mean 4.58 risks/path
+- **single_risk:** paths with exactly ONE risk node (7,103 paths at SIM≥0.9, max=1 risk/path) — eliminates x-risk hub chains at path start; body node sequence CAN backtrack
+- **both:** single_risk AND monotonic combined (5,939 paths) — single risk root AND no backtracking in body sequence
+
+**What monotonic actually removes:** Paths where the body sequence backtracks (e.g., problem_analysis → theoretical_insight → problem_analysis). It does NOT remove multi-risk paths — that is single_risk's job. Monotonic alone (336K paths) still has mean 4.58 risks/path.
+
+**Forked paths** (Risk_A → Body_Node ← Risk_B): treated as TWO SEPARATE paths, each with one risk. Both paths survive single_risk filtering because each individually has one risk. Body_Node appears in both paths and gets clustered by embedding similarity — it lands in whichever risk family's cluster it's most similar to. The fork is not rejected; the clustering resolves it by embedding.
+
+"both" mode gives clean single-root directed chains. single_risk gives single-root chains allowing iterative body structure. The clustering algorithm (agglomerative) then groups nodes by embedding similarity within the eligible node set.
 
 ### Key Finding: Single_Risk Is the Primary Structural Constraint
 
 At ec=0.9 for risk, **single_risk carries nearly all the structural grounding** — both (90.8% EDGE%) vs single_risk (90.6% EDGE%) are essentially identical on EDGE validation. Monotonic alone without single_risk drops to 58.1% EDGE%, and unconstrained drops to 56.0%. This reveals that:
 
-- **single_risk** = the constraint that prevents x-risk hubs from aggregating semantically diverse mechanism families → structural grounding comes from this
-- **monotonic** = adds directional path ordering → improves ARI stability (+0.022: both=0.731 vs single_risk=0.709) but at a cost: it excludes body nodes that have bidirectional causal relationships (both influenced by a risk AND contributing to an intervention)
+- **single_risk** = the constraint that prevents x-risk hubs from aggregating diverse mechanism families by filtering out paths with multiple risk nodes (7K vs 1M paths at SIM≥0.9 — a 99.3% reduction, confirming the x-risk hub problem is severe in unconstrained mode)
+- **monotonic** = adds directional body ordering → improves ARI stability (+0.022: both=0.731 vs single_risk=0.709) but excludes body nodes with iterative causal structure (backtracking allowed in real mechanism arguments)
 
 Mode rankings for risk at ec=0.9: both (rank 3, composite=0.789) > single_risk (rank 7, composite=0.758) > monotonic (rank 11, composite=0.597) > unconstrained (rank 16, composite=0.438). The composite gap between both and single_risk (0.031) is narrow; the gap to unconstrained (0.351) is large.
 
-**Implication for Step 4:** Single_risk at ec=0.9 is the methodologically appropriate cut for body-node differentiation analysis (mechanism nodes between risk and intervention). It prevents x-risk hub dominance while allowing intermediate nodes to appear with bidirectional connections, making them visible as cross-family bridges in betweenness analysis. See Section D3 (planned).
+**Implication for Step 4:** For 3-level cluster analysis (risk clusters → mechanism clusters → intervention clusters), single_risk ec=0.9 is preferred: it prevents x-risk hub aggregation while preserving iterative body-node structure. The cluster-level EDGE connectivity graph (not betweenness) is the primary tool for identifying which mechanism families bridge which risk and intervention clusters. See Phase2_comprehensive_analysis_plan.md #27 Cross-Cluster Connectivity and #29 Risk→Intervention Mapping Matrix.
 
 ---
 
@@ -171,7 +176,9 @@ All nodes included as both sources and potential path intermediates. Brandes O(V
 
 ### Why X-Risk Nodes Dominate Bridges
 
-In the AI safety literature, existential catastrophe concepts are the **shared motivational reference point** across nearly all papers — whether identifying a risk, analyzing a mechanism, or proposing an intervention. This means x-risk nodes have both risk-paper neighbors and intervention-paper neighbors, placing them at the intersection of the two primary literature clusters. A shortest path from any node in the risk-identification literature to any node in the intervention literature frequently passes through these concepts. They are bridges not because they are only risk nodes — they are bridges because they are the semantic hinge connecting why interventions exist to the problems they address.
+**Correction:** There is no separate "risk literature" and "intervention literature" in the ARD corpus. Each paper traces a **full chain** from risk → mechanism → intervention. x-risk nodes are high-betweenness because they appear at the **start of many different papers' mechanism chains** — each paper begins with a variant of "existential catastrophe from misaligned AI" and then traces a distinct path through different body/mechanism nodes to a different intervention. They are the shared starting premise of many chains, not bridges between separate document populations.
+
+In graph terms: x-risk nodes have high out-degree to many different body-node clusters (different mechanism families), all eventually connecting to intervention nodes. A shortest path between any two mechanism or intervention nodes typically passes through the shared x-risk starting premise they both derive from.
 
 ### Top-20 Bridge Nodes (full-graph exact, corrected categories)
 
