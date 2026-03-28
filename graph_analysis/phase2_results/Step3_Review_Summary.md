@@ -136,6 +136,7 @@ Filter is applied to the full path (risk preamble + body + intervention). Step 4
 
 **File:** `threshold_sensitivity_analysis.csv` (800 rows)
 **Plot:** `threshold_sensitivity_profile.png` (4-panel)
+**Filters:** All ARI scores compare cluster assignments from path files; path files for all thresholds (0.8–EDGE) were generated with conf≥3 + maturity≥3 applied at graph-load time. ✅
 
 ### Stability Score per Threshold (risk, mode=both)
 
@@ -169,6 +170,7 @@ The 0.9→0.95 transition achieves the highest adjacent-pair ARI (0.757), confir
 
 **Files:** `edge_only_comparison.csv`, `edge_only_test_set.jsonl`
 **Plot:** `edge_vs_sim_coverage.png` (2-panel)
+**Filters:** All cluster assignments, node counts, and path samples derive from path files with conf≥3 + maturity≥3. Test 8 degree counts use SIM≥0.9 edges only (no edge_confidence filter needed for SIMILARITY edges). ✅
 
 ### Test 6: ARI Overlap (EDGE ↔ SIM≥0.9)
 
@@ -308,7 +310,7 @@ FDT connects to AI alignment because: a sufficiently capable AI will be modeled/
 
 **Files:** `betweenness_both09.csv` (top-100), `betweenness_both09_bridge_clusters.csv` (top-50 in 12 clusters), `betweenness_both09_raw_checkpoint.pkl`
 **Plot:** `betweenness_both09_comparison.png`
-**Method:** EXACT betweenness on induced subgraph of all nodes in both-mode ec=0.9 agglomerative clusters. Runtime: 15 min.
+**Method:** EXACT betweenness on induced subgraph of all nodes in both-mode ec=0.9 agglomerative clusters (conf≥3 EDGE edges, maturity≥3 intervention nodes). Runtime: 15 min (original unfiltered).
 
 > ⚠ **RE-RUN IN PROGRESS** with conf≥3 + maturity≥3 filters. Numbers below will be updated on completion.
 
@@ -431,6 +433,7 @@ The both-mode betweenness is the more directly relevant analysis for Step 4 clus
 ## Section E — #24 Held-Out Validation
 
 **File:** `held_out_validation.csv` (315 clusters)
+**Filters:** Cluster members come from SIM≥0.9+both path files (conf≥3 + maturity≥3). Accuracy is computed on embeddings only — no EDGE edges or SIM edges are traversed. All intervention clusters contain only maturity≥3 nodes. ✅
 
 ### Method
 Leave-20%-out accuracy: for each cluster in the primary cut (SIM≥0.9+both, agglomerative), withhold 20% of members, compute centroid from 80%, check if withheld nodes are nearest-neighbour assigned to their original cluster. Comparison is **within-node_type only** (not across all 315 clusters). Note: cross-node_type comparison would compute NN against all 315 cluster centroids spanning different semantic domains (risk vs intervention vs design_rationale etc.), artificially inflating error rates because withheld nodes would often be "closer" to centroids from a different node type at a different semantic scale. Per-node_type comparison is the correct baseline (1/40 = 2.5% chance).
