@@ -5,6 +5,11 @@
 **Outputs:** `phase2_results/step3_validation_and_selection/`
 **Status:** Sections A–F complete ✅ · Section D full-graph betweenness ✅ (33.1h) · Both-mode betweenness ✅ (15 min)
 
+> ⚠ **Section D, D2, F RE-RUN IN PROGRESS** (`phase2_step3_rerun_betweenness_sectionf.py`, PID 2415422).
+> The original betweenness and EDGE subgraph stats used unfiltered EDGE edges (no conf≥3 or maturity≥3 cut).
+> All numbers in Sections D, D2, and F will be superseded once the re-run completes.
+> Monitor: `cat /tmp/betweenness_rerun.log`
+
 ---
 
 ## Section A — #23 Multi-Criteria Scoring
@@ -60,6 +65,19 @@
 ### Key Note: EDGE-Validation Weight Bias
 The 30% EDGE validation weight structurally advantages EDGE-only configs (trivial score=1.0). For risk, the composite gap of 0.036 is narrow; SIM≥0.9+both is preferred for cross-literature coverage (10× more nodes, 90.8% structural validation). For intervention, the 0.134 gap is substantial — SIM≥0.95 is genuinely better.
 
+### Path Generation Filters (Applied Before Clustering)
+All Phase 1 path files were generated with these mandatory filters applied at graph-load time in `final_pathway_analysis_modes.py`:
+- **`edge_confidence >= 3`** on all EDGE edges (removes 38.7% of EDGE edges — conf<3 accounts for conf=1: 1.7% + conf=2: 37.0% = 78,164 edges excluded from 202,149 total)
+- **`intervention_maturity >= 3`** on all intervention endpoint nodes
+- Only sources in `source_pathways_final.json["mature"]["conf>=1"]` (3,703 eligible sources)
+
+These filters explain the EDGE-only path count:
+- `source_pathways_final.json` at conf≥3: **3,498 paths** from **1,917 sources** (only 52% of the 3,703 eligible sources have complete chains after the conf≥3 cut)
+- BFS EDGE-only unconstrained: **3,473 paths** — matches almost exactly (slight difference from intervention set filtering)
+- The oft-cited "11K sources × 3–5 paths" estimate ignores both the source eligibility filter and the conf≥3 cut; at conf≥1 the total is 8,281 paths from 3,630 sources
+
+**The clustering inherits these filters** — `phase2_clustering.py` reads its node populations from path files, so all cluster members are nodes from conf≥3 + maturity≥3 paths. The PKL files (`graph_edge_data.pkl`, `graph_node_attributes.pkl`) store raw unfiltered data; the filters must be re-applied whenever they are used for downstream analysis.
+
 ### Mode Definitions
 The four clustering modes filter **pre-generated paths** (Phase 1 path files). Each path is a linear node sequence `[risk, body_nodes..., intervention]`. The modes define which paths are kept:
 
@@ -84,6 +102,30 @@ At ec=0.9 for risk, **single_risk carries nearly all the structural grounding** 
 Mode rankings for risk at ec=0.9: both (rank 3, composite=0.789) > single_risk (rank 7, composite=0.758) > monotonic (rank 11, composite=0.597) > unconstrained (rank 16, composite=0.438). The composite gap between both and single_risk (0.031) is narrow; the gap to unconstrained (0.351) is large.
 
 **Implication for Step 4:** For 3-level cluster analysis (risk clusters → mechanism clusters → intervention clusters), single_risk ec=0.9 is preferred: it prevents x-risk hub aggregation while preserving iterative body-node structure. The cluster-level EDGE connectivity graph (not betweenness) is the primary tool for identifying which mechanism families bridge which risk and intervention clusters. See Phase2_comprehensive_analysis_plan.md #27 Cross-Cluster Connectivity and #29 Risk→Intervention Mapping Matrix.
+
+### Path and Node Coverage Facts (Confirmed from Path Files)
+
+| Path file | Paths | Unique nodes |
+|-----------|-------|-------------|
+| `paths_unconstrained_edge_only.jsonl` | 3,473 | 17,136 |
+| `paths_unconstrained_sim0.9.jsonl` | 1,054,527 | 21,553 |
+| `paths_single_risk_sim0.9.jsonl` | 7,103 | 18,590 |
+| `paths_monotonic_sim0.9.jsonl` | 336,092 | 19,982 |
+| `paths_both_sim0.9.jsonl` | 5,939 | 17,954 |
+
+Total nodes across all 20 (mode × edge_config) combinations: **42,767**. Remaining ~158K nodes are on partial chains (no intervention endpoint OR no risk root). The betweenness analysis used the full 200,568-node graph — these partial-chain nodes are included in betweenness but not in cluster memberships.
+
+**Full-path consecutive SIM distribution** (applied to entire path: risk preamble + body + intervention, confirmed on all 1,054,527 unconstrained sim0.9 paths):
+
+| Max consecutive SIM (full path) | Paths | % | Cumulative |
+|----------------------------------|-------|---|-----------|
+| 0 (100% EDGE — truly structural) | 3,405 | 0.3% | 0.3% |
+| ≤ 1 | 75,008 | 7.1% | 7.1% |
+| ≤ 2 | 432,776 | 41.0% | 41.0% |
+| ≤ 3 | 772,423 | 73.2% | 73.2% |
+| ≤ 4 | 935,251 | 88.7% | 88.7% |
+
+**Note:** Filter must be applied to the full path. A body-only filter (which incorrectly excluded the 4–5 SIM-connected x-risk hub nodes in the risk preamble) gave inflated counts — ≤1 body-only = 452K vs ≤1 full-path = 75K. The full-path numbers are the correct basis for Step 4 path sampling variants (Variant A = 75K, Variant B = 433K).
 
 ---
 
@@ -168,8 +210,11 @@ Saved to `edge_only_test_set.jsonl` — direct input to Step 4 simulation valida
 **Plot:** `betweenness_comparison.png`
 **Method:** EXACT betweenness on FULL graph (200,568 nodes, 346,224 edges). Runtime: 33.1 hours. All 200,568 nodes used as sources — no sampling, no subgraph restriction.
 
+> ⚠ **FILTER INCONSISTENCY — RE-RUN IN PROGRESS.** The original run used ALL EDGE edges (no conf≥3 filter) and ALL intervention nodes (no maturity≥3 filter), inconsistent with path generation. The re-run (`phase2_step3_rerun_betweenness_sectionf.py`) applies conf≥3 and maturity≥3 and will overwrite these outputs. All numbers below are from the unfiltered run and will be superseded.
+
 ### Graph Used
-SIM≥0.9 edges (144,140) + structural EDGE edges (202,149) = 346,224 total edges, 200,568 nodes.
+Original (unfiltered): SIM≥0.9 edges (144,140) + ALL EDGE edges (202,149) = 346,224 total edges, 200,568 nodes.
+Re-run (filtered): SIM≥0.9 + EDGE conf≥3 (~123,985 EDGE edges) + maturity≥3 intervention nodes only.
 All nodes included as both sources and potential path intermediates. Brandes O(V×E) exact algorithm.
 
 **Note:** The clustering mode (both/unconstrained/monotonic/single_risk) does not affect betweenness computation. Betweenness is a property of the raw graph topology — all SIM≥0.9 + EDGE edges are used regardless of what mode was applied during clustering.
@@ -264,6 +309,8 @@ FDT connects to AI alignment because: a sufficiently capable AI will be modeled/
 **Files:** `betweenness_both09.csv` (top-100), `betweenness_both09_bridge_clusters.csv` (top-50 in 12 clusters), `betweenness_both09_raw_checkpoint.pkl`
 **Plot:** `betweenness_both09_comparison.png`
 **Method:** EXACT betweenness on induced subgraph of all nodes in both-mode ec=0.9 agglomerative clusters. Runtime: 15 min.
+
+> ⚠ **FILTER INCONSISTENCY — RE-RUN IN PROGRESS.** The original run used ALL EDGE edges (no conf≥3 filter) between both-mode nodes, without maturity≥3 on intervention nodes. The re-run applies both filters consistently. All numbers below are from the unfiltered run and will be superseded.
 
 ### Why a Separate Both-Mode Analysis
 
@@ -417,7 +464,9 @@ Random chance baseline: 1/40 = 2.5%. Observed 51.2% = **20× above random**.
 **File:** `edge_subgraph_stats.csv`
 **Plot:** `edge_degree_distribution.png`
 
-### Topology Results
+> ⚠ **FILTER INCONSISTENCY — RE-RUN IN PROGRESS.** The original run built the EDGE subgraph from ALL 202,149 EDGE edges (no conf≥3 filter) and all intervention nodes (no maturity≥3 filter). The re-run applies both filters — this will reduce EDGE edges by ~38.7% (conf<3 edges removed), significantly changing the topology stats (fewer nodes, different WCC structure, updated degree distribution). Numbers below are from the unfiltered run and will be superseded.
+
+### Topology Results (unfiltered — superseded by re-run)
 
 | Metric | Value |
 |--------|-------|
@@ -447,6 +496,27 @@ All 25 top-betweenness nodes from Step 2b appear in the EDGE subgraph (100% over
 
 ---
 
+---
+
+## Pipeline Filter Consistency Audit
+
+The two mandatory first-cut filters from path generation must be applied consistently in all downstream analyses:
+- **`edge_confidence >= 3`** — removes 38.7% of EDGE edges (conf=1: 1.7%, conf=2: 37.0% = 78,164 of 202,149 edges excluded)
+- **`intervention_maturity >= 3`** — removes low-maturity intervention nodes
+
+| Analysis | conf≥3 EDGE | maturity≥3 | Status |
+|----------|-------------|------------|--------|
+| Path generation (Phase 1) | ✅ applied | ✅ applied | Correct |
+| Clustering (phase2_clustering.py) | ✅ inherited via path files | ✅ inherited via path files | Correct |
+| EDGE validation metric (quality_metrics_summary.csv) | ✅ uses edge_only path files | ✅ inherited | Correct |
+| EDGE purity / gold standard (cluster_edge_purity.csv) | ✅ uses EDGE-config cluster members | ✅ inherited | Correct |
+| ARI stability, silhouette, threshold sensitivity | N/A (no EDGE edges) | N/A | Correct |
+| Held-out validation (Section E) | N/A (embeddings only) | N/A | Correct |
+| **Section D betweenness (full graph)** | ❌ ALL EDGE edges used | ❌ all intervention nodes | **Re-run in progress** |
+| **Section D2 betweenness (both-mode)** | ❌ ALL EDGE edges used | ❌ all intervention nodes | **Re-run in progress** |
+| **Section F EDGE subgraph stats** | ❌ ALL EDGE edges used | ❌ all intervention nodes | **Re-run in progress** |
+| Step 4 cluster connectivity (#27) | ✅ explicitly required | ✅ via valid_nodes | Planned |
+
 ## Summary: Final Config Selection
 
 | node_type | Final config | Mode | Key metric | Workshop use |
@@ -462,8 +532,8 @@ All 25 top-betweenness nodes from Step 2b appear in the EDGE subgraph (100% over
 |------|---------------|
 | `optimal_configs_final.csv` | Determines cluster memberships for naming |
 | `edge_only_test_set.jsonl` | 100 pathways for simulation validation |
-| `betweenness_bridge_clusters.csv` | Full-corpus bridge seeds: existential catastrophe, FDT, opacity, reward misspecification |
-| `betweenness_both09_bridge_clusters.csv` | Mechanism-space bridge seeds: catastrophic misalignment, adversarial vulnerability, reward misspecification, opacity, RLHF |
+| `betweenness_bridge_clusters.csv` | Full-corpus bridge seeds (**⚠ pending re-run** — themes likely stable: existential catastrophe, FDT, opacity, reward misspecification) |
+| `betweenness_both09_bridge_clusters.csv` | Mechanism-space bridge seeds (**⚠ pending re-run** — themes likely stable: catastrophic misalignment, adversarial vulnerability, reward misspecification, opacity, RLHF) |
 | `selection_justification.md` | Methods section 3.4 text |
 
 ### Key Distinction for Step 4: Three Betweenness Perspectives

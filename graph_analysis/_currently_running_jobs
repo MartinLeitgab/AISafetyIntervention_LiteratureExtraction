@@ -1,0 +1,68 @@
+# Currently Running Jobs
+**Updated:** 2026-03-28
+
+---
+
+## Job 1 — Section F + Section D Betweenness Re-run (ACTIVE)
+
+**Script:** `graph_analysis/phase2_step3_rerun_betweenness_sectionf.py`
+**PID:** 2415422
+**Log:** `/tmp/betweenness_rerun.log`
+**Started:** 2026-03-28 ~17:04
+**Status:** Running (PKL load complete, Section F and betweenness in progress)
+
+### Filters applied (correcting prior inconsistency)
+- `edge_confidence >= 3` on all EDGE edges (consistent with path generation)
+- `intervention_maturity >= 3` on intervention nodes (consistent with path generation)
+
+### Steps in order
+1. **Section F — EDGE subgraph stats** (~3 min): rebuild EDGE subgraph with filters
+2. **Full-graph betweenness (unconstrained)** (hours): SIM≥0.9 + EDGE conf≥3, maturity≥3, full 200K-node graph
+3. **Both-mode betweenness** (faster): same filters on nodes in ec=0.9 mode=both agglomerative clusters
+
+### Outputs (overwritten; originals backed up as `*_unfiltered.*`)
+| File | Location |
+|------|----------|
+| `edge_subgraph_stats.csv` | `step3_validation_and_selection/` |
+| `edge_degree_distribution.png` | `step3_validation_and_selection/` |
+| `betweenness_sim09.csv` | `step3_validation_and_selection/` |
+| `betweenness_bridge_clusters.csv` | `step3_validation_and_selection/` |
+| `betweenness_comparison.png` | `step3_validation_and_selection/` |
+| `betweenness_both09.csv` | `step3_validation_and_selection/` |
+| `betweenness_both09_bridge_clusters.csv` | `step3_validation_and_selection/` |
+| `betweenness_both09_comparison.png` | `step3_validation_and_selection/` |
+
+Intermediate checkpoints saved to:
+- `betweenness_raw_checkpoint_filtered.pkl` (full-graph, after betweenness completes)
+- `betweenness_both09_raw_checkpoint_filtered.pkl` (both-mode, after betweenness completes)
+
+---
+
+## ⚠ IMPORTANT — Findings Documents Supersession
+
+**The outputs of this job will supersede all betweenness and EDGE subgraph insights
+in the following documents once the job completes:**
+
+- `graph_analysis/phase2_results/Step3_Review_Summary.md`
+  - Section D: betweenness bridge themes (existential catastrophe, FDT, opacity, RLHF)
+  - Section F: EDGE subgraph topology (WCC count, diameter, degree distribution)
+  - Any node counts or rankings derived from the unfiltered betweenness run
+
+- `graph_analysis/phase2_results/Phase2_Step2_Comprehensive_Findings.md`
+  - Substep #16 (mechanism transfer betweenness): all SIM≥0.8 betweenness ranks
+    were computed without conf≥3 or maturity≥3 — superseded by new betweenness_sim09.csv
+  - Any bridge node rankings or themes cited from the old betweenness
+
+**Action required after job completes:**
+1. Read new `betweenness_sim09.csv` and `betweenness_both09.csv` for updated bridge themes
+2. Update Step3_Review_Summary.md Section D with corrected top bridge nodes and clusters
+3. Note in findings docs that betweenness was re-run with conf≥3 + maturity≥3 filters
+4. Delete or archive this file once findings docs are updated
+
+---
+
+## Monitor
+```bash
+cat /tmp/betweenness_rerun.log
+tail -5 /tmp/betweenness_rerun.log
+```
