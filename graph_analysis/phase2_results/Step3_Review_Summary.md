@@ -3,11 +3,12 @@
 **Generated:** 2026-03-22; last updated 2026-03-28
 **Script:** `graph_analysis/phase2_step3_validation_and_selection.py`
 **Outputs:** `phase2_results/step3_validation_and_selection/`
-**Status:** Sections A–F complete ✅ · Section D full-graph betweenness ✅ (33.1h) · Both-mode betweenness ✅ (15 min)
+**Status:** Sections A–F complete ✅ · Section F re-run ✅ (conf≥3 + maturity≥3) · Section D betweenness re-run ⚠ IN PROGRESS · Section D2 betweenness re-run ⚠ WAITING
 
-> ⚠ **Section D, D2, F RE-RUN IN PROGRESS** (`phase2_step3_rerun_betweenness_sectionf.py`, PID 2415422).
-> The original betweenness and EDGE subgraph stats used unfiltered EDGE edges (no conf≥3 or maturity≥3 cut).
-> All numbers in Sections D, D2, and F will be superseded once the re-run completes.
+> ⚠ **Section D, D2 RE-RUN IN PROGRESS** (`phase2_step3_rerun_betweenness_sectionf.py`, PID 2415422).
+> Section F re-run is complete; numbers updated below.
+> Section D (full-graph betweenness) is computing on 131,634 nodes, 251,221 edges with conf≥3 + maturity≥3.
+> Section D2 (both-mode betweenness) will run after D completes.
 > Monitor: `cat /tmp/betweenness_rerun.log`
 
 ---
@@ -463,28 +464,27 @@ Random chance baseline: 1/40 = 2.5%. Observed 51.2% = **20× above random**.
 **File:** `edge_subgraph_stats.csv`
 **Plot:** `edge_degree_distribution.png`
 
-> ⚠ **RE-RUN IN PROGRESS** with conf≥3 + maturity≥3 filters applied. Numbers below will be updated once complete.
+**Filters applied:** conf≥3 on all EDGE edges (removes 38.7%, 78,164 low-confidence + 15,637 low-maturity-endpoint edges dropped); intervention nodes with maturity<3 excluded from graph.
 
-### Topology Results (pending re-run)
+### Topology Results (conf≥3 + maturity≥3)
 
 | Metric | Value |
 |--------|-------|
-| Nodes | 200,525 |
-| Edges | 202,123 |
-| Weakly connected components | 15,123 |
-| Largest WCC size | 61 nodes (0.03%) |
-| Approximate diameter | 5 hops |
-| Mean degree | 2.02 |
-| Nodes with degree ≥ 2 | 74.4% |
-| Top-25 betweenness nodes in EDGE subgraph | 25/25 (100%) |
+| Nodes | 130,126 |
+| EDGE edges (conf≥3, maturity-valid endpoints) | 108,339 |
+| Weakly connected components | 25,953 |
+| Largest WCC size | 53 nodes (0.04%) |
+| Approximate diameter (BFS sample) | 6 hops |
+| Mean degree | 1.67 |
+| Top-25 betweenness nodes in EDGE subgraph | 18/25 (72%) |
 
 ### Key Structural Finding: Isolated Chains by Design
 
-The EDGE-only subgraph is **not a connected backbone** — it consists of ~15K isolated chains (mean degree ~2.0, largest component ~61 nodes). This is **expected by design**: each EDGE chain was extracted from a single source document, tracing a local argument from risk → body → intervention within one paper. Cross-paper connectivity does not exist in EDGE edges and was never intended to.
+The EDGE-only subgraph consists of ~26K isolated chains (conf≥3 + maturity≥3: 108,339 edges, mean degree 1.67, largest component 53 nodes). This is **expected by design**: each EDGE chain was extracted from a single source document, tracing a local argument from risk → body → intervention within one paper. Cross-paper connectivity does not exist in EDGE edges and was never intended to.
 
-**SIM edges are therefore the structural mechanism for cross-paper analysis** — they are not optional enrichment but the only source of global connectivity. The EDGE subgraph confirming ~15K isolated fragments is a validation that extraction worked as designed (one chain per paper), not a surprising finding.
+The higher chain count vs the unfiltered run (~26K vs ~15K) reflects the conf≥3 cut breaking weak-confidence EDGE links within some paper-local chains, splitting them into shorter fragments.
 
-Numbers below are pending re-run (conf≥3 filter will reduce total EDGE edges by ~38.7%; isolated-chain structure will be preserved but component counts and degree distribution will shift).
+**SIM edges are therefore the structural mechanism for cross-paper analysis** — they are not optional enrichment but the only source of global connectivity. The EDGE subgraph confirming ~26K isolated fragments is a validation that extraction worked as designed (one chain per paper), not a surprising finding.
 
 ---
 
