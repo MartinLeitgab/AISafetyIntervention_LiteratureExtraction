@@ -69,6 +69,17 @@ The four clustering modes apply constraints on top of the edge_config similarity
 
 "both" mode produces the most semantically coherent mechanism chains: each chain has a directed causal structure and a single risk root. It is the primary cut for risk and intervention node types.
 
+### Key Finding: Single_Risk Is the Primary Structural Constraint
+
+At ec=0.9 for risk, **single_risk carries nearly all the structural grounding** — both (90.8% EDGE%) vs single_risk (90.6% EDGE%) are essentially identical on EDGE validation. Monotonic alone without single_risk drops to 58.1% EDGE%, and unconstrained drops to 56.0%. This reveals that:
+
+- **single_risk** = the constraint that prevents x-risk hubs from aggregating semantically diverse mechanism families → structural grounding comes from this
+- **monotonic** = adds directional path ordering → improves ARI stability (+0.022: both=0.731 vs single_risk=0.709) but at a cost: it excludes body nodes that have bidirectional causal relationships (both influenced by a risk AND contributing to an intervention)
+
+Mode rankings for risk at ec=0.9: both (rank 3, composite=0.789) > single_risk (rank 7, composite=0.758) > monotonic (rank 11, composite=0.597) > unconstrained (rank 16, composite=0.438). The composite gap between both and single_risk (0.031) is narrow; the gap to unconstrained (0.351) is large.
+
+**Implication for Step 4:** Single_risk at ec=0.9 is the methodologically appropriate cut for body-node differentiation analysis (mechanism nodes between risk and intervention). It prevents x-risk hub dominance while allowing intermediate nodes to appear with bidirectional connections, making them visible as cross-family bridges in betweenness analysis. See Section D3 (planned).
+
 ---
 
 ## Section B — #21 Threshold Sensitivity
@@ -368,7 +379,7 @@ The both-mode betweenness is the more directly relevant analysis for Step 4 clus
 **File:** `held_out_validation.csv` (315 clusters)
 
 ### Method
-Leave-20%-out accuracy: for each cluster in the primary cut (SIM≥0.9+both, agglomerative), withhold 20% of members, compute centroid from 80%, check if withheld nodes are nearest-neighbour assigned to their original cluster. Comparison is within-node_type only (not across all 315 clusters).
+Leave-20%-out accuracy: for each cluster in the primary cut (SIM≥0.9+both, agglomerative), withhold 20% of members, compute centroid from 80%, check if withheld nodes are nearest-neighbour assigned to their original cluster. Comparison is **within-node_type only** (not across all 315 clusters). Note: cross-node_type comparison would compute NN against all 315 cluster centroids spanning different semantic domains (risk vs intervention vs design_rationale etc.), artificially inflating error rates because withheld nodes would often be "closer" to centroids from a different node type at a different semantic scale. Per-node_type comparison is the correct baseline (1/40 = 2.5% chance).
 
 ### Results by Node Type
 
@@ -448,8 +459,24 @@ All 25 top-betweenness nodes from Step 2b appear in the EDGE subgraph (100% over
 | `betweenness_both09_bridge_clusters.csv` | Mechanism-space bridge seeds: catastrophic misalignment, adversarial vulnerability, reward misspecification, opacity, RLHF |
 | `selection_justification.md` | Methods section 3.4 text |
 
-### Key Distinction for Step 4: Two Betweenness Perspectives
+### Key Distinction for Step 4: Three Betweenness Perspectives
 
 **Full-graph betweenness** (`betweenness_bridge_clusters.csv`) identifies nodes that bridge the broadest cross-section of the corpus, including connections through nodes excluded from the final mechanism selection. Use for: understanding the overall intellectual structure of the corpus, identifying historically prominent themes (including FDT from the 2018–2022 era), writing the corpus-level methods description.
 
-**Both-mode betweenness** (`betweenness_both09_bridge_clusters.csv`) identifies nodes that bridge within the constrained mechanism chains actually used in the taxonomy. Use for: Step 4 cluster naming seeds, identifying which risk and problem_analysis concepts are the structural organizing principles of the mechanism taxonomy, prioritizing which clusters to name first.
+**Both-mode betweenness** (`betweenness_both09_bridge_clusters.csv`) identifies nodes that bridge within the constrained mechanism chains actually used in the taxonomy. Use for: Step 4 cluster naming seeds (primary), identifying which risk and problem_analysis concepts are the structural organizing principles of the mechanism taxonomy, prioritizing which clusters to name first. Limitation: monotonic constraint may exclude body nodes with bidirectional causal relationships, biasing toward risk/problem_analysis nodes over intermediate mechanism nodes.
+
+**Single_risk ec=0.9 betweenness** (`betweenness_singlerisk09_bridge_clusters.csv` — PLANNED) identifies nodes that bridge within the mechanism space when x-risk hub aggregation is prevented but directional constraints are relaxed. This is the most appropriate cut for body-node differentiation: reveals which intermediate mechanism nodes (implementation_mechanism, design_rationale, problem_analysis body nodes) act as cross-family bridges. Expected: less fragmented than both-mode (more reachable pairs), body nodes more visible as bridges, catastrophic misalignment still dominant but lower ranked than in full-graph. See Section A Key Finding for rationale.
+
+---
+
+## Section D3 — Betweenness on Single_Risk ec=0.9 Subgraph (PLANNED)
+
+**Files:** `betweenness_singlerisk09.csv`, `betweenness_singlerisk09_bridge_clusters.csv`, `betweenness_singlerisk09_raw_checkpoint.pkl`
+**Method:** EXACT betweenness on induced subgraph of all nodes in single_risk ec=0.9 agglomerative clusters. Analogous to Section D2 but with monotonic constraint removed.
+**Rationale:** Answers the question neither Section D nor D2 answers: "which body nodes (intermediate mechanism nodes between risk and intervention) act as cross-family bridges when x-risk hub dominance is prevented but directionality is not enforced?"
+
+**Why single_risk, not unconstrained:**
+- unconstrained at ec=0.9 for risk: composite=0.438 (rank 16/20), EDGE%=56.0% — x-risk hubs aggregate diverse mechanism families, clusters lose coherence
+- single_risk at ec=0.9: composite=0.758 (rank 7/20), EDGE%=90.6% — nearly identical structural grounding to both (90.8%), without directional restrictions on body nodes
+
+**Status:** ⬜ TODO
