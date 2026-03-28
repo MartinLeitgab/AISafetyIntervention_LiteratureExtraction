@@ -93,16 +93,17 @@ The four clustering modes filter **pre-generated paths** (Phase 1 path files). E
 
 "both" mode gives clean single-root directed chains. single_risk gives single-root chains allowing iterative body structure. The clustering algorithm (agglomerative) then groups nodes by embedding similarity within the eligible node set.
 
-### Key Finding: Single_Risk Is the Primary Structural Constraint
+### Key Finding: Mode Effect on Structural Grounding
 
 At ec=0.9 for risk, **single_risk carries nearly all the structural grounding** — both (90.8% EDGE%) vs single_risk (90.6% EDGE%) are essentially identical on EDGE validation. Monotonic alone without single_risk drops to 58.1% EDGE%, and unconstrained drops to 56.0%. This reveals that:
 
-- **single_risk** = the constraint that prevents x-risk hubs from aggregating diverse mechanism families by filtering out paths with multiple risk nodes (7K vs 1M paths at SIM≥0.9 — a 99.3% reduction, confirming the x-risk hub problem is severe in unconstrained mode)
-- **monotonic** = adds directional body ordering → improves ARI stability (+0.022: both=0.731 vs single_risk=0.709) but excludes body nodes with iterative causal structure (backtracking allowed in real mechanism arguments)
+- **single_risk** = the constraint that prevents x-risk hubs from aggregating diverse mechanism families by filtering out paths with multiple risk nodes (7K vs 1M paths at SIM≥0.9 — a 99.3% reduction)
+- **monotonic** = adds directional body ordering → improves ARI stability (+0.022: both=0.731 vs single_risk=0.709) but excludes body nodes with iterative causal structure
+- **unconstrained** = preserves x-risk hub nodes and the full x-risk hierarchy (shared starting premise across many papers); lower EDGE validation (56%) but highest node coverage (21,553 nodes vs 18,590 for single_risk)
 
-Mode rankings for risk at ec=0.9: both (rank 3, composite=0.789) > single_risk (rank 7, composite=0.758) > monotonic (rank 11, composite=0.597) > unconstrained (rank 16, composite=0.438). The composite gap between both and single_risk (0.031) is narrow; the gap to unconstrained (0.351) is large.
+Mode rankings for risk at ec=0.9: both (rank 3, composite=0.789) > single_risk (rank 7, composite=0.758) > monotonic (rank 11, composite=0.597) > unconstrained (rank 16, composite=0.438). The composite score favors high EDGE validation, which structurally biases against unconstrained due to the 30% weight on EDGE%.
 
-**Implication for Step 4:** For 3-level cluster analysis (risk clusters → mechanism clusters → intervention clusters), single_risk ec=0.9 is preferred: it prevents x-risk hub aggregation while preserving iterative body-node structure. The cluster-level EDGE connectivity graph (not betweenness) is the primary tool for identifying which mechanism families bridge which risk and intervention clusters. See Phase2_comprehensive_analysis_plan.md #27 Cross-Cluster Connectivity and #29 Risk→Intervention Mapping Matrix.
+**Step 4 uses unconstrained** for the 3-level cluster connectivity analysis (#27). The x-risk hub cluster that unconstrained preserves is a meaningful structural level — it sits at the top of the risk hierarchy (x-risk cluster → secondary risk clusters → mechanism clusters → intervention clusters) and should not be removed. The cluster-level EDGE connectivity graph (not node-level betweenness) is the primary tool for identifying which mechanism families bridge which risk and intervention clusters.
 
 ### Path and Node Coverage Facts (Confirmed from Path Files)
 
@@ -477,20 +478,13 @@ Random chance baseline: 1/40 = 2.5%. Observed 51.2% = **20× above random**.
 | Nodes with degree ≥ 2 | 74.4% |
 | Top-25 betweenness nodes in EDGE subgraph | 25/25 (100%) |
 
-### Key Structural Finding: No Global Backbone
+### Key Structural Finding: Isolated Chains by Design
 
-The EDGE-only subgraph is **not a connected backbone** — it consists of 15,123 isolated chains with a maximum component of 61 nodes and mean degree of 2.0. Each "chain" represents a paper-local causal argument (problem → concept → intervention) that is structurally disconnected from chains in other papers.
+The EDGE-only subgraph is **not a connected backbone** — it consists of ~15K isolated chains (mean degree ~2.0, largest component ~61 nodes). This is **expected by design**: each EDGE chain was extracted from a single source document, tracing a local argument from risk → body → intervention within one paper. Cross-paper connectivity does not exist in EDGE edges and was never intended to.
 
-**Implication:** SIM edges are the **sole source of global connectivity** in the AI safety knowledge graph. Without similarity edges, the graph is a collection of 15K isolated paper-local fragments. This reframes SIM augmentation from "optional enrichment" to "structural necessity" for cross-paper analysis.
+**SIM edges are therefore the structural mechanism for cross-paper analysis** — they are not optional enrichment but the only source of global connectivity. The EDGE subgraph confirming ~15K isolated fragments is a validation that extraction worked as designed (one chain per paper), not a surprising finding.
 
-The diameter-5 finding within components is consistent with the 7-hop median path length found in Step 2 — small components with depth-5 internal chains.
-
-All 25 top-betweenness nodes from Step 2b appear in the EDGE subgraph (100% overlap), confirming that the most structurally important nodes are grounded in paper-local literature chains, not only SIM-connected.
-
-**Relationship to both-mode subgraph:** The both-mode SIM≥0.9 subgraph (Section D2) has 15,502 EDGE edges — a substantial subset of the 202,123 total EDGE edges, filtered to those between nodes satisfying both-mode constraints. This gives the both-mode subgraph a similar chain-dominated structure (EDGE:SIM ratio 2.6:1) but with SIM edges providing cross-chain bridges that don't exist in the pure EDGE-only graph.
-
-### Workshop Claim Supported
-> "Structural (EDGE-only) edges form 15,123 isolated paper-local chains (mean component size ≤61 nodes, mean degree=2.0), with no global connectivity. Similarity edges at SIM≥0.9 are therefore not optional augmentation but the structural mechanism enabling cross-paper mechanism identification. All 25 top-betweenness concept nodes are present in EDGE chains, confirming that bridge concepts are grounded in explicit literature arguments."
+Numbers below are pending re-run (conf≥3 filter will reduce total EDGE edges by ~38.7%; isolated-chain structure will be preserved but component counts and degree distribution will shift).
 
 ---
 
@@ -513,24 +507,10 @@ All 25 top-betweenness nodes from Step 2b appear in the EDGE subgraph (100% over
 | `betweenness_both09_bridge_clusters.csv` | Mechanism-space bridge seeds: catastrophic misalignment, adversarial vulnerability, reward misspecification, opacity, RLHF (⚠ re-run in progress) |
 | `selection_justification.md` | Methods section 3.4 text |
 
-### Key Distinction for Step 4: Three Betweenness Perspectives
+### Step 4 Betweenness Use
 
-**Full-graph betweenness** (`betweenness_bridge_clusters.csv`) identifies nodes that bridge the broadest cross-section of the corpus, including connections through nodes excluded from the final mechanism selection. Use for: understanding the overall intellectual structure of the corpus, identifying historically prominent themes (including FDT from the 2018–2022 era), writing the corpus-level methods description.
+**Full-graph betweenness** (`betweenness_bridge_clusters.csv`) — naming seeds for Step 4 #26: corpus-wide bridge themes including existential catastrophe, FDT (agent foundations era), opacity, reward misspecification. Use to understand the overall intellectual structure and historically prominent themes.
 
-**Both-mode betweenness** (`betweenness_both09_bridge_clusters.csv`) identifies nodes that bridge within the constrained mechanism chains actually used in the taxonomy. Use for: Step 4 cluster naming seeds (primary), identifying which risk and problem_analysis concepts are the structural organizing principles of the mechanism taxonomy, prioritizing which clusters to name first. Limitation: monotonic constraint may exclude body nodes with bidirectional causal relationships, biasing toward risk/problem_analysis nodes over intermediate mechanism nodes.
+**Both-mode betweenness** (`betweenness_both09_bridge_clusters.csv`) — naming seeds for Step 4 #26, mechanism-space specific: catastrophic misalignment, adversarial vulnerability, reward misspecification, opacity, RLHF. Use to prioritize which clusters to name first within the mechanism taxonomy.
 
-**Single_risk ec=0.9 betweenness** (`betweenness_singlerisk09_bridge_clusters.csv` — PLANNED) identifies nodes that bridge within the mechanism space when x-risk hub aggregation is prevented but directional constraints are relaxed. This is the most appropriate cut for body-node differentiation: reveals which intermediate mechanism nodes (implementation_mechanism, design_rationale, problem_analysis body nodes) act as cross-family bridges. Expected: less fragmented than both-mode (more reachable pairs), body nodes more visible as bridges, catastrophic misalignment still dominant but lower ranked than in full-graph. See Section A Key Finding for rationale.
-
----
-
-## Section D3 — Betweenness on Single_Risk ec=0.9 Subgraph (PLANNED)
-
-**Files:** `betweenness_singlerisk09.csv`, `betweenness_singlerisk09_bridge_clusters.csv`, `betweenness_singlerisk09_raw_checkpoint.pkl`
-**Method:** EXACT betweenness on induced subgraph of all nodes in single_risk ec=0.9 agglomerative clusters. Analogous to Section D2 but with monotonic constraint removed.
-**Rationale:** Answers the question neither Section D nor D2 answers: "which body nodes (intermediate mechanism nodes between risk and intervention) act as cross-family bridges when x-risk hub dominance is prevented but directionality is not enforced?"
-
-**Why single_risk, not unconstrained:**
-- unconstrained at ec=0.9 for risk: composite=0.438 (rank 16/20), EDGE%=56.0% — x-risk hubs aggregate diverse mechanism families, clusters lose coherence
-- single_risk at ec=0.9: composite=0.758 (rank 7/20), EDGE%=90.6% — nearly identical structural grounding to both (90.8%), without directional restrictions on body nodes
-
-**Status:** ⬜ TODO
+**Step 4 cluster connectivity analysis (#27) uses unconstrained** — the x-risk hub cluster at the top of the risk hierarchy is a meaningful structural level (x-risk cluster → secondary risk clusters → mechanism clusters → intervention clusters). Node-level betweenness on constrained subgraphs is not the primary tool for Step 4; cluster-level EDGE connectivity (#27) supersedes it.
