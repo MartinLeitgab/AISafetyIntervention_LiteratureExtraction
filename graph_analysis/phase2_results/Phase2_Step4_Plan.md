@@ -17,6 +17,20 @@ Paths in `phase1_rawpathsfiles/` were generated with the following mandatory fil
 
 These constraints are applied BEFORE path traversal. The edge_data.pkl (which includes all EDGE edges from FalkorDB) was NOT filtered by confidence — it contains all edges. The path files use a filtered subgraph.
 
+### Filter consistency across pipeline stages
+
+| Stage | conf≥3 EDGE | maturity≥3 intervention |
+|-------|-------------|------------------------|
+| Path generation (`final_pathway_analysis_modes.py`) | ✅ | ✅ endpoint only |
+| Clustering (`phase2_clustering.py`) | ✅ inherited via path files | ✅ inherited via path files |
+| Step 1 PKL (`graph_edge_data.pkl`) | ❌ all confidences stored | N/A (stored as attribute) |
+| Step 2/3 metrics (use PKL) | ❌ not filtered | reads raw attribute |
+| Step 3 betweenness (Section D) | ❌ all EDGE edges used — inconsistency | N/A |
+| **Step 4 cluster connectivity (#27)** | ✅ **must apply explicitly** (see task) | N/A |
+| Step 4 path sampling | ✅ inherited from path files | ✅ inherited from path files |
+
+**Note:** Step 3 betweenness used ALL EDGE edges from edge_data.pkl without a conf≥3 filter. This is a methodological inconsistency with path generation. The betweenness results are still valid for identifying high-centrality nodes (adding low-conf edges changes betweenness magnitude but not top-node identity significantly), but the methods section should note this distinction.
+
 ### Path count structure and "overcounting"
 The path files are NOT overcounted in the sense of duplicate paths. Each path is a unique (start_node, end_node) pair. However the fan-out is large:
 - 3,751 unique start (risk) nodes × up to 648 reachable intervention endpoints each = 1,054,527 total unconstrained sim0.9 paths
@@ -94,7 +108,8 @@ Single_risk produces 7,103 paths covering 18,590 nodes. Unconstrained produces 1
 
 **#27 Cross-Cluster Connectivity (cluster-level graph)**
 - Build cluster-level directed graph: nodes = clusters, edges = structural EDGE connections between members of different clusters
-- For each EDGE edge (u → v) where u ∈ cluster C1 and v ∈ cluster C2 (C1 ≠ C2): record (C1_node_type, C2_node_type, C1_id, C2_id, edge_subtype)
+- **Filter EDGE edges: `confidence >= 3`** (consistent with path generation; edge_data.pkl contains ALL confidence levels — must filter explicitly)
+- For each EDGE edge (u → v) with confidence≥3, where u ∈ cluster C1 and v ∈ cluster C2 (C1 ≠ C2): record (C1_node_type, C2_node_type, C1_id, C2_id, edge_subtype)
 - Levels: risk clusters (Level 1) → body clusters (Level 2: problem_analysis, theoretical_insight, design_rationale, implementation_mechanism, validation_evidence) → intervention clusters (Level 3)
 - Config: unconstrained (to preserve x-risk hierarchy)
 
