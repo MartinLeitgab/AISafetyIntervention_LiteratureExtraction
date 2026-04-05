@@ -897,8 +897,10 @@ Note: L1/L3 cluster assignments are the SAME across all 6 configs (same PKL, sam
 | Edge-only path fraction | ✅ | — | ✅ | — | n/a (trivial=1.0) | — |
 | L2 chain body clustering (A) | ✅ k=40 | — | ✅ k=40 | — | ✅ k=10 | — |
 | L2 chain body families (B) | — | ✅ 16,034 fam | — | ✅ 1,603 fam | — | ✅ 51 fam |
-| Connectivity (conf≥3 fixed) | ✅ | same paths | ✅ | same paths | ✅ | same paths |
-| Gap analysis (all 0 gaps) | ✅ | same | ✅ | same | ✅ | same |
+| Connectivity pathbuildA | ✅ | — | ✅ | — | ✅ | — |
+| Connectivity pathbuildB (R→B→I) | — | ✅ (2026-04-05) | — | ✅ (2026-04-05) | — | ✅ (2026-04-05) |
+| Gap analysis pathbuildA | ✅ | — | ✅ | — | ✅ | — |
+| Gap analysis pathbuildB | — | ✅ (2026-04-05) | — | ✅ (2026-04-05) | — | ✅ (2026-04-05) |
 | Three-layer network (basic) | ✅ | — | ✅ (2026-04-05) | — | ✅ (2026-04-05) | — |
 | Three-layer network (color) | ✅ (2026-04-05) | — | ✅ (2026-04-05) | — | ✅ (2026-04-05) | — |
 | Subcluster identification | ✅ 36 flagged | — | same PKL | — | same PKL | — |
@@ -912,10 +914,12 @@ Note: L1/L3 cluster assignments are the SAME across all 6 configs (same PKL, sam
 | Step 5 pathway examples | — | — | ✅ consim1 paths | n/a | n/a | n/a |
 | Step 5 triplet SIM reach | — | — | ✅ VPN-filtered | n/a | n/a | n/a |
 
-**All planned items complete (2026-04-05):**
+**All planned items complete (last updated 2026-04-05):**
 - ✅ Color-coded three-layer networks — 6 plots + cluster_color_categories.csv produced
-  - Note: Chain clusters render mostly grey ("other") because LLM names use risk-problem framing not mechanism keywords — cosmetically accurate given chain naming collapse structural finding
-- ✅ Subcluster naming — 36 parent clusters × k=5 + 2-pass gpt-4o-mini; 180 subclusters, 96.1% high confidence; structural finding: 35/36 clusters are semantically tight (1 dominant subcluster + 4 outlier singletons); only I9 splits meaningfully (Transformer architectures vs. Memory optimization)
+- ✅ Subcluster naming — 180 subclusters, 96.1% high confidence; only I9 splits meaningfully
+- ✅ PathbuildB R→B→I connectivity (substep 27) — `phase2_step4_pathbuildB_connectivity.py` (2026-04-05); 100% family match for all 3 configs; no orphaned families
+- ✅ UMAP per-consim config — 6 plots (consim0/1/2 × risk/intervention) with maturity≥3 fix (2026-04-05); see `step4_finalanalysis/umap_*_consimN.png`
+- ✅ Maturity filter root cause fix — `valid_pathway_nodes` alone does not guarantee maturity≥3 (path generator used unfiltered `ALL_INTERVENTION_IDS` cache); all Category B scripts now apply both filters (fixed in `connectivity.py` and `umap_plots.py`, 2026-04-05)
 
 **Priority order:**
 **Phase A — Code fixes (before any rerun):**
@@ -930,13 +934,14 @@ Note: L1/L3 cluster assignments are the SAME across all 6 configs (same PKL, sam
 8. ⚠️ **Restrict Step 3 D2 `both_nodes` to valid_pathway_nodes** (Gap 3c) — Step 3 output superseded by path-filtered betweenness; Step 4 does not use D2 output
 9. ✅ Filter Option B body subtype lookup (`node_to_stc`) to valid_pathway_nodes
 10. ✅ Fix ARI Jaccard denominator in `cluster_naming.py` Section 5
+11. ✅ **Root cause fix: maturity≥3 NOT guaranteed by valid_pathway_nodes** — path generation used `ALL_INTERVENTION_IDS` cache (includes maturity<3 nodes). Added explicit `intervention_maturity≥3` filter on top of valid_pathway_nodes in `connectivity.py` and `umap_plots.py` (2026-04-05). All existing analyses already had maturity≥3 as belt-and-suspenders in earlier fix — this note documents the root cause.
 
 **Phase B — Core Step 4 analyses (all 6 configs):**
 
 11. ✅ consim0 pathbuildA + pathbuildB; consim1 pathbuildA + pathbuildB; consim2 pathbuildA + pathbuildB
 12. ✅ cluster tables (risk, intervention, chain) on VPN-filtered members for all configs
 13. ✅ edge-only path fraction for consim1 and consim2
-14. ✅ Connectivity + gap analysis for all configs
+14. ✅ Connectivity + gap analysis for all configs (pathbuildA) ✅ PathbuildB R→B→I connectivity for all 3 consims (substep 27 — `phase2_step4_pathbuildB_connectivity.py`, 2026-04-05)
 15. ✅ Subcluster identification (36 flagged); ✅ subcluster naming (180 subclusters, 2026-04-05)
 16. ✅ Three-layer network (basic + color-coded) for all 3 consimN configs (2026-04-05)
 17. ✅ Cross-config ARI stability test (ARI=1.0)

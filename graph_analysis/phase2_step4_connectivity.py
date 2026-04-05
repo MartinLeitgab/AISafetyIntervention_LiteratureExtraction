@@ -184,9 +184,17 @@ for cid, node_ids in risk_clusters_09.items():
         node_to_risk[nid] = cid
 
 interv_clusters_09_raw = get_clusters("0.9", "unconstrained", "intervention")
-# Gap 4: apply valid_pathway_nodes filter (holistic — subsumes maturity≥3)
+# Gap 4: apply valid_pathway_nodes filter + explicit maturity≥3 (belt-and-suspenders).
+# NOTE: valid_pathway_nodes alone does NOT guarantee maturity≥3 because path generation
+# used ALL_INTERVENTION_IDS from cache which includes maturity<3 nodes.  The maturity
+# check is therefore required in addition to valid_pathway_nodes.
 interv_clusters_09 = {
-    cid: [n for n in nodes if n in valid_pathway_nodes]
+    cid: [
+        n
+        for n in nodes
+        if n in valid_pathway_nodes
+        and int(node_attrs.get(n, {}).get("intervention_maturity", 0) or 0) >= 3
+    ]
     for cid, nodes in interv_clusters_09_raw.items()
 }
 node_to_interv = {}

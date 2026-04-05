@@ -5,9 +5,23 @@ Produce UMAP 2D projection plots for valid_pathway_nodes-filtered
 risk and intervention cluster members (edge_config=0.9, mode=unconstrained,
 algo=agglomerative).
 
-Outputs:
-  graph_analysis/phase2_results/step4_finalanalysis/umap_risks.png
-  graph_analysis/phase2_results/step4_finalanalysis/umap_interventions.png
+Three consim configs are produced:
+  consim0 — edge-only paths (paths_unconstrained_edge_only.jsonl)
+  consim1 — sim0.9 paths filtered to max_consec_sim <= 1
+  consim2 — sim0.9 paths filtered to max_consec_sim <= 2
+
+For intervention nodes a maturity>=3 filter is applied in addition to
+valid_pathway_nodes membership.
+
+Outputs (in graph_analysis/phase2_results/step4_finalanalysis/):
+  umap_risks.png              — original unconstrained (unchanged)
+  umap_interventions.png      — original unconstrained (unchanged)
+  umap_risks_consim0.png
+  umap_interventions_consim0.png
+  umap_risks_consim1.png
+  umap_interventions_consim1.png
+  umap_risks_consim2.png
+  umap_interventions_consim2.png
 """
 
 import json
@@ -30,9 +44,13 @@ STEP1_DIR = (
     PROJECT_ROOT
     / "graph_analysis/phase2_results/step1_load_and_parse_umapwithoutlocalsatellites"
 )
-PATHS_FILE = (
+PATHS_SIM09_FILE = (
     PROJECT_ROOT
     / "graph_analysis/phase1_rawpathsfiles/paths_unconstrained_sim0.9.jsonl"
+)
+PATHS_EDGE_ONLY_FILE = (
+    PROJECT_ROOT
+    / "graph_analysis/phase1_rawpathsfiles/paths_unconstrained_edge_only.jsonl"
 )
 OUT_DIR = PROJECT_ROOT / "graph_analysis/phase2_results/step4_finalanalysis"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -55,86 +73,175 @@ print(
     flush=True,
 )
 
-# ---------------------------------------------------------------------------
-# 2. Build valid_pathway_nodes from paths_unconstrained_sim0.9.jsonl
-# ---------------------------------------------------------------------------
-print("Building valid_pathway_nodes …", flush=True)
+print("Loading graph_edge_data.pkl (needed for sim_edge_set) …", flush=True)
 t0 = time.time()
-valid_pathway_nodes: set = set()
-with open(PATHS_FILE) as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        record = json.loads(line)
-        for node_id in record["path"]:
-            valid_pathway_nodes.add(node_id)
+with open(STEP1_DIR / "graph_edge_data.pkl", "rb") as f:
+    edge_data: list = pickle.load(f)
 print(
-    f"  {len(valid_pathway_nodes):,} unique pathway nodes in {time.time() - t0:.1f}s",
+    f"  Loaded {len(edge_data):,} edges in {time.time() - t0:.1f}s",
     flush=True,
 )
 
 
 # ---------------------------------------------------------------------------
-# Helper: parse embedding string if needed
+# 2. Build sim_edge_set (cos_sim >= 0.9 SIMILARITY edges)
+# ---------------------------------------------------------------------------
+def cos_sim_from_score(s):
+    return 1.0 - float(s) ** 2 / 2.0
+
+
+print("Building sim_edge_set (cos_sim >= 0.9) …", flush=True)
+t0 = time.time()
+sim_edge_set: set = set()
+for e in edge_data:
+    if str(e.get("type", "")).upper() == "SIMILARITY":
+        score = e.get("similarity_score")
+        if score is not None and cos_sim_from_score(score) >= 0.9:
+            try:
+                s2, t2 = int(e["source"]), int(e["target"])
+                sim_edge_set.add((min(s2, t2), max(s2, t2)))
+            except (ValueError, TypeError):
+                pass
+print(
+    f"  {len(sim_edge_set):,} sim edges at cos_sim>=0.9 in {time.time() - t0:.1f}s",
+    flush=True,
+)
+# edge_data no longer needed — free memory
+del edge_data
+
+
+# ---------------------------------------------------------------------------
+# 3. Helper: max consecutive SIM hops in a path
+# ---------------------------------------------------------------------------
+def max_consec_sim(path_ids, sim_set):
+    max_run = run = 0
+    for i in range(len(path_ids) - 1):
+        a, b = int(path_ids[i]), int(path_ids[i + 1])
+        if (min(a, b), max(a, b)) in sim_set:
+            run += 1
+            max_run = max(max_run, run)
+        else:
+            run = 0
+    return max_run
+
+
+# ---------------------------------------------------------------------------
+# 4. Build valid_pathway_nodes per consim config
+# ---------------------------------------------------------------------------
+def load_pathway_nodes_edge_only(path_file: Path) -> set:
+    """Load all node IDs from an edge-only JSONL path file."""
+    nodes: set = set()
+    with open(path_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            for nid in record["path"]:
+                nodes.add(nid)
+    return nodes
+
+
+def load_pathway_nodes_sim09_filtered(path_file: Path, max_consec: int) -> set:
+    """Load node IDs from sim0.9 JSONL keeping only paths with max_consec_sim <= max_consec."""
+    nodes: set = set()
+    with open(path_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            path_ids = record["path"]
+            if max_consec_sim(path_ids, sim_edge_set) <= max_consec:
+                for nid in path_ids:
+                    nodes.add(nid)
+    return nodes
+
+
+print("\nBuilding valid_pathway_nodes for consim0 (edge-only) …", flush=True)
+t0 = time.time()
+vpn_consim0 = load_pathway_nodes_edge_only(PATHS_EDGE_ONLY_FILE)
+print(f"  consim0: {len(vpn_consim0):,} nodes in {time.time() - t0:.1f}s", flush=True)
+
+print("Building valid_pathway_nodes for consim1 (max_consec_sim<=1) …", flush=True)
+t0 = time.time()
+vpn_consim1 = load_pathway_nodes_sim09_filtered(PATHS_SIM09_FILE, max_consec=1)
+print(f"  consim1: {len(vpn_consim1):,} nodes in {time.time() - t0:.1f}s", flush=True)
+
+print("Building valid_pathway_nodes for consim2 (max_consec_sim<=2) …", flush=True)
+t0 = time.time()
+vpn_consim2 = load_pathway_nodes_sim09_filtered(PATHS_SIM09_FILE, max_consec=2)
+print(f"  consim2: {len(vpn_consim2):,} nodes in {time.time() - t0:.1f}s", flush=True)
+
+# Also keep unconstrained (all paths in sim0.9 file) for original plots
+print("Building valid_pathway_nodes for unconstrained (all sim0.9 paths) …", flush=True)
+t0 = time.time()
+vpn_unconstrained: set = set()
+with open(PATHS_SIM09_FILE) as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        record = json.loads(line)
+        for nid in record["path"]:
+            vpn_unconstrained.add(nid)
+print(
+    f"  unconstrained: {len(vpn_unconstrained):,} nodes in {time.time() - t0:.1f}s",
+    flush=True,
+)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
 # ---------------------------------------------------------------------------
 def parse_embedding(emb) -> np.ndarray:
     if isinstance(emb, np.ndarray):
         return emb.astype(np.float32)
     if isinstance(emb, str):
         return np.fromstring(emb.strip("<>"), sep=", ").astype(np.float32)
-    # fallback: try converting
     return np.array(emb, dtype=np.float32)
 
 
-# ---------------------------------------------------------------------------
-# Helper: build color list cycling through tab20 + tab20b for 40 clusters
-# ---------------------------------------------------------------------------
 def build_color_map(cluster_ids: list) -> dict:
-    tab20 = plt.cm.tab20.colors  # 20 colours
-    tab20b = plt.cm.tab20b.colors  # 20 colours
-    palette = list(tab20) + list(tab20b)  # 40 colours total
+    tab20 = plt.cm.tab20.colors
+    tab20b = plt.cm.tab20b.colors
+    palette = list(tab20) + list(tab20b)
     unique_sorted = sorted(set(cluster_ids))
     return {cid: palette[i % len(palette)] for i, cid in enumerate(unique_sorted)}
 
 
-# ---------------------------------------------------------------------------
-# 3 & 4. Collect filtered cluster members for risk and intervention
-# ---------------------------------------------------------------------------
 EDGE_CONFIG = 0.9
 MODE = "unconstrained"
 ALGO = "agglomerative"
 
 
-def collect_filtered_members(node_type: str):
-    """Return (node_ids, cluster_labels) for valid_pathway_nodes-filtered members."""
+def collect_filtered_members(
+    node_type: str, valid_pathway_nodes: set, maturity_filter: bool = False
+):
+    """Return (node_ids, cluster_labels) applying valid_pathway_nodes filter.
+
+    For intervention nodes pass maturity_filter=True to additionally require
+    intervention_maturity >= 3.
+    """
     node_ids = []
     labels = []
     for (ec, mode, nt, algo, cluster_id), members in cluster_memberships.items():
         if ec == EDGE_CONFIG and mode == MODE and nt == node_type and algo == ALGO:
             for nid in members:
-                if nid in valid_pathway_nodes:
-                    node_ids.append(nid)
-                    labels.append(cluster_id)
+                if nid not in valid_pathway_nodes:
+                    continue
+                if maturity_filter:
+                    mat = int(
+                        node_attrs.get(nid, {}).get("intervention_maturity", 0) or 0
+                    )
+                    if mat < 3:
+                        continue
+                node_ids.append(nid)
+                labels.append(cluster_id)
     return node_ids, labels
 
 
-print("\nCollecting filtered risk cluster members …", flush=True)
-risk_ids, risk_labels = collect_filtered_members("risk")
-print(f"  {len(risk_ids):,} risk nodes pass valid_pathway_nodes filter", flush=True)
-
-print("Collecting filtered intervention cluster members …", flush=True)
-interv_ids, interv_labels = collect_filtered_members("intervention")
-print(
-    f"  {len(interv_ids):,} intervention nodes pass valid_pathway_nodes filter",
-    flush=True,
-)
-
-
-# ---------------------------------------------------------------------------
-# 5. Build embedding matrices
-# ---------------------------------------------------------------------------
-def build_embedding_matrix(node_ids: list) -> np.ndarray:
+def build_embedding_matrix(node_ids: list):
     embs = []
     missing = 0
     for nid in node_ids:
@@ -159,51 +266,11 @@ def build_embedding_matrix(node_ids: list) -> np.ndarray:
     return matrix, missing
 
 
-print("\nBuilding risk embedding matrix …", flush=True)
-t0 = time.time()
-risk_matrix, risk_missing = build_embedding_matrix(risk_ids)
-print(
-    f"  Shape: {risk_matrix.shape}, missing: {risk_missing}, time: {time.time() - t0:.1f}s",
-    flush=True,
-)
-
-print("Building intervention embedding matrix …", flush=True)
-t0 = time.time()
-interv_matrix, interv_missing = build_embedding_matrix(interv_ids)
-print(
-    f"  Shape: {interv_matrix.shape}, missing: {interv_missing}, time: {time.time() - t0:.1f}s",
-    flush=True,
-)
-
-
-# ---------------------------------------------------------------------------
-# 6. Run UMAP
-# ---------------------------------------------------------------------------
 UMAP_PARAMS = dict(
     n_components=2, n_neighbors=15, min_dist=0.1, metric="cosine", random_state=42
 )
 
-print("\nRunning UMAP for risk nodes …", flush=True)
-t0 = time.time()
-reducer_risk = umap.UMAP(**UMAP_PARAMS)
-risk_2d = reducer_risk.fit_transform(risk_matrix)
-print(
-    f"  UMAP done in {time.time() - t0:.1f}s, output shape: {risk_2d.shape}", flush=True
-)
 
-print("Running UMAP for intervention nodes …", flush=True)
-t0 = time.time()
-reducer_interv = umap.UMAP(**UMAP_PARAMS)
-interv_2d = reducer_interv.fit_transform(interv_matrix)
-print(
-    f"  UMAP done in {time.time() - t0:.1f}s, output shape: {interv_2d.shape}",
-    flush=True,
-)
-
-
-# ---------------------------------------------------------------------------
-# 7. Plot and save
-# ---------------------------------------------------------------------------
 def make_umap_plot(coords_2d, labels, title, out_path):
     color_map = build_color_map(labels)
     colors = [color_map[lb] for lb in labels]
@@ -223,7 +290,6 @@ def make_umap_plot(coords_2d, labels, title, out_path):
     ax.set_ylabel("UMAP-2")
     ax.tick_params(labelsize=8)
 
-    # Legend (one patch per cluster)
     unique_labels = sorted(set(labels))
     handles = [
         plt.Line2D(
@@ -254,23 +320,121 @@ def make_umap_plot(coords_2d, labels, title, out_path):
     print(f"  Saved: {out_path}", flush=True)
 
 
-n_risk_plotted = risk_matrix.shape[0]
-n_interv_plotted = interv_matrix.shape[0]
+def run_umap_and_plot(valid_pathway_nodes: set, label: str, suffix: str):
+    """Collect members, run UMAP, and save plots for one consim config."""
+    print(f"\n--- {label} ---", flush=True)
 
-print("\nPlotting risk UMAP …", flush=True)
-make_umap_plot(
-    risk_2d,
-    risk_labels,
-    f"Risk Clusters — UMAP 2D (valid_pathway_nodes, n={n_risk_plotted:,})",
-    OUT_DIR / "umap_risks.png",
+    print("  Collecting risk members …", flush=True)
+    risk_ids, risk_labels = collect_filtered_members(
+        "risk", valid_pathway_nodes, maturity_filter=False
+    )
+    print(f"    {len(risk_ids):,} risk nodes", flush=True)
+
+    print("  Collecting intervention members (maturity>=3) …", flush=True)
+    interv_ids, interv_labels = collect_filtered_members(
+        "intervention", valid_pathway_nodes, maturity_filter=True
+    )
+    print(f"    {len(interv_ids):,} intervention nodes", flush=True)
+
+    print("  Building risk embedding matrix …", flush=True)
+    t0 = time.time()
+    risk_matrix, risk_missing = build_embedding_matrix(risk_ids)
+    print(
+        f"    Shape: {risk_matrix.shape}, missing: {risk_missing}, time: {time.time() - t0:.1f}s",
+        flush=True,
+    )
+
+    print("  Building intervention embedding matrix …", flush=True)
+    t0 = time.time()
+    interv_matrix, interv_missing = build_embedding_matrix(interv_ids)
+    print(
+        f"    Shape: {interv_matrix.shape}, missing: {interv_missing}, time: {time.time() - t0:.1f}s",
+        flush=True,
+    )
+
+    print("  Running UMAP for risk …", flush=True)
+    t0 = time.time()
+    risk_2d = umap.UMAP(**UMAP_PARAMS).fit_transform(risk_matrix)
+    print(f"    Done in {time.time() - t0:.1f}s", flush=True)
+
+    print("  Running UMAP for interventions …", flush=True)
+    t0 = time.time()
+    interv_2d = umap.UMAP(**UMAP_PARAMS).fit_transform(interv_matrix)
+    print(f"    Done in {time.time() - t0:.1f}s", flush=True)
+
+    make_umap_plot(
+        risk_2d,
+        risk_labels,
+        f"Risk Clusters — UMAP 2D ({label}, n={risk_matrix.shape[0]:,})",
+        OUT_DIR / f"umap_risks{suffix}.png",
+    )
+    make_umap_plot(
+        interv_2d,
+        interv_labels,
+        f"Intervention Clusters — UMAP 2D ({label}, maturity>=3, n={interv_matrix.shape[0]:,})",
+        OUT_DIR / f"umap_interventions{suffix}.png",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 5. Original unconstrained plots (umap_risks.png / umap_interventions.png)
+#    These do NOT apply maturity filter (backward-compatible).
+# ---------------------------------------------------------------------------
+print("\n=== Original unconstrained plots (no maturity filter) ===", flush=True)
+print("  Collecting risk members (unconstrained) …", flush=True)
+risk_ids_unc, risk_labels_unc = collect_filtered_members(
+    "risk", vpn_unconstrained, maturity_filter=False
+)
+print(f"    {len(risk_ids_unc):,} risk nodes", flush=True)
+
+print(
+    "  Collecting intervention members (unconstrained, no maturity filter) …",
+    flush=True,
+)
+interv_ids_unc, interv_labels_unc = collect_filtered_members(
+    "intervention", vpn_unconstrained, maturity_filter=False
+)
+print(f"    {len(interv_ids_unc):,} intervention nodes", flush=True)
+
+t0 = time.time()
+risk_matrix_unc, _ = build_embedding_matrix(risk_ids_unc)
+print(f"  Risk matrix {risk_matrix_unc.shape} in {time.time() - t0:.1f}s", flush=True)
+
+t0 = time.time()
+interv_matrix_unc, _ = build_embedding_matrix(interv_ids_unc)
+print(
+    f"  Intervention matrix {interv_matrix_unc.shape} in {time.time() - t0:.1f}s",
+    flush=True,
 )
 
-print("Plotting intervention UMAP …", flush=True)
+print("  Running UMAP for risk (unconstrained) …", flush=True)
+t0 = time.time()
+risk_2d_unc = umap.UMAP(**UMAP_PARAMS).fit_transform(risk_matrix_unc)
+print(f"    Done in {time.time() - t0:.1f}s", flush=True)
+
+print("  Running UMAP for interventions (unconstrained) …", flush=True)
+t0 = time.time()
+interv_2d_unc = umap.UMAP(**UMAP_PARAMS).fit_transform(interv_matrix_unc)
+print(f"    Done in {time.time() - t0:.1f}s", flush=True)
+
 make_umap_plot(
-    interv_2d,
-    interv_labels,
-    f"Intervention Clusters — UMAP 2D (valid_pathway_nodes, n={n_interv_plotted:,})",
+    risk_2d_unc,
+    risk_labels_unc,
+    f"Risk Clusters — UMAP 2D (valid_pathway_nodes, n={risk_matrix_unc.shape[0]:,})",
+    OUT_DIR / "umap_risks.png",
+)
+make_umap_plot(
+    interv_2d_unc,
+    interv_labels_unc,
+    f"Intervention Clusters — UMAP 2D (valid_pathway_nodes, n={interv_matrix_unc.shape[0]:,})",
     OUT_DIR / "umap_interventions.png",
 )
 
-print("\nDone.", flush=True)
+# ---------------------------------------------------------------------------
+# 6. Per-consim plots
+# ---------------------------------------------------------------------------
+run_umap_and_plot(vpn_consim0, "consim0 (edge-only paths)", "_consim0")
+run_umap_and_plot(vpn_consim1, "consim1 (max_consec_sim<=1)", "_consim1")
+run_umap_and_plot(vpn_consim2, "consim2 (max_consec_sim<=2)", "_consim2")
+
+print("\nDone. All 8 plots written.", flush=True)

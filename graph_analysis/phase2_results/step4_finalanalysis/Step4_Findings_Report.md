@@ -3,7 +3,7 @@
 **Generated:** 2026-04-04
 **Scripts run:** `phase2_step4b_paths_and_plots.py` (fixed), `phase2_step4_connectivity.py` (fixed), `phase2_step4_phase_c_reruns.py` (new)
 **All outputs in:** `phase2_results/step4_finalanalysis/`
-**Filter compliance:** All Category B analyses use `valid_pathway_nodes` from `paths_unconstrained_sim0.9.jsonl` (holistic quality-cut filter — EDGE conf≥3, SIM cos_sim≥0.9, intervention maturity≥3, applied simultaneously during path generation)
+**Filter compliance:** All Category B analyses use `valid_pathway_nodes` from `paths_unconstrained_sim0.9.jsonl` plus explicit `intervention_maturity≥3` check. NOTE (2026-04-05): path generation (`final_pathway_analysis_modes.py`) used `ALL_INTERVENTION_IDS = cache["interventions"]` as BFS terminal set, which included maturity<3 nodes — so valid_pathway_nodes alone does NOT guarantee maturity≥3. All Category B scripts apply both filters simultaneously.
 
 ---
 
@@ -16,7 +16,7 @@ The following gaps from the Step 4 Analysis Plan (v9) were fixed before this run
 | Gap 4 — `build_cluster_table()` unfiltered | `step4b`, `cluster_naming` | All cluster member lists now filtered to `valid_pathway_nodes` before any computation |
 | Gap 3b — `risk_clusters_09.pkl` saved unfiltered | `step4b`, `cluster_naming` | `risk_clusters_09` built with `valid_pathway_nodes` filter before PKL save |
 | Gap 3b — `risk_clusters_09` loaded unfiltered | `connectivity` | Filter applied after PKL load: `{cid: [n for n in nodes if n in valid_pathway_nodes]}` |
-| Gap 4 — `interv_clusters_09` maturity-only filter | `connectivity` | Replaced with `valid_pathway_nodes` filter (holistic, subsumes maturity≥3) |
+| Gap 4 — `interv_clusters_09` maturity-only filter | `connectivity` | Now filters by `valid_pathway_nodes` AND explicit `intervention_maturity≥3` (both required — see root cause note in header) |
 | Gap 4 — `valid_pathway_nodes` missing | `connectivity` | Added loading from `paths_unconstrained_sim0.9.jsonl` |
 | Gap 9 — `node_to_stc` unfiltered body nodes | `step4b`, `cluster_naming` | Added `if nid in valid_pathway_nodes` guard |
 | Gap 4 — Plot 19 maturity heatmap unfiltered | `step4b` | Uses `valid_pathway_nodes`-filtered intervention clusters |
@@ -33,7 +33,7 @@ Step 4 completed the three-level risk → connection-concept-chain → intervent
 
 **Key numbers:**
 - **4,889** risk nodes in 40 risk clusters (all on ≥1 qualifying unconstrained path)
-- **2,815** intervention nodes in 40 intervention clusters (qualifying, maturity≥3)
+- **2,815** intervention nodes in 40 intervention clusters (qualifying, maturity≥3) — confirmed by connectivity rerun (2026-04-05)
 - **40** chain body clusters (Option A, MiniBatchKMeans on mean body embeddings — consim1_pathbuildA selected)
 - **51 / 1,603 / 16,034** Option B co-occurrence chain families for consim0 / consim1 / all-unconstrained (see Part 1 for labeling correction — 16,034 families are from all unconstrained paths, not consim2-filtered)
 - **432,776** consim2 qualifying paths; **74,921** consim1; **3,386** edge-only (with body nodes)
@@ -68,7 +68,7 @@ All 40 clusters have `edge_purity = 1.0` — every cluster has ≥1 valid-pathwa
 
 ### L3 Intervention Clusters — 40 clusters, 2,815 qualifying nodes (maturity≥3)
 
-**Note:** 155 intervention nodes in the PKL with maturity<3 (15 at mat=1, 140 at mat=2) are excluded by the valid_pathway_nodes + maturity≥3 filter, reducing the count from 2,970 to 2,815.
+**Note:** 155 intervention nodes in the PKL with maturity<3 (15 at mat=1, 140 at mat=2) are excluded by the explicit maturity≥3 filter, reducing the count from 2,970 to 2,815. Root cause: path generation used `ALL_INTERVENTION_IDS` from cache (includes maturity<3 nodes) as BFS terminal set, so 155 maturity<3 interventions appear in path files and in valid_pathway_nodes. The maturity≥3 check is therefore an ADDITIONAL required filter, not redundant with valid_pathway_nodes.
 
 | Cluster | N nodes (qual.) | N sources | Centroid sim | Top representative node |
 |---------|----------------|-----------|--------------|------------------------|
@@ -430,12 +430,12 @@ All consimN analyses complete. Config selection made.
 
 | Config | Cluster tables | Chain KMeans / Families | Connectivity | Gap analysis | Status |
 |--------|---------------|------------------------|-------------|-------------|--------|
-| `consim0_pathbuildA` | ✅ | ✅ k=10 | ✅ | ✅ 0 gaps | ✅ Complete |
-| `consim1_pathbuildA` | ✅ | ✅ k=40 | ✅ | ✅ 0 gaps | ✅ Complete |
-| `consim2_pathbuildA` | ✅ | ✅ k=40 | ✅ | ✅ 0 gaps | ✅ Complete |
-| `consim0_pathbuildB` | ✅ Option B (51 families) | — | — | — | ✅ |
-| `consim1_pathbuildB` | ✅ Option B (1,603 families) | — | — | — | ✅ |
-| `unconstrained_pathbuildB` ⚠️ (mislabeled consim2) | ✅ Option B (16,034 families from ALL unconstrained paths) | — | — | — | ✅ |
+| `consim0_pathbuildA` | ✅ | ✅ k=10 | ✅ | ✅ | ✅ Complete |
+| `consim1_pathbuildA` | ✅ | ✅ k=40 | ✅ | ✅ | ✅ Complete |
+| `consim2_pathbuildA` | ✅ | ✅ k=40 | ✅ | ✅ | ✅ Complete |
+| `consim0_pathbuildB` | ✅ 51 families | — | ✅ R→B→I (2026-04-05) | ✅ (2026-04-05) | ✅ Complete |
+| `consim1_pathbuildB` | ✅ 1,603 families | — | ✅ R→B→I (2026-04-05) | ✅ (2026-04-05) | ✅ Complete |
+| `unconstrained_pathbuildB` ⚠️ (mislabeled consim2) | ✅ 16,034 families (all unconstrained paths) | — | ✅ R→B→I (2026-04-05) | ✅ (2026-04-05) | ✅ Complete |
 
 **All 6 configs complete.** Three-layer network visualizations produced for all 3 consimN configs (`three_layer_network_consim0/1/2.png`).
 
@@ -445,11 +445,31 @@ All consimN analyses complete. Config selection made.
 - Step 5a/5b/5c: LLM naming (120 clusters), pathway examples (prevalent + gaps + EDGE-only + Option B), triplet SIM reach — all done. See Part 14.
 - Step 5d — Subcluster naming: 36 parent clusters × k=5 AgglomerativeClustering + 2-pass gpt-4o-mini; 180 subclusters, 96.1% high confidence. See Part 10.
 - Color-coded three-layer networks: 6 plots (3 consimN × Sankey + detail) + `cluster_color_categories.csv`. See `step4_connectivity/`.
-- UMAP plots (`umap_risks.png`, `umap_interventions.png`): ⏳ in progress (valid_pathway_nodes-filtered cluster members, UMAP 2D projection, colored by cluster ID).
+- UMAP plots: ✅ per-consim plots for consim0/consim1/consim2 × risk/intervention = 6 plots. Maturity≥3 filter applied. Node counts (maturity-filtered):
+  - consim0: 2,639 risk / 2,693 intervention — `umap_risks_consim0.png`, `umap_interventions_consim0.png`
+  - consim1: 3,830 risk / 2,799 intervention — `umap_risks_consim1.png`, `umap_interventions_consim1.png`
+  - consim2: 4,648 risk / 2,808 intervention — `umap_risks_consim2.png`, `umap_interventions_consim2.png`
+  - Original `umap_risks.png` / `umap_interventions.png` (unconstrained, no maturity filter): 4,889 risk / 2,970 intervention — preserved as reference
+  - Note: Original unconstrained plots still use unfiltered intervention count (2,970). The per-consim plots are the workshop-appropriate outputs.
 
-**Open gaps identified (2026-04-05):**
-- **Option B connectivity/gap analysis not run** — Substep #27 specified "all 6 configs" but connectivity (`phase2_step4_connectivity.py`) uses KMeans cluster IDs for the L2 chain level and cannot be directly applied to pathbuildB's signature-based families. A separate script would be needed to compute R_cluster → B_family → I_cluster connectivity for pathbuildB configs. Not yet implemented.
-- **True consim2 Option B not computed** — the 16,034-family file is from all unconstrained paths, not consim2-filtered (see Part 1 correction). A consim2-specific Option B would require running `pathbuildB_remaining.py` against `representative_pathways_consim2.jsonl`.
+### PathbuildB Connectivity — Substep #27 (completed 2026-04-05)
+
+Script: `phase2_step4_pathbuildB_connectivity.py`
+Outputs in `step4_connectivity/`: `risk_to_Bfamily_edges_consimN.csv`, `Bfamily_to_interv_edges_consimN.csv`, `risk_to_interv_via_B_edges_consimN.csv`, `gap_analysis_pathbuildB_consimN.csv` for N ∈ {0, 1, 2}.
+
+| Config | Paths | Families matched | R→B edges | B→I edges | R→I direct |
+|--------|-------|-----------------|-----------|-----------|------------|
+| consim0 | 3,473 | 51/51 (100%) | 170 | 104 | 610 |
+| consim1 | 75,008 | 1,603/1,603 (100%) | 6,461 | 1,952 | 1,088 |
+| consim2 (unconstrained) | 1,054,527 | 16,034/16,034 (100%) | 69,712 | 19,931 | 1,362 |
+
+**Gap analysis highlights:**
+- consim0: 8 risk clusters, 7 intervention clusters have no B-family connection (expected — sparse edge-only data); all clusters have direct R→I links
+- consim1: 3 risk clusters, 1 intervention cluster disconnected from B-families; all have R→I
+- consim2: only 1 risk cluster and 1 intervention cluster disconnected; all have R→I
+- No B-families are orphaned in any config (0 families with no risk or intervention connection)
+
+**Note on `unconstrained_pathbuildB` labeling:** The 16,034-family file was previously labeled "consim2" in the report. It is computed from ALL 1,054,527 unconstrained paths (no max_consec_sim filter). A true consim2-filtered pathbuildB (max_consec_sim≤2) would use a subset of these paths and would yield a slightly smaller family count. This distinction is documented; the unconstrained computation is the broader/less restrictive version.
 
 **Human review items (from `step5_naming/human_review_checklist.csv`, 63 items — mandatory before workshop submission):**
 1. R13 (4 qualifying nodes) — confirm artifact or genuine niche cluster; consider removing from taxonomy
