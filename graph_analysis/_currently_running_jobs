@@ -1,26 +1,20 @@
 # Currently Running Jobs
-**Updated:** 2026-03-28
+**Updated:** 2026-03-29
 
 ---
 
-## Job 1 — Section F + Section D Betweenness Re-run (ACTIVE)
+## ✅ ALL JOBS COMPLETE — This file can be archived
 
-**Script:** `graph_analysis/phase2_step3_rerun_betweenness_sectionf.py`
-**PID:** 2415422
-**Log:** `/tmp/betweenness_rerun.log`
-**Started:** 2026-03-28 ~17:04
-**Status:** Running (PKL load complete, Section F and betweenness in progress)
+---
 
-### Filters applied (correcting prior inconsistency)
-- `edge_confidence >= 3` on all EDGE edges (consistent with path generation)
-- `intervention_maturity >= 3` on intervention nodes (consistent with path generation)
+## Job 1 — Betweenness Re-run ✅ COMPLETE
 
-### Steps in order
-1. **Section F — EDGE subgraph stats** (~3 min): rebuild EDGE subgraph with filters
-2. **Full-graph betweenness (unconstrained)** (hours): SIM≥0.9 + EDGE conf≥3, maturity≥3, full 200K-node graph
-3. **Both-mode betweenness** (faster): same filters on nodes in ec=0.9 mode=both agglomerative clusters
+**Script:** `graph_analysis/phase2_rerun_pathfiltered.py`
+**PID:** 2508040
+**Started:** 2026-03-28 ~21:26
+**Completed:** 2026-03-29 ~00:00
 
-### Outputs (overwritten; originals backed up as `*_unfiltered.*`)
+### Outputs (all written)
 | File | Location |
 |------|----------|
 | `edge_subgraph_stats.csv` | `step3_validation_and_selection/` |
@@ -32,37 +26,44 @@
 | `betweenness_both09_bridge_clusters.csv` | `step3_validation_and_selection/` |
 | `betweenness_both09_comparison.png` | `step3_validation_and_selection/` |
 
-Intermediate checkpoints saved to:
-- `betweenness_raw_checkpoint_filtered.pkl` (full-graph, after betweenness completes)
-- `betweenness_both09_raw_checkpoint_filtered.pkl` (both-mode, after betweenness completes)
+### Key results
+- Section F (EDGE subgraph, valid-pathway): 42,870 nodes, 29,383 edges, 13,908 WCCs, largest WCC=37
+- Section D (path-filtered betweenness): 38,054 nodes, 163,848 edges; 49/50 top bridge nodes = risk variants of "existential catastrophe from misaligned AI"
+- Section D2 (both-mode betweenness): 17,952 nodes, 21,269 edges; same risk-dominated pattern
+- **FDT is absent from path-filtered analysis** — was a full-graph artifact in old run
+
+### Documents updated
+- `Step3_Review_Summary.md`: Sections D, D2, F fully updated with path-filtered values
+- `Phase2_Step2_Comprehensive_Findings.md`: Issue 3 resolved
+- `Phase2_Step2_Issues.md`: All 9 issues marked ✅ FIXED
 
 ---
 
-## ⚠ IMPORTANT — Findings Documents Supersession
+## Job 2 — Hub Quality SIM Degrees Fix ✅ COMPLETE
 
-**The outputs of this job will supersede all betweenness and EDGE subgraph insights
-in the following documents once the job completes:**
+**Script:** `graph_analysis/phase2_fix_hub_quality_sim_degrees.py`
+**Completed:** 2026-03-29
 
-- `graph_analysis/phase2_results/Step3_Review_Summary.md`
-  - Section D: betweenness bridge themes (existential catastrophe, FDT, opacity, RLHF)
-  - Section F: EDGE subgraph topology (WCC count, diameter, degree distribution)
-  - Any node counts or rankings derived from the unfiltered betweenness run
+- Fixed n_sources bug (node_attrs int key lookup)
+- n_sources_at_config_thr: 0.00 → 150.92 mean, max 1787
+- Top hub (node 147238): 617 SIM≥0.9 edges, 617 distinct partner papers (SIM≥0.9)
+- Backups: `*_structonly.csv/png`
 
-- `graph_analysis/phase2_results/Phase2_Step2_Comprehensive_Findings.md`
-  - Substep #16 (mechanism transfer betweenness): all SIM≥0.8 betweenness ranks
-    were computed without conf≥3 or maturity≥3 — superseded by new betweenness_sim09.csv
-  - Any bridge node rankings or themes cited from the old betweenness
+---
 
-**Action required after job completes:**
-1. Read new `betweenness_sim09.csv` and `betweenness_both09.csv` for updated bridge themes
-2. Update Step3_Review_Summary.md Section D with corrected top bridge nodes and clusters
-3. Note in findings docs that betweenness was re-run with conf≥3 + maturity≥3 filters
-4. Delete or archive this file once findings docs are updated
+## Job 3 — Reproducible Calculations ✅ COMPLETE
+
+**Script:** `graph_analysis/phase2_reproducible_calculations.py`
+**Completed:** 2026-03-29
+**Output:** `phase2_results/reproducible_calculations.json`
+
+Key results:
+- Issue 2 valid-pathway SIM counts: 1,302,549 (83.2%) at ≥0.80; 134,465 (93.3%) at ≥0.90
+- Issue 5 inter-cluster baseline: mean=0.733, range [0.472, 0.942], 0.9% > 0.9 (confirmed)
+- Issue 7 inter-hub cosine: range [0.954, 0.979], mean 0.966
+- Issue 8 paths below 5 hops: 0.82% overall, 8.2% EDGE-only
 
 ---
 
 ## Monitor
-```bash
-cat /tmp/betweenness_rerun.log
-tail -5 /tmp/betweenness_rerun.log
-```
+All jobs complete. No active monitoring needed.

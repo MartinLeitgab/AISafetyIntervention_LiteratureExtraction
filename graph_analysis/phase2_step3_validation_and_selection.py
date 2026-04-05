@@ -1106,12 +1106,16 @@ def run_section_d(node_attrs, edge_data):
                 G.add_edge(src, tgt)
                 n_sim09 += 1
         elif etype == "EDGE":
-            G.add_edge(src, tgt)
-            n_struct += 1
+            try:
+                if float(e.get("confidence") or 0) >= 3:
+                    G.add_edge(src, tgt)
+                    n_struct += 1
+            except (TypeError, ValueError):
+                pass
 
     print(
         f"  Full graph: {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges "
-        f"(SIM09={n_sim09:,}, STRUCT={n_struct:,})"
+        f"(SIM09={n_sim09:,}, STRUCT_conf>=3={n_struct:,})"
     )
 
     # Compute exact betweenness on the full graph so that shortest paths can
@@ -1388,12 +1392,16 @@ def run_betweenness_both(node_attrs, edge_data, cluster_memberships):
                 G.add_edge(src, tgt)
                 n_sim += 1
         elif etype == "EDGE":
-            G.add_edge(src, tgt)
-            n_edge += 1
+            try:
+                if float(e.get("confidence") or 0) >= 3:
+                    G.add_edge(src, tgt)
+                    n_edge += 1
+            except (TypeError, ValueError):
+                pass
 
     print(
         f"  Subgraph: {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges "
-        f"(SIM09={n_sim:,}, EDGE={n_edge:,})"
+        f"(SIM09={n_sim:,}, EDGE_conf>=3={n_edge:,})"
     )
     sys.stdout.flush()
 
@@ -1659,13 +1667,17 @@ def run_section_f(node_attrs, edge_data):
     print("SECTION F — #25 EDGE Subgraph Consistency")
     print("=" * 70)
 
-    print("  Building EDGE-only directed subgraph ...")
+    print("  Building EDGE-only directed subgraph (conf>=3) ...")
     G_edge = nx.DiGraph()
     for e in edge_data:
         if str(e.get("type", "")).upper() == "EDGE":
             src, tgt = str(e.get("source", "")), str(e.get("target", ""))
             if src and tgt:
-                G_edge.add_edge(src, tgt)
+                try:
+                    if float(e.get("confidence") or 0) >= 3:
+                        G_edge.add_edge(src, tgt)
+                except (TypeError, ValueError):
+                    pass
 
     n_nodes = G_edge.number_of_nodes()
     n_edges = G_edge.number_of_edges()

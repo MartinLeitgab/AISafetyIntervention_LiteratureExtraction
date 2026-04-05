@@ -1,8 +1,27 @@
 # APPENDIX B: Phase 2 Analysis Substep Mapping to Workshop Goals
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Companion to:** Phase 2 Comprehensive Clustering Analysis Plan v2.0  
-**Last Updated:** February 2026
+**Last Updated:** 2026-03-29 (updated after Steps 2–4 planning complete)
+
+## Status Summary (as of 2026-03-29)
+
+**Steps 2 and 3 are COMPLETE.** All 9 issues in Phase2_Step2_Issues.md resolved. All Step 3 re-runs complete (path-filtered betweenness, hub quality fix, reproducible calculations).
+
+**Key insights that shift priorities:**
+- Algorithm comparison (substep #20): ✅ DONE — agglomerative k=40 is definitively best (Louvain silhouette=0.011, HDBSCAN 80.7% noise — both unsuitable)
+- ARI stability (#7): ✅ DONE — ARI 0.49–0.72 for risk/intervention at high thresholds; confirmed stable taxonomy
+- EDGE validation (#4, #5, #22): ✅ DONE — SIM≥0.9 "both": 90.8% EDGE validation; SIM≥0.85 "both": 73%; SIM≥0.8 unconstrained: 27%
+- Hub quality (#14): ✅ DONE (corrected) — top-5 hubs are "existential catastrophe" variants with 617 SIM≥0.9 edges each; RLHF hub is a SIM≥0.8 artifact only (18 edges at SIM≥0.9)
+- Multi-criteria scoring (#23): ✅ DONE — SIM≥0.9 selected; see Step 3 Section A optimal_configs_ranked.csv
+- Betweenness centrality (#16): ✅ DONE (path-filtered) — 49/50 top bridge nodes = existential catastrophe variants; FDT ABSENT (full-graph artifact)
+- Path-filtered subgraph (#25): ✅ DONE — 42,870 valid-pathway nodes; 38,054 in betweenness subgraph
+- Threshold sensitivity (#21): ✅ DONE — SIM≥0.9 selected as optimal
+- EDGE-only validation (#22): ✅ DONE
+
+**Step 4 is now the active step.** The taxonomy construction uses a three-level hierarchy: Risk → Connection Concept Chain → Intervention (see Phase2_Step4_Analysis_Plan.md). "Connection concept chain" replaces "mechanism" throughout as Level 2 layer name. A single connection concept chain = the body of one qualifying path; a connection concept chain family = a cluster of similar chains.
+
+**Terminology update:** "Mechanism taxonomy" (Goal 6 and throughout) now refers to the three-level taxonomy with named connection concept chain families as Level 2.
 
 ---
 
@@ -17,7 +36,7 @@ This appendix maps each of the 34 Phase 2 analysis substeps to the 9 workshop-cr
 3. **⭐ Algorithm Comparison** – Method justification with performance metrics
 4. **⭐ Optimal Config Selection with Full Transparency** – Multi-criteria scoring showing all base data
 5. **⭐ Path Length vs. Quality Relationship** – Validates ≥5 hop claim for mechanistic detail
-6. **⭐ Mechanism Taxonomy with Manual Validation** – Core deliverable (40-60 families) with coherence scoring
+6. **⭐ Connection Concept Chain Taxonomy with Manual Validation** – Core deliverable: three-level risk→connection concept chain→intervention hierarchy with named families and coherence scoring
 7. **⭐ Intervention Hub Quality Assessment** – Addresses artifact concerns with EDGE-validation and source diversity
 8. **⭐ Temporal Coverage Analysis** – Shows scope of literature (publication dates per cluster)
 9. **⭐ Bias Documentation** – Critical for limitations section
@@ -28,36 +47,36 @@ This appendix maps each of the 34 Phase 2 analysis substeps to the 9 workshop-cr
 
 | Substep | Analysis Name | Primary Goal(s) | Secondary Goal(s) | Step |
 |---------|---------------|-----------------|-------------------|------|
-| **1** | Silhouette Score | Goal 3 (Algorithm) | Goal 4 (Selection) | Step 2 |
-| **2** | Cluster Size Distribution | Goal 6 (Taxonomy) | Goal 4 (Selection) | Step 2 |
-| **3** | Cluster Cohesion Metrics | Goal 3 (Algorithm) | Goal 4 (Selection) | Step 2 |
-| **4** | EDGE Validation Rate | **Goal 2** (EDGE) | Goal 4 (Selection) | Step 2 |
-| **5** | EDGE Purity per Cluster | **Goal 2** (EDGE) | Goal 6 (Taxonomy) | Step 2 |
-| **6** | Source Diversity per Cluster | Goal 7 (Hub Quality) | **Goal 2** (EDGE) | Step 2 |
-| **7** | Cross-Threshold Stability (ARI) | **Goal 1** (Stability) | Goal 4 (Selection) | Step 2 |
-| **8** | Node Migration Analysis | **Goal 1** (Stability) | Goal 9 (Bias) | Step 2 |
+| **1** ✅ DONE | Silhouette Score | Goal 3 (Algorithm) | Goal 4 (Selection) | Step 2 |
+| **2** ✅ DONE | Cluster Size Distribution | Goal 6 (Taxonomy) | Goal 4 (Selection) | Step 2 |
+| **3** ✅ DONE | Cluster Cohesion Metrics | Goal 3 (Algorithm) | Goal 4 (Selection) | Step 2 |
+| **4** ✅ DONE | EDGE Validation Rate | **Goal 2** (EDGE) | Goal 4 (Selection) | Step 2 |
+| **5** ✅ DONE | EDGE Purity per Cluster | **Goal 2** (EDGE) | Goal 6 (Taxonomy) | Step 2 |
+| **6** ✅ DONE | Source Diversity per Cluster | Goal 7 (Hub Quality) | **Goal 2** (EDGE) | Step 2 |
+| **7** ✅ DONE | Cross-Threshold Stability (ARI) | **Goal 1** (Stability) | Goal 4 (Selection) | Step 2 |
+| **8** ✅ DONE | Node Migration Analysis | **Goal 1** (Stability) | Goal 9 (Bias) | Step 2 |
 | **9** | Mode Impact on Clustering Quality | Goal 9 (Bias) | Goal 4 (Selection) | Step 2 |
 | **10** | Multi-Risk Cluster Characterization | Goal 6 (Taxonomy) | Goal 9 (Bias) | Step 2 |
 | **11** | Risk Diversity per Configuration | Goal 6 (Taxonomy) | Goal 9 (Bias) | Step 2 |
 | **12** | Risk→Intervention Connectivity | Goal 6 (Taxonomy) | - | Step 2 |
 | **13** | Intervention Maturity Distribution | Goal 6 (Taxonomy) | Goal 9 (Bias) | Step 2 |
-| **14** | Intervention Hub Quality Assessment | **Goal 7** (Hub Quality) | **Goal 2** (EDGE) | Step 2 |
+| **14** ✅ DONE | Intervention Hub Quality Assessment | **Goal 7** (Hub Quality) | **Goal 2** (EDGE) | Step 2 |
 | **15** | Category-Specific Mechanism Families | Goal 6 (Taxonomy) | - | Step 2 |
-| **16** | Mechanism Transfer Enablers | Goal 6 (Taxonomy) | - | Step 2 |
+| **16** ✅ DONE | Mechanism Transfer Enablers | Goal 6 (Taxonomy) | - | Step 2 |
 | **17** | Risk→Concept→Intervention Triplets | Goal 6 (Taxonomy) | Goal 4 (Selection) | Step 4 |
 | **18** | Exemplar Path Extraction | Goal 6 (Taxonomy) | **Goal 5** (Path Length) | Step 4 |
-| **19** | Pathway Signature Validation | **Goal 5** (Path Length) | Goal 9 (Bias) | Step 2 |
-| **20** | Algorithm Performance Comparison | **Goal 3** (Algorithm) | Goal 4 (Selection) | Step 3 |
-| **21** | Edge Threshold Sensitivity Test | **Goal 1** (Stability) | Goal 4 (Selection) | Step 3 |
-| **22** | EDGE-Only Configuration Validation | **Goal 2** (EDGE) | Goal 4 (Selection) | Step 3 |
-| **23** | Multi-Criteria Scoring Transparency | **Goal 4** (Selection) | Goal 9 (Bias) | Step 3 |
+| **19** ✅ DONE | Pathway Signature Validation | **Goal 5** (Path Length) | Goal 9 (Bias) | Step 2 |
+| **20** ✅ DONE | Algorithm Performance Comparison | **Goal 3** (Algorithm) | Goal 4 (Selection) | Step 3 |
+| **21** ✅ DONE | Edge Threshold Sensitivity Test | **Goal 1** (Stability) | Goal 4 (Selection) | Step 3 |
+| **22** ✅ DONE | EDGE-Only Configuration Validation | **Goal 2** (EDGE) | Goal 4 (Selection) | Step 3 |
+| **23** ✅ DONE | Multi-Criteria Scoring Transparency | **Goal 4** (Selection) | Goal 9 (Bias) | Step 3 |
 | **24** | Held-Out Test Set Validation | Goal 6 (Taxonomy) | Goal 3 (Algorithm) | Step 3 |
-| **25** | EDGE Subgraph Consistency Check | **Goal 2** (EDGE) | Goal 6 (Taxonomy) | Step 3 |
+| **25** ✅ DONE | EDGE Subgraph Consistency Check | **Goal 2** (EDGE) | Goal 6 (Taxonomy) | Step 3 |
 | **26** | Cluster Naming & Manual Validation | **Goal 6** (Taxonomy) | - | Step 4 |
 | **27** | Exemplar Quality Assessment | Goal 6 (Taxonomy) | **Goal 5** (Path Length) | Step 4 |
 | **28** | Risk-Intervention Connectivity Matrix | Goal 6 (Taxonomy) | - | Step 4 |
-| **29** | Pathway Length vs Cluster Quality | **Goal 5** (Path Length) | Goal 9 (Bias) | Step 2 |
-| **30** | Temporal Coverage Analysis | **Goal 8** (Temporal) | Goal 9 (Bias) | Step 2 |
+| **29** ✅ DONE | Pathway Length vs Cluster Quality | **Goal 5** (Path Length) | Goal 9 (Bias) | Step 2 |
+| **30** ✅ DONE | Temporal Coverage Analysis | **Goal 8** (Temporal) | Goal 9 (Bias) | Step 2 |
 | **31** | Intervention Lifecycle Distribution | Goal 6 (Taxonomy) | Goal 9 (Bias) | Step 2 |
 | **32** | Inter-Rater Agreement (Manual) | **Goal 6** (Taxonomy) | - | Step 4 |
 | **33** | Path→Prompt Engineering | Goal 6 (Taxonomy) | - | Step 4 |
@@ -74,13 +93,13 @@ This appendix maps each of the 34 Phase 2 analysis substeps to the 9 workshop-cr
 | **Goal 3: Algorithm Comparison** | 1, 3, 20 | 24 | 4 substeps |
 | **Goal 4: Optimal Config Selection** | 23 | 1, 2, 7, 9, 17, 20, 21, 22 | 9 substeps |
 | **Goal 5: Path Length vs Quality** | 19, 29 | 18, 27 | 4 substeps |
-| **Goal 6: Mechanism Taxonomy** | 2, 10, 11, 12, 13, 15, 16, 17, 18, 24, 26, 27, 28, 31, 32, 33, 34 | 5 | 18 substeps |
+| **Goal 6: Connection Concept Chain Taxonomy** | 2, 10, 11, 12, 13, 15, 16, 17, 18, 24, 26, 27, 28, 31, 32, 33, 34 | 5 | 18 substeps (most now complete or absorbed into S4-25–S4-28) |
 | **Goal 7: Hub Quality Assessment** | 14 | 6 | 2 substeps |
 | **Goal 8: Temporal Coverage** | 30 | - | 1 substep |
 | **Goal 9: Bias Documentation** | 9 | 8, 10, 11, 13, 19, 23, 29, 30, 31 | 10 substeps |
 
 **Key Observations:**
-- Goal 6 (Mechanism Taxonomy) is the most comprehensive, involving 18 substeps – reflects core deliverable
+- Goal 6 (Connection Concept Chain Taxonomy) is the most comprehensive, involving 18 substeps – reflects core deliverable (3-level hierarchy: risk → connection concept chain → intervention)
 - Goal 2 (EDGE-Validation) has strong coverage (6 substeps) – critical for literature grounding
 - Goal 4 (Optimal Selection) touches 9 substeps – emphasizes transparency requirement
 - Goal 8 (Temporal Coverage) has minimal direct analysis – secondary priority
@@ -160,53 +179,78 @@ This section provides comprehensive traceability tables organized by analysis st
 
 ### STEP 4: TAXONOMY CONSTRUCTION & NETWORK VISUALIZATION
 
-**9 substeps total:** 1 CRITICAL, 0 ESSENTIAL, 8 ENRICHMENT
+**Active step as of 2026-03-29.** Plan in Phase2_Step4_Analysis_Plan.md.
 
-| # | Substep Name | Theme | Goals | Question Answered | Output Files/Plots | Criticality |
-|---|--------------|-------|-------|-------------------|-------------------|-------------|
-| **26** | Cluster Naming & Manual Validation | Mechanism | **Goal 6**: Mechanism Taxonomy | What are human-interpretable names for each of the 40-60 mechanism families? Do manual annotators agree these clusters represent coherent mechanisms (1-5 coherence scale)? | `mechanism_taxonomy_summary.csv`<br>`cluster_naming_validation.csv`<br>`mechanism_families.json` | **CRITICAL** |
-| **32** | Inter-Rater Agreement (Manual) | Method Rigor | **Goal 6**: Mechanism Taxonomy | Do independent annotators agree on mechanism coherence? What is Fleiss' kappa for 10 risk + 10 intervention + 10 concept clusters? | `cluster_naming_validation.csv`<br>`inter_rater_agreement.json` | **ENRICHMENT** |
-| **17** | Risk→Concept→Intervention Triplets | Mechanism | **Goal 6**: Mechanism Taxonomy<br>Goal 4: Optimal Config Selection | Using all_concepts clusters OR 6 individual concept categories, how many valid triplets connect risk→concept→intervention clusters? How many actual pathways support each triplet? | `cluster_level_network.png` (Plot 11)<br>`sankey_risk_concept_intervention.png` (Plot 12)<br>`cluster_level_network_data.json` | **ENRICHMENT** |
-| **18** | Exemplar Path Extraction | Mechanism | **Goal 6**: Mechanism Taxonomy<br>**Goal 5**: Path Length vs Quality | For each mechanism family, what is the exemplar pathway (node closest to cluster centroid)? Do synthetic paths (connecting exemplar nodes directly) preserve mechanism semantics vs actual pathways? | `representative_pathways.jsonl`<br>`exemplar_quality_comparison.csv` | **ENRICHMENT** |
-| **27** | Exemplar Quality Assessment | Mechanism | **Goal 6**: Mechanism Taxonomy<br>**Goal 5**: Path Length vs Quality | How representative are exemplar nodes of their clusters? What is the average distance from exemplar to all cluster members? | `cluster_naming_validation.csv`<br>`exemplar_quality_stats.csv` | **ENRICHMENT** |
-| **28** | Risk-Intervention Connectivity Matrix | Mechanism | **Goal 6**: Mechanism Taxonomy | Which risk clusters connect to which intervention clusters via pathways? What is the pathway count strength for each risk-intervention pair? | `risk_intervention_matrix.csv`<br>`connectivity_matrix_heatmap.png` (Plot 13) | **ENRICHMENT** |
-| **33** | Path→Prompt Engineering | Mechanism | **Goal 6**: Mechanism Taxonomy | Can pathways be converted to natural language descriptions for LLM simulation? Do prompts comprehensibly describe: risk → mechanism steps → intervention? | `simulation_prompts_sample.json`<br>Sample prompt validation | **ENRICHMENT** |
-| **34** | Expected Output Formatting | Mechanism | **Goal 6**: Mechanism Taxonomy | How will simulation results be aggregated per mechanism family? What metrics will be reported (Δ instrumental goals, Δ pro-human goals, Δ anti-human goals with 95% CI)? | `simulation_prompts_sample.json`<br>Output format specification | **ENRICHMENT** |
+**Revised substep set (renumbered to avoid collision with prior substeps):**
 
-**Note:** Substep #12 (Risk→Intervention Connectivity) is covered by #28.
+| New # | Substep Name | Theme | Goals | Question Answered | Output | Criticality |
+|-------|--------------|-------|-------|-------------------|--------|-------------|
+| **S4-25** | Build Connection Concept Chain Cluster Tables | Taxonomy | **Goal 6**: Taxonomy | Run Option A (path-body clustering) and Option B (pkl subtype co-occurrence) to produce Level 2 connection concept chain families; produce cluster summary tables for all three levels | `step4_cluster_tables/` | **CRITICAL** |
+| **S4-29** | Consecutive SIM ARI Test | Method Rigor | **Goal 1**: Stability | Does applying the consecutive SIM ≤2 cut change cluster assignments (ARI)? If ARI < 0.7, recluster before naming. Gate decision before naming. | `step4_paths/consecutive_sim_ari_test.json` | **CRITICAL** |
+| **S4-26** | Cluster Naming & Human Review | Taxonomy | **Goal 6**: Taxonomy | LLM-generated names for all ~120 clusters (risk + connection concept chain + intervention); naming test for Level 2 chains; human review of risk clusters and cited findings | `step4_cluster_tables/taxonomy_names.csv` | **CRITICAL** |
+| **S4-27** | Three-Level Connectivity Network | Taxonomy | **Goal 6**: Taxonomy | EDGE connectivity between levels; gap analysis (6 gap types); three-layer Sankey/node-link visualization (primary workshop figure) | `step4_connectivity/` + `three_layer_network.png` | **CRITICAL** |
+| **S4-28** | Subcluster Analysis | Taxonomy | **Goal 6**: Taxonomy | Triggered subclustering for heterogeneous clusters; refine large/ambiguous families | `step4_subclusters/` | **ESSENTIAL** |
+| **S4-path** | Path Sampling | Taxonomy/Sim Prep | **Goal 5**: Path Length | Sample top paths per connection concept chain cluster (EDGE purity + path length) for Step 5 simulation | `step4_paths/` | **ESSENTIAL** |
 
-**Step 4 Key Deliverables:**
-- 40-60 mechanism families with manual validation
-- Mechanism taxonomy summary with names, exemplars, coherence scores
-- Representative pathways (500-1000) for simulation
-- Risk-intervention connectivity matrix
-- Cluster-level network visualization
-- Simulation-ready prompt templates
+**Original Step 4 substep disposition:**
+| Old # | Original Name | Disposition |
+|-------|--------------|-------------|
+| 26 | Cluster Naming & Manual Validation | → S4-26 (active, enhanced with connection concept chain naming test) |
+| 17 | Risk→Concept→Intervention Triplets | → Absorbed into S4-27 (connectivity network); Option A/B triplet formation = connection concept chain Options A/B |
+| 28 | Risk-Intervention Connectivity Matrix | → Absorbed into S4-27 |
+| 18 | Exemplar Path Extraction | → Absorbed into S4-path (path sampling); full exemplar quality = Step 5 scope |
+| 27 | Exemplar Quality Assessment | → Step 5 scope |
+| 32 | Inter-Rater Agreement (Fleiss' kappa) | → Absorbed into S4-26 human review protocol; full kappa calculation deprioritized |
+| 33 | Path→Prompt Engineering | → Step 5 scope |
+| 34 | Expected Output Formatting | → Step 5 scope |
+
+**Step 4 Key Deliverables (revised):**
+- Named three-level taxonomy: risk families × connection concept chain families × intervention families
+- Three-layer Sankey/network visualization (primary workshop figure)
+- Gap analysis: 6 gap types across all layer-pair combinations
+- Representative path sample per connection concept chain family (for Step 5 simulation)
+- Subcluster refinements for heterogeneous families
 
 ---
 
 ### CRITICALITY SUMMARY ACROSS ALL STEPS
 
+**As of 2026-03-29: Steps 2 and 3 are COMPLETE. Step 4 is active.**
+
 | Criticality | Step 2 | Step 3 | Step 4 | Total |
 |-------------|--------|--------|--------|-------|
-| **CRITICAL** | 4 | 2 | 1 | **7 substeps** |
-| **ESSENTIAL** | 8 | 2 | 0 | **10 substeps** |
-| **ENRICHMENT** | 7 | 2 | 8 | **17 substeps** |
-| **Total** | **19** | **6** | **9** | **34 substeps** |
+| **COMPLETE** | 19 | 6 | 0 | **25 substeps done** |
+| **CRITICAL (remaining)** | 0 | 0 | 4 (S4-25, S4-29, S4-26, S4-27) | **4 substeps** |
+| **ESSENTIAL (remaining)** | 0 | 0 | 2 (S4-28, S4-path) | **2 substeps** |
+| **Step 5 scope** | — | — | 4 (old #27, #32, #33, #34) | deferred |
 
-**Critical Path for Workshop (7 substeps, ~6.5 hours):**
-- Step 2: #7 (ARI), #4 (EDGE%), #14 (Hub Quality), #19 (Path Length)
-- Step 3: #20 (Algorithm), #23 (Selection Transparency)
-- Step 4: #26 (Manual Validation)
+**Remaining Critical Path for Workshop (Step 4 only, ~1 day compute + naming):**
+1. S4-25: Build cluster tables (Option A + B) — new computation
+2. S4-29: Consecutive SIM ARI test — gate decision
+3. S4-26: LLM naming pass + human review of risk clusters
+4. S4-27: Three-level connectivity + gap analysis + Sankey visualization
 
-**Essential for Complete Story (10 substeps, ~5.5 hours):**
-- Step 2: #1, #3, #8, #5, #6, #30, #2, #29
-- Step 3: #21, #22
+**Essential (Step 4):**
+5. S4-28: Subcluster analysis for heterogeneous families
+6. S4-path: Path sampling per connection concept chain cluster for simulation
 
-**Enrichment Substeps (17 substeps, ~13.5 hours):**
-- Step 2: #10, #11, #13, #15, #16, #31, #9
-- Step 3: #24, #25
-- Step 4: #32, #17, #18, #27, #28, #33, #34
+**Previously critical — now complete:**
+- ✅ #7 ARI stability — confirmed 0.49–0.72 for risk/intervention at high thresholds
+- ✅ #4 EDGE validation — SIM≥0.9 "both" = 90.8%; selection justified
+- ✅ #14 Hub quality — top-5 = existential catastrophe variants (617 SIM≥0.9 edges); RLHF = SIM≥0.8 artifact
+- ✅ #19 Path length validation — 0.82% of paths below 5 hops overall; 8.2% EDGE-only
+- ✅ #20 Algorithm comparison — agglomerative k=40 definitively best
+- ✅ #23 Multi-criteria scoring transparency — SIM≥0.9 selected; all 160 configs ranked
+
+**Upward priority revisions:**
+- Gap analysis (new, in S4-27): now CRITICAL — forms the core narrative of what AI safety literature covers and misses
+- Three-layer visualization (new, in S4-27): now CRITICAL — primary workshop figure
+- Connection concept chain construction option A/B (new, in S4-25): now CRITICAL — Level 2 layer is the novel contribution
+
+**Downward priority revisions:**
+- #32 Inter-rater agreement: absorbed into S4-26 human review; Fleiss' kappa not needed
+- #17/#18 Triplet/exemplar extraction: absorbed into S4-27/S4-path; full exemplar analysis moved to Step 5
+- #33/#34 Simulation prep: Step 5 scope
 
 ---
 
@@ -238,12 +282,12 @@ This section provides comprehensive traceability tables organized by analysis st
 
 ---
 
-### Results Section (4.5 Mechanism Taxonomy)
+### Results Section (4.5 Connection Concept Chain Taxonomy)
 
 **Primary Substeps:** 2, 10, 11, 12, 15, 16, 17, 18, 26, 27, 28  
 **Theme:** Mechanism Discovery & Taxonomy  
 **Content:**
-- 40-60 mechanism families identified
+- 40-60 connection concept chain families identified (three-level hierarchy: risk → chain → intervention)
 - Category-specific mechanism transfer enablers
 - Risk-intervention connectivity patterns
 - Exemplar pathway examples with quality scores

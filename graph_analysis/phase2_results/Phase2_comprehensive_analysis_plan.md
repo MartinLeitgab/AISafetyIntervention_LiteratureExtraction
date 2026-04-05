@@ -6,9 +6,37 @@ Formatting may be inconsistent from source
 # Phase 2 Comprehensive Clustering Analysis Plan
 ## AI Safety Intervention Pathway Analysis
 
-**Document Version:** 2.0  
-**Last Updated:** January 2026  
-**Status:** Implementation Ready
+**Document Version:** 2.0 (original) — see update notes below  
+**Last Updated:** January 2026 (original); update notes added 2026-03-29  
+**Status:** Steps 1–3 COMPLETE. Step 4 active. See Phase2_Step4_Analysis_Plan.md for current plan.
+
+## ⚠ Update Notes (2026-03-29 — post Steps 2–4)
+
+The following decisions made in Steps 2–4 supersede parts of this document:
+
+**Optimal threshold: SIM≥0.9 (not SIM≥0.85)**
+Section K originally listed SIM≥0.85 unconstrained as "recommended optimal." Step 3 multi-criteria scoring selected **SIM≥0.9** based on: EDGE validation 90.8% ("both" mode), silhouette 0.519, ARI stability 0.731, k=40 clusters. SIM≥0.85 was not the top scorer on the composite (lower EDGE validation: 73%). Use SIM≥0.9 throughout.
+
+**Mode: unconstrained (not "both" from scoring)**
+Step 3 Section A selected "both" mode for risk. Step 4 overrides to **unconstrained** to preserve the x-risk hub structure (near-duplicate "existential catastrophe" nodes, 617 SIM≥0.9 edges each) as the top level of the three-level hierarchy. Single_risk removes these nodes (99.3% path reduction). See Phase2_Step4_Analysis_Plan.md rationale.
+
+**Algorithm: agglomerative k=40 (definitively best)**
+Louvain: silhouette=0.011 (unsuitable). HDBSCAN: 80.7% noise, collapses to ~3 clusters (unsuitable). Agglomerative k=40: silhouette=0.438, best across all node types. Section VII/XX algorithm comparison is complete.
+
+**FDT (Functional Decision Theory): ABSENT from path-filtered analysis**
+FDT appeared in early betweenness results but was confirmed a full-graph artifact (200K node graph, not path-filtered). Path-filtered betweenness (38,054 valid-pathway nodes): 49/50 top bridge nodes = existential catastrophe variants. FDT is NOT a mechanism family.
+
+**"Mechanism families" → "connection concept chain families"**
+The Level 2 layer in the three-level hierarchy is now called **connection concept chain families** — clusters of similar path bodies (one chain = body of one path from one data source; one family = cluster of similar chains). See Phase2_Step4_Analysis_Plan.md.
+
+**Level 2 construction: two options (not original Option A/B)**
+Original #17 offered all_concepts clusters (A) or 6 per-subtype clusters (B). Replaced by:
+- Option A: cluster complete path bodies by mean embedding → families of similar chains
+- Option B: use existing pkl per-subtype clusters, group paths by co-occurrence signature → no new clustering needed
+Both evaluated in Step 4 substep S4-25.
+
+**Consecutive SIM ≤2 cut added**
+New quality cut: paths with ≥3 consecutive SIM edges are filtered at path-sampling stage. Retains 41% of unconstrained paths (433K paths at ≤2). ARI test in Step 4 determines whether reclustering is needed.
 
 ---
 
@@ -19,7 +47,7 @@ This Phase 2 analysis evaluates 160 clustering configurations (5 edge configs Ã
 **Key Objectives:**
 1. Validate clustering quality across all configurations
 2. Identify optimal configurations per node type
-3. Extract 40-60 distinct mechanism families
+3. Extract 40-60 distinct connection concept chain families (three-level hierarchy: risk → chain → intervention)
 4. Prepare 500-1000 representative pathways for simulation
 5. Document biases and limitations for workshop presentation
 

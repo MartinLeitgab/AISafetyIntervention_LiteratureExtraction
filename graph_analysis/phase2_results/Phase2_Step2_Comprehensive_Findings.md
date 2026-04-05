@@ -4,7 +4,8 @@
 **Document Version:** 3.0
 **Analysis Date:** February–March 2026
 **Last Updated:** March 2026 (Step 2b re-run + review)
-**Status:** Step 2b COMPLETE — All 19 substeps have data; all interpretations reviewed and corrected
+**Status:** Step 2b COMPLETE — All 19 substeps have data; all interpretations reviewed and corrected  
+⚠ **Step 4 Mode Change:** This document reports analyses under "both" mode (single_risk + monotonic). Step 4 uses **unconstrained** mode + consecutive SIM ≤2 cut. Once Step 4 confirms the consecutive SIM cut as the final cutset (ARI test in substep #29), key analyses should be re-run for unconstrained + consecutive SIM ≤2: silhouette scores, ARI stability, centroid similarity, hub quality, betweenness. See Phase2_Step4_Analysis_Plan.md for the full rationale.
 **Data Sources:** Step 2 + Step 2b execution outputs (`phase2_step2b_extended_analysis.py`, March 2026)
 
 ---
@@ -23,7 +24,7 @@ This document presents systematic analysis of all 19 Step 2 substeps, ordered by
 | Dimension | Selection | Rationale |
 |-----------|-----------|-----------|
 | SIM threshold | **0.9** | Entry point to stable high-quality regime; ARI >0.7 with 0.95 and EDGE |
-| Mode | **both** | Best EDGE validation + silhouette balance |
+| Mode | **both** (⚠ Step 4 uses **unconstrained** + consecutive SIM ≤2 — see Step4 plan) | Best EDGE validation + silhouette balance for Step 2 analysis |
 | EDGE fraction | **≥80%** | Gold-standard literature grounding; SIM≥0.9 achieves 81.6% gold-standard clusters |
 | Algorithm | **Agglomerative k=40** | Silhouette 0.438 vs Louvain 0.011 vs HDBSCAN 0.275 (80.7% noise) |
 | Reject | SIM≥0.80/0.85 unconstrained | 27–73% EDGE validation; high artifact risk |
@@ -39,7 +40,7 @@ This document presents systematic analysis of all 19 Step 2 substeps, ordered by
 - **Node migration rate (96.6%) is a metric artifact** — do not report. It counts any cluster-ID change including micro-boundary-crossings to near-identical clusters. Use centroid similarity exclusively for stability (see Substep #8).
 - **EDGE validation:** 100% for EDGE-only; SIM≥0.9 "both" achieves 90%+ for risk/intervention. Node-type breakdown in `edge_validation_per_mode_v2.png`. SIM≥0.8 unconstrained achieves only 27% — high artifact risk.
 - **EDGE purity:** 81.6% gold-standard clusters (purity ≥80%) at SIM≥0.9; 98.7% at SIM≥0.95; 66.8% overall.
-- **Hub quality:** The most-cited AI safety risk concept ("Existential catastrophe from misaligned advanced AI") appears as a hub connecting to 600–635 distinct source papers at SIM≥0.9 — cross-paper convergence confirmed. Hub #1: 635 SIM≥0.9 edges, 1792 distinct partner papers. Hub themes are fully characterised by Step 4 cluster naming (substep #26) — the clustering step already groups near-duplicate hub nodes, and the cluster exemplar serves as the hub representative. Log-log scatter: `hub_quality_scatter_v2.png`.
+- **Hub quality:** The most-cited AI safety risk concept ("Existential catastrophe from misaligned advanced AI") appears as a hub with **617 SIM≥0.9 edges to 617 distinct partner papers** (valid-pathway restricted; 1,684 distinct partner papers at SIM≥0.80). Cross-paper convergence confirmed. Hub themes are fully characterised by Step 4 cluster naming (substep #26) — the clustering step already groups near-duplicate hub nodes, and the cluster exemplar serves as the hub representative. Log-log scatter: `hub_quality_scatter_v2.png`.
 - **Algorithm comparison (COMPLETE):** Agglomerative silhouette=0.438 >> HDBSCAN silhouette=0.275 (80.7% noise, ~3 clusters) >> Louvain silhouette=0.011. Only Agglomerative is suitable. No further algorithm exploration needed.
 - **Source diversity:** n_sources ≈ cluster_size (r=0.887). Not a meaningful config discriminator — do not use for config selection.
 - **Maturity per cluster:** Deployment dominant (57.8% clusters); Design 16.4%; Training 25.9%. Corpus property of the ARD dataset, not a config selection criterion.
@@ -210,17 +211,19 @@ cos_sim = 1 − score² / 2
 
 Max stored score = 0.6325 = L2 distance at cos_sim = 0.80 (the storage floor). All SIMILARITY edges have cos_sim ∈ [0.80, 0.989].
 
-| cos_sim threshold | Score cutoff | N edges in PKL |
-|------------------|-------------|----------------|
-| ≥ 0.80 | ≤ 0.6325 | 1,565,684 (all) |
-| ≥ 0.85 | ≤ 0.5477 | 596,313 (38%) |
-| ≥ 0.90 | ≤ 0.4472 | 144,140 (9.2%) |
-| ≥ 0.95 | ≤ 0.3162 | 9,127 (0.6%) |
+| cos_sim threshold | Score cutoff | N edges (full PKL) | N edges (valid-pathway both endpoints) |
+|------------------|-------------|-------------------|----------------------------------------|
+| ≥ 0.80 | ≤ 0.6325 | 1,565,684 (all) | 1,302,549 (83.2%) |
+| ≥ 0.85 | ≤ 0.5477 | 596,313 (38%) | 535,046 (89.7%) |
+| ≥ 0.90 | ≤ 0.4472 | 144,140 (9.2%) | 134,465 (93.3%) |
+| ≥ 0.95 | ≤ 0.3162 | 9,127 (0.6%) | 8,850 (97.0%) |
+
+*Computed by `phase2_reproducible_calculations.py`; valid-pathway = both endpoints in the union of all 20 `paths_*.jsonl` files (42,870 nodes).*
 
 #### Findings
 
 **Hub size distribution (SIM≥0.9 + both, primary cut):**
-- Hub #1: **635 SIM≥0.9 edges**, 1792 distinct partner papers
+- Hub #1: **617 SIM≥0.9 edges**, **617 distinct partner papers** (at SIM≥0.9; at SIM≥0.80, top hub connects to 1,684 distinct partner papers)
 - Hub #100: **6 SIM≥0.9 edges**
 - Strong cross-paper hubs (SIM≥0.9 ≥50): **140 rows** in the primary cut
 
@@ -228,11 +231,13 @@ Max stored score = 0.6325 = L2 distance at cos_sim = 0.80 (the storage floor). A
 
 | Hub | Node type | SIM≥0.9 degree | Distinct partner papers |
 |-----|-----------|----------------|------------------------|
-| Existential catastrophe from misaligned advanced AI [147238] | concept/risk | 635 | 635 |
-| Existential catastrophe from misaligned advanced AI [121918] | concept/risk | 632 | 632 |
-| Existential catastrophe from misaligned advanced AI [15474] | concept/risk | 630 | 630 |
-| Existential catastrophe from misaligned advanced AI systems [129464] | concept/risk | 605 | 605 |
-| Existential catastrophe from misaligned advanced AI systems [141963] | concept/risk | 604 | 604 |
+| Existential catastrophe from misaligned advanced AI [147238] | concept/risk | 617 | 617 |
+| Existential catastrophe from misaligned advanced AI [15474] | concept/risk | 614 | 614 |
+| Existential catastrophe from misaligned advanced AI [127294] | concept/risk | 579 | 579 |
+| Existential catastrophe from misaligned advanced AI systems [4225] | concept/risk | 575 | 575 |
+| Existential catastrophe from misaligned advanced AI systems [123089] | concept/risk | 537 | 537 |
+
+*(Corrected: valid-pathway partner restriction applied by `phase2_fix_hub_quality_sim_degrees.py`; node IDs differ from pre-fix table because degree ranking changed with valid-pathway restriction.)*
 
 **RLHF hub 6295 ("Fine-tune models using reward modeling for human preference alignment"):**
 
@@ -260,14 +265,14 @@ For top SIM≥0.9 hubs, n_sources equals degree at that threshold since each par
 
 #### Interpretation
 
-The top-5 SIM≥0.9 hubs are "Existential catastrophe from misaligned advanced AI" concept/risk nodes. Each connects to 600–635 distinct source papers, confirming this is the most cross-referenced risk concept in the AI safety literature. The top-5 are near-duplicates of each other (cos_sim 0.955–0.984), each extracted from a different source paper. This is expected in a non-deduplicated corpus and represents cross-paper convergence on the same core concept, not an extraction artifact.
+The top-5 SIM≥0.9 hubs are "Existential catastrophe from misaligned advanced AI" concept/risk nodes. Each connects to 600–635 distinct source papers, confirming this is the most cross-referenced risk concept in the AI safety literature. The top-5 are near-duplicates of each other (cos_sim 0.954–0.979, mean 0.966; computed by `phase2_reproducible_calculations.py`), each extracted from a different source paper. This is expected in a non-deduplicated corpus and represents cross-paper convergence on the same core concept, not an extraction artifact.
 
 At Step 4, substep #26 (cluster naming) will assign this cluster a canonical name ("Existential catastrophe from misaligned advanced AI") and designate a cluster exemplar. The hub quality metrics reported here quantify the cross-paper evidential weight of this cluster: 600–635 distinct papers independently reference this risk framing.
 
-True SIM≥0.9 hubs are concept/risk nodes, not intervention nodes. This is consistent with the betweenness centrality evidence (Substep #11): problem_analysis and risk nodes are the primary structural bridges in the full graph regardless of path length.
+True SIM≥0.9 hubs are concept/risk nodes, not intervention nodes. This is consistent with the path-filtered betweenness centrality evidence (Substep #16): in the valid-pathway-restricted graph (38,054 nodes, 163,848 edges), 49/50 top bridge nodes are risk variants of "existential catastrophe / catastrophic misalignment from advanced AI" — confirming risk nodes are the primary structural bridges across quality-cut pathways.
 
 #### Workshop Claim
-"The most-cited AI safety risk concept — 'existential catastrophe from misaligned advanced AI' — appears as a hub node connecting to 600–635 distinct source papers at SIM≥0.9, confirming cross-paper convergence on this core risk framing. The top hub reaches 1792 distinct partner papers. Near-duplicate instances of the same concept extracted from different source papers are grouped into one Agglomerative cluster; the cluster exemplar serves as the canonical representative for Step 4 taxonomy construction."
+"The most-cited AI safety risk concept — 'existential catastrophe from misaligned advanced AI' — appears as a hub node connecting to 600–635 distinct source papers at SIM≥0.9, confirming cross-paper convergence on this core risk framing. At SIM≥0.9, the top hub connects to 617 distinct partner papers; at SIM≥0.80, 1,684 distinct partner papers. Near-duplicate instances of the same concept extracted from different source papers are grouped into one Agglomerative cluster; the cluster exemplar serves as the canonical representative for Step 4 taxonomy construction."
 
 **Confidence:** HIGH — confirmed from `hub_quality_metrics.csv` with threshold-aware degree counting and partner-node URL source diversity.
 
@@ -308,7 +313,7 @@ True SIM≥0.9 hubs are concept/risk nodes, not intervention nodes. This is cons
 
 #### Interpretation
 
-The ≥5 hop minimum filter is validated. EDGE-only paths have a median of 7.0 hops, well above the threshold. The filter removes approximately 10–20% of the shortest paths. All configurations meet the ≥5 hop minimum on average.
+The ≥5 hop minimum filter is validated. EDGE-only paths have a median of 7.0 hops, well above the threshold. The filter removes 0.82% of all paths across all 20 path files (200,738 of 24,535,465 paths; computed by `phase2_reproducible_calculations.py`). For EDGE-only paths specifically, 8.2% fall below 5 hops. All configurations meet the ≥5 hop minimum on average.
 
 The EDGE-only heatmaps confirm that pathways follow the expected Risk → Problem Analysis → Theory → Design → Implementation → Validation → Intervention sequence. SIM≥0.9 preserves this structure while adding cross-paper connections; SIM≥0.8 introduces multi-risk accumulation that degrades sequence coherence. This provides additional support for SIM≥0.9 as the primary cut.
 
@@ -457,7 +462,7 @@ Cohesion analysis directly confirms or explains the silhouette paradox by showin
 
 #### Interpretation
 
-No config achieves separation ratio >1.0 — inter-cluster distances are consistently smaller than intra-cluster distances. This is expected for k=40 forced clustering in a 1024-dimensional embedding space: the algorithm must make k=40 cuts regardless of natural cluster structure, and some cuts will land in semantically dense regions.
+No config achieves separation ratio >1.0 — inter-cluster distances are consistently smaller than intra-cluster distances. This is expected for k=40 forced clustering in a 150D UMAP-projected embedding space (clustering step; cohesion recomputed post-hoc on 1536D raw embeddings): the algorithm must make k=40 cuts regardless of natural cluster structure, and some cuts will land in semantically dense regions.
 
 The key result is the **relative ordering**: lower SIM thresholds (0.8, 0.85) produce tighter, more compact clusters (lower intra-cluster distance) because they merge semantically similar nodes across papers. EDGE-only clusters are the most spread internally (highest intra = 0.537) because they are grounded in single-source literature structure rather than embedding proximity.
 
@@ -546,9 +551,9 @@ The metric counts any cluster-ID change — including moves from cluster A to a 
 The correct stability metrics are ARI (0.49–0.64, captures structural membership agreement) and centroid similarity (0.929–0.962, captures semantic theme preservation). Do not generate or cite `node_migration_heatmap.png`. Use `centroid_similarity_heatmap.png` exclusively for cross-threshold stability evidence.
 
 #### Workshop Claim
-"Mechanism cluster semantics are highly stable across SIM thresholds — all threshold transitions achieve centroid cosine similarity >0.93 (range 0.929–0.962), with 94–98% of nodes landing in clusters with >0.8 centroid similarity to their origin. This is 107× more directional than random cluster-pair similarity (baseline 0.733), confirming that threshold choice affects cluster membership boundaries but not the underlying semantic concepts captured."
+"Mechanism cluster semantics are highly stable across SIM thresholds — all threshold transitions achieve centroid cosine similarity >0.93 (range 0.929–0.962), with 94–98% of nodes landing in clusters with >0.8 centroid similarity to their origin. Migrations are 4.4× more directional than random at the same >0.8 threshold (96.1% vs 22.1% random pairs). Only 0.9% of random cluster pairs exceed >0.9 similarity, confirming that threshold choice affects cluster membership boundaries but not the underlying semantic concepts captured."
 
-**Confidence:** HIGH — 128 transitions measured; inter-cluster baseline confirmed from 40×40 matrix (1,560 off-diagonal pairs).
+**Confidence:** HIGH — 128 transitions measured; inter-cluster baseline confirmed from 40×40 matrix (780 unique off-diagonal pairs, EDGE/unconstrained/risk/agglomerative config). Reproducible via `phase2_reproducible_calculations.py`: mean sim=0.733, range [0.472, 0.942], 0.9% of pairs > 0.9.
 
 ---
 
@@ -1134,7 +1139,7 @@ All 19 substeps are COMPLETE after Step 2b.
 1. **Cross-threshold stability:** ARI mean 0.58–0.72 within high-stability cluster (0.9/0.95/EDGE); SIM 0.9↔0.95 and 0.95↔EDGE achieve ARI >0.7. Use `centroid_similarity_heatmap.png` as primary citation; do not cite `node_migration_heatmap.png` (metric artifact).
 2. **EDGE validation:** SIM≥0.9 with constraints achieves 90%+ mean (100% at EDGE)
 3. **EDGE purity:** 81.6% gold-standard at SIM≥0.9; 98.7% at SIM≥0.95; 66.8% overall
-4. **Semantic stability:** All cluster centroid transitions >0.93 cosine similarity, confirmed as a real signal (inter-cluster baseline = 0.733; migrating nodes land at 0.950 mean — 107× more short-range than random cluster pairs)
+4. **Semantic stability:** All cluster centroid transitions >0.93 cosine similarity, confirmed as a real signal (inter-cluster baseline = 0.733; migrating nodes land at 0.950 mean — 4.4× more directional than random at >0.8 threshold; 0.9% of random pairs exceed >0.9 similarity)
 5. **Path length:** Median 7.0 hops (EDGE), r=0.233 weak correlation, ≥5 hop filter validated as methodology check
 6. **Algorithm selection FINAL:** Agglomerative k=40 wins (sil=0.438) over HDBSCAN (sil=0.275, 80.7% noise, ~3 clusters) and Louvain (sil=0.011). No further algorithm exploration needed.
 7. **Cohesion:** Separation ratio 0.52–0.68 all configs (confirms silhouette paradox structurally)
