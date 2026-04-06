@@ -99,28 +99,10 @@ for nid, attrs in node_attrs.items():
             pass
 log.info(f"  emb_cache: {len(emb_cache)} nodes  ({time.time() - t_emb:.1f}s)")
 
-# ─── Build SIM edge set (SIM>=0.9 only, for max_consec_SIM) ──────────────────
-log.info("Building SIM edge set (SIM>=0.9 only) …")
-t3 = time.time()
 
-
+# ─── cos_sim_from_score helper (used by sim_edge_set below) ──────────────────
 def cos_sim_from_score(s):
     return 1.0 - float(s) ** 2 / 2.0
-
-
-sim_edge_set = set()
-for e in edge_data:
-    if str(e.get("type", "")).upper() == "SIMILARITY":
-        score = e.get("similarity_score")
-        if score is not None and cos_sim_from_score(score) >= 0.9:
-            try:
-                s, t = int(e["source"]), int(e["target"])
-                sim_edge_set.add((min(s, t), max(s, t)))
-            except (ValueError, TypeError):
-                pass
-log.info(
-    f"  sim_edge_set (SIM>=0.9): {len(sim_edge_set)} pairs  ({time.time() - t3:.1f}s)"
-)
 
 
 # ─── Cluster helper ───────────────────────────────────────────────────────────
@@ -164,10 +146,30 @@ valid_pathway_nodes = set()
 with open(paths_file, "r") as f:
     for line in f:
         obj = json.loads(line)
-        for n in obj["path"]:
-            valid_pathway_nodes.add(int(n))
+        path = [int(x) for x in obj["path"]]
+        interv_id = path[-1]
+        if int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0) >= 3:
+            valid_pathway_nodes.update(path)
 log.info(
-    f"  {len(valid_pathway_nodes)} unique valid-pathway nodes  ({time.time() - t_vp:.1f}s)"
+    f"  {len(valid_pathway_nodes)} unique valid-pathway nodes (maturity>=3 filter)  ({time.time() - t_vp:.1f}s)"
+)
+
+# ─── Build SIM edge set (SIM>=0.9 only, restricted to VPN pairs) ─────────────
+log.info("Building SIM edge set (SIM>=0.9, VPN-restricted) …")
+t3 = time.time()
+sim_edge_set = set()
+for e in edge_data:
+    if str(e.get("type", "")).upper() == "SIMILARITY":
+        score = e.get("similarity_score")
+        if score is not None and cos_sim_from_score(score) >= 0.9:
+            try:
+                s, t = int(e["source"]), int(e["target"])
+                if s in valid_pathway_nodes and t in valid_pathway_nodes:
+                    sim_edge_set.add((min(s, t), max(s, t)))
+            except (ValueError, TypeError):
+                pass
+log.info(
+    f"  sim_edge_set (SIM>=0.9, VPN-pairs): {len(sim_edge_set)} pairs  ({time.time() - t3:.1f}s)"
 )
 
 # ─── SECTION 2: Risk and Intervention cluster tables ─────────────────────────

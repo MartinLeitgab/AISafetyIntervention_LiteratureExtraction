@@ -94,6 +94,7 @@ def get_clusters(edge_config, mode, node_type, algo="agglomerative"):
 
 
 # ─── Load valid_pathway_nodes (unconstrained) ─────────────────────────────────
+# maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
 log.info("Loading valid_pathway_nodes (unconstrained) …")
 t_vp = time.time()
 valid_pathway_nodes = set()
@@ -101,8 +102,10 @@ paths_file = os.path.join(PATHS_DIR, "paths_unconstrained_sim0.9.jsonl")
 with open(paths_file, "r") as f:
     for line in f:
         obj = json.loads(line)
-        for nid in obj["path"]:
-            valid_pathway_nodes.add(int(nid))
+        path = [int(x) for x in obj["path"]]
+        interv_id = path[-1]
+        if int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0) >= 3:
+            valid_pathway_nodes.update(path)
 log.info(
     f"  {len(valid_pathway_nodes)} valid-pathway nodes  ({time.time() - t_vp:.1f}s)"
 )

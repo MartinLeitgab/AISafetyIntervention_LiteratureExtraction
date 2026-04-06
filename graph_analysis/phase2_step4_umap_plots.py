@@ -84,13 +84,41 @@ print(
 
 
 # ---------------------------------------------------------------------------
-# 2. Build sim_edge_set (cos_sim >= 0.9 SIMILARITY edges)
+# 2. Build unconstrained VPN first (needed to restrict sim_edge_set)
+#    maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
 # ---------------------------------------------------------------------------
 def cos_sim_from_score(s):
     return 1.0 - float(s) ** 2 / 2.0
 
 
-print("Building sim_edge_set (cos_sim >= 0.9) …", flush=True)
+print(
+    "Building unconstrained valid_pathway_nodes for sim_edge_set restriction …",
+    flush=True,
+)
+t0 = time.time()
+_vpn_for_sim: set = set()
+with open(PATHS_SIM09_FILE) as _f:
+    for _line in _f:
+        _line = _line.strip()
+        if not _line:
+            continue
+        _record = json.loads(_line)
+        _path_ids = _record["path"]
+        _interv_id = int(_path_ids[-1])
+        if (
+            int(node_attrs.get(_interv_id, {}).get("intervention_maturity", 0) or 0)
+            >= 3
+        ):
+            _vpn_for_sim.update(int(x) for x in _path_ids)
+print(
+    f"  unconstrained VPN for sim restriction: {len(_vpn_for_sim):,} nodes in {time.time() - t0:.1f}s",
+    flush=True,
+)
+
+# ---------------------------------------------------------------------------
+# Build sim_edge_set (cos_sim >= 0.9, restricted to VPN pairs)
+# ---------------------------------------------------------------------------
+print("Building sim_edge_set (cos_sim >= 0.9, VPN-restricted) …", flush=True)
 t0 = time.time()
 sim_edge_set: set = set()
 for e in edge_data:
@@ -99,7 +127,8 @@ for e in edge_data:
         if score is not None and cos_sim_from_score(score) >= 0.9:
             try:
                 s2, t2 = int(e["source"]), int(e["target"])
-                sim_edge_set.add((min(s2, t2), max(s2, t2)))
+                if s2 in _vpn_for_sim and t2 in _vpn_for_sim:
+                    sim_edge_set.add((min(s2, t2), max(s2, t2)))
             except (ValueError, TypeError):
                 pass
 print(
@@ -108,6 +137,7 @@ print(
 )
 # edge_data no longer needed — free memory
 del edge_data
+del _vpn_for_sim
 
 
 # ---------------------------------------------------------------------------
@@ -129,21 +159,9 @@ def max_consec_sim(path_ids, sim_set):
 # 4. Build valid_pathway_nodes per consim config
 # ---------------------------------------------------------------------------
 def load_pathway_nodes_edge_only(path_file: Path) -> set:
-    """Load all node IDs from an edge-only JSONL path file."""
-    nodes: set = set()
-    with open(path_file) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            record = json.loads(line)
-            for nid in record["path"]:
-                nodes.add(nid)
-    return nodes
-
-
-def load_pathway_nodes_sim09_filtered(path_file: Path, max_consec: int) -> set:
-    """Load node IDs from sim0.9 JSONL keeping only paths with max_consec_sim <= max_consec."""
+    """Load node IDs from an edge-only JSONL path file.
+    maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
+    """
     nodes: set = set()
     with open(path_file) as f:
         for line in f:
@@ -152,9 +170,34 @@ def load_pathway_nodes_sim09_filtered(path_file: Path, max_consec: int) -> set:
                 continue
             record = json.loads(line)
             path_ids = record["path"]
-            if max_consec_sim(path_ids, sim_edge_set) <= max_consec:
-                for nid in path_ids:
-                    nodes.add(nid)
+            interv_id = int(path_ids[-1])
+            if (
+                int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0)
+                >= 3
+            ):
+                nodes.update(int(x) for x in path_ids)
+    return nodes
+
+
+def load_pathway_nodes_sim09_filtered(path_file: Path, max_consec: int) -> set:
+    """Load node IDs from sim0.9 JSONL keeping only paths with max_consec_sim <= max_consec.
+    maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
+    """
+    nodes: set = set()
+    with open(path_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            path_ids = record["path"]
+            interv_id = int(path_ids[-1])
+            if (
+                int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0)
+                >= 3
+                and max_consec_sim(path_ids, sim_edge_set) <= max_consec
+            ):
+                nodes.update(int(x) for x in path_ids)
     return nodes
 
 
@@ -173,8 +216,12 @@ t0 = time.time()
 vpn_consim2 = load_pathway_nodes_sim09_filtered(PATHS_SIM09_FILE, max_consec=2)
 print(f"  consim2: {len(vpn_consim2):,} nodes in {time.time() - t0:.1f}s", flush=True)
 
-# Also keep unconstrained (all paths in sim0.9 file) for original plots
-print("Building valid_pathway_nodes for unconstrained (all sim0.9 paths) …", flush=True)
+# Also keep unconstrained (all maturity>=3-endpoint paths in sim0.9 file) for original plots
+# maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
+print(
+    "Building valid_pathway_nodes for unconstrained (all sim0.9 paths, maturity>=3) …",
+    flush=True,
+)
 t0 = time.time()
 vpn_unconstrained: set = set()
 with open(PATHS_SIM09_FILE) as f:
@@ -183,8 +230,10 @@ with open(PATHS_SIM09_FILE) as f:
         if not line:
             continue
         record = json.loads(line)
-        for nid in record["path"]:
-            vpn_unconstrained.add(nid)
+        path_ids = record["path"]
+        interv_id = int(path_ids[-1])
+        if int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0) >= 3:
+            vpn_unconstrained.update(int(x) for x in path_ids)
 print(
     f"  unconstrained: {len(vpn_unconstrained):,} nodes in {time.time() - t0:.1f}s",
     flush=True,
@@ -378,9 +427,9 @@ def run_umap_and_plot(valid_pathway_nodes: set, label: str, suffix: str):
 
 # ---------------------------------------------------------------------------
 # 5. Original unconstrained plots (umap_risks.png / umap_interventions.png)
-#    These do NOT apply maturity filter (backward-compatible).
+#    maturity>=3 endpoint filter applied for consistency.
 # ---------------------------------------------------------------------------
-print("\n=== Original unconstrained plots (no maturity filter) ===", flush=True)
+print("\n=== Original unconstrained plots (maturity>=3 filter) ===", flush=True)
 print("  Collecting risk members (unconstrained) …", flush=True)
 risk_ids_unc, risk_labels_unc = collect_filtered_members(
     "risk", vpn_unconstrained, maturity_filter=False
@@ -388,11 +437,11 @@ risk_ids_unc, risk_labels_unc = collect_filtered_members(
 print(f"    {len(risk_ids_unc):,} risk nodes", flush=True)
 
 print(
-    "  Collecting intervention members (unconstrained, no maturity filter) …",
+    "  Collecting intervention members (unconstrained, maturity>=3) …",
     flush=True,
 )
 interv_ids_unc, interv_labels_unc = collect_filtered_members(
-    "intervention", vpn_unconstrained, maturity_filter=False
+    "intervention", vpn_unconstrained, maturity_filter=True
 )
 print(f"    {len(interv_ids_unc):,} intervention nodes", flush=True)
 

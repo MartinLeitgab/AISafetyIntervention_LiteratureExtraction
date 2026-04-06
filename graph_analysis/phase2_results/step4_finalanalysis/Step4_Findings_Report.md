@@ -1,9 +1,19 @@
 # Phase 2 Step 4 — Findings Report (Fresh)
 
-**Generated:** 2026-04-04
-**Scripts run:** `phase2_step4b_paths_and_plots.py` (fixed), `phase2_step4_connectivity.py` (fixed), `phase2_step4_phase_c_reruns.py` (new)
-**All outputs in:** `phase2_results/step4_finalanalysis/`
-**Filter compliance:** All Category B analyses use `valid_pathway_nodes` from `paths_unconstrained_sim0.9.jsonl` plus explicit `intervention_maturity≥3` check. NOTE (2026-04-05): path generation (`final_pathway_analysis_modes.py`) used `ALL_INTERVENTION_IDS = cache["interventions"]` as BFS terminal set, which included maturity<3 nodes — so valid_pathway_nodes alone does NOT guarantee maturity≥3. All Category B scripts apply both filters simultaneously.
+**Generated:** 2026-04-04  
+**Last updated:** 2026-04-06 (VPN root fix applied — all scripts rerun)
+**Scripts run:** `phase2_step4b_paths_and_plots.py`, `phase2_step4_cluster_naming.py`, `phase2_step4_connectivity.py`, `phase2_step4_pathbuildB_connectivity.py`, `phase2_step4_umap_plots.py`, `phase2_step4_phase_c_reruns.py`, `phase2_step5_naming.py`, `phase2_step5_triplet_simreach.py`, `phase2_step5_examples.py`
+**All outputs in:** `phase2_results/step4_finalanalysis/`, `phase2_results/step5_naming/`, `phase2_results/step5_examples/`
+**Filter compliance (corrected 2026-04-06):** All Category B analyses use `valid_pathway_nodes` built exclusively from paths where the **intervention endpoint has `intervention_maturity≥3`**. This is the root fix: previously, path generation used `ALL_INTERVENTION_IDS = cache["interventions"]` (all maturity levels) as BFS terminal nodes, causing 155 maturity<3 intervention endpoints to appear in path files and pollute valid_pathway_nodes. All 9 Category B scripts now construct VPN with the maturity≥3 endpoint check at build time:
+```python
+valid_pathway_nodes = set()
+for line in open(paths_file):
+    obj = json.loads(line)
+    path = [int(x) for x in obj["path"]]
+    if int(node_attrs.get(path[-1], {}).get("intervention_maturity", 0) or 0) >= 3:
+        valid_pathway_nodes.update(path)
+```
+sim_edge_set is additionally restricted to SIM≥0.9 edges where both endpoints are in valid_pathway_nodes. Belt-and-suspenders explicit maturity≥3 check is retained on top of VPN for intervention cluster members.
 
 ---
 
@@ -450,11 +460,13 @@ All consimN analyses complete. Config selection made.
   - consim1: 3,830 risk / 2,799 intervention — `umap_risks_consim1.png`, `umap_interventions_consim1.png`
   - consim2: 4,648 risk / 2,808 intervention — `umap_risks_consim2.png`, `umap_interventions_consim2.png`
   - Original `umap_risks.png` / `umap_interventions.png` (unconstrained, no maturity filter): 4,889 risk / 2,970 intervention — preserved as reference
-  - Note: Original unconstrained plots still use unfiltered intervention count (2,970). The per-consim plots are the workshop-appropriate outputs.
+  - Note (updated 2026-04-06): All UMAP plots, including the original unconstrained plots, now apply the maturity≥3 filter. `umap_interventions.png` (unconstrained) shows **2,815** intervention nodes (previously showed unfiltered 2,970). The per-consim plots are the workshop-appropriate outputs.
 
 ### PathbuildB Connectivity — Substep #27 (completed 2026-04-05)
 
-Script: `phase2_step4_pathbuildB_connectivity.py`
+Script: `phase2_step4_pathbuildB_connectivity.py`  
+**Rerun 2026-04-06** with corrected VPN (maturity≥3 endpoint filter + sim_edge_set VPN restriction). Numbers confirmed unchanged — family signature matching and R→B→I edge counts are determined by path files and family CSVs, which were not regenerated; the VPN fix ensures only correctly-filtered nodes are used for cluster membership lookups.
+
 Outputs in `step4_connectivity/`: `risk_to_Bfamily_edges_consimN.csv`, `Bfamily_to_interv_edges_consimN.csv`, `risk_to_interv_via_B_edges_consimN.csv`, `gap_analysis_pathbuildB_consimN.csv` for N ∈ {0, 1, 2}.
 
 | Config | Paths | Families matched | R→B edges | B→I edges | R→I direct |

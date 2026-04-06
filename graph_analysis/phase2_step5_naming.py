@@ -89,14 +89,23 @@ if not PATHS_UNCONSTRAINED.exists():
     PATHS_UNCONSTRAINED = BASE / "phase1_rawpathsfiles/paths_unconstrained_sim0.9.jsonl"
 
 log.info("Building valid_pathway_nodes from unconstrained path file …")
+# maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
 t0 = time.time()
 valid_pathway_nodes = set()
 with open(PATHS_UNCONSTRAINED) as _f:
     for _line in _f:
         _obj = json.loads(_line)
-        _path = _obj.get("path") or _obj.get("node_id_sequence") or []
-        for _nid in _path:
-            valid_pathway_nodes.add(int(_nid))
+        _path = [
+            int(x) for x in (_obj.get("path") or _obj.get("node_id_sequence") or [])
+        ]
+        if not _path:
+            continue
+        _interv_id = _path[-1]
+        if (
+            int(node_attrs.get(_interv_id, {}).get("intervention_maturity", 0) or 0)
+            >= 3
+        ):
+            valid_pathway_nodes.update(_path)
 log.info(
     f"  valid_pathway_nodes: {len(valid_pathway_nodes):,} nodes  ({time.time() - t0:.1f}s)"
 )

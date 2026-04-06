@@ -60,14 +60,23 @@ with open(BASE / "step4_finalanalysis" / "optionA_cluster_labels.pkl", "rb") as 
 print(f"  chain_labels keys: {list(chain_labels.keys())[:3]}")
 
 # ── 2b. Load valid_pathway_nodes (Gap 5b fix) ────────────────────────────────
+# maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
 print("Building valid_pathway_nodes …")
 valid_pathway_nodes = set()
 with open(PATHS_UNCONSTRAINED) as _f:
     for _line in _f:
         _obj = json.loads(_line)
-        _path = _obj.get("path") or _obj.get("node_id_sequence") or []
-        for _nid in _path:
-            valid_pathway_nodes.add(int(_nid))
+        _path = [
+            int(x) for x in (_obj.get("path") or _obj.get("node_id_sequence") or [])
+        ]
+        if not _path:
+            continue
+        _interv_id = _path[-1]
+        if (
+            int(node_attrs.get(_interv_id, {}).get("intervention_maturity", 0) or 0)
+            >= 3
+        ):
+            valid_pathway_nodes.update(_path)
 print(f"  valid_pathway_nodes: {len(valid_pathway_nodes):,} nodes")
 
 # ── 3. Build node → risk/intervention cluster dicts ─────────────────────────
@@ -140,11 +149,15 @@ for e in edge_data:
     cos = 1.0 - float(score) ** 2 / 2.0
     if cos < SIM_THRESHOLD:
         continue
-    src = e["source"]
-    tgt = e["target"]
-    node_sim_partners[src].add(tgt)
-    node_sim_partners[tgt].add(src)
-    n_sim += 1
+    try:
+        src = int(e["source"])
+        tgt = int(e["target"])
+    except (ValueError, TypeError):
+        continue
+    if src in valid_pathway_nodes and tgt in valid_pathway_nodes:
+        node_sim_partners[src].add(tgt)
+        node_sim_partners[tgt].add(src)
+        n_sim += 1
 
 print(
     f"  SIM>=0.9 edges: {n_sim:,}, nodes with SIM partners: {len(node_sim_partners):,}"

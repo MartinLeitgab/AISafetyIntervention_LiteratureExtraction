@@ -132,8 +132,29 @@ with open(os.path.join(STEP1_DIR, "graph_edge_data.pkl"), "rb") as f:
     edge_data = pickle.load(f)
 log.info(f"  {len(edge_data)} edges  ({time.time() - t2:.1f}s)")
 
-# ─── Build sim_edge_set (SIM >= 0.9) ──────────────────────────────────────────
-log.info("Building sim_edge_set (SIM>=0.9) …")
+# ─── Build broad unconstrained VPN first (needed to restrict sim_edge_set) ────
+# maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
+# sim_edge_set is config-agnostic; restrict it to the broadest VPN (unconstrained)
+log.info("Building unconstrained valid_pathway_nodes for sim_edge_set restriction …")
+t_vpn_broad = time.time()
+vpn_unconstrained = set()
+_paths_file_broad = os.path.join(PATHS_DIR, "paths_unconstrained_sim0.9.jsonl")
+with open(_paths_file_broad) as _f:
+    for _line in _f:
+        _obj = json.loads(_line)
+        _path = [int(x) for x in _obj["path"]]
+        _interv_id = _path[-1]
+        if (
+            int(node_attrs.get(_interv_id, {}).get("intervention_maturity", 0) or 0)
+            >= 3
+        ):
+            vpn_unconstrained.update(_path)
+log.info(
+    f"  {len(vpn_unconstrained)} unconstrained VPN nodes  ({time.time() - t_vpn_broad:.1f}s)"
+)
+
+# ─── Build sim_edge_set (SIM >= 0.9, restricted to unconstrained VPN pairs) ───
+log.info("Building sim_edge_set (SIM>=0.9, VPN-restricted) …")
 t_sim = time.time()
 sim_edge_set = set()
 for e in edge_data:
@@ -142,7 +163,8 @@ for e in edge_data:
         if score is not None and cos_sim_from_score(score) >= 0.9:
             try:
                 s, tgt = int(e["source"]), int(e["target"])
-                sim_edge_set.add((min(s, tgt), max(s, tgt)))
+                if s in vpn_unconstrained and tgt in vpn_unconstrained:
+                    sim_edge_set.add((min(s, tgt), max(s, tgt)))
             except (ValueError, TypeError):
                 pass
 log.info(f"  {len(sim_edge_set)} SIM>=0.9 pairs  ({time.time() - t_sim:.1f}s)")
@@ -228,6 +250,7 @@ for cfg in CONFIGS:
     log.info(f"Processing config: {config_name}")
 
     # Build valid_pathway_nodes for this config
+    # maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
     log.info(f"  Building valid_pathway_nodes from {os.path.basename(paths_file)} …")
     t_vp = time.time()
     valid_pathway_nodes = set()
@@ -239,9 +262,13 @@ for cfg in CONFIGS:
             # Apply consim filter even for valid_pathway_nodes if needed
             if filter_fn is not None and not filter_fn(path):
                 continue
-            for nid in path:
-                valid_pathway_nodes.add(nid)
-            n_paths_vpn += 1
+            interv_id = path[-1]
+            if (
+                int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0)
+                >= 3
+            ):
+                valid_pathway_nodes.update(path)
+                n_paths_vpn += 1
     log.info(
         f"    {len(valid_pathway_nodes)} valid-pathway nodes from {n_paths_vpn} paths  ({time.time() - t_vp:.1f}s)"
     )

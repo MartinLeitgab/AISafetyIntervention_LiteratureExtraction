@@ -1,10 +1,12 @@
 # Phase 2 Step 5 Review Summary (consim1_pathbuildA)
 
-**Generated:** 2026-04-05
+**Generated:** 2026-04-05  
+**Last updated:** 2026-04-06 (VPN root fix — all Step 5 scripts rerun with corrected valid_pathway_nodes)
 **Config:** consim1_pathbuildA (selected config — ≤1 consecutive SIM hop, Option A KMeans k=40)
-**Scripts:** `phase2_step5_naming.py` (Gap 5a fixed), `phase2_step5_examples.py` (consim1, VPN-filtered), `phase2_step5_triplet_simreach.py` (Gap 5b fixed), `phase2_step5_examples_edgeonly_fix.py` (regenerated EDGE-only + Option B family examples), `phase2_step5_subcluster_naming.py` (k=5 subclusters + 2-pass LLM)
+**Scripts:** `phase2_step5_naming.py`, `phase2_step5_examples.py`, `phase2_step5_triplet_simreach.py` — all rerun 2026-04-06 with corrected VPN (maturity≥3 endpoint filter at build time). `phase2_step5_subcluster_naming.py` (k=5 subclusters + 2-pass LLM) — not rerun (subcluster analysis does not depend on VPN directly).
 **Outputs:** `step5_naming/`, `step5_examples/`, `step4_subclusters/`
-**Status:** All planned outputs complete ✅ (including subcluster naming 2026-04-05)
+**VPN correction note:** valid_pathway_nodes is now built exclusively from paths with intervention endpoint maturity≥3 (root fix applied to all 9 Category B scripts 2026-04-06). Rerun confirmed: VPN = 21,553 unconstrained nodes, 19,791 consim1 nodes. Core numbers (path counts, triplet reach) unchanged — path files were not regenerated.
+**Status:** All planned outputs complete ✅
 
 ---
 
@@ -168,7 +170,7 @@ Step 5 completed four tasks on the selected config (consim1_pathbuildA) with all
 
 ## Section E: Triplet SIM Reach Analysis
 
-**Setup:** 144,140 SIM≥0.9 edges; 9,414 nodes with SIM partners; 21,553 valid_pathway_nodes (VPN-filtered).
+**Setup:** 144,140 SIM≥0.9 edges; 9,414 nodes with SIM partners; 21,553 valid_pathway_nodes (VPN-filtered, maturity≥3 endpoint — confirmed from 2026-04-06 rerun).
 
 | Rank | Triplet | N paths | Union reach | Core |
 |------|---------|---------|-------------|------|

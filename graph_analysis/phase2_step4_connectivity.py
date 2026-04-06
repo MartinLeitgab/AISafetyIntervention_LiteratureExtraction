@@ -79,28 +79,9 @@ with open(os.path.join(STEP1_DIR, "graph_edge_data.pkl"), "rb") as f:
     edge_data = pickle.load(f)
 log.info(f"  Loaded in {time.time() - t0:.1f}s")
 
-# Build SIM edge set for max_consec_SIM filtering (SIM>=0.9 only)
-log.info("Building SIM edge set (SIM>=0.9 only) …")
-t_sim = time.time()
-
 
 def cos_sim_from_score(s):
     return 1.0 - float(s) ** 2 / 2.0
-
-
-sim_edge_set = set()
-for e in edge_data:
-    if str(e.get("type", "")).upper() == "SIMILARITY":
-        score = e.get("similarity_score")
-        if score is not None and cos_sim_from_score(score) >= 0.9:
-            try:
-                s, t = int(e["source"]), int(e["target"])
-                sim_edge_set.add((min(s, t), max(s, t)))
-            except (ValueError, TypeError):
-                pass
-log.info(
-    f"  sim_edge_set (SIM>=0.9): {len(sim_edge_set)} pairs  ({time.time() - t_sim:.1f}s)"
-)
 
 
 def max_consec_sim(path_ids):
@@ -130,6 +111,7 @@ for nid, attrs in node_attrs.items():
 log.info(f"  emb_cache: {len(emb_cache)} nodes  ({time.time() - t_emb:.1f}s)")
 
 # ─── Load valid_pathway_nodes (Gap 4 — CRITICAL: was missing entirely) ────────
+# maturity>=3 endpoint filter — path gen used ALL_INTERVENTION_IDS
 log.info("Loading valid_pathway_nodes …")
 t_vp = time.time()
 valid_pathway_nodes = set()
@@ -137,10 +119,30 @@ paths_file_vp = os.path.join(PATHS_DIR, "paths_unconstrained_sim0.9.jsonl")
 with open(paths_file_vp, "r") as f:
     for line in f:
         obj = json.loads(line)
-        for nid in obj["path"]:
-            valid_pathway_nodes.add(int(nid))
+        path = [int(x) for x in obj["path"]]
+        interv_id = path[-1]
+        if int(node_attrs.get(interv_id, {}).get("intervention_maturity", 0) or 0) >= 3:
+            valid_pathway_nodes.update(path)
 log.info(
     f"  {len(valid_pathway_nodes)} valid-pathway nodes  ({time.time() - t_vp:.1f}s)"
+)
+
+# Build SIM edge set for max_consec_SIM filtering (SIM>=0.9 only, restricted to VPN pairs)
+log.info("Building SIM edge set (SIM>=0.9 only, VPN-restricted) …")
+t_sim = time.time()
+sim_edge_set = set()
+for e in edge_data:
+    if str(e.get("type", "")).upper() == "SIMILARITY":
+        score = e.get("similarity_score")
+        if score is not None and cos_sim_from_score(score) >= 0.9:
+            try:
+                s, t = int(e["source"]), int(e["target"])
+                if s in valid_pathway_nodes and t in valid_pathway_nodes:
+                    sim_edge_set.add((min(s, t), max(s, t)))
+            except (ValueError, TypeError):
+                pass
+log.info(
+    f"  sim_edge_set (SIM>=0.9): {len(sim_edge_set)} pairs  ({time.time() - t_sim:.1f}s)"
 )
 
 # ─── Load Option A KMeans model ───────────────────────────────────────────────
