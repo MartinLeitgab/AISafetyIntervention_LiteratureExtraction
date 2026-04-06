@@ -4,16 +4,21 @@
 **Last updated:** 2026-04-06 (VPN root fix applied — all scripts rerun)
 **Scripts run:** `phase2_step4b_paths_and_plots.py`, `phase2_step4_cluster_naming.py`, `phase2_step4_connectivity.py`, `phase2_step4_pathbuildB_connectivity.py`, `phase2_step4_umap_plots.py`, `phase2_step4_phase_c_reruns.py`, `phase2_step5_naming.py`, `phase2_step5_triplet_simreach.py`, `phase2_step5_examples.py`
 **All outputs in:** `phase2_results/step4_finalanalysis/`, `phase2_results/step5_naming/`, `phase2_results/step5_examples/`
-**Filter compliance (corrected 2026-04-06):** All Category B analyses use `valid_pathway_nodes` built exclusively from paths where the **intervention endpoint has `intervention_maturity≥3`**. This is the root fix: previously, path generation used `ALL_INTERVENTION_IDS = cache["interventions"]` (all maturity levels) as BFS terminal nodes, causing 155 maturity<3 intervention endpoints to appear in path files and pollute valid_pathway_nodes. All 9 Category B scripts now construct VPN with the maturity≥3 endpoint check at build time:
-```python
-valid_pathway_nodes = set()
-for line in open(paths_file):
-    obj = json.loads(line)
-    path = [int(x) for x in obj["path"]]
-    if int(node_attrs.get(path[-1], {}).get("intervention_maturity", 0) or 0) >= 3:
-        valid_pathway_nodes.update(path)
-```
-sim_edge_set is additionally restricted to SIM≥0.9 edges where both endpoints are in valid_pathway_nodes. Belt-and-suspenders explicit maturity≥3 check is retained on top of VPN for intervention cluster members.
+**Filter compliance (audited 2026-04-06):** All three pathway-level quality cuts are simultaneously satisfied in the analysis:
+
+| Cut | Where enforced | Verified |
+|-----|----------------|---------|
+| SIM edges: cos_sim ≥ 0.9 | Graph loaded with `sim_thresh=0.9` in `final_pathway_analysis_modes.py` | ✅ |
+| EDGE edges: confidence ≥ 3 | Graph loaded with `min_conf=3` in `final_pathway_analysis_modes.py` | ✅ |
+| Intervention endpoint: maturity ≥ 3 | `cache["interventions"]` pre-filtered to maturity≥3 before BFS | ✅ |
+
+**Path file audit result (2026-04-06):** Empirically confirmed — scanning ALL 1,054,527 paths in `paths_unconstrained_sim0.9.jsonl` and all 3,473 in `paths_unconstrained_edge_only.jsonl`: **0 paths with maturity<3 endpoints**. Path files are fully correct and do NOT need regeneration.
+
+**True root cause of the 2,970→2,815 intervention node discrepancy:** The PKL cluster memberships (built during Step 1/2 by agglomerative clustering on all node embeddings) include 155 intervention nodes with maturity<3 that fall into intervention clusters based on embedding similarity, but are **not endpoints of any qualifying path** (hence absent from valid_pathway_nodes). The downstream Category B scripts were using PKL cluster members directly without intersecting with VPN — these 155 nodes were incorrectly included in analyses. Fix: filter all PKL cluster members by `valid_pathway_nodes` before any analysis.
+
+**VPN maturity endpoint check (belt-and-suspenders):** The maturity≥3 check added at VPN construction time is redundant given path file correctness, but retained as a safeguard. The critical fix was filtering PKL members by VPN.
+
+**sim_edge_set VPN restriction (genuine fix):** Restricting `sim_edge_set` to SIM≥0.9 edges where both endpoints are in valid_pathway_nodes is a real correctness improvement: it prevents SIM edges between nodes that are in the full graph but not part of any qualifying path from affecting hop classification in `max_consec_sim()`.
 
 ---
 
@@ -732,3 +737,72 @@ Full table: `step5_naming/triplet_simreach.csv`
 | Triplet SIM reach | `step5_naming/triplet_simreach.csv` | ✅ 15 triplets, ranked |
 
 **Outstanding issue — Chain naming collapse:** The chain level needs k reduction (k=5-10) or Option B subtype families for the workshop paper to have meaningfully distinct L2 labels. Current k=40 produces 35+ semantically near-identical "AI misalignment risk" chains. Recommend for workshop paper: use Option B families for L2 quantitative analysis, and for L2 qualitative examples use the 5 clearly distinct chains (C0, C6, C12, C15, C23) as representatives.
+
+---
+
+## Part 14: Comprehensive Pathway-Level Quality Cut Audit (2026-04-06)
+
+This section documents the definitive audit of all Steps 2–5 for holistic simultaneous application of the three pathway-level quality cuts.
+
+### Governing principle
+Every analysis must ONLY use nodes and edges that are part of qualifying paths. A qualifying path must **simultaneously** satisfy:
+1. Every SIM edge: cos_sim ≥ 0.9
+2. Every EDGE (structural LLM-extracted) edge: confidence ≥ 3
+3. Intervention endpoint: maturity ≥ 3
+
+### Audit findings by step
+
+| Step | Scripts | Category | Path filter required? | Status | Notes |
+|------|---------|----------|----------------------|--------|-------|
+| Step 1 (load & parse) | `phase2_step1_loadandparse.py` | A | NO | ✅ | Graph loading only; no path-level analysis |
+| Step 2 (metrics/stability) | `phase2_step2_metrics_stability.py`, `phase2_step2b_extended_analysis.py` | A | NO | ✅ | Algorithm selection — full graph acceptable per plan. Does not use path files. |
+| Step 3 (validation/selection) | `phase2_step3*.py` | C | NO | ✅ | Path files used only for illustrative sampling, not statistical analysis |
+| Step 4b (paths, plots, families) | `phase2_step4b_paths_and_plots.py` | B | YES | ✅ Fixed | VPN filtering applied; PKL members intersected with VPN |
+| Step 4 cluster naming | `phase2_step4_cluster_naming.py` | B | YES | ✅ Fixed | VPN applied to all cluster member lists |
+| Step 4 connectivity | `phase2_step4_connectivity.py` | B | YES | ✅ Fixed | VPN + sim_edge_set VPN restriction |
+| Step 4 pathbuildB connectivity | `phase2_step4_pathbuildB_connectivity.py` | B | YES | ✅ Fixed | VPN built per-config from correct path files |
+| Step 4 UMAP plots | `phase2_step4_umap_plots.py` | B | YES | ✅ Fixed | VPN + sim_edge_set restriction; maturity≥3 on all plots |
+| Step 4 phase C reruns | `phase2_step4_phase_c_reruns.py` | B | YES | ✅ Fixed | VPN applied |
+| Step 5 naming | `phase2_step5_naming.py` | B | YES | ✅ Fixed | VPN applied to all cluster member sampling |
+| Step 5 triplet simreach | `phase2_step5_triplet_simreach.py` | B | YES | ✅ Fixed | VPN + sim_edge_set restriction |
+| Step 5 examples | `phase2_step5_examples.py` | B | YES | ✅ Fixed | VPN applied (lines 111–116); example paths from correct path files |
+
+### Path file correctness (empirically verified 2026-04-06)
+
+**Result:** Both raw path files are fully correct. No regeneration needed.
+
+| File | Total paths | Maturity<3 endpoints | Verdict |
+|------|-------------|----------------------|---------|
+| `paths_unconstrained_sim0.9.jsonl` | 1,054,527 | **0** | ✅ Clean |
+| `paths_unconstrained_edge_only.jsonl` | 3,473 | **0** | ✅ Clean |
+
+All three quality cuts are simultaneously enforced in path generation:
+- `min_conf=3` passed to `load_graph()` — excludes EDGE edges with confidence<3 from BFS graph
+- `sim_thresh=0.9` passed to `load_graph()` — excludes SIM edges with cos_sim<0.9
+- `cache["interventions"]` pre-filtered to maturity≥3 — BFS terminal set contains only qualifying interventions
+
+The consimN derived files (`representative_pathways_consim1.jsonl`, `representative_pathways_consim2.jsonl`) inherit this correctness.
+
+### True root cause of the 2,970→2,815 intervention count discrepancy
+
+| Source | Count | Explanation |
+|--------|-------|-------------|
+| PKL cluster memberships (raw) | 2,970 intervention nodes | Agglomerative clustering run on ALL node embeddings; 155 maturity<3 nodes fall into intervention clusters by embedding proximity |
+| valid_pathway_nodes (from path files) | 2,815 intervention nodes | Path files only contain maturity≥3 endpoints; 155 maturity<3 nodes are in clusters but never on any qualifying path |
+| After VPN filter (correct analysis) | **2,815** | ✅ |
+
+The 155 maturity<3 nodes are structurally in the graph and share embeddings with genuine interventions, but no qualifying path (R→I with all three cuts) ever terminates at them. They are unreachable under the quality cuts. The fix (filter PKL by VPN) is the correct and sufficient solution.
+
+### sim_edge_set VPN restriction — justification
+
+The `max_consec_sim()` function classifies each hop in a path as SIM or EDGE by looking up `(min(a,b), max(a,b))` in `sim_edge_set`. If `sim_edge_set` includes SIM edges between non-path-participating nodes, it can misclassify hops: a hop between VPN nodes A→B may appear "SIM" in sim_edge_set even though the SIM edge (A,B) is only traversed via paths that don't qualify (e.g., those between non-VPN nodes that happen to share a cluster neighborhood). Restricting to VPN-pair SIM edges ensures only edges that are part of qualifying paths contribute to hop classification, maintaining internal consistency of the consimN analysis.
+
+### Category A vs. Category B boundary
+
+- **Category A** (algorithm selection — full graph acceptable): Steps 1, 2, 3. These characterize the clustering algorithm performance over the full embedding space, not the workshop-level analysis universe. Using full-graph metrics for algorithm selection is correct and intentional.
+- **Category B** (workshop findings — must use path-participating nodes/edges): Steps 4, 5. All analyses here now correctly filter to VPN-intersected cluster members with simultaneous three-cut compliance.
+
+### Open issues for workshop paper
+
+1. **Path counts in Part 3 (Node Coverage table):** The path counts reported (75,008 consim1, 432,776 consim2, 3,473 edge-only) refer to paths in the raw path files, which are all maturity≥3-clean. These are correct as-is.
+2. **No remaining correctness gaps** — all Category B analyses confirmed VPN-filtered and path-file-clean.

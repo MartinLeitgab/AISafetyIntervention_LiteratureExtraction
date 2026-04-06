@@ -5,7 +5,7 @@
 **Config:** consim1_pathbuildA (selected config — ≤1 consecutive SIM hop, Option A KMeans k=40)
 **Scripts:** `phase2_step5_naming.py`, `phase2_step5_examples.py`, `phase2_step5_triplet_simreach.py` — all rerun 2026-04-06 with corrected VPN (maturity≥3 endpoint filter at build time). `phase2_step5_subcluster_naming.py` (k=5 subclusters + 2-pass LLM) — not rerun (subcluster analysis does not depend on VPN directly).
 **Outputs:** `step5_naming/`, `step5_examples/`, `step4_subclusters/`
-**VPN correction note:** valid_pathway_nodes is now built exclusively from paths with intervention endpoint maturity≥3 (root fix applied to all 9 Category B scripts 2026-04-06). Rerun confirmed: VPN = 21,553 unconstrained nodes, 19,791 consim1 nodes. Core numbers (path counts, triplet reach) unchanged — path files were not regenerated.
+**VPN correction note:** valid_pathway_nodes is built from path files that are empirically verified clean (0 maturity<3 endpoints in 1,054,527 paths). The maturity≥3 check in VPN construction is belt-and-suspenders. The substantive fix was filtering PKL cluster memberships by VPN intersection (removing 155 maturity<3 intervention nodes that were in clusters but never on any qualifying path). Rerun confirmed: VPN = 21,553 unconstrained nodes, 19,791 consim1 nodes. Path counts and triplet reach values unchanged. See Part 14 of Step4_Findings_Report.md for the full audit.
 **Status:** All planned outputs complete ✅
 
 ---
