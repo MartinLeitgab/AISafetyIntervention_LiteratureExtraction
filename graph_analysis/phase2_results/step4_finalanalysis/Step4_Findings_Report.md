@@ -756,7 +756,7 @@ Every analysis must ONLY use nodes and edges that are part of qualifying paths. 
 |------|---------|----------|----------------------|--------|-------|
 | Step 1 (load & parse) | `phase2_step1_loadandparse.py` | A | NO | ✅ | Graph loading only; no path-level analysis |
 | Step 2 (metrics/stability) | `phase2_step2_metrics_stability.py`, `phase2_step2b_extended_analysis.py` | A | NO | ✅ | Algorithm selection — full graph acceptable per plan. Does not use path files. |
-| Step 3 (validation/selection) | `phase2_step3*.py` | C | NO | ✅ | Path files used only for illustrative sampling, not statistical analysis |
+| Step 3 (validation/selection) | `phase2_step3*.py` | B (examples) | YES | ✅ Fixed (2026-04-07) | `_sample_edge_pathways()` now builds VPN and filters; 16/3,473 edge-only paths excluded; `edge_only_test_set.jsonl` regenerated |
 | Step 4b (paths, plots, families) | `phase2_step4b_paths_and_plots.py` | B | YES | ✅ Fixed | VPN filtering applied; PKL members intersected with VPN |
 | Step 4 cluster naming | `phase2_step4_cluster_naming.py` | B | YES | ✅ Fixed | VPN applied to all cluster member lists |
 | Step 4 connectivity | `phase2_step4_connectivity.py` | B | YES | ✅ Fixed | VPN + sim_edge_set VPN restriction |
