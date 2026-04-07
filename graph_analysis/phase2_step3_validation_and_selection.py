@@ -753,7 +753,35 @@ def run_section_c(
 
 
 def _sample_edge_pathways(node_attrs, cluster_memberships):
-    """Sample 100 EDGE-only pathways stratified by intervention lifecycle stage."""
+    """Sample 100 EDGE-only pathways stratified by intervention lifecycle stage.
+
+    Only paths where ALL nodes are in valid_pathway_nodes (built from qualifying paths
+    with maturity>=3 endpoints) are eligible. Governing principle: illustrative examples
+    must come exclusively from the analysis universe.
+    """
+    # Build valid_pathway_nodes from the unconstrained path file (maturity>=3 endpoints)
+    valid_pathway_nodes: set = set()
+    vpn_file = PATHS_DIR / "paths_unconstrained_sim0.9.jsonl"
+    if vpn_file.exists():
+        with open(vpn_file) as _f:
+            for _line in _f:
+                try:
+                    _obj = json.loads(_line)
+                    _path = [int(x) for x in _obj.get("path", [])]
+                    if not _path:
+                        continue
+                    _interv_id = _path[-1]
+                    _mat = int(
+                        node_attrs.get(
+                            str(_interv_id), node_attrs.get(_interv_id, {})
+                        ).get("intervention_maturity", 0)
+                        or 0
+                    )
+                    if _mat >= 3:
+                        valid_pathway_nodes.update(_path)
+                except Exception:
+                    continue
+
     # Get nodes in EDGE-only configs
     edge_nodes = set()
     for key, members in cluster_memberships.items():
@@ -774,11 +802,26 @@ def _sample_edge_pathways(node_attrs, cluster_memberships):
                     path_ids = rec.get("path", [])
                     if isinstance(path_ids, str):
                         path_ids = json.loads(path_ids)
+                    path_ids = [int(x) for x in path_ids]
+                    # Governing principle: only paths where ALL nodes are in VPN
+                    if not path_ids or not all(
+                        n in valid_pathway_nodes for n in path_ids
+                    ):
+                        continue
+                    # Belt-and-suspenders: intervention endpoint must be maturity>=3
+                    _interv_id = path_ids[-1]
+                    _mat = int(
+                        node_attrs.get(
+                            str(_interv_id), node_attrs.get(_interv_id, {})
+                        ).get("intervention_maturity", 0)
+                        or 0
+                    )
+                    if _mat < 3:
+                        continue
                     # Find lifecycle of first intervention node in path
                     lifecycle = None
                     for nid in path_ids:
-                        nid_str = str(nid)
-                        attrs = node_attrs.get(nid_str, node_attrs.get(nid, {}))
+                        attrs = node_attrs.get(str(nid), node_attrs.get(nid, {}))
                         lc = attrs.get("intervention_lifecycle")
                         if lc is not None:
                             lifecycle = int(lc)
