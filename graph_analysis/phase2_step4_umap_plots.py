@@ -329,8 +329,8 @@ def make_umap_plot(coords_2d, labels, title, out_path):
         coords_2d[:, 0],
         coords_2d[:, 1],
         c=colors,
-        alpha=0.5,
-        s=3,
+        alpha=0.6,
+        s=10,
         linewidths=0,
         rasterized=True,
     )

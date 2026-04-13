@@ -1,12 +1,14 @@
 """
 Phase 2 Step 4 — Three-layer network visualizations for consim0, consim1, consim2.
 
+Uses PathbuildB (Option B frozenset co-occurrence families) as the L2 chain layer.
 For each config, reads the connectivity CSVs and builds a three-column matplotlib figure:
-  Left:   risk clusters   (R{id})
-  Middle: chain clusters  (C{id})
+  Left:   risk clusters    (R{id})
+  Middle: B-family chains  (B{id})
   Right:  intervention clusters (I{id})
 
 Edges width proportional to log(n_paths).
+Node labels are full names (no truncation).
 
 Outputs:
   step4_connectivity/three_layer_network_consim0.png
@@ -31,7 +33,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.join(ROOT, "phase2_results")
 STEP4_DIR = os.path.join(RESULTS_DIR, "step4_finalanalysis")
 OUT_CONN = os.path.join(STEP4_DIR, "step4_connectivity")
-OUT_TABLES = os.path.join(STEP4_DIR, "step4_cluster_tables")
+NAMING_DIR = os.path.join(RESULTS_DIR, "step5_naming")
 LOG_DIR = os.path.join(ROOT, "logfiles", "phase4_logs")
 
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -50,42 +52,48 @@ log = logging.getLogger(__name__)
 log.info("=" * 70)
 log.info("Phase 2 Step 4 — Three-layer network visualizations")
 
-# ─── File name map for each config ───────────────────────────────────────────
-# consim2 files have no consim suffix; consim0/1 have _consimN suffix
+# ─── File name map for each config (PathbuildB connectivity files) ────────────
 CONFIG_FILES = {
     "consim0": {
-        "r2c": "risk_to_chain_edges_consim0.csv",
-        "c2i": "chain_to_interv_edges_consim0.csv",
-        "r2i": "risk_to_interv_edges_consim0.csv",
-        "out": "three_layer_network_consim0.png",
+        "r2c": "risk_to_Bfamily_edges_consim0.csv",
+        "c2i": "Bfamily_to_interv_edges_consim0.csv",
+        "r2i": "risk_to_interv_via_B_edges_consim0.csv",
+        "out": "three_layer_network_pathbuildB_consim0.png",
     },
     "consim1": {
-        "r2c": "risk_to_chain_edges_consim1.csv",
-        "c2i": "chain_to_interv_edges_consim1.csv",
-        "r2i": "risk_to_interv_edges_consim1.csv",
-        "out": "three_layer_network_consim1.png",
+        "r2c": "risk_to_Bfamily_edges_consim1.csv",
+        "c2i": "Bfamily_to_interv_edges_consim1.csv",
+        "r2i": "risk_to_interv_via_B_edges_consim1.csv",
+        "out": "three_layer_network_pathbuildB_consim1.png",
     },
     "consim2": {
-        "r2c": "risk_to_chain_edges.csv",
-        "c2i": "chain_to_intervention_edges.csv",
-        "r2i": "risk_to_intervention_edges.csv",
-        "out": "three_layer_network_consim2.png",
+        "r2c": "risk_to_Bfamily_edges_consim2.csv",
+        "c2i": "Bfamily_to_interv_edges_consim2.csv",
+        "r2i": "risk_to_interv_via_B_edges_consim2.csv",
+        "out": "three_layer_network_pathbuildB_consim2.png",
     },
 }
 
 
 # ─── Load cluster name CSVs (best-effort, fall back to IDs) ──────────────────
-def load_name_map(csv_path, id_col="cluster_id", name_col="cluster_name"):
+def load_name_map(csv_path, id_col="cluster_id", name_col="final_name"):
     try:
         df = pd.read_csv(csv_path)
-        return dict(zip(df[id_col].astype(str), df[name_col].str[:35]))
+        # Fall back to llm_name if final_name is absent or all NaN
+        if name_col not in df.columns or df[name_col].isna().all():
+            name_col = "llm_name"
+        return dict(zip(df[id_col].astype(str), df[name_col].fillna("")))
     except Exception:
         return {}
 
 
-risk_names = load_name_map(os.path.join(OUT_TABLES, "risk_cluster_names.csv"))
-interv_names = load_name_map(os.path.join(OUT_TABLES, "intervention_cluster_names.csv"))
-chain_names = load_name_map(os.path.join(OUT_TABLES, "chain_cluster_names.csv"))
+risk_names = load_name_map(os.path.join(NAMING_DIR, "risk_cluster_names_llm_v2.csv"))
+interv_names = load_name_map(
+    os.path.join(NAMING_DIR, "intervention_cluster_names_llm_v2.csv")
+)
+chain_names = load_name_map(
+    os.path.join(NAMING_DIR, "pathbuildB_chain_names_llm_v2.csv")
+)
 
 log.info(
     f"  Loaded {len(risk_names)} risk names, {len(interv_names)} interv names, {len(chain_names)} chain names"
@@ -168,7 +176,7 @@ def make_three_layer_plot(config_name, r2c_df, c2i_df, r2i_df):
     X_CHAIN = 0.5
     X_INTERV = 1.0
 
-    fig, ax = plt.subplots(figsize=(18, max(10, max(n_r, n_c, n_i) * 0.4)))
+    fig, ax = plt.subplots(figsize=(28, max(14, max(n_r, n_c, n_i) * 0.5)))
 
     # ── Draw edges: risk → chain ──────────────────────────────────────────────
     if len(r2c_df) > 0:
@@ -238,43 +246,48 @@ def make_three_layer_plot(config_name, r2c_df, c2i_df, r2i_df):
             )
 
     # ── Draw nodes ────────────────────────────────────────────────────────────
+    import textwrap
+
+    def wrap(text, width=38):
+        return "\n".join(textwrap.wrap(text, width))
+
     for cid, y in risk_y.items():
         ax.scatter(X_RISK, y, s=180, c="steelblue", zorder=4)
-        label = risk_names.get(str(cid), f"R{cid}")
+        label = wrap(risk_names.get(str(cid), f"R{cid}"))
         ax.text(
             X_RISK - 0.03,
             y,
             label,
             ha="right",
             va="center",
-            fontsize=6,
+            fontsize=5.5,
             color="steelblue",
         )
 
     for cid, y in chain_y.items():
         ax.scatter(X_CHAIN, y, s=140, c="seagreen", zorder=4)
-        label = chain_names.get(str(cid), f"C{cid}")
+        label = wrap(chain_names.get(str(cid), f"B{cid}"), width=32)
         ax.text(
-            X_CHAIN,
-            y + 0.025,
+            X_CHAIN + 0.03,
+            y,
             label,
-            ha="center",
-            va="bottom",
-            fontsize=5.5,
+            ha="left",
+            va="center",
+            fontsize=5,
             color="seagreen",
-            rotation=45,
+            rotation=0,
         )
 
     for cid, y in interv_y.items():
         ax.scatter(X_INTERV, y, s=180, c="darkorange", zorder=4)
-        label = interv_names.get(str(cid), f"I{cid}")
+        label = wrap(interv_names.get(str(cid), f"I{cid}"))
         ax.text(
             X_INTERV + 0.03,
             y,
             label,
             ha="left",
             va="center",
-            fontsize=6,
+            fontsize=5.5,
             color="darkorange",
         )
 
@@ -292,7 +305,7 @@ def make_three_layer_plot(config_name, r2c_df, c2i_df, r2i_df):
     ax.text(
         X_CHAIN,
         1.05,
-        "CHAIN\nClusters",
+        "CHAIN\n(PathbuildB Families)",
         ha="center",
         va="bottom",
         fontsize=10,
@@ -326,13 +339,13 @@ def make_three_layer_plot(config_name, r2c_df, c2i_df, r2i_df):
 
     total_paths = int(r2i_df["n_paths"].sum()) if len(r2i_df) > 0 else 0
     ax.set_title(
-        f"Three-Layer Network — {config_name}_pathbuildA\n"
-        f"(top-{MAX_RISK} risk, top-{MAX_CHAIN} chain, top-{MAX_INTERV} interv; "
+        f"Three-Layer Network — {config_name}_pathbuildB\n"
+        f"(top-{MAX_RISK} risk, top-{MAX_CHAIN} B-family chains, top-{MAX_INTERV} interv; "
         f"total r→i paths: {total_paths:,})",
         fontsize=11,
         pad=20,
     )
-    ax.set_xlim(-0.55, 1.55)
+    ax.set_xlim(-0.75, 1.75)
     ax.set_ylim(-0.15, 1.2)
     ax.axis("off")
     plt.tight_layout()

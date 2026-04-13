@@ -221,9 +221,10 @@ def load_interv_sizes(path: str) -> dict:
 
 
 def load_chain_sizes(path: str) -> dict:
-    """Chain clusters sized by n_paths"""
+    """Chain clusters sized by n_paths or n_members (PathbuildB naming CSV uses n_members)."""
     df = pd.read_csv(path)
-    return {int(r["cluster_id"]): int(r["n_paths"]) for _, r in df.iterrows()}
+    col = "n_paths" if "n_paths" in df.columns else "n_members"
+    return {int(r["cluster_id"]): int(r[col]) for _, r in df.iterrows()}
 
 
 # ---------------------------------------------------------------------------
@@ -324,9 +325,9 @@ valid_pathway_nodes = load_valid_pathway_nodes(PATHS_FILE)
 # ---------------------------------------------------------------------------
 # Load naming data
 # ---------------------------------------------------------------------------
-risk_names = load_names(f"{NAMING_DIR}/risk_cluster_names_llm.csv")
-chain_names = load_names(f"{NAMING_DIR}/chain_cluster_names_llm.csv")
-interv_names = load_names(f"{NAMING_DIR}/intervention_cluster_names_llm.csv")
+risk_names = load_names(f"{NAMING_DIR}/risk_cluster_names_llm_v2.csv")
+chain_names = load_names(f"{NAMING_DIR}/pathbuildB_chain_names_llm.csv")
+interv_names = load_names(f"{NAMING_DIR}/intervention_cluster_names_llm_v2.csv")
 
 # ---------------------------------------------------------------------------
 # Classify risk and chain clusters (same for all configs, based on naming CSV)
@@ -490,34 +491,32 @@ print(f"\nSaved cluster_color_categories.csv ({len(cat_df)} rows)")
 # ---------------------------------------------------------------------------
 CONN_FILES = {
     "consim0": {
-        "rc": f"{CONN_DIR}/risk_to_chain_edges_consim0.csv",
-        "ci": f"{CONN_DIR}/chain_to_interv_edges_consim0.csv",
-        "ri": f"{CONN_DIR}/risk_to_interv_edges_consim0.csv",
+        "rc": f"{CONN_DIR}/risk_to_Bfamily_edges_consim0.csv",
+        "ci": f"{CONN_DIR}/Bfamily_to_interv_edges_consim0.csv",
+        "ri": f"{CONN_DIR}/risk_to_interv_via_B_edges_consim0.csv",
         "risk_tbl": f"{TABLES_DIR}/risk_clusters_consim0.csv",
         "interv_tbl": f"{TABLES_DIR}/intervention_clusters_consim0.csv",
-        "chain_tbl": f"{TABLES_DIR}/optionA_chainbody_clusters_consim0.csv",
+        "chain_tbl": f"{NAMING_DIR}/pathbuildB_chain_names_llm.csv",
     },
     "consim1": {
-        "rc": f"{CONN_DIR}/risk_to_chain_edges_consim1.csv",
-        "ci": f"{CONN_DIR}/chain_to_interv_edges_consim1.csv",
-        "ri": None,  # check if exists
+        "rc": f"{CONN_DIR}/risk_to_Bfamily_edges_consim1.csv",
+        "ci": f"{CONN_DIR}/Bfamily_to_interv_edges_consim1.csv",
+        "ri": f"{CONN_DIR}/risk_to_interv_via_B_edges_consim1.csv",
         "risk_tbl": f"{TABLES_DIR}/risk_clusters_consim1.csv",
         "interv_tbl": f"{TABLES_DIR}/intervention_clusters_consim1.csv",
-        "chain_tbl": f"{TABLES_DIR}/optionA_chainbody_clusters_consim1.csv",
+        "chain_tbl": f"{NAMING_DIR}/pathbuildB_chain_names_llm.csv",
     },
     "consim2": {
-        "rc": f"{CONN_DIR}/risk_to_chain_edges.csv",
-        "ci": f"{CONN_DIR}/chain_to_intervention_edges.csv",
-        "ri": f"{CONN_DIR}/risk_to_intervention_edges.csv",
+        "rc": f"{CONN_DIR}/risk_to_Bfamily_edges_consim2.csv",
+        "ci": f"{CONN_DIR}/Bfamily_to_interv_edges_consim2.csv",
+        "ri": f"{CONN_DIR}/risk_to_interv_via_B_edges_consim2.csv",
         "risk_tbl": f"{TABLES_DIR}/risk_clusters.csv",
         "interv_tbl": f"{TABLES_DIR}/intervention_clusters.csv",
-        "chain_tbl": f"{TABLES_DIR}/optionA_chainbody_clusters.csv",
+        "chain_tbl": f"{NAMING_DIR}/pathbuildB_chain_names_llm.csv",
     },
 }
 
-# Check if consim1 has ri file
-ri1 = f"{CONN_DIR}/risk_to_interv_edges_consim1.csv"
-CONN_FILES["consim1"]["ri"] = ri1 if os.path.exists(ri1) else None
+# (ri paths for all consim configs already set above via PathbuildB files)
 
 
 # ---------------------------------------------------------------------------
@@ -741,7 +740,7 @@ def make_plots(config_label: str, files: dict, interv_cats: dict):
         edgecolor="#cccccc",
     )
 
-    out1 = f"{OUT_DIR}/three_layer_network_color_{config_label}.png"
+    out1 = f"{OUT_DIR}/three_layer_network_pathbuildB_color_{config_label}.png"
     fig.savefig(out1, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  Saved: {out1}")
@@ -881,7 +880,7 @@ def make_plots(config_label: str, files: dict, interv_cats: dict):
         edgecolor="#cccccc",
     )
 
-    out2 = f"{OUT_DIR}/three_layer_network_detail_{config_label}.png"
+    out2 = f"{OUT_DIR}/three_layer_network_pathbuildB_detail_{config_label}.png"
     fig2.savefig(out2, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig2)
     print(f"  Saved: {out2}")
