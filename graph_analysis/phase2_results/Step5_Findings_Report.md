@@ -349,3 +349,57 @@ All `step4_finalanalysis/` and `step5_naming/` CSV files cleaned of non-ASCII ch
 - **Both chain clustering methods operate on the identical qualifying path set** (SIM≥0.9, EDGE conf≥3, maturity≥3, consim1). The difference is exclusively in how body/chain nodes are clustered, not in path construction.
 - **SIM bridging limitation:** 53.1% of R→I pairs established via cross-paper SIM bridging lack single-paper end-to-end arguments. These connections are valid collective inferences but their strength relative to EDGE-grounded connections should be qualified.
 - **Interactive visualizations:** Six interactive Plotly HTML files are available alongside the static PNGs (heatmaps, dendrograms, meta-connectivity network, three-layer network). See Step4 Part 16.7 for the full file listing.
+
+---
+
+## Part 11: Rev7 — Frozenset Group Names and Centroid Spread Verification (2026-04-19)
+
+**Scripts:** `phase2_step4_E4_frozenset_group_naming.py` (naming) — see Step4 Part 18 for full methodology.
+
+### 11.1 — Naming methodology
+
+The 20 frozenset groups (data-driven Jaccard clustering of 1,603 frozensets — see Step4 Part 18) are named via 2-pass gpt-4.1-mini:
+
+- **Pass 1 (naming):** Given centroid decoded body concepts, closest-3 and farthest-3 frozenset signatures decoded to human-readable body cluster names, and top-3 R→I pairs bridged by the group. Prompt requires a 4–10 word causal mechanism noun phrase that completes: "The reason why [intervention] mitigates [risk] is [NAME]." No "via"/"through"/"by means of" as first word.
+- **Pass 2 (judge):** Independent review for compliance with the causal noun phrase rule, consistency with closest-3, and consistency with farthest-3 (borderline cases). Flags if judge detects starts_via, name_fits_closest=False, or name_fits_borderline=False.
+
+The farthest-3 frozensets serve a crucial quality role: they show the most borderline members of each group. A name that fits both closest-3 and farthest-3 is a stronger claim than one fitting only the dense core.
+
+### 11.2 — Group names and quality metrics
+
+**17/20 groups** received fully clean names (no flags). **3/20** were flagged by the judge for detecting "through" or "via" mid-phrase — but in all three cases `fits_closest=True` and `fits_borderline=True`, meaning the content is consistent with both representative and borderline frozensets. These are judge false-positives: the names begin with "Robust", "Mitigation", and "Effective" respectively, not with "via"/"through".
+
+| Group | N paths | Final name | Judge flags | Content ok? |
+|-------|---------|------------|-------------|-------------|
+| G12 | 31,332 | Scaling AI Safety Research Capacity and Awareness | none | yes |
+| G14 | 11,354 | Alignment via human preference propagation | none | yes |
+| G2 | 3,680 | Robust feature alignment through adversarial optimization | mid-phrase "through" | yes — fits both closest+borderline |
+| G15 | 3,169 | Detection and mitigation of reward mis-specification effects | none | yes |
+| G10 | 3,117 | Preservation of Attainable Utility to Limit Unsafe Agent Influence | none | yes |
+| G8 | 2,126 | Exposing hidden model cognition through mechanistic analysis | none | yes |
+| G3 | 1,614 | Centralized control of advanced AI compute resources | none | yes |
+| G17 | 1,371 | Alignment of learned reward signals with human intent | none | yes |
+| G5 | 1,154 | Enhanced model transparency enabling proactive vulnerability detection | none | yes |
+| G1 | 955 | Systematic identification of hidden model vulnerabilities | none | yes |
+| G4 | 918 | Aligned internal reasoning and goal representation | none | yes |
+| G16 | 543 | Robust policy optimization under reward uncertainty | none | yes |
+| G7 | 327 | Aggregated human-aligned iterative model refinement | none | yes |
+| G18 | 270 | Improved calibration of AI progress forecasts | none | yes |
+| G9 | 171 | Capability race incentives suppressing safety investments | none | yes |
+| G20 | 119 | Improved generalization via robust feature learning | none | yes |
+| G6 | 45 | Detection and mitigation of emergent harmful capabilities | none | yes |
+| G19 | 42 | Mitigation of spurious feature reliance | none | yes |
+| G13 | 39 | Mitigation of reward mis-specification through robust feedback alignment | mid-phrase "through" | yes — fits both closest+borderline |
+| G11 | 11 | Effective alignment through modular interpretability and community support | mid-phrase "through" | yes — fits both closest+borderline |
+
+Full output: `step5_naming/frozenset_group_names_llm.csv` (20 rows, columns: group_id, n_frozensets, n_paths_total, centroid_decoded, llm_name, description, test_sentence, test_sentence_ok, test_sentence_reasoning, borderline_note, p1_confidence, judge_starts_via, judge_fits_closest, judge_fits_borderline, borderline_consistency_note, suggested_revision, judge_confidence, final_name).
+
+### 11.3 — What to use in paper
+
+The 20 group names provide a higher-level L2 taxonomy than the 1,603 individual frozenset families. For a workshop paper, the recommended L2 representation is:
+
+- **Top-level narrative:** 20 mechanism groups, each with a data-driven Jaccard clustering justification and LLM-assigned causal name verified against centroid spread
+- **Table:** Group name, N paths, N frozensets, top R→I pair bridged (from `ri_group_triplets_top20_consim1.csv`)
+- **Detail (supplementary):** The closest-3 and farthest-3 frozenset decoded signatures from `frozenset_groups_consim1.csv` — these allow reviewers to independently verify what each group is capturing
+
+The key advantage over the old meta-family approach: group membership is determined before naming (data-driven), so the LLM name is interpretive rather than definitional. A reviewer who disagrees with the name can still inspect the Jaccard distance dendrogram to see which frozensets co-cluster.

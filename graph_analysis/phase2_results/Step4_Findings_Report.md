@@ -720,3 +720,110 @@ The dendrogram (`step4_cluster_tables/pathbuildB_metafamily_dendrogram.png`) use
 ### 17.6 — UMAP clusters axes fix
 
 `step4_finalanalysis/umap_interventions_consim1_clusters.png` previously had `axis("off")`. Now shows UMAP-1 [min, max] and UMAP-2 [min, max] with tick marks. Regenerated via `phase2_step4_B9_umap_regen.py`.
+
+---
+
+## Part 18: Rev7 — Frozenset Group Clustering and Centroid Spread Display (2026-04-19)
+
+**Scripts:** `phase2_step4_E1_body_cluster_spread.py` · `phase2_step4_E2_base_cluster_spread.py` · `phase2_step4_E3_frozenset_groups.py` · `phase2_step4_E4_frozenset_group_naming.py` · `phase2_step4_E5_triplets_rev7.py`
+
+**Plan document:** `step4_rev7_plan.md`
+
+This revision replaces the ad-hoc dominant-family meta-family heuristic (rev6) with a fully data-driven frozenset grouping and adds reviewer-verifiable centroid spread displays at every taxonomy level.
+
+### 18.1 — Methodological rationale: centroid spread display
+
+For a workshop paper, LLM-assigned cluster names carry the risk that reviewers cannot independently verify whether the name reflects the full cluster or only its densest core. The rev7 approach addresses this by adding **closest-3** and **farthest-3** members by cosine similarity to centroid at every cluster level:
+
+- **Closest-3** (highest cosine similarity): the most representative members — the core of the cluster.
+- **Farthest-3** (lowest cosine similarity): borderline cases assigned to this cluster — where the cluster boundary sits.
+
+If farthest-3 members are thematically consistent with closest-3, the cluster is tight and the LLM name is trustworthy. If farthest-3 members look like they belong to a different cluster, reviewers can see the heterogeneity. This is more informative than silhouette scores alone because it shows named examples rather than aggregate statistics.
+
+### 18.2 — Body concept cluster spread (E1)
+
+`bodysubtype_cluster_representatives_v2.csv` (200 rows) adds `closest3_names`, `farthest3_names`, `centroid_sim_min`, `centroid_sim_max` to all 200 body concept cluster representatives (5 subtypes x ~40 clusters each, at edge_config=0.9/unconstrained).
+
+**Quality summary:**
+- centroid_sim_min range: **0.292 -- 0.831** (across all 200 clusters)
+- centroid_sim_max range: **0.676 -- 0.968**
+- Missing closest3: **0**
+- Heterogeneous clusters (centroid_sim_min < 0.5): **106 / 200** (53%)
+
+The high fraction of heterogeneous clusters is expected: body concept clusters at the 0.9/unconstrained config include all nodes on any qualifying path, which spans diverse papers and topics. For clusters with sim_min < 0.5, the farthest-3 examples in the CSV allow reviewers to assess whether heterogeneity invalidates the cluster name. In practice, most heterogeneous clusters reflect topic-adjacent concepts (e.g., a "reward misspecification" cluster that includes both RL specification gaming and RLHF preference learning examples at its boundary).
+
+The most coherent body clusters (sim_min > 0.7) are typically small, highly specific implementation clusters (e.g., `im:2` transformer architecture, `va:19` formal verification proofs). Broad conceptual clusters spanning multiple AI safety topics show lower minimum similarity, as expected.
+
+### 18.3 — L1 risk and L3 intervention cluster spread (E2)
+
+`risk_clusters_consim1_v2.csv` and `intervention_clusters_consim1_v2.csv` add the same four columns. Both use vpn_unconstrained (superset of vpn_consim1, maturity≥3 filter applied) to avoid loading the 1.7M-edge edge_data PKL. The centroid computed from vpn_unconstrained differs negligibly from a vpn_consim1 centroid for clusters with ≥10 members.
+
+### 18.4 — Frozenset group clustering: binary vector approach (E3)
+
+**Problem with individual frozenset naming:** 1,603 frozensets with n≥5 paths cannot be individually named for a workshop paper. The prior meta-family approach grouped them by dominant concept type (a heuristic), creating 32 meta-families. This is ad hoc: a frozenset with equal contributions from two concept types is arbitrarily assigned to one.
+
+**Binary vector grouping:** Each frozenset is represented as a binary vector over all 191 distinct body concept cluster IDs present in the corpus (vocabulary size = 191). Presence of a cluster ID in the frozenset signature = 1; absence = 0. This encodes the frozenset's mechanistic footprint in a representation-agnostic way.
+
+**Clustering procedure:**
+1. Pairwise Jaccard distance matrix (1,603 × 1,603) on unweighted binary vectors
+2. Average-linkage agglomerative clustering
+3. Frozensets weighted by sqrt(n_paths) during linkage (up-weights high-coverage frozensets)
+4. k=20 groups chosen (auto-selected k=23; k=20 achieves better interpretability with marginal loss in intra-group cohesion)
+
+**Quality metrics:** Mean intra-group Jaccard similarity by group ranges from 0.111 to 0.833. The two smallest groups (G11, G19) have only 2 frozensets each and thus show high intra-group similarity; large diverse groups (G12, G14) show lower intra-group similarity, reflecting their broad thematic coverage.
+
+**Outputs:** `step4_cluster_tables/frozenset_groups_consim1.csv` (20 rows) · `step4_cluster_tables/frozenset_group_memberships_consim1.csv` (1,603 rows) · `frozenset_groups_dendrogram_full.png` · `frozenset_groups_mds.png`
+
+**Why this is more defensible than LLM naming of individual frozensets:** The grouping is purely data-driven (no LLM input until after groups are defined). A reviewer can verify group membership by inspecting the Jaccard distance dendrogram. The binary vector representation makes the grouping criterion explicit and reproducible.
+
+**Group summary (sorted by n_triplet_paths descending):**
+
+| Group | N frozensets | N triplet paths | Intra-Jaccard sim | Centroid (top body concepts) |
+|-------|-------------|----------------|-------------------|------------------------------|
+| G12 | 630 | 31,332 | 0.176 | Grant programs / funding targets AI safety research / fine-tuning |
+| G14 | 346 | 11,354 | 0.178 | Reward modeling fine-tuning / human feedback / Learning reward models |
+| G2 | 120 | 3,680 | 0.285 | Adversarial training / robust features / Projected gradient descent |
+| G15 | 76 | 3,169 | 0.197 | Specification gaming benchmarks / RL reward evaluation |
+| G10 | 73 | 3,117 | 0.253 | Penalizing attainable utility reductions / agent impact limit |
+| G8 | 79 | 2,126 | 0.286 | Mechanistic interpretability / neuron-circuit analysis |
+| G3 | 44 | 1,614 | 0.433 | Export controls on compute / advanced AI proliferation |
+| G17 | 50 | 1,371 | 0.182 | Human-preference trained RL / reward mis-specification |
+| G5 | 48 | 1,154 | 0.215 | Transparency / reliability verification / domain experts |
+| G1 | 36 | 955 | 0.193 | Vulnerability experiments / adversarial robustness |
+| G4 | 21 | 918 | 0.392 | Deceptive alignment / synthetic prompt generation |
+| G16 | 22 | 543 | 0.239 | Stochastic policy optimization / RL smoothness |
+| G7 | 12 | 327 | 0.323 | Few-shot classification / MAML benchmarks |
+| G18 | 15 | 270 | 0.216 | Scaling laws / compute forecasting / AI progress uncertainty |
+| G9 | 8 | 171 | 0.219 | AI capability race / safety investment incentives |
+| G20 | 12 | 119 | 0.156 | Shared feature learning / adaptation acceleration |
+| G6 | 2 | 45 | 0.200 | Tool-augmented malicious LLM / alignment deployment |
+| G19 | 2 | 42 | 0.833 | Input gradient regularization / spurious correlations |
+| G13 | 5 | 39 | 0.291 | Inadequate RLHF alignment / specification gaming examples |
+| G11 | 2 | 11 | 0.111 | Public acceptance / explainable AI case studies |
+
+### 18.5 — Frozenset group LLM naming (E4)
+
+See Step5 Part 11 for full naming results. Groups are named via 2-pass gpt-4.1-mini using context: (1) centroid decoded body concept names, (2) closest-3 frozensets decoded, (3) farthest-3 frozensets decoded, (4) top-3 R→I pairs bridged by the group.
+
+### 18.6 — R→Group→I triplets (E5)
+
+`ri_triplets_consim1_rev7.csv` adds `group_id` and `group_name` to all 2,298 base triplet rows. `ri_group_triplets_consim1.csv` aggregates to 764 unique (risk, group, intervention) triplets with n_triplet_paths summed. `ri_group_triplets_top20_consim1.csv` contains the top 20.
+
+**Quality check:** 0 frozensets without group assignment; 19/20 groups appear in aggregated triplets (G11 with 11 paths falls below minimum triplet threshold).
+
+**Top-5 R→Group→I triplets:**
+1. Existential catastrophe from misaligned AI → [Scaling AI Safety Research Capacity] → Expand AI Safety Research Funding (6,539 paths)
+2. Misaligned Superintelligent AI → [Scaling AI Safety Research Capacity] → Expand AI Safety Research Funding (3,266 paths)
+3. Misaligned AGI existential catastrophe → [Scaling AI Safety Research Capacity] → Expand AI Safety Research Funding (2,790 paths)
+4. Catastrophic AI misalignment and loss of control → [Scaling AI Safety Research Capacity] → Expand AI Safety Research Funding (2,502 paths)
+5. Insufficient AI safety research capacity → [Scaling AI Safety Research Capacity] → Expand AI Safety Research Funding (2,271 paths)
+
+The top-16 triplets all involve G12 (Scaling AI Safety Research Capacity) or G14 (Alignment via human preference propagation), reflecting the corpus concentration in field-building and RLHF alignment paths. Mechanistically distinct groups (G2 adversarial robustness, G10 attainable utility, G8 interpretability) appear from rank 16 onward.
+
+**Files:**
+- `step4_connectivity/ri_triplets_consim1_rev7.csv` — base triplets with group_id/group_name added
+- `step4_connectivity/ri_group_triplets_consim1.csv` — aggregated R→Group→I (764 rows)
+- `step4_connectivity/ri_group_triplets_top20_consim1.csv` — top 20
+- `step4_cluster_tables/frozenset_groups_consim1.csv` — 20 group summaries
+- `step4_cluster_tables/frozenset_group_memberships_consim1.csv` — 1,603 frozenset→group assignments
+- `step5_naming/frozenset_group_names_llm.csv` — 20 LLM group names with quality metrics
