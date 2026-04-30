@@ -24,13 +24,15 @@ python intervention_graph_creation/src/local_graph_extraction/extract/extractor.
 # Start FalkorDB with empty graph (extraction pipeline use)
 docker run -p 6379:6379 -p 3000:3000 -it --rm falkordb/falkordb:latest
 
-# Start FalkorDB and load existing dump.rdb (graph_analysis use; ~15 min RDB load)
-# - Mount target MUST be /var/lib/falkordb/data (not /data) for the :edge image
-# - Place dump.rdb (the wide-embeddings ARD variant per issue #132) in <data_dir>
-# - On Windows + WSL: prepend `wsl -d Ubuntu --` to the command
-docker run -d --name falkordb -p 6379:6379 -p 3000:3000 \
-  --volume /absolute/path/to/intervention_graph_creation/data:/var/lib/falkordb/data \
-  falkordb/falkordb:edge
+# Start FalkorDB and load existing dump.rdb (graph_analysis use; ~15 min indices)
+# - Use -it (foreground TTY) — detached mode (-d) silently exits with code 255
+#   during index construction with no logs (no TTY → child processes die silently).
+# - Mount target MUST be /var/lib/falkordb/data (not /data) for the :edge image.
+# - Place dump.rdb (the wide-embeddings ARD variant per issue #132) in <data_dir>.
+# - On Windows + WSL: run inside `wsl` shell directly (Docker is in WSL only).
+docker run -p 6379:6379 -p 3000:3000 -it --rm \
+  --volume ./data:/var/lib/falkordb/data \
+  falkordb/falkordb falkordb:edge
 
 # Ingest extracted JSONs into FalkorDB
 python intervention_graph_creation/src/local_graph_extraction/db/ai_safety_graph.py
