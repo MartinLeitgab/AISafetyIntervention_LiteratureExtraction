@@ -478,6 +478,7 @@ colors = {
     "single_risk": "#3498DB",
     "monotonic": "#2ECC71",
     "both": "#E74C3C",
+    "custom": "#F39C12",  # rev8: orange — distinct from existing four
 }
 
 # Path length distributions (2x3 grid: EDGE + 4 similarity thresholds, last empty)
@@ -547,12 +548,16 @@ plt.savefig(
 )
 print("  ✓ constrained_modes_path_lengths_all_with_edge.png", flush=True)
 
-# Heatmaps - EDGE-only (2x2 grid for 4 modes)
+# Heatmaps - EDGE-only (2x3 grid: 5 modes, last panel hidden)
 print("\nGenerating EDGE-only heatmap...", flush=True)
 bins = list(range(1, 21)) + [">20"]
 
-fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+fig, axes = plt.subplots(2, 3, figsize=(20, 12))
 axes = axes.flatten()
+# rev8: hide unused panel (5 modes total, 6 panels)
+if len(MODES) < len(axes):
+    for spare_idx in range(len(MODES), len(axes)):
+        axes[spare_idx].axis("off")
 
 mode_results_edge = all_results["EDGE"]
 
@@ -597,8 +602,12 @@ print("\nGenerating similarity heatmaps...", flush=True)
 
 for threshold in [t for t in THRESHOLDS if t != "EDGE"]:
     print(f"  SIM≥{threshold}...", flush=True)
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    # rev8: 2x3 grid for 5 modes, last panel hidden
+    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
     axes = axes.flatten()
+    if len(MODES) < len(axes):
+        for spare_idx in range(len(MODES), len(axes)):
+            axes[spare_idx].axis("off")
 
     mode_results = all_results[threshold]
 
@@ -658,8 +667,20 @@ threshold_colors = {
     0.90: "#2ECC71",
     0.95: "#E74C3C",
 }
-mode_markers = {"unconstrained": "o", "single_risk": "s", "monotonic": "^", "both": "D"}
-mode_lines = {"unconstrained": "-", "single_risk": "--", "monotonic": "-.", "both": ":"}
+mode_markers = {
+    "unconstrained": "o",
+    "single_risk": "s",
+    "monotonic": "^",
+    "both": "D",
+    "custom": "P",  # rev8: plus-filled — distinct from existing four
+}
+mode_lines = {
+    "unconstrained": "-",
+    "single_risk": "--",
+    "monotonic": "-.",
+    "both": ":",
+    "custom": (0, (3, 1, 1, 1)),  # rev8: dashdotdot
+}
 
 degree_types = [
     ("degrees_all", "All Pathway Nodes", axes[0, 0]),
@@ -767,7 +788,26 @@ for threshold in THRESHOLDS:
         multi_risk_paths = 0
         max_risks = 0
 
-        with open(result["path_file"], "r") as f:
+        # rev8: try both phase1_otherrawdata/ and phase1_rawpathsfiles/ for the
+        # path file, since canonical custom paths live in phase1_rawpathsfiles/.
+        candidates = [
+            result["path_file"],
+            f"../phase1_rawpathsfiles/{result['path_file']}",
+            f"../phase1_otherrawdata/{result['path_file']}",
+        ]
+        path_to_open = None
+        for c in candidates:
+            if os.path.exists(c):
+                path_to_open = c
+                break
+        if path_to_open is None:
+            print(
+                f"    {mode:15s}: (path file {result['path_file']} not found, skipping)",
+                flush=True,
+            )
+            continue
+
+        with open(path_to_open, "r") as f:
             for line in f:
                 data = json.loads(line)
                 risk_count = sum(1 for cat in data["categories"] if cat == "risk")
