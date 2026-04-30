@@ -116,12 +116,18 @@ These are the corrections discovered during the rev7→rev8 transition. They sha
 
 ## Key scripts (rev8)
 
-- `graph_analysis/final_pathway_analysis_modes.py` — adds 'custom' mode (commit 821e985)
+- `graph_analysis/final_pathway_analysis_modes.py` — adds 'custom' BFS mode (commit 821e985)
 - `graph_analysis/phase2_step4_F0_custom_path_audit.py` — invariant + retention audit (commit 0526385)
-- `graph_analysis/phase2_step4_F1_consim1_custom_rebuild.py` — single-pass consim1 + frozensets + ri_triplets on custom paths
-- `graph_analysis/phase2_step4_F4_frozenset_groups_custom.py` — Jaccard grouping on 104 frozensets, k=10 (preview)
-- `graph_analysis/phase2_step4_F5_group_naming_custom.py` — gpt-5.5 LLM naming with `max_completion_tokens=1500` (preview)
-- `graph_analysis/phase2_step4_F6_triplets_custom.py` — R→Group→I triplets (preview, not run)
+- `graph_analysis/phase2_step4_F1_consim1_custom_rebuild.py` — single-pass consim1 + frozensets + ri_triplets on custom-BFS paths
+- `graph_analysis/phase2_step4_F2_paperpair_paths.py` — paper-pair v1 (vpn_custom restricted, deprecated)
+- `graph_analysis/phase2_step4_F2v2_paperpair_paths.py` — v2 with first-hop EDGE-only (deprecated; lost ~9k R-I pairs)
+- `graph_analysis/phase2_step4_F2v3_hopwise_paths.py` — **v3 hop-wise enumeration, CANONICAL rev8 path enumeration**
+  - Constraint set: full graph, EDGE conf>=3, SIM cos_sim>=0.9, maturity>=3 endpoint, simple paths, consim1 alternation, first-hop EDGE-or-SIM to body subtype, single-risk, single-intervention, min length 3, max length 20, global cap 1M
+  - Output at sim=0.9: 224,314 paths over 13,833 unique (R, I) pairs, 27 sec runtime
+  - Path length histogram shows monotonic 1.4-1.5x growth past L=12 (over-fragmentation symptom; flattens after Task #7)
+- `graph_analysis/phase2_step4_F4_frozenset_groups_custom.py` — Jaccard grouping on 104 frozensets, k=10 (PREVIEW, on rev7 body clusters)
+- `graph_analysis/phase2_step4_F5_group_naming_custom.py` — gpt-5.5 LLM naming with `max_completion_tokens=1500` (PREVIEW)
+- `graph_analysis/phase2_step4_F6_triplets_custom.py` — R→Group→I triplets (PREVIEW, not run)
 
 ---
 
