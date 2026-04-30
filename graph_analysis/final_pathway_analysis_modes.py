@@ -150,12 +150,21 @@ def extract_mode(mode, all_sources, all_int_ids, adj, threshold_label):
 
                     # Terminal intervention check
                     if node in all_int_ids and node != risk_id:
-                        unvisited = [
-                            nb for nb in adj.get(node, []) if nb not in visited
-                        ]
-                        has_non_int = any(nb not in all_int_ids for nb in unvisited)
+                        # Custom mode: never traverse THROUGH an intervention.
+                        # Always emit the path here and skip neighbor expansion,
+                        # regardless of whether unvisited neighbors exist or
+                        # whether they're interventions. This guarantees no
+                        # intervention appears in the middle of an emitted path.
+                        if mode == "custom":
+                            should_emit = True
+                        else:
+                            unvisited = [
+                                nb for nb in adj.get(node, []) if nb not in visited
+                            ]
+                            has_non_int = any(nb not in all_int_ids for nb in unvisited)
+                            should_emit = has_non_int or len(unvisited) == 0
 
-                        if has_non_int or len(unvisited) == 0:
+                        if should_emit:
                             # Reconstruct path
                             path = []
                             curr = node
@@ -171,6 +180,29 @@ def extract_mode(mode, all_sources, all_int_ids, adj, threshold_label):
 
                             # Apply mode constraints during path validation
                             valid_path = True
+
+                            if mode == "custom":
+                                # Custom mode (added 2026-04-30): single-risk + single-
+                                # intervention + body-monotonic-relaxed.
+                                # 1. Reject if any non-start node is a risk
+                                #    (no body->risk reversals; no SIM-bridge risk chains)
+                                # 2. Reject if any non-end node is an intervention
+                                #    (no walking through interventions). The BFS already
+                                #    enforces this by emitting at first intervention,
+                                #    so this is a safety check.
+                                # 3. body<->body order is unconstrained.
+                                if cat_path[0] != "risk":
+                                    valid_path = False
+                                else:
+                                    for c in cat_path[1:]:
+                                        if c == "risk":
+                                            valid_path = False
+                                            break
+                                    if valid_path:
+                                        for c in cat_path[:-1]:
+                                            if c == "intervention":
+                                                valid_path = False
+                                                break
 
                             if mode == "single_risk" or mode == "both":
                                 # Check single-risk constraint
@@ -229,10 +261,18 @@ def extract_mode(mode, all_sources, all_int_ids, adj, threshold_label):
 
                     # Expand neighbors
                     for nb in adj.get(node, []):
-                        if nb not in visited:
-                            visited[nb] = visited[node] + 1
-                            parent[nb] = node
-                            queue.append(nb)
+                        if nb in visited:
+                            continue
+                        # Custom mode: do not traverse to risk neighbors after the start.
+                        # This eliminates risk-risk SIM-bridge chains (the 99% root cause
+                        # of "risk in middle" paths discovered 2026-04-30).
+                        if mode == "custom":
+                            nb_cat = GLOBAL_NODE_CATEGORIES.get(nb, "unknown")
+                            if nb_cat == "risk":
+                                continue
+                        visited[nb] = visited[node] + 1
+                        parent[nb] = node
+                        queue.append(nb)
 
     print(f"\n  ✓ {total_paths:,} paths, {len(all_pathway_nodes):,} nodes", flush=True)
 
@@ -325,7 +365,19 @@ print("\nLoading graph into memory...", flush=True)
 
 # Process EDGE-only + similarity thresholds
 THRESHOLDS = ["EDGE", 0.80, 0.85, 0.90, 0.95]
-MODES = ["unconstrained", "single_risk", "monotonic", "both"]
+# Modes:
+#   unconstrained — no constraint
+#   single_risk   — exactly one risk node anywhere
+#   monotonic     — category indices may not decrease (full monotonicity)
+#   both          — single_risk + monotonic
+#   custom        — single risk at start + single intervention at end +
+#                   body-monotonic-relaxed (body<->body order unconstrained).
+#                   BFS pre-emption: never traverse to risk neighbors after
+#                   start; never traverse through interventions. Added 2026-04-30
+#                   to fix the silent-drop bug where 99% of unconstrained paths
+#                   contained risk nodes in the middle (Open Item 8 in
+#                   step4_rev7_plan.md).
+MODES = ["unconstrained", "single_risk", "monotonic", "both", "custom"]
 
 all_results = {}  # {threshold: {mode: results}}
 
