@@ -8,6 +8,63 @@
 
 ---
 
+## Path Enumeration Methodology (CANONICAL — applies to all downstream analysis)
+
+This section captures every cut and design choice in the path enumeration that produced `paths_unconstrained_sim0.9.jsonl` and the `consim1` qualifying-path filter. **All downstream analysis (frozensets, body clustering, risk/intervention clustering, triplet construction) inherits these cuts.** Cite this section whenever a path-derived metric is reported.
+
+### Source script
+`final_pathway_analysis_modes.py` (lines 98-225). BFS from each risk node, emits one shortest path per (risk_node, intervention_node) pair, four output modes: `unconstrained`, `single_risk`, `monotonic`, `both`.
+
+### Edge set used in BFS
+EDGE edges with `edge_confidence ≥ 3` (min_conf=3) plus SIMILARITY edges with `cos_sim ≥ 0.9` (sim_thresh=0.9). The BFS treats the union as one undirected adjacency. The same `adj` dict is queried for all neighbor expansion — no per-step distinction between EDGE and SIMILARITY at traversal time. Consecutive-SIM-hop counts are recovered post-hoc via the `consim1` filter, not enforced during BFS.
+
+### Cuts applied during BFS
+1. **One BFS per (source_paper, risk_node).** Multiple risks in the same source produce independent BFS runs.
+2. **Visited-set per BFS.** A node is processed exactly once per BFS run; revisits are blocked.
+3. **Shortest path only.** BFS = breadth-first, so the first time an intervention is encountered, that path is the shortest from the originating risk to that intervention. Longer alternative paths to the same intervention are NOT enumerated.
+4. **One path per (risk_node, intervention_node) pair per BFS.** Subsequent re-discoveries of the same intervention in the same BFS are blocked by the visited set.
+5. **No subpath enumeration.** A path R→B1→B2→B3→I is emitted as one record; the truncation R→B1→B2→I is not separately emitted unless it terminates at a different intervention.
+6. **Mode-dependent constraints (post-emission filter):**
+   - `unconstrained`: no constraint
+   - `single_risk`: paths with >1 risk node anywhere in the sequence are dropped
+   - `monotonic`: paths with category-order reversals (e.g., `design_rationale → theoretical_insight`) are dropped
+   - `both`: both single_risk and monotonic applied
+7. **Path with no body skipped at frozenset construction.** `phase2_step4_pathbuildB_remaining.py:130` — `if len(path) < 3: continue`. Direct R→I edges produce paths of length 2 (length = nodes − 1 = 1), excluded.
+
+### Cuts applied at consim1 path-set construction (post-enumeration)
+Source: `phase2_step4_pathbuildB_connectivity.py`, lines ~252-273.
+1. **Maturity ≥ 3 endpoint:** `node_attrs[interv_id]['intervention_maturity'] >= 3`
+2. **Consecutive-SIM-hop limit ≤ 1:** `consim1` recomputes the run-length of SIM edges along each path, drops any with >1 consecutive SIM edges
+3. **Edge-set restricted SIM bridging:** SIM edges restricted to pairs where both endpoints are in `vpn_unconstrained` (the maturity≥3-filtered universe)
+
+The result is the **75,008 consim1 qualifying paths** — the analysis universe used by all downstream Step 4 / Step 5 work.
+
+### Frozenset construction cuts
+Source: `phase2_step4_pathbuildB_remaining.py:127-141`.
+1. **Body sequence = path[1:-1].** Risk start and intervention endpoint excluded.
+2. **node_to_stc filter:** only nodes that are body subtypes (problem_analysis, theoretical_insight, design_rationale, implementation_mechanism, validation_evidence) contribute to the frozenset signature. Risk nodes and intervention nodes that appear in the middle of a path are **silently dropped** (see Known Limitation below).
+3. **n_paths ≥ 5 cutoff.** Only frozensets that occur in ≥5 distinct paths are kept (line 141): **1,603 of N_total unique frozensets**, capturing 62,357 of 75,008 consim1 paths. Singleton/rare frozensets dropped to focus on representative co-occurrence patterns.
+
+When reporting any frozenset-derived count, disclose the n≥5 cutoff and what fraction of consim1 paths it covers.
+
+### KNOWN LIMITATION — non-body nodes silently dropped from path middles
+**Quantified on `paths_unconstrained_sim0.9.jsonl` (first 100,000 paths sampled, 2026-04-20):**
+- **99.34% of paths** have at least one **risk node in the middle** (path[1:-1] contains a node with `concept_category='risk'`)
+- **13.57% of paths** have at least one **intervention node in the middle**
+
+**Cause:** `mode='unconstrained'` does not constrain BFS from passing through risk nodes or intervention nodes when the SIMILARITY edge set provides risk-risk or intervention-intervention links (cos_sim ≥ 0.9). Then `final_pathway_analysis_modes.py` lines 152-217 — when an intervention is reached but its only unvisited neighbors are also interventions, no path is emitted there but BFS continues through the intervention to find a "later" terminal intervention. The path emitted to that later terminal includes the first intervention as a middle node.
+
+**Effect:** at frozenset construction, `frozenset(node_to_stc[n] for n in body if n in node_to_stc)` drops these middle non-body nodes. Two paths with very different routings can collapse to the same frozenset.
+
+**Fix options** (deferred to next revision):
+- (preferred) Switch to `paths_both_sim0.9.jsonl` (single_risk + monotonic constraints) as input. Single_risk eliminates the 99% risk-in-middle case; monotonic eliminates the intervention-in-middle case.
+- (alternative) Post-filter `paths_unconstrained_sim0.9.jsonl`: reject any path whose middle contains a non-body node. Apply BEFORE consim1 filtering and frozenset construction.
+- (sanity-check measurement) Quantify on the consim1 set (not just unconstrained) — recompute the percentages.
+
+This is a real correctness issue affecting frozenset signatures. Tracked as Open Item 8 in `step4_rev7_plan.md`.
+
+---
+
 ## Executive Summary
 
 Step 4 produced a three-level risk → chain → intervention taxonomy over the AI safety literature corpus. The analysis uses `valid_pathway_nodes` (nodes on any qualifying path with all three quality cuts simultaneously enforced) as the analysis universe.

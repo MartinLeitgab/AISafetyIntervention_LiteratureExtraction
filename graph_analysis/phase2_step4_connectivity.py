@@ -468,10 +468,17 @@ for node_type_key in ["risk", "intervention"]:
         n = len(node_ids)
         csim_mean = float(csim_means.get(cid_str, 1.0))
 
-        cats = [
-            node_attrs.get(nid, {}).get("concept_category", "") for nid in node_ids[:50]
-        ]
+        # Bug fix 2026-04-20: previously sliced node_ids[:50] which capped split
+        # detection at first 50 nodes regardless of cluster size. Large clusters
+        # with category diversity past position 50 were silently classified as
+        # not-needing-split. Now scan ALL nodes in the cluster.
+        cats = [node_attrs.get(nid, {}).get("concept_category", "") for nid in node_ids]
         unique_cats = len(set(c for c in cats if c))
+        n_uncategorized = sum(1 for c in cats if not c)
+        if n_uncategorized:
+            log.info(
+                f"  cluster {cid_str}: {n_uncategorized}/{len(node_ids)} nodes lacked concept_category"
+            )
 
         needs_split = csim_mean < 0.3 or n > 100 or unique_cats > 2
         if not needs_split:

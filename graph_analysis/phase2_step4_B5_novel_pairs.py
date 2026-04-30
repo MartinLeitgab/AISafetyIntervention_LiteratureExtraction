@@ -27,24 +27,35 @@ RESULTS_DIR = os.path.join(ROOT, "phase2_results")
 STEP4_DIR = os.path.join(RESULTS_DIR, "step4_finalanalysis")
 CONN_DIR = os.path.join(STEP4_DIR, "step4_connectivity")
 TABLES_DIR = os.path.join(STEP4_DIR, "step4_cluster_tables")
+NAMING_DIR = os.path.join(RESULTS_DIR, "step5_naming")
 
-# ─── Load data ─────────────��─────────────────────────────────────────────────
+# ─── Load data ───────────────────────────────────────────────────────────────
+# Inputs updated 2026-04-30: use v2 naming canonical files (rev5+)
 ri_pairs = pd.read_csv(os.path.join(CONN_DIR, "cross_config_ri_pairs.csv"))
-risk_names = pd.read_csv(os.path.join(TABLES_DIR, "risk_cluster_names.csv"))
-interv_names = pd.read_csv(os.path.join(TABLES_DIR, "intervention_cluster_names.csv"))
+risk_names = pd.read_csv(os.path.join(NAMING_DIR, "risk_cluster_names_llm_v2.csv"))
+interv_names = pd.read_csv(
+    os.path.join(NAMING_DIR, "intervention_cluster_names_llm_v2.csv")
+)
+
+risk_name_col = "final_name" if "final_name" in risk_names.columns else "llm_name"
+interv_name_col = "final_name" if "final_name" in interv_names.columns else "llm_name"
 
 print(f"Total R→I cluster pairs: {len(ri_pairs)}")
 print(f"  n_paths_c0 = 0 (SIM-bridged only): {(ri_pairs['n_paths_c0'] == 0).sum()}")
 
-# ─── Build name lookup ────────────────────────────────��───────────────────────
+# ─── Build name lookup ───────────────────────────────────────────────────────
 risk_name_map = dict(
-    zip(risk_names["cluster_id"].astype(str), risk_names["cluster_name"].str[:80])
+    zip(risk_names["cluster_id"].astype(str), risk_names[risk_name_col].astype(str))
 )
 interv_name_map = dict(
-    zip(interv_names["cluster_id"].astype(str), interv_names["cluster_name"].str[:80])
+    zip(
+        interv_names["cluster_id"].astype(str),
+        interv_names[interv_name_col].astype(str),
+    )
 )
+size_col = "n_members" if "n_members" in interv_names.columns else "n_nodes"
 interv_size_map = dict(
-    zip(interv_names["cluster_id"].astype(str), interv_names["n_nodes"])
+    zip(interv_names["cluster_id"].astype(str), interv_names[size_col])
 )
 
 # ─── Classify intervention clusters by type ───────────────────────��───────────
@@ -91,7 +102,7 @@ GOVERNANCE_KEYWORDS = [
 
 for _, row in interv_names.iterrows():
     cid = str(row["cluster_id"])
-    name_lower = str(row["cluster_name"]).lower()
+    name_lower = str(row[interv_name_col]).lower()
     if any(kw in name_lower for kw in FIELD_BUILDING_KEYWORDS):
         FIELD_BUILDING_CLUSTERS.add(cid)
     elif any(kw in name_lower for kw in GOVERNANCE_KEYWORDS):
@@ -113,17 +124,37 @@ sim_bridged = ri_pairs[ri_pairs["n_paths_c0"] == 0].copy()
 sim_bridged["risk_cid_str"] = sim_bridged["risk_cid"].astype(int).astype(str)
 sim_bridged["interv_cid_str"] = sim_bridged["interv_cid"].astype(int).astype(str)
 
-sim_bridged["risk_name"] = (
-    sim_bridged["risk_cid_str"].map(risk_name_map).fillna("unknown")
-)
-sim_bridged["interv_name"] = (
-    sim_bridged["interv_cid_str"].map(interv_name_map).fillna("unknown")
-)
-sim_bridged["interv_type"] = sim_bridged["interv_cid_str"].apply(
-    lambda c: "field-building"
-    if c in FIELD_BUILDING_CLUSTERS
-    else ("governance" if c in GOVERNANCE_CLUSTERS else "technical")
-)
+# Bug fix 2026-04-20: previously the lambda below defaulted unmapped intervention
+# IDs to "technical", which silently misclassified clusters with no name string.
+# Now: explicitly flag unmapped IDs as "unknown_no_name" and report counts.
+sim_bridged["risk_name"] = sim_bridged["risk_cid_str"].map(risk_name_map)
+sim_bridged["interv_name"] = sim_bridged["interv_cid_str"].map(interv_name_map)
+
+n_risk_unmapped = sim_bridged["risk_name"].isna().sum()
+n_interv_unmapped = sim_bridged["interv_name"].isna().sum()
+if n_risk_unmapped or n_interv_unmapped:
+    print(
+        f"WARN: {n_risk_unmapped} risk_cids and {n_interv_unmapped} interv_cids lacked names — flagged as 'unknown_no_name'"
+    )
+
+sim_bridged["risk_name"] = sim_bridged["risk_name"].fillna("unknown_no_name")
+sim_bridged["interv_name"] = sim_bridged["interv_name"].fillna("unknown_no_name")
+
+
+def classify_interv_type(c, name):
+    if name == "unknown_no_name":
+        return "unknown_no_name"
+    if c in FIELD_BUILDING_CLUSTERS:
+        return "field-building"
+    if c in GOVERNANCE_CLUSTERS:
+        return "governance"
+    return "technical"
+
+
+sim_bridged["interv_type"] = [
+    classify_interv_type(c, n)
+    for c, n in zip(sim_bridged["interv_cid_str"], sim_bridged["interv_name"])
+]
 sim_bridged["interv_n_nodes"] = (
     sim_bridged["interv_cid_str"].map(interv_size_map).fillna(0)
 )

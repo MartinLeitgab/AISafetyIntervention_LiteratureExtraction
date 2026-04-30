@@ -36,7 +36,7 @@ ROOT = Path(__file__).parent
 load_dotenv(ROOT / ".env")
 api_key = os.getenv("OPENAI_API_KEY") or os.getenv("openai_api_key")
 client = OpenAI(api_key=api_key)
-MODEL = "gpt-4.1-mini"
+MODEL = "gpt-5.5"
 
 RESULTS_DIR = ROOT / "phase2_results"
 STEP4_DIR = RESULTS_DIR / "step4_finalanalysis"

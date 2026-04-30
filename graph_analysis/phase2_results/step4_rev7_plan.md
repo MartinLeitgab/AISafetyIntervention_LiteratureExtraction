@@ -209,3 +209,85 @@ After E5 completes, append to both findings reports:
 2. After E3: commit `feat: rev7 — frozenset binary-vector Jaccard grouping, k=N groups, dendrogram`
 3. After E4: commit `feat: rev7 — LLM naming of frozenset groups (causal framing)`
 4. After E5 + report updates: commit `feat: rev7 — rebuilt triplets and findings report update`
+
+---
+
+## Open Items / Future Work (added 2026-04-20)
+
+These items were discussed in the rev7 review but **not yet implemented**. They depend on prior items being resolved first; all are noted here so they can be resumed later.
+
+### Open Item 1 — Document n>=5 frozenset cutoff in findings reports
+**Source:** `phase2_step4_pathbuildB_remaining.py` line 141 (`large_sigs_set = {s for s, c in sig_counts.items() if c >= 5}`).
+**Action:** Whenever the figure "1,603 frozensets" or "62,357 paths" or any n_paths-aggregated number is reported, accompany with explicit cutoff disclosure: "n_paths >= 5 frozensets retained for downstream analysis (1,603 of N_total unique frozensets, capturing M of M_total qualifying paths). Singleton/rare frozensets dropped to focus analysis on representative co-occurrence patterns; raw counts available in optionB_cooccurrence_families_consim1.csv."
+**Where to apply:** Step4 Part 1, Part 18.4, Step5 Part 11.1, Appendix_QualityCutAudit.md.
+
+### Open Item 2 — Body cluster homogeneity audit and k-scan
+**Problem:** k=40 hardcoded in `phase2_clustering.py:532-534` for all node types (risk, intervention, all 5 body subtypes). No homogeneity-vs-separation optimization. This is the upstream root cause of frozenset over-fragmentation symptoms (e.g., G13/G15 split, pr:7/pr:19/pr:37 near-duplicates).
+**Action:** Per-subtype k-scan in [10, 60] optimizing the (max_intra_homogeneity, min_inter_homogeneity) Pareto frontier. Metrics:
+  - Intra: mean cosine sim of each cluster's members to its centroid (per cluster, then aggregate)
+  - Inter: max cosine sim between any two cluster centroids (lower = more separated)
+  - Silhouette as a baseline reference
+**Output:** `step4_cluster_tables/body_kscan_metrics.csv` with per-(subtype, k) intra/inter/silhouette. Choose k per subtype where intra is high and inter is low.
+**Apply same scan to:** L1 risk, L3 intervention. Also to E3 frozenset grouping (currently k=20 hardcoded).
+**Verification:** Re-run E3 on rederived body clusters; confirm G13/G15-style splits collapse where appropriate.
+
+### Open Item 3 — Body clustering must be done on qualifying-path nodes only
+**Problem:** `phase2_step4_pathbuildB_connectivity.py:174-188` and rev7 E1/E2 both load body clusters from `cm[(0.9, "unconstrained", subtype, "agglomerative", cid)]` — these clusters were built on ALL body nodes in the graph, not only qualifying-path body nodes. VPN filtering is applied AFTER cluster definition, leading to the "9 body cluster IDs that never appear on a qualifying path" anomaly.
+**Action:** Restrict body clustering input to body nodes that appear on at least one qualifying path (consim1 + maturity≥3 + EDGE conf≥3 + SIM≥0.9). Re-cluster per-subtype on this VPN-restricted population.
+**Order of operations:** must be done BEFORE Open Item 2 k-scan (the k-scan should be over the VPN-restricted body node population).
+**Verification:** every body cluster ID appearing in cluster_memberships output must have ≥1 member on a qualifying path.
+
+### Open Item 4 — Recursive frozenset group reclustering for homogeneity floor
+**Problem:** k=20 frozenset groups have intra_jaccard_mean ranging 0.111 to 0.833. Many groups (G12, G14) are heterogeneous (intra<0.3) and would benefit from being split.
+**Action:** After Open Items 2 and 3 are resolved (so body cluster IDs are no longer over-fragmented), run E3 with recursive splitting: for each group with intra_jaccard_mean < threshold (proposed: 0.5), re-run agglomerative clustering on its members; repeat until all leaf groups meet threshold or hit min-size floor (proposed: 3 frozensets).
+**Output:** Hierarchical taxonomy. Each leaf group gets its own E4 LLM name; intermediate nodes get summary names from path-weighted leaf merging.
+**Why deferred:** Recursive splitting on the current over-fragmented body cluster IDs would produce phantom splits driven by ID-level differences, not real mechanism diversity.
+
+### Open Item 5 — Triplet-level grouping
+**Problem:** Top-20 R→Group→I triplets sorted purely by path count = corpus volume, not mechanism diversity. The top-16 are dominated by G12+G14 routes; mechanistically distinct groups (G2, G10, G8) appear only at rank 16+.
+**Three options noted, not yet chosen:**
+  - **Option A (simplest):** Group the 764 triplets by `group_id` (already a partitioning). Within each of the 19 mechanism groups, list top-3 risk-intervention pairs. Output: 57 triplets covering all mechanism groups, ranked within each by paths.
+  - **Option B:** Compute combined embedding per triplet (concatenate risk centroid + group binary vector + intervention centroid), cluster, take top-N per cluster.
+  - **Option C:** Run Open Item 4 first (recursive group homogeneity), then aggregate triplets at finer-grained mechanism level. Diversity emerges naturally.
+**Recommended:** Option C if Open Items 2-4 are done; otherwise Option A.
+
+### Open Item 6 — Interactive hierarchical visualization (public-facing)
+**Goal:** A clickable web UI for the full 3-layer taxonomy + triplets, hosted publicly (GitHub Pages on a personal/org domain like `martin.github.io` — confirm with user which domain).
+**Specification:**
+  - **Top level:** all triplets visualization (ranked by paths or by mechanism group cluster). Each triplet is clickable.
+  - **Click-through to entity:** clicking a Risk cluster, Frozenset Group, or Intervention cluster opens its detail page.
+  - **Detail pages show:** centroid name, n_members, n_paths, closest-3 / farthest-3 members with metadata.
+  - **Click-through to nodes:** clicking a member node shows: name, description, aliases, intervention_lifecycle/maturity (if applicable), source URL (hyperlinked to original paper), local extraction audit record (the original LLM extraction JSON for that paper).
+  - **Hierarchy breadcrumb:** persistent top bar like `Triplets > Group G14 > Intervention I35 > Node 12345` so user can navigate up/down.
+  - **Frozenset group page:** shows constituent frozensets as nodes; click a frozenset to see its constituent paths and their counts.
+**Hosting candidates:**
+  - GitHub Pages on `MartinLeitgab.github.io/<repo>` (free, static-only)
+  - Fly.io / Render free tier if dynamic backend is needed
+  - Static HTML + JSON data files is preferred (no backend needed)
+**Tech stack candidate:** static HTML + Plotly/D3 for the triplet network plot + JSON-driven detail panes. All data already in CSVs/PKLs.
+**Apply public-deployment-readiness checks:** any private-only audit records (raw LLM extraction with internal notes) must be filtered out before public deploy.
+**Why deferred:** depends on stable taxonomy (Open Items 2-4) so the visualization doesn't need to be rebuilt after every regrouping.
+
+### Open Item 7 — Step 4 / Step 5 report consolidation
+Currently Step 4 (~830 lines) and Step 5 (~430 lines) overlap at the boundary "structure vs naming." After Open Items 2-4 resolve and rev7 LLM naming becomes the only LLM-driven step, most of Step 5 (Parts 1-7 covering v1/v2 cluster naming, examples, subclusters) may be archivable. Decision deferred until taxonomy stabilizes.
+
+### Open Item 8 — Reject paths with non-body middle nodes (CRITICAL — correctness issue)
+**Discovered:** 2026-04-20 path enumeration audit (first 100k of `paths_unconstrained_sim0.9.jsonl`):
+- 99.34% of paths have at least one risk node in the middle
+- 13.57% of paths have at least one intervention node in the middle
+
+**Cause:** `mode='unconstrained'` BFS uses SIMILARITY edges (cos_sim ≥ 0.9) which include risk-risk and intervention-intervention links. BFS walks freely through these. `final_pathway_analysis_modes.py:152-217` only emits a path when an intervention has a non-intervention unvisited neighbor — when it doesn't, BFS continues THROUGH the intervention. Frozenset construction (`phase2_step4_pathbuildB_remaining.py:134`) silently drops these middle non-body nodes via the `if n in node_to_stc` filter.
+
+**Effect:** frozenset signatures are partial. Two paths with very different mechanism routings collapse to the same frozenset. The L2 taxonomy reflects body-cluster co-occurrence with non-body waypoints invisibly stripped.
+
+**Fix options:**
+- (preferred) Switch path-source from `paths_unconstrained_sim0.9.jsonl` to `paths_both_sim0.9.jsonl` (single_risk + monotonic constraints). Single_risk eliminates the 99% risk-in-middle case; monotonic eliminates the intervention-in-middle case (interventions can only appear as the terminal node, since reversing from intervention back to body is forbidden).
+- (alternative) Post-filter `paths_unconstrained_sim0.9.jsonl` to reject any path whose `categories[1:-1]` contains a non-body category. Apply BEFORE consim1 filtering.
+
+**Verification step:**
+1. Re-run path audit on filtered set → 0 paths with non-body middle
+2. Recompute n_paths totals — expect substantial drop from 75,008 consim1 paths to fewer cleaner paths
+3. Re-run E3 frozenset grouping → expect different group structure since underlying data changes
+4. Document % of corpus retained vs dropped
+
+**Order in pipeline:** must be done BEFORE Open Items 2-4 (body re-clustering should happen on body nodes that appear on TRULY body-only middle paths, not the polluted current set).

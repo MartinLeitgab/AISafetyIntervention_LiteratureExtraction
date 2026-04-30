@@ -180,18 +180,29 @@ def extract_mode(mode, all_sources, all_int_ids, adj, threshold_label):
 
                             if valid_path and (mode == "monotonic" or mode == "both"):
                                 # Check monotonic constraint
+                                # Bug fix 2026-04-20: previously this loop silently skipped
+                                # nodes whose category was not in CAT_INDEX (i.e. nodes with
+                                # missing or unrecognised concept_category). That allowed
+                                # non-monotonic paths to slip through monotonic mode.
+                                # Now: any unknown-category node is treated as a hard
+                                # validation failure.
                                 cat_indices = []
                                 for cat in cat_path:
                                     if cat in CAT_INDEX:
                                         cat_indices.append(CAT_INDEX[cat])
                                     elif cat == "intervention":
                                         cat_indices.append(len(CAT_ORDER))
-
-                                # Check for reversals
-                                for i in range(1, len(cat_indices)):
-                                    if cat_indices[i] < cat_indices[i - 1]:
+                                    else:
+                                        # Unknown category — reject the path
                                         valid_path = False
                                         break
+
+                                if valid_path:
+                                    # Check for reversals
+                                    for i in range(1, len(cat_indices)):
+                                        if cat_indices[i] < cat_indices[i - 1]:
+                                            valid_path = False
+                                            break
 
                             if valid_path:
                                 f.write(
