@@ -27,6 +27,14 @@ class GraphEdgeAnalyzer:
         """
         self.client = redis.Redis(host=host, port=port, decode_responses=True)
         self.graph_name = graph_name
+        # Bug fix 2026-04-30 (CF-5): bump RESULTSET_SIZE to 10M so queries do
+        # not silently truncate at the default 10k row limit.
+        try:
+            self.client.execute_command(
+                "GRAPH.CONFIG", "SET", "RESULTSET_SIZE", "10000000"
+            )
+        except Exception as e:
+            print(f"WARN: could not bump RESULTSET_SIZE: {e}")
 
     def get_node_type_counts(self):
         """

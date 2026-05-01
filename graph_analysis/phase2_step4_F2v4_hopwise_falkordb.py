@@ -25,6 +25,7 @@ Outputs:
   graph_analysis/phase2_results/step4_finalanalysis/step4_connectivity/hopwise_v4_summary.txt
 """
 
+import argparse
 import json
 import sys
 import time
@@ -33,21 +34,44 @@ from pathlib import Path
 
 import redis
 
+# ─── CLI args ────────────────────────────────────────────────────────────────
+parser = argparse.ArgumentParser(
+    description="Hop-wise DFS path enumeration from FalkorDB"
+)
+parser.add_argument(
+    "--threshold",
+    type=str,
+    default="0.9",
+    help="SIM threshold: 'EDGE' for edge-only (no SIM), or float in [0.8, 1.0]",
+)
+parser.add_argument("--max-length", type=int, default=30, help="Max path length (hops)")
+parser.add_argument("--max-paths", type=int, default=50_000_000, help="Global path cap")
+args = parser.parse_args()
+
 ROOT = Path(__file__).parent
 PATHS_DIR = ROOT / "phase1_rawpathsfiles"
 OUT_DIR = ROOT / "phase2_results/step4_finalanalysis/step4_connectivity"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-OUTPUT = PATHS_DIR / "paths_hopwise_v4_sim0.9.jsonl"
-SUMMARY = OUT_DIR / "hopwise_v4_summary.txt"
+# Threshold label and SIM filtering
+EDGE_ONLY = args.threshold.upper() == "EDGE"
+if EDGE_ONLY:
+    SIM_THRESHOLD = None
+    SIM_SCORE_MAX = None
+    THRESHOLD_LABEL = "edge_only"
+else:
+    SIM_THRESHOLD = float(args.threshold)
+    SIM_SCORE_MAX = (2 * (1 - SIM_THRESHOLD)) ** 0.5
+    THRESHOLD_LABEL = f"sim{SIM_THRESHOLD}"
 
-SIM_THRESHOLD = 0.9  # cos_sim >= 0.9 → euclidean score < sqrt(2*(1-0.9)) = 0.6325
-SIM_SCORE_MAX = (2 * (1 - SIM_THRESHOLD)) ** 0.5  # = 0.6325
+OUTPUT = PATHS_DIR / f"paths_hopwise_v4_{THRESHOLD_LABEL}.jsonl"
+SUMMARY = OUT_DIR / f"hopwise_v4_{THRESHOLD_LABEL}_summary.txt"
+
 EDGE_CONFIDENCE_MIN = 3
 INTERVENTION_MATURITY_MIN = 3
 MIN_PATH_LENGTH = 3
-MAX_PATH_LENGTH = 30  # adjusted: 50 was excessive given combinatorial growth past L=20
-MAX_TOTAL_PATHS = 50_000_000  # raised from 10M for headroom; cluster-level enum (post Task #7) eliminates the cap need
+MAX_PATH_LENGTH = args.max_length
+MAX_TOTAL_PATHS = args.max_paths
 
 BODY_SUBTYPES = {
     "problem analysis",
@@ -67,11 +91,14 @@ def query(client, cypher, timeout_ms=600000):
 
 
 print("=" * 70)
-print("Phase 2 Step 4 rev8 — F2v4 hop-wise from FalkorDB live")
+print(f"Phase 2 Step 4 rev8 — F2v4 hop-wise from FalkorDB live ({THRESHOLD_LABEL})")
 print("=" * 70)
-print(
-    f"  SIM threshold: cos_sim >= {SIM_THRESHOLD} (euclidean score < {SIM_SCORE_MAX:.4f})"
-)
+if EDGE_ONLY:
+    print("  EDGE-only mode (no SIM edges)")
+else:
+    print(
+        f"  SIM threshold: cos_sim >= {SIM_THRESHOLD} (euclidean score < {SIM_SCORE_MAX:.4f})"
+    )
 print(f"  EDGE confidence: >= {EDGE_CONFIDENCE_MIN}")
 print(f"  Intervention maturity: >= {INTERVENTION_MATURITY_MIN}")
 print(f"  Path length: {MIN_PATH_LENGTH} - {MAX_PATH_LENGTH}")
@@ -155,27 +182,31 @@ while cur <= max_id:
     cur += batch
 print(f"    EDGE edges (undirected pairs): {n_edge:,}  ({time.time() - t2:.1f}s)")
 
-# SIM edges (2150_NEAREST, score < 0.6325 = cos_sim >= 0.9)
-print("  Loading SIM edges (cos_sim>=0.9)...")
-t3 = time.time()
+# SIM edges (2150_NEAREST, score < SIM_SCORE_MAX = cos_sim >= SIM_THRESHOLD).
+# Skipped in EDGE_ONLY mode.
 n_sim = 0
-cur = min_id
-while cur <= max_id:
-    cy = (
-        f"MATCH (n)-[e:SIMILARITY_ABOVE_POINT_EIGHT_2150_NEAREST]-(m) "
-        f"WHERE id(n) >= {cur} AND id(n) < {cur + batch} AND id(m) > id(n) "
-        f"AND e.score < {SIM_SCORE_MAX} "
-        f"RETURN id(n), id(m)"
-    )
-    res = query(client, cy)
-    rows = res[1] if len(res) > 1 else []
-    for row in rows:
-        s, t = int(row[0]), int(row[1])
-        adj_sim[s].add(t)
-        adj_sim[t].add(s)
-        n_sim += 1
-    cur += batch
-print(f"    SIM edges (undirected pairs): {n_sim:,}  ({time.time() - t3:.1f}s)")
+if not EDGE_ONLY:
+    print(f"  Loading SIM edges (cos_sim>={SIM_THRESHOLD})...")
+    t3 = time.time()
+    cur = min_id
+    while cur <= max_id:
+        cy = (
+            f"MATCH (n)-[e:SIMILARITY_ABOVE_POINT_EIGHT_2150_NEAREST]-(m) "
+            f"WHERE id(n) >= {cur} AND id(n) < {cur + batch} AND id(m) > id(n) "
+            f"AND e.score < {SIM_SCORE_MAX} "
+            f"RETURN id(n), id(m)"
+        )
+        res = query(client, cy)
+        rows = res[1] if len(res) > 1 else []
+        for row in rows:
+            s, t = int(row[0]), int(row[1])
+            adj_sim[s].add(t)
+            adj_sim[t].add(s)
+            n_sim += 1
+        cur += batch
+    print(f"    SIM edges (undirected pairs): {n_sim:,}  ({time.time() - t3:.1f}s)")
+else:
+    print("  Skipping SIM edges (EDGE-only mode)")
 
 # ─── DFS enumeration ──────────────────────────────────────────────────────────
 t4 = time.time()

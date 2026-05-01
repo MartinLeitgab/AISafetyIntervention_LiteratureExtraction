@@ -11,6 +11,16 @@ class GraphDiagnostics:
         """
         self.client = redis.Redis(host=host, port=port, decode_responses=True)
         self.graph_name = graph_name
+        # Bug fix 2026-04-30 (CF-5): bump RESULTSET_SIZE to 10M so queries do
+        # not silently truncate at the default 10k row limit. Edge queries with
+        # batch_size=2000 nodes can still produce >10k edge rows when nodes have
+        # high degree; the bump makes the cap effectively unreachable.
+        try:
+            self.client.execute_command(
+                "GRAPH.CONFIG", "SET", "RESULTSET_SIZE", "10000000"
+            )
+        except Exception as e:
+            print(f"WARN: could not bump RESULTSET_SIZE: {e}")
 
     def get_node_info_batch(self, node_ids):
         """

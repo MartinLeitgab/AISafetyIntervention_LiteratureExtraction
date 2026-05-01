@@ -51,6 +51,15 @@ class ClusterMapper:
             host=falkordb_host, port=falkordb_port, decode_responses=True
         )
         self.graph_name = graph_name
+        # Bug fix 2026-04-30 (CF-5): bump RESULTSET_SIZE to 10M so queries do
+        # not silently truncate at the default 10k row limit. Defensive even
+        # though queries below are now batched.
+        try:
+            self.client.execute_command(
+                "GRAPH.CONFIG", "SET", "RESULTSET_SIZE", "10000000"
+            )
+        except Exception as e:
+            print(f"  WARN: could not bump RESULTSET_SIZE: {e}")
 
         # Build mapping: FalkorDB node_id → semantic_cluster
         print("\nBuilding FalkorDB → cluster mapping...")

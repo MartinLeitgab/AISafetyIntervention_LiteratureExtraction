@@ -27,6 +27,14 @@ class PathfindingAnalyzer:
     def __init__(self, host="localhost", port=6379, graph="AISafetyIntervention"):
         self.client = redis.Redis(host=host, port=port, decode_responses=True)
         self.graph = graph
+        # Bug fix 2026-04-30 (CF-5): bump RESULTSET_SIZE to 10M so queries do
+        # not silently truncate at the default 10k row limit.
+        try:
+            self.client.execute_command(
+                "GRAPH.CONFIG", "SET", "RESULTSET_SIZE", "10000000"
+            )
+        except Exception as e:
+            print(f"WARN: could not bump RESULTSET_SIZE: {e}")
 
     def euclidean_from_cosine(self, cosine):
         return np.sqrt(2 * (1 - cosine))
