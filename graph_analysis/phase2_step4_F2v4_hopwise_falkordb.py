@@ -46,8 +46,8 @@ SIM_SCORE_MAX = (2 * (1 - SIM_THRESHOLD)) ** 0.5  # = 0.6325
 EDGE_CONFIDENCE_MIN = 3
 INTERVENTION_MATURITY_MIN = 3
 MIN_PATH_LENGTH = 3
-MAX_PATH_LENGTH = 50  # raised from 20
-MAX_TOTAL_PATHS = 10_000_000  # raised from 1M
+MAX_PATH_LENGTH = 30  # adjusted: 50 was excessive given combinatorial growth past L=20
+MAX_TOTAL_PATHS = 50_000_000  # raised from 10M for headroom; cluster-level enum (post Task #7) eliminates the cap need
 
 BODY_SUBTYPES = {
     "problem analysis",
