@@ -38,14 +38,37 @@ class PathfindingAnalyzer:
         return result[1] if len(result) > 1 else []
 
     def get_all_interventions(self):
-        """Get all interventions with maturity≥3"""
-        query = """
-        MATCH (i:Intervention)
-        WHERE i.intervention_maturity >= 3
-        RETURN id(i), i.name
+        """Get all interventions with maturity>=3, batched by id-range.
+
+        Bug fix 2026-04-30 (CF-5): the original single-shot query was silently
+        truncated at 10,000 rows by FalkorDB's default RESULTSET_SIZE limit.
+        With ~22k mature interventions in the corpus, this lost up to 12k.
+        See `graph_analysis/phase2_results/rev8_active_state.md` Bug Audit.
         """
-        rows = self.query(query)
-        return {int(row[0]): row[1] for row in rows}
+        # Get id range
+        id_result = self.query(
+            "MATCH (i:Intervention) WHERE i.intervention_maturity >= 3 "
+            "RETURN min(id(i)), max(id(i))"
+        )
+        if not id_result or not id_result[0]:
+            return {}
+        min_id = int(id_result[0][0])
+        max_id = int(id_result[0][1])
+
+        interventions = {}
+        cur = min_id
+        batch_size = 5000
+        while cur <= max_id:
+            q = (
+                f"MATCH (i:Intervention) "
+                f"WHERE id(i) >= {cur} AND id(i) < {cur + batch_size} "
+                f"AND i.intervention_maturity >= 3 "
+                f"RETURN id(i), i.name"
+            )
+            for row in self.query(q):
+                interventions[int(row[0])] = row[1]
+            cur += batch_size
+        return interventions
 
     def get_all_risks(self):
         """Get all risk concepts using ID-based batching"""

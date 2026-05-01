@@ -116,7 +116,7 @@ class GraphEdgeAnalyzer:
         within_doc_rel,
         cross_doc_rel,
         node_types=["Concept", "Intervention"],
-        batch_size=10000,
+        batch_size=5000,  # B-5 fix 2026-04-30 (CF-5): reduced from 10000 (was at boundary risk of silent truncation)
         euclidean_threshold=None,
     ):
         """

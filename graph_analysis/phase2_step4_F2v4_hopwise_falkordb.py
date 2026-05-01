@@ -81,6 +81,13 @@ t0 = time.time()
 client = redis.Redis(host="localhost", port=6379, decode_responses=True)
 print(f"\nFalkorDB ping: {client.execute_command('PING')}")
 
+# Bug fix 2026-04-30 (CF-5): FalkorDB default RESULTSET_SIZE=10000 silently
+# truncates query responses to 10k rows. Bump to 10M defensively at script
+# start so downstream queries see full result sets even on fresh containers.
+client.execute_command("GRAPH.CONFIG", "SET", "RESULTSET_SIZE", "10000000")
+rs_check = client.execute_command("GRAPH.CONFIG", "GET", "RESULTSET_SIZE")
+print(f"RESULTSET_SIZE: {rs_check}")
+
 # ─── Categorise nodes (queries FalkorDB live) ────────────────────────────────
 print("\nCategorising nodes from FalkorDB...")
 t1 = time.time()

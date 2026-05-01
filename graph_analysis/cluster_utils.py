@@ -103,21 +103,42 @@ class ClusterMapper:
 
         print(f"  NetworkX nodes with clusters: {len(name_to_cluster)}")
 
-        # Query FalkorDB for all Concept/Intervention nodes
-        query = """
-        MATCH (n)
-        WHERE 'Concept' IN labels(n) OR 'Intervention' IN labels(n)
-        RETURN id(n) as node_id, n.name as name
-        """
-
-        result = self.client.execute_command("GRAPH.QUERY", self.graph_name, query)
+        # Query FalkorDB for all Concept/Intervention nodes, batched by id-range.
+        # Bug fix 2026-04-30 (CF-5): the original single-shot query was silently
+        # truncated at 10,000 rows by FalkorDB's default RESULTSET_SIZE limit.
+        # With ~200k Concept+Intervention nodes in the corpus, ~95% of mappings
+        # were silently lost. See graph_analysis/phase2_results/rev8_active_state.md
+        # Bug Audit (B-1).
+        id_q = (
+            "MATCH (n) "
+            "WHERE 'Concept' IN labels(n) OR 'Intervention' IN labels(n) "
+            "RETURN min(id(n)), max(id(n))"
+        )
+        id_res = self.client.execute_command("GRAPH.QUERY", self.graph_name, id_q)
 
         mapping = {}
         matched = 0
         unmatched = 0
 
-        if len(result) > 1:
-            for row in result[1]:
+        if len(id_res) > 1 and id_res[1]:
+            min_id = int(id_res[1][0][0])
+            max_id = int(id_res[1][0][1])
+            cur = min_id
+            batch_size = 5000
+            all_rows = []
+            while cur <= max_id:
+                q = (
+                    f"MATCH (n) "
+                    f"WHERE id(n) >= {cur} AND id(n) < {cur + batch_size} "
+                    f"AND ('Concept' IN labels(n) OR 'Intervention' IN labels(n)) "
+                    f"RETURN id(n) as node_id, n.name as name"
+                )
+                res = self.client.execute_command("GRAPH.QUERY", self.graph_name, q)
+                if len(res) > 1:
+                    all_rows.extend(res[1])
+                cur += batch_size
+
+            for row in all_rows:
                 falkordb_id = int(row[0])
                 name = row[1] if row[1] else ""
 

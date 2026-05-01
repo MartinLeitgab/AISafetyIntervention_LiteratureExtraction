@@ -110,7 +110,7 @@ class GraphDiagnostics:
         cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL",
         node_types=["Concept", "Intervention"],
         top_n=20,
-        batch_size=10000,
+        batch_size=2000,  # B-4 fix 2026-04-30 (CF-5): reduced from 10000 to avoid silent truncation when avg edges-per-node > 5
     ):
         """
         Test 1: Hub Quality Analysis
@@ -569,7 +569,7 @@ class GraphDiagnostics:
         within_doc_rel="EDGE",
         cross_doc_rel="SIMILARITY_ABOVE_POINT_EIGHT_FOR_REAL",
         node_types=["Concept", "Intervention"],
-        batch_size=10000,
+        batch_size=2000,  # B-4 fix 2026-04-30 (CF-5): reduced from 10000 to avoid silent truncation when avg edges-per-node > 5
     ):
         """
         Test 4: Connected Components Analysis
