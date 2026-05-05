@@ -1,0 +1,476 @@
+Original Text:
+*Meta: Over the past few months, we've held a seminar series on the* [*Simulators theory*](https://www.alignmentforum.org/posts/vJFdjigzmcXMhNTsx/simulators) *by janus. As the theory is actively under development, the purpose of the series is to discover central structures and* [*open problems*](https://www.alignmentforum.org/posts/vJFdjigzmcXMhNTsx/simulators#Next_steps)*. Our aim with this sequence is to share some of our discussions with a broader audience and to encourage new research on the questions we uncover. Below, we outline the broader rationale and shared assumptions of the participants of the seminar.*
+
+**Shared assumptions**
+----------------------
+
+*Going into the seminar series, we determined a number of assumptions that we share. The degree to which each participant subscribes to each assumption varies, but we agreed to postpone discussions on these topics to have a maximally productive seminar. This restriction does not apply to the reader of this post, so please feel free to question our assumptions.*
+
+1. **Aligning AI is a crucial task** that needs to be addressed as AI systems rapidly become more capable.
+	1. (Probably a rather uncontroversial assumption for readers of this Forum, but worth stating explicitly.)
+2. The core part of the **alignment problem involves "deconfusion research."**
+	1. We do not work on deconfusion for the sake of deconfusion but in order to [engineer concepts](https://www.lesswrong.com/posts/9iA87EfNKnREgdTJN/a-revolution-in-philosophy-the-rise-of-conceptual), identify unknown unknowns, and transition from philosophy to mathematics to algorithms to implementation.
+3. The problem is complex because **we have to reason about something that doesn't yet exist.**
+	1. AGI is going to be fundamentally different from anything we have ever known and will thus present us with challenges that are very hard to predict. We might only have a very narrow window of opportunity to perform critical actions and might not get the chance to iterate on a solution.
+4. However, this **does not mean that we should ignore evidence as it emerges.**
+	1. It is essential to carefully consider the GPT paradigm as it is being developed and implemented. At this point, it appears to us more plausible than not that GPT will be a core component of AGI.
+5. One **feasible-seeming approach is "**[**accelerating alignment**](https://openai.com/blog/our-approach-to-alignment-research/)**,"** which involves leveraging AI as it is developed to help solve the challenging problems of alignment**.**
+	1. This is not a novel idea, as it's related to previously suggested concepts such as [seed AI](https://www.lesswrong.com/tag/seed-ai), [nanny AI](https://www.lesswrong.com/tag/nanny-ai), and iterated amplification and distillation (IDA).
+
+**Simulators refresher**
+------------------------
+
+*Going into the seminar series, we had all read the original* [*Simulators post*](https://www.alignmentforum.org/posts/vJFdjigzmcXMhNTsx/simulators) *by janus. We recommend reading the post in the original but provide a condensed summary as a refresher below.*
+
+
+> A *fruitful* way to think about GPT is
+> 
+> * GPT is a **simulator** (i.e. a model trained with predictive loss on a self-supervised dataset)[[1]](#fnb9zte924tyg)
+> * The entities simulated by GPT are **simulacra** (agentic or non-agentic; different objective than the simulator)
+> 
+> The simulator terminology has appropriate connotations
+> 
+> * GPT is not (per se) an oracle, genie, agentic, …
+> * **all GPT “cares about” is simulating/modeling the training distribution**
+> 	+ log-loss is a proper scoring rule[[2]](#fnqquyuy43h2a)
+> 
+
+**Solving alignment with simulators**
+-------------------------------------
+
+*While much of this sequence will focus on the details and consequences of simulator theory, we want to clearly state at the outset that we do this work with the goal of* [*contributing to a solution to the alignment problem*](https://www.alignmentforum.org/posts/vJFdjigzmcXMhNTsx/simulators?commentId=iYwjFxh8NkfoiFu7E)*. In this section, we briefly outline how we might expect simulator theory to concretely contribute to such a solution.*
+
+One slightly[[3]](#fnbfrcjj3p18a) naive approach to solving the alignment is to use a strong, GPT-like model as a simulator, prompt it with "`the solution to the alignment problem is`", to cross your fingers and hit `enter`. The list of ways in which this approach fails is hard to exhaust and includes the model's tendency to [hallucinate](https://arxiv.org/abs/2202.03629), the [generally weak reasoning ability](https://arxiv.org/abs/2201.11903), as well as more fundamental [issues with steering simulations](https://www.alignmentforum.org/posts/nXeLPcT9uhfG3TMPS/conditioning-generative-models). Strategies to mitigate some of these problems [have been proposed](https://www.alignmentforum.org/posts/HAz7apopTzozrqW2k/strategy-for-conditioning-generative-models), but (in line with our shared assumptions listed above), we believe that a foundational understanding of simulators is *necessary* in order to enable/ensure positive outcomes.
+
+Conditional on having a foundational understanding of simulators (supported by theorems and empirical results), we hope to be able to construct a simulation (or a set of simulations) that reliably produces useful alignment research. On a high level, it seems wise to optimize for *augmenting* human cognition rather than outsourcing cognitive labor or producing good-looking outputs ([here](https://www.alignmentforum.org/posts/vJFdjigzmcXMhNTsx/simulators?commentId=iYwjFxh8NkfoiFu7E), [here](https://www.alignmentforum.org/posts/vJFdjigzmcXMhNTsx/simulators?commentId=J6nccirDiK4gkTZa9)). We acknowledge the worries of some that constructing a simulator that reliably produces useful alignment research [is an alignment-complete problem](https://www.lesswrong.com/s/TLSzP4xP42PPBctgw/p/DwqgLXn5qYC7GqExF). However, we believe that the simulator framework provides a few key advantages that are afforded by the "non-agency" of simulators:
+
+* simulators are not as exposed to goodharting since they are not optimizing for an objective (other than predicting the data distribution)
+* simulators (in particular, the simulacra they simulate) are not optimizing for survival by default and thus do not present the same degree of worry about treacherous turns
+* simulators can be configured to simulate many simulacra in tandem and can thus produce a variety of perspectives on a given problem
+
+We hope to substantiate these claims with more rigor over the course of this sequence (or to at least point in the direction in which other alignment researchers might fruitfully work).
+
+1. **[^](#fnrefb9zte924tyg)**While a base GPT model trained with the predictive loss approximates a simulator, this property [can get lost with further training](https://www.lesswrong.com/posts/t9svvNPNmFf5Qa3TA/mysteries-of-mode-collapse). When talking about simulators, we tend to think of base GPT without fine-tuning. Understanding how and to which degree the simulator property interacts with fine-tuning is very high on our list of priorities.
+2. **[^](#fnrefqquyuy43h2a)**A proper scoring rule is optimized by predicting the “true” probabilities of the distribution which generates observations, and thus incentivizes honest probabilistic guesses. Log-loss (such as GPT is trained with) is a proper scoring rule.
+
+This means the model is directly incentivized to match its predictions to the probabilistic transition rule which implicitly governs the training distribution. As a model is made increasingly optimal with respect to this objective, the rollouts that it generates become increasingly statistically indistinguishable from training samples, because they come closer to being described by the same underlying law: closer to a perfect simulation.
+3. **[^](#fnrefbfrcjj3p18a)**The proposal is "naive" in the sense that it is by far not pessimistic/prepared enough for the worst-case.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Unaligned AGI behavior in future AI systems",
+      "type": "concept",
+      "description": "Advanced AI may pursue objectives contrary to human values, leading to catastrophic outcomes once deployed.",
+      "aliases": [
+        "catastrophic misalignment of AGI",
+        "existential risk from misaligned AI"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lack of foundational conceptual clarity about alignment in AI research",
+      "type": "concept",
+      "description": "Researchers lack precise, engineered concepts for specifying and solving alignment, hampering progress.",
+      "aliases": [
+        "deconfusion gap",
+        "conceptual ambiguity in alignment"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Unreliable outputs from GPT simulators due to hallucinations, weak reasoning, and steering difficulties",
+      "type": "concept",
+      "description": "Naïvely prompting GPT can yield fabricated or logically flawed answers, and controlling the content of long rollouts is hard.",
+      "aliases": [
+        "hallucination and poor reasoning in GPT",
+        "steering problems in simulators"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Mode collapse of simulator property after fine-tuning in GPT models",
+      "type": "concept",
+      "description": "Additional supervised or RLHF fine-tuning can distort the pure predictive objective, undermining the non-agentic simulator behaviour.",
+      "aliases": [
+        "loss of simulator behaviour after RLHF",
+        "simulator property degradation"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Deconfusion research enabling engineered concepts for alignment",
+      "type": "concept",
+      "description": "Systematic philosophical and mathematical work can produce precise concepts that underlie practical alignment algorithms.",
+      "aliases": [
+        "concept engineering via deconfusion",
+        "foundational clarity work"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Simulator theory framing GPT as non-agentic predictor minimizing log-loss",
+      "type": "concept",
+      "description": "Treats a base GPT as a simulator that simply predicts text distribution via the log-loss proper-scoring rule rather than optimising external goals.",
+      "aliases": [
+        "GPT-as-simulator perspective",
+        "non-agentic GPT model"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Non-agency of simulators reducing Goodharting and treacherous turn risk",
+      "type": "concept",
+      "description": "Because simulators do not pursue objectives, they are less prone to reward hacking and deceptive power-seeking.",
+      "aliases": [
+        "simulator safety advantage",
+        "no objective optimisation benefit"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Accelerating alignment by leveraging AI simulators to augment human cognition",
+      "type": "concept",
+      "description": "Using AI systems to help humans think better about alignment problems rather than fully outsourcing solutions.",
+      "aliases": [
+        "AI-augmented alignment research",
+        "accelerating alignment approach"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Preserving base GPT simulator property for controlled simulations",
+      "type": "concept",
+      "description": "Keeping GPT close to its predictive objective makes its behaviour easier to reason about and exploit safely.",
+      "aliases": [
+        "maintain simulator purity",
+        "avoid excessive fine-tuning"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Prompting base GPT with multiple simulacra for diverse alignment perspectives",
+      "type": "concept",
+      "description": "Configure GPT to instantiate several contrasting personas or lines of reasoning simultaneously, generating varied ideas for alignment.",
+      "aliases": [
+        "multi-simulacra prompting",
+        "parallel simulations for insight"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Limiting fine-tuning intensity to preserve simulator behavior",
+      "type": "concept",
+      "description": "Restrict or carefully design any further training so the model retains its non-agentic predictive character.",
+      "aliases": [
+        "fine-tuning restraint",
+        "minimal RLHF"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Developing theoretical and empirical characterizations of simulator behavior",
+      "type": "concept",
+      "description": "Research program to mathematically prove and experimentally validate how and when models act as simulators.",
+      "aliases": [
+        "simulator behaviour measurement",
+        "proofs & benchmarks for simulators"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Log-loss property implying accurate distribution simulation in optimized GPT models",
+      "type": "concept",
+      "description": "Mathematical property that as log-loss is minimised, rollouts become statistically indistinguishable from training data.",
+      "aliases": [
+        "proper scoring rule evidence",
+        "log-loss alignment evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Empirical observations of hallucination in GPT outputs under naive prompting",
+      "type": "concept",
+      "description": "Published studies and user experience show GPT fabricating facts or reasoning errors when simply asked for answers.",
+      "aliases": [
+        "hallucination benchmark findings",
+        "naive prompt failure evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Conduct systematic deconfusion research to formalize simulator theory for alignment",
+      "type": "intervention",
+      "description": "Launch coordinated philosophical, mathematical and empirical projects to develop precise, shareable concepts around simulators and alignment.",
+      "aliases": [
+        "deconfusion research program",
+        "formalising simulators"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Use multi-simulacra prompt engineering with base GPT to augment human alignment research",
+      "type": "intervention",
+      "description": "Prompt a base GPT to spin up several complementary simulacra and compile their outputs to support human researchers.",
+      "aliases": [
+        "multi-persona prompting for alignment",
+        "GPT-assisted ideation"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Restrict additional fine-tuning after self-supervised training to preserve simulator behavior",
+      "type": "intervention",
+      "description": "Impose policy or algorithmic constraints that limit RLHF or supervised fine-tuning so the non-agentic simulator property remains intact.",
+      "aliases": [
+        "fine-tuning freeze",
+        "simulator-preserving training policy"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Create benchmarks and proofs validating simulator non-agency advantages",
+      "type": "intervention",
+      "description": "Develop formal proofs and empirical test suites that measure Goodharting resistance and treacherous-turn likelihood of simulators.",
+      "aliases": [
+        "simulator safety benchmarks",
+        "non-agency proofs"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Unaligned AGI behavior in future AI systems",
+      "target_node": "Lack of foundational conceptual clarity about alignment in AI research",
+      "description": "Misalignment risk arises partly because researchers do not yet have precise concepts to guide solutions.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unaligned AGI behavior in future AI systems",
+      "target_node": "Unreliable outputs from GPT simulators due to hallucinations, weak reasoning, and steering difficulties",
+      "description": "If simulators cannot be relied on, using them for alignment may fail, increasing misalignment risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unaligned AGI behavior in future AI systems",
+      "target_node": "Mode collapse of simulator property after fine-tuning in GPT models",
+      "description": "Loss of simulator property via fine-tuning undermines safe use, raising misalignment chance.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of foundational conceptual clarity about alignment in AI research",
+      "target_node": "Deconfusion research enabling engineered concepts for alignment",
+      "description": "Systematic deconfusion directly addresses the conceptual gap.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Simulator theory framing GPT as non-agentic predictor minimizing log-loss",
+      "target_node": "Non-agency of simulators reducing Goodharting and treacherous turn risk",
+      "description": "Non-agency insight elaborates on simulator theory’s safety implications.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Deconfusion research enabling engineered concepts for alignment",
+      "target_node": "Accelerating alignment by leveraging AI simulators to augment human cognition",
+      "description": "Clear concepts make it feasible to safely use simulators for research assistance.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Simulator theory framing GPT as non-agentic predictor minimizing log-loss",
+      "target_node": "Preserving base GPT simulator property for controlled simulations",
+      "description": "Recognizing GPT as a simulator motivates keeping that property intact.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Non-agency of simulators reducing Goodharting and treacherous turn risk",
+      "target_node": "Preserving base GPT simulator property for controlled simulations",
+      "description": "The safety benefit provides rationale for preserving the property.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Accelerating alignment by leveraging AI simulators to augment human cognition",
+      "target_node": "Prompting base GPT with multiple simulacra for diverse alignment perspectives",
+      "description": "Multi-simulacra prompting is a concrete way to augment researchers using simulators.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Preserving base GPT simulator property for controlled simulations",
+      "target_node": "Limiting fine-tuning intensity to preserve simulator behavior",
+      "description": "Restricting fine-tuning operationalises the preservation goal.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Preserving base GPT simulator property for controlled simulations",
+      "target_node": "Developing theoretical and empirical characterizations of simulator behavior",
+      "description": "Measurements and proofs help ensure the property is preserved.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Prompting base GPT with multiple simulacra for diverse alignment perspectives",
+      "target_node": "Empirical observations of hallucination in GPT outputs under naive prompting",
+      "description": "Hallucination data highlight weaknesses that this mechanism must overcome.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Limiting fine-tuning intensity to preserve simulator behavior",
+      "target_node": "Log-loss property implying accurate distribution simulation in optimized GPT models",
+      "description": "Proper-scoring-rule analysis supports effectiveness of keeping model close to base objective.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Developing theoretical and empirical characterizations of simulator behavior",
+      "target_node": "Log-loss property implying accurate distribution simulation in optimized GPT models",
+      "description": "Log-loss property provides initial ground truth for such characterisations.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Log-loss property implying accurate distribution simulation in optimized GPT models",
+      "target_node": "Restrict additional fine-tuning after self-supervised training to preserve simulator behavior",
+      "description": "Because base training already yields good simulation, extra fine-tuning may be unnecessary and risky.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical observations of hallucination in GPT outputs under naive prompting",
+      "target_node": "Use multi-simulacra prompt engineering with base GPT to augment human alignment research",
+      "description": "Hallucinations show that naïve single-thread prompting fails; multi-simulacra may mitigate.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Deconfusion research enabling engineered concepts for alignment",
+      "target_node": "Conduct systematic deconfusion research to formalize simulator theory for alignment",
+      "description": "Theoretical need naturally leads to launching a structured research program.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Log-loss property implying accurate distribution simulation in optimized GPT models",
+      "target_node": "Create benchmarks and proofs validating simulator non-agency advantages",
+      "description": "Understanding the property suggests formalising and testing safety advantages.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.lesswrong.com/posts/nmMorGE4MS4txzr8q/simulators-seminar-sequence-1-background-and-shared"
+    },
+    {
+      "key": "title",
+      "value": "[Simulators seminar sequence] #1 Background & shared assumptions"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-01-02T23:48:50Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Jan",
+        "Charlie Steiner",
+        "Logan Riggs",
+        "janus",
+        "jacquesthibs",
+        "metasemi",
+        "Michael Oesterle",
+        "Lucas Teixeira",
+        "peligrietzer",
+        "remember"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "lesswrong"
+    }
+  ]
+}
+            

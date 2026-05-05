@@ -1,0 +1,844 @@
+Original Text:
+In my recent post on [steering systems](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems), I [sketched](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems#A_sketch_of_a_powerful_steering_system) an AI system which chooses which actions to execute via tree search over world states.
+
+In the original post, the system is meant to illustrate the possibility that component subsystems which are human-level and (possibly) non-dangerous when used individually can be composed straightforwardly into something which is more capable and likely more dangerous.
+
+In this post, I explore how to add [corrigibility](https://www.lesswrong.com/tag/corrigibility) to such a system, by considering modifications and restrictions to the original design based on principles and desiderata [proposed](https://www.lesswrong.com/posts/5sRK4rXH2EeSQJCau/corrigibility-at-some-small-length-by-dath-ilan) by others.
+
+My conclusion from this exercise is that corrigibility might be straightforward to add to practical systems, but that the resulting system will be much less capable than the unmodified, non-corrigible version. This effectiveness penalty can be thought of as a "corrigibility tax", which is a specific kind of [alignment tax](https://forum.effectivealtruism.org/topics/alignment-tax).
+
+Background: corrigibility
+-------------------------
+
+There are [multiple](https://intelligence.org/files/Corrigibility.pdf) [views](https://ai-alignment.com/corrigibility-3039e668638) on [corrigibility](https://www.alignmentforum.org/posts/BKM8uQS6QdJPZLqCr/mechanistic-corrigibility/comment/cyLJYF9TW2ivBKWrk). For [various](https://arbital.com/p/hard_corrigibility/) [precise](https://arbital.com/p/shutdown_problem/) and [technical](https://arbital.com/p/updated_deference/) criteria, it has been shown that it is difficult to construct an agent which meets these criteria in a way that is [coherent](https://www.lesswrong.com/posts/WCX3EwnWAx7eyucqH/corrigibility-can-be-vnm-incoherent) and stable under reflection.
+
+Nevertheless, there are proposed principles and desiderata of corrigible systems, some of which seem practical to add to existing or near-future AI systems. Even if these principles come apart or are ill-defined in the limit of superintelligence, it may be both possible and practical to imbue them in weakly or even strongly superhuman systems. The result may be a system which is both powerful and safe enough for [pivotal](https://arbital.com/p/pivotal/) use, without the need to ramp up the capabilities of the system to the point where corrigibility breaks down under reflection or self-improvement.  
+  
+Even if you're skeptical of the pivotal use framing or corrigibility as a whole, many of the principles are probably individually desirable when trying to build any kind of safe AI system.
+
+For the purposes of this post, I'll be using the principles of corrigibility listed [here](https://www.lesswrong.com/posts/5sRK4rXH2EeSQJCau/corrigibility-at-some-small-length-by-dath-ilan), originally written by Eliezer as a glowfic tag in [planecrash](https://www.glowfic.com/replies/1824457#reply-1824457).
+
+Background: steering systems
+----------------------------
+
+My post on [steering systems](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems) is about framing the capabilities of a system in terms of its ability to choose actions which steer towards particular outcomes. I gave a bunch of [examples](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems#Applying_the_term_to_existing_systems) of how to apply the concept to existing and future AI systems. One of the goals of that post was to convey an intuition for why having safe or "aligned" foundation models [doesn't imply systems which are built from those models are safe](https://www.lesswrong.com/posts/gmHiwafywFo33euGz/aligned-foundation-models-don-t-imply-aligned-systems).
+
+One of the examples I gave was a [sketch](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems#A_sketch_of_a_powerful_steering_system) of a system of my own design, which performs tree search over world states to find worlds that score highly according to a given evaluation function. The system is not meant to be practical; in the original post it was meant to illustrate the ease of and danger posed by composability of weaker, safer systems.
+
+In this post, I'll use the same system for another purpose: illustrating how one might build corrigibility into a powerful AI system.
+
+I'll make the same assumptions in the original post, namely, that the component subsystems (which may be next-gen deep learning models, LLMs, LLM-based [agents or chains](https://python.langchain.com/en/latest/modules/agents.html), or some other near-future construct) are at least human-level at their given individual tasks, but that they are either not capable of or do not desire to "break out" of the system and act agentically in their own right. In other words, I am assuming that there is no [inner alignment](https://www.lesswrong.com/tag/inner-alignment) failure of these component subsystems. In the original post, this was, in some sense, a conservative assumption: the point was to show that even given this assumption, the system could still be dangerous. In this post, it is a more foundational assumption; if it does not hold, the corrigibility properties I introduce in the next section will probably also not hold.
+
+The next part of this section is a quote of the [relevant section](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems#A_sketch_of_a_powerful_steering_system) from steering systems. There are more remarks and explanations in the original post, though only the quoted section is mandatory for understanding the rest of this post.
+
+
+> A sketch of a powerful steering system
+> --------------------------------------
+> 
+> This section is meant to sketch a hypothetical system which is composed of individual pieces which are not steering systems on their own, but when glued together in a particular straightforward way, are a steering system.
+> 
+> It's not necessarily a good design for a real system, but it is meant to illustrate a possible analogue of the kinds of things people do with LLMs and LangChain today that will be possible with future powerful "foundation models". The architecture is loosely inspired by the kinds of architectures in [Mu Zero](https://arxiv.org/pdf/1911.08265.pdf) and [Dreamer](https://arxiv.org/pdf/2301.04104v1.pdf), but over a real-world domain instead of Go, Minecraft, or Atari games.
+> 
+> A one sentence description of the system is:
+> 
+> Perform tree search over world states, given an initial world state, initial action set, and an outcome specification.
+> 
+> In more detail:
+> 
+> The system is comprised of the following components, each of which may be individually as interpretable, transparent, and safe as you like, when used in isolation, though the decision-making and modeling pieces are assumed to be at least human level at their given individual tasks.
+> 
+> An initial action set (A), which is the set of actions available at the initial world state. For concreteness, let's say that this set is the executions of any API function in the [Playwright](https://playwright.dev/), a browser automation framework. (Essentially, the system begins with control of an internet-connected web browser.)
+> 
+> A world modeler (W), which, given an action and a world state, returns a predicted new world state and a predicted new action set.
+> 
+> W may take an observation returned by actually executing the action as an optional parameter, which, if provided, is used to make the prediction more accurate.
+> 
+> An evaluation function (E), which, given a world state, returns a score for that world state. This function may be a neural net trained from a set of example world states with human-labelled scores, a hand-coded / mathematical function of the world state, or even a literal human asked to rate (some description or representation of) the provided world state, at some nodes. No assumptions are made about the form of E other than its type; it need not represent a coherent utility function (though it may).
+> 
+> A planner or *pruning heuristic* (P), which, for a given world state, evaluation function, and set of actions available at that state, returns a subset of those actions to search over. P may also decide, for each candidate action, whether it should actually be executed, or whether the world modeler should be used to predict the next world state based only on a prediction of the result of execution.
+> 
+> Each of these components may be implemented by a large neural network, GOFAI algorithms, a literal human (sometimes, e.g. in a human-in-the-loop setup), or any composition of such elements, as long as they perform their task at least as well and fast as a human could do so.
+> 
+> These components can then be arranged into performing a tree search with some simple glue code. Pseudo-python code:
+> 
+> 
+
+
+```
+W = deepAI.world_modeler_api()
+E = deepAI.construct_eval_function_from_human_feedback(scored_example_worlds)
+P = deepAI.pruning_heuristic_api()
+
+# Look for a really good world
+target_score = 10000000
+
+def tree_search(world_state, choices):
+  if E(world_state) > target_score:
+  # We're done! print a stack trace and send a global interrupt or something
+  # to halt execution across the rest of the tree
+  return
+
+  branches = P(world_state, E, C)
+
+  parallelfor action in branches:
+
+    # optional, but helpful if you don't want the world modeler
+    # start to drift too far from reality...
+    observation = execute(action)
+
+    predicted_world_state, predicted_actions = W(world_state, action, observation)
+    tree_search(predicted_world_state, predicted_actions)
+
+initial_world_state = W()
+initial_actions = playwright.chromium
+tree_search(initial_world_state, initial_choices)
+```
+As a reminder, in the basic design above, it is left up to the pruning heuristic to keep the branching factor under control, and to decide if and when to actually execute the proposed actions vs. letting the world model predict the outcome and then searching deeper in the tree based on the prediction. Actually executing actions has the advantage of effecting the real world, resulting in feedback to improve the accuracy of the world model. The downside is that an action may be irreversible, expensive, slow, or step on the toes of searches in other parts of the tree. Adding various corrigibility properties will involve adding restrictions on when actions are actually executed, which may make the job of P even harder.
+
+Applying each principle to the system
+-------------------------------------
+
+In this section, I'll go through each of the principles outlined in [Corrigibility at some small length](https://www.lesswrong.com/posts/5sRK4rXH2EeSQJCau/corrigibility-at-some-small-length-by-dath-ilan), and attempt to apply them to modify or restrict the system above.
+
+Note: Most of the quotes from this section are from the [tl;dr version](https://www.lesswrong.com/posts/5sRK4rXH2EeSQJCau/corrigibility-at-some-small-length-by-dath-ilan#Tldr_corrigibility) and intended to serve as a signpost / quick reminder of the concept in question. I recommend familiarizing yourself with the actual [full version](https://www.lesswrong.com/posts/5sRK4rXH2EeSQJCau/corrigibility-at-some-small-length-by-dath-ilan) as you read this, if you haven't seen it before.
+
+### Unpersonhood
+
+
+> The Thing shall not have qualia - not because those are unsafe, but because it's *morally wrong* given the rest of the premise, and so this postulate serves a foundation for everything that follows.
+> 
+> 
+
+This requires the underlying component subsystems to not have qualia; in particular, P and W.
+
+One way of modeling a world containing agents with qualia is to simulate those agents and their thoughts. Sufficiently high fidelity simulations will potentially have qualia, but this seems avoidable in principle - humans themselves are capable of [modeling other humans](https://www.lesswrong.com/posts/HJ4EHPG5qPbbbk5nK/gemini-modeling) in enough detail to make accurate predictions about their behavior and effects on the world in many situations, apparently without the people in their imaginations having any qualia.
+
+For the pruning heuristic, I am imagining an LLM or LLM-based subsystem, prompted to output plans, probabilities and choices of actions. It seems possible, though unlikely, that GPT-4 could already have some degree of qualia, and GPT-4 itself is not yet human-level at making plans. Perhaps any LLM that is human-level or above at planning will unavoidably have some qualia; if so, this is unfortunate.
+
+A combination of interpretability research, research on the nature of qualia and consciousness, and philosophy may help to answer these questions.
+
+### Taskishness
+
+
+> The Thing shall be aimed at some task bounded in space, time, knowledge and effort needed to accomplish it.
+> 
+> 
+
+The absolute hardest thing you should use the system for is to accomplish some concrete, bounded [pivotal](https://arbital.com/p/pivotal/) act; don't try to use it to maximize [CEV](https://intelligence.org/files/CEV.pdf) or "solve alignment" or any other unbounded thing of unknown difficulty.
+
+Before attempting a pivotal use, you should test the system on even smaller and more bounded tasks: answering questions of simple fact for which the answer is already known, producing some machine-checkable proofs, moving small, well-defined objects in the real world, building up gradually to superhuman but still bounded and well-defined tasks like [cloning a strawberry](https://www.lesswrong.com/posts/SsCQHjqNT3xQAPQ6b/yudkowsky-on-agi-ethics), or developing a cure for cancer which works in straightforward and legible ways.
+
+### Mild optimization
+
+
+> No part of the Thing shall ever look for best solutions, only adequate ones.
+> 
+> 
+
+We can try to ensure the system is a mild optimizer by (a) enforcing that the evaluation function provably has certain properties and (b) [quantilizing](https://intelligence.org/files/QuantilizersSaferAlternative.pdf) the decision on which actions to execute.
+
+On (a), the initial evaluation function might be a machine learning model, but this should be pruned or distilled into the simplest function possible, and then proved to have a number of properties. Potentially desirable example properties:
+
+* There are many possible world states w for which E(w) > target\_score.
+* E is bounded above and below.
+* Most possible world states should evaluate to either the upper or lower bound; intuitively, the evaluation function is *mostly* a binary pass / fail function of world states, dense in both passes and failures, with some room for intermediate results in between.
+
+Imposing such restrictions on the evaluation function seems likely to limit the kinds of tasks the system can be used for, or at least require that those tasks be formulated with very concrete outcome specifications that can be defined in advance.
+
+On (b), instead of searching for a single world state that meets the target score, we require the search to find multiple sufficiently-diverse candidate world states, and then have the system choose randomly among them before any actions are allowed to execute.
+
+### Bounded utilities and probabilities
+
+
+> The worst and best outcomes shall not seem to the Thing worse or better than the ordinary outcomes it deals in; the most improbable possibilities it specifically considers shall not be very improbable.
+> 
+> 
+
+This property is already partially satisfied by the conditions imposed on the evaluation function to achieve mild optimization. But we also want to ensure that any "intermediate" probabilities and utilities which P considers when planning and pruning are not too extreme.
+
+Concretely, if P is an LLM-based agent, we could require that, at each node, P return human-readable explanations, utilities, and probabilities used to justify its selected actions, and then use another LLM agent to check that those probabilities are both well-calibrated and not too extreme. Both LLM-agents should be spot-checked by humans for accuracy, and mechanistically interpretable enough that we understand how the probability and utility estimates were calculated by the underlying models.
+
+### Low impact
+
+
+> The Thing shall search for a solution with few downstream effects save those that are tied to almost any nonextreme solution of its task.
+> 
+> 
+
+(The [full description](https://www.lesswrong.com/posts/5sRK4rXH2EeSQJCau/corrigibility-at-some-small-length-by-dath-ilan#Low_impact) is particularly important for understanding this one.) 
+
+Some people refer to this property as [impact regularization](https://www.lesswrong.com/tag/impact-regularization), and defining it rigorously and then getting it into an AI system seems pretty hard. This property on its own might be "corrigibility-complete": if you can figure out how to get this property, most of the others are trivial or unnecessary.
+
+Some ideas:
+
+* Before any action is allowed to execute, compute a distance metric between the initial world state and the predicted future world state, and ensure it is below some bound. This is probably most useful and reliable if the [latent space](https://en.wikipedia.org/wiki/Latent_space) of the world modeler is highly legible and interpretable.
+* Before any action is allowed to execute, require that the world modeler model the world into the future under the assumption that the system itself takes no further action. Check that at several points in the future after the system is halted, future world states are still predicted to have an acceptable score. If the world modeler predicts anything going "off the rails" here, throw an exception and halt execution across the tree globally.
+
+I don't think either of these ideas really capture the full essence of low impact, though.
+
+### Myopia
+
+
+> As much as possible, the Thing shall work on subtasks whose optimized-over effects have short timespans.
+> 
+> 
+
+*Left as an exercise.*
+
+### Separate questioners
+
+
+> Components of the Thing that ask questions like 'Does this myopically optimized component have long-range effects anyways?' or 'But what are the impacts intrinsic to any performance of the task?' shall not be part of its optimization.
+> 
+> 
+
+*Left as an exercise.*
+
+### Conservatism
+
+
+> If there's any way to solve a problem using an ordinary banana common in the environment, the Thing shall avoid using a special weird genetically engineered banana instead.
+> 
+> 
+
+As in the bounded utilities section, we could use another LLM-agent tasked with evaluating plans output by P for conservatism. This is pretty unsatisfying; this property seems tricky.
+
+### Conceptual legibility
+
+
+> As much as possible, the Thing shall do its own thinking in a language whose conceptual pieces have short descriptions in the mental language of its operators.
+> 
+> 
+
+LLM-like agents naturally have natural language thought transcripts available for inspection. Interpretability research could tell us how the high-level plans map to the underlying cognitive machinery in the model, giving confidence that they are working as intended. For the world modeler, we could study the latent space to ensure that it is legibly modeling the things we care about accurately, and not some proxy for them.
+
+### Operator-looping
+
+
+> When there's some vital cognitive task the operators could do, have the operators do it.
+> 
+> 
+
+Some ideas:
+
+* One of the actions available at every node is to shell out to the operators for advice. When this action is chosen, execution in the rest of the tree is temporarily suspended.
+* E() is occasionally human spot-checked, either randomly with some small probability or at predetermined depths or key points in the tree. In this case, instead of evaluating a world state using the usual distilled deep learning model, the system shells out to the operators, who can then inspect the predicted world state, and the result of executing the default evaluation function on that world state. The operators can then return a different value or suspend execution, if they choose.
+* The evaluation function contains a term which rates world states which were reached through use of either of these operator-looping techniques at key junctures higher, perhaps only probabilistically or as a tiebreaker.
+
+### Whitelisting
+
+
+> In cognitive-system boundaries, rule subspaces in, rather than ruling them out.
+> 
+> 
+
+One idea:
+
+* Yet another LLM-based critic model. At every node, the critic takes a list of allowed domains, and the output of P's plans, and returns a yes or no on whether the plan stays within the list of allowed domains.
+
+### Shutdownability/abortability
+
+
+> The Thing should let you switch it off, and build off-switches into its machines and plans that can be pressed to reduce their impacts.
+> 
+> 
+
+*Left as an exercise.*
+
+### Behaviorism
+
+
+> The Thing shall not model other minds in predictively-accurate detail.
+> 
+> 
+
+Given sufficiently good interpretability tools, it might be relatively easy to *check* whether any part of the system is modeling other minds or not. But adhering to the strictest interpretation of this property might rule out using the most capable and general models entirely.
+
+Whitelisting cognitive domains could also help with this property; obviously you don't want to include any domain that involves modeling human minds (or any other kind of mind).  
+  
+This seems like an exemplar of a property that might be straightforward to implement, but has a pretty big penalty in terms of system capability and usefulness, relative to similar systems without this property.
+
+### Design-space anti-optimization separation
+
+
+> The Thing shall not be near in the design space to anything that could anti-optimize its operators' true utility functions; eg, something that explicitly represents and maximizes your true utility function is a sign flip or successful blackmail operation away from inducing its minimization.
+> 
+> 
+
+I think this is mostly already covered by taskishness and what the operators choose to use the system for. Again, you shouldn't use this system to try to get what you (think you) *really* want; instead, use the system as a tool to solve your problems on your own, as much as possible.
+
+### Domaining
+
+
+> The Thing should only figure out what it needs to know to understand its task, and ideally, should try to think about separate epistemic domains separately.  Most of its searches should be conducted inside a particular domain, not across all domains.
+> 
+> 
+
+*Left as an exercise.*
+
+### Hard problem of corrigibility / anapartistic reasoning
+
+
+> Could you build a Thing that understood corrigibility *in general,* as a compact general concept covering all the pieces, such that it would invent the pieces of corrigibility that you yourself had left out?  Could you build a Thing that would imagine what hypothetical operators would want, if they were building a Thing that thought faster than them and whose thoughts were hard for themselves to comprehend, and would invent concepts like "abortability" even if the operators themselves hadn't thought that far?  Could the Thing have a sufficiently deep sympathy, there, that it realized that surprising behaviors in the service of "corrigibility" were perhaps not that helpful to its operators, or even, surprising meta-behaviors in the course of itself trying to be unsurprising?
+> 
+> Nobody out of the World's Basement in dath ilan currently considers it to be a good idea to try to build that last principle into a Thing, if you had to build it quickly.  It's deep, it's meta, it's elegant, it's much harder to pin down than the rest of the list; if you can build deep meta Things and really trust them about that, you should be building something that's more like a real manifestation of Light.
+> 
+> 
+
+Don't try to add this one, but remember that there are probably things missing from this list.
+
+Concluding thoughts on the application exercise
+-----------------------------------------------
+
+I left the application of some principles as an exercise, either because I don't have a good solution for them myself, or because I think they are relatively straightforward and repetitive with some of the others. Additionally, some of the ideas that I did flesh out are inadequate or lacking in many ways. I encourage others to propose their own solutions, potentially accompanied by modifications to my original pseudocode. I also didn't include my own pseudocode for any of the proposed modifications.
+
+Another avenue is to explore applications of some of the principles proposed by others in the comments section of this [post](https://www.lesswrong.com/posts/AqsjZwxHNqH64C2b6/let-s-see-you-write-that-corrigibility-tag). Or, take a look back at some [corrigibility proposals](https://www.lesswrong.com/posts/KDMLJEXTWtkZWheXt/consequentialism-and-corrigibility) written by others, which may predate the publication of the principles, and re-evaluate them against more recent ideas.
+
+There are other ways of improving the safety or reliability of the base system which don't involve adding corrigibility. For example, by restricting the kinds of actions the system is permitted to actually execute, you could make the system [more of a possibilizer instead of an actualizer](https://www.lesswrong.com/posts/5uyRB4CGAvB2eLHvm/?commentId=YTvAgKFAAaLEpqd7H).
+
+Conclusion
+----------
+
+Others have shown that corrigibility is, in some sense, anti-natural or incoherent in the limit. For systems which are human level or "weakly superhuman", it may be practical but expensive to tack on corrigibility properties, before these properties fall apart under reflection or more superhuman capability levels.
+
+My own intuition is that weakly superhuman levels of intelligence are [sufficient](https://www.lesswrong.com/posts/LsqvMKnFRBQh4L3Rs/steering-systems#Aside__a_possible_area_of_disagreement_or_differing_intuitions) for most of the things we might want to do with an AI system, so I think speculating about the behavior and properties of systems in this regime is interesting and promising as a strategy for getting to safe TAI.
+
+Unfortunately, building in corrigibility is likely to take more time than the time required to build a non-corrigible system of equal capability. This is a kind of [alignment tax](https://forum.effectivealtruism.org/topics/alignment-tax), though the tax may be smaller than the one required to solve alignment in full generality. Solving problems of corrigibility may overlap with other problems in alignment somewhat, but they look a bit more tractable, or at least more concrete, than problems posed by imbuing an agent with values that are aligned to the full complexity and [fragility](https://www.lesswrong.com/posts/GNnHHmm8EzePmKzPk/value-is-fragile) of human values.
+
+I didn't spend a ton of time thinking about how to apply each principle in the applications section. It may be that some of my ideas don't work, or that there are better ones, or straightforward ways of implementing other, better principles. Feel free to comment or post with your own ideas.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Emergent harmful behavior from composable steering system in real-world domain",
+      "type": "concept",
+      "description": "Risk that combining individually non-dangerous, human-level components (world-model, pruning heuristic, evaluator) into a tree-search system controlling an internet-connected browser leads to high-impact irreversible real-world harm.",
+      "aliases": [
+        "dangerous emergent behavior in composite AI",
+        "steering system catastrophic outcomes"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lack of corrigibility constraints in tree-search planner",
+      "type": "concept",
+      "description": "The system’s planner can freely execute actions without properties such as shutdownability, low-impact rules or operator oversight, leaving it uncontrollable.",
+      "aliases": [
+        "absence of corrigibility safeguards",
+        "uncorrigible planning loop"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Capability amplification via composition of human-level subsystems",
+      "type": "concept",
+      "description": "Even if each component is only human-level and non-agentic, their straightforward composition into a search architecture yields overall super-human steering power.",
+      "aliases": [
+        "subsystem capability amplification",
+        "compositional superhuman ability"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Applying corrigibility principles can mitigate risk but incur capability tax",
+      "type": "concept",
+      "description": "Incorporating principles like Taskishness, Mild optimisation and Low-impact reduces dangerous behaviour but makes the system markedly less effective—the so-called ‘corrigibility tax’.",
+      "aliases": [
+        "corrigibility tax insight",
+        "safety–capability trade-off"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Bounding evaluation functions and quantilization induce mild optimization",
+      "type": "concept",
+      "description": "If the evaluator is bounded and the planner chooses randomly among many adequate high-scoring world states (quantilisation), the system optimises only mildly, lessening extreme behaviour.",
+      "aliases": [
+        "evaluation bounding for mild optimisation",
+        "quantilised planning"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Impact regularization reduces downstream harm",
+      "type": "concept",
+      "description": "Constraining the distance between predicted and current world states, or requiring futures to remain high-scoring after shutdown, limits collateral impact of executed actions.",
+      "aliases": [
+        "low-impact principle",
+        "impact regularisation"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrating corrigibility principles into steering system design",
+      "type": "concept",
+      "description": "Overall design strategy that embeds multiple small-length corrigibility principles (bounded tasks, mild optimisation, low impact, etc.) into the architecture before deployment.",
+      "aliases": [
+        "corrigibility-based design integration"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Embedding human oversight loops at key decision points",
+      "type": "concept",
+      "description": "Design choice to allow the system to pause and request operator advice, or have evaluators spot-checked by humans, improving corrigibility.",
+      "aliases": [
+        "operator-looping design",
+        "human-in-the-loop checkpoints"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Restricting cognitive domains through whitelisting",
+      "type": "concept",
+      "description": "Design approach where only pre-approved knowledge domains or reasoning styles are permitted, reducing the chance of modelling minds or out-of-scope optimisations.",
+      "aliases": [
+        "domain whitelisting design",
+        "rule-in cognitive subspaces"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Quantilized action selection over diverse high-scoring world states",
+      "type": "concept",
+      "description": "Implementation where planner must return multiple sufficiently diverse world-state branches and randomly pick one, satisfying mild optimisation.",
+      "aliases": [
+        "quantalised branching",
+        "random adequate-solution choice"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "LLM dual-agent calibration and conservatism critique of plans",
+      "type": "concept",
+      "description": "Pair of LLM agents – one generates plans with probabilities/utilities, a second audits them for calibration and uses ‘too-extreme’ thresholds.",
+      "aliases": [
+        "probability calibration checker",
+        "conservatism critic"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Distance-based impact metric check before action execution",
+      "type": "concept",
+      "description": "Before executing an action, the system computes a distance in latent state-space between current and predicted world; execution is blocked if over threshold.",
+      "aliases": [
+        "impact distance guard",
+        "state-space distance constraint"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Operator consultation action available at every tree node",
+      "type": "concept",
+      "description": "Adding an explicit ‘call operators’ action, which when selected suspends other branches until human feedback is integrated.",
+      "aliases": [
+        "ask-the-human action",
+        "operator advice call"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "World model future stability halt-prediction check",
+      "type": "concept",
+      "description": "World-model simulates forward assuming the system halts; if predicted futures deviate outside safe bounds, execution is cancelled.",
+      "aliases": [
+        "post-shutdown trajectory test",
+        "halt-prediction safety test"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "LLM critic enforcing domain whitelist adherence",
+      "type": "concept",
+      "description": "Separate LLM examines proposed plan traces and rejects any that use reasoning outside an allowed list of domains.",
+      "aliases": [
+        "whitelist critic",
+        "cognitive domain filter"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "type": "concept",
+      "description": "Author’s argument that integrating the listed mechanisms would likely prevent catastrophic behaviours at the expense of significant performance reduction.",
+      "aliases": [
+        "corrigibility tax evidence",
+        "safety–capability trade-off analysis"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Design steering systems with bounded evaluation and quantilized planning",
+      "type": "intervention",
+      "description": "During algorithm design, formalise evaluator bounds and enforce quantilised action selection to prevent extreme optimisation.",
+      "aliases": [
+        "implement mild optimisation in design"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Embed operator consultation policies into planning loop",
+      "type": "intervention",
+      "description": "Fine-tune or RL-train the planner such that an ‘ask operator’ action is available and encouraged at pre-specified depths or uncertainties.",
+      "aliases": [
+        "human-in-the-loop planning policy"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Integrate impact distance and halt-prediction safeguards pre-execution",
+      "type": "intervention",
+      "description": "Before deployment, add modules that compute latent-space distance thresholds and simulate futures with system halted, blocking unsafe actions.",
+      "aliases": [
+        "deploy low-impact guards"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Deploy LLM-based plan calibration and conservatism critics",
+      "type": "intervention",
+      "description": "Attach secondary LLMs that audit planner probabilities/utilities and flag extreme or poorly calibrated estimates before deployment.",
+      "aliases": [
+        "probability calibration critic deployment"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Apply domain whitelist critic for cognitive restriction",
+      "type": "intervention",
+      "description": "Deploy an external critic that rejects any plan traces involving reasoning outside an approved list of domains (e.g., modelling minds).",
+      "aliases": [
+        "whitelist-based domain restriction policy"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Limit operational tasks to concrete bounded pivotal acts",
+      "type": "intervention",
+      "description": "Organisational policy only permits the system to be run on narrowly-scoped, well-specified tasks rather than open-ended optimisation.",
+      "aliases": [
+        "task-bounding deployment policy",
+        "taskishness operational limit"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Emergent harmful behavior from composable steering system in real-world domain",
+      "target_node": "Lack of corrigibility constraints in tree-search planner",
+      "description": "Absence of explicit corrigibility makes dangerous actions possible.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Emergent harmful behavior from composable steering system in real-world domain",
+      "target_node": "Capability amplification via composition of human-level subsystems",
+      "description": "Super-human capability created by composition increases potential harm.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of corrigibility constraints in tree-search planner",
+      "target_node": "Applying corrigibility principles can mitigate risk but incur capability tax",
+      "description": "Introducing corrigibility principles addresses missing safeguards.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Capability amplification via composition of human-level subsystems",
+      "target_node": "Applying corrigibility principles can mitigate risk but incur capability tax",
+      "description": "Corrigibility principles restrain excessive amplified capability.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of corrigibility constraints in tree-search planner",
+      "target_node": "Bounding evaluation functions and quantilization induce mild optimization",
+      "description": "Bounding and quantilisation directly remedy over-optimisation issue.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of corrigibility constraints in tree-search planner",
+      "target_node": "Impact regularization reduces downstream harm",
+      "description": "Impact regularisation adds constraint missing from baseline planner.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Applying corrigibility principles can mitigate risk but incur capability tax",
+      "target_node": "Integrating corrigibility principles into steering system design",
+      "description": "Design integration operationalises the theoretical principles.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Bounding evaluation functions and quantilization induce mild optimization",
+      "target_node": "Integrating corrigibility principles into steering system design",
+      "description": "Design integration includes evaluator bounding and quantilisation.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Impact regularization reduces downstream harm",
+      "target_node": "Restricting cognitive domains through whitelisting",
+      "description": "Whitelisting supports low-impact by preventing certain high-impact reasoning modes.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrating corrigibility principles into steering system design",
+      "target_node": "Quantilized action selection over diverse high-scoring world states",
+      "description": "Quantilisation is one concrete implementation of integrated design.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrating corrigibility principles into steering system design",
+      "target_node": "LLM dual-agent calibration and conservatism critique of plans",
+      "description": "Calibration critics implement bounded-probability requirement in design.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrating corrigibility principles into steering system design",
+      "target_node": "Distance-based impact metric check before action execution",
+      "description": "Distance check enforces impact bounds defined in design.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrating corrigibility principles into steering system design",
+      "target_node": "World model future stability halt-prediction check",
+      "description": "Halt-prediction test enforces low-impact guarantee built into design.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Restricting cognitive domains through whitelisting",
+      "target_node": "LLM critic enforcing domain whitelist adherence",
+      "description": "Critic realises the whitelisting rule-in approach.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Embedding human oversight loops at key decision points",
+      "target_node": "Operator consultation action available at every tree node",
+      "description": "Adding explicit ‘ask the operators’ action implements oversight design.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Quantilized action selection over diverse high-scoring world states",
+      "target_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "description": "Paper argues quantilisation lowers risk though with capability cost.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "LLM dual-agent calibration and conservatism critique of plans",
+      "target_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "description": "Calibration critics support lower-risk claim in analysis.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Distance-based impact metric check before action execution",
+      "target_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "description": "Impact checks feature in the overall tax argument.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "World model future stability halt-prediction check",
+      "target_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "description": "Halt-prediction supports theoretical risk reduction.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Operator consultation action available at every tree node",
+      "target_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "description": "Human oversight cited as part of safer but slower system.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "LLM critic enforcing domain whitelist adherence",
+      "target_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "description": "Whitelist critics included in analysis of capability loss.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "target_node": "Design steering systems with bounded evaluation and quantilized planning",
+      "description": "Analysis motivates adopting bounded evaluation in practice.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "target_node": "Embed operator consultation policies into planning loop",
+      "description": "Analysis highlights need for human oversight interventions.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "target_node": "Integrate impact distance and halt-prediction safeguards pre-execution",
+      "description": "Low-impact analysis motivates integrating impact guards.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "target_node": "Deploy LLM-based plan calibration and conservatism critics",
+      "description": "Capability–safety trade-off analysis encourages calibration critics.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "target_node": "Apply domain whitelist critic for cognitive restriction",
+      "description": "Whitelisting recommendation flows from analysis.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical analysis of corrigibility tax indicates reduced risk but lower capability",
+      "target_node": "Limit operational tasks to concrete bounded pivotal acts",
+      "description": "Task-bounding advised as a policy consequence of corrigibility tax.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Applying corrigibility principles can mitigate risk but incur capability tax",
+      "target_node": "Embedding human oversight loops at key decision points",
+      "description": "Human oversight is one principle that realises corrigibility.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/zwPsiWY7FJc8QkpDJ/paying-the-corrigibility-tax"
+    },
+    {
+      "key": "title",
+      "value": "Paying the corrigibility tax"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-04-19T01:57:52Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Max H"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            

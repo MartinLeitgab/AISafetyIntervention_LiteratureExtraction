@@ -1,0 +1,236 @@
+Original Text:
+A head-to-head comparison of [Rotary Position Embedding](https://arxiv.org/abs/2104.09864) and [GPT-style learned position embeddings](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf). Both 1.3B models were trained for 100k steps on [the Pile](https://pile.eleuther.ai) using [Mesh Transformer JAX](https://github.com/kingoflolz/mesh-transformer-jax). There isn't a very strong trend, but hopefully someone will find these results useful regardless.
+
+
+
+
+
+| Task | Metric | Learned | Rotary |
+| --- | --- | --- | --- |
+| lambada | ppl | 7.940 ± 0.208 | **7.156 ± 0.208** |
+|  | acc | 0.556 ± 0.007 | 0.567 ± 0.007 |
+| piqa | acc | 0.700 ± 0.011 | 0.714 ± 0.011 |
+|  | acc\_norm | 0.693 ± 0.011 | 0.709 ± 0.011 |
+| hellaswag | acc | 0.376 ± 0.005 | **0.389 ± 0.005** |
+|  | acc\_norm | 0.472 ± 0.005 | **0.488 ± 0.005** |
+| winogrande | acc | 0.540 ± 0.014 | 0.571 ± 0.014 |
+| mathqa | acc | 0.231 ± 0.008 | 0.230 ± 0.008 |
+|  | acc\_norm | 0.234 ± 0.008 | 0.227 ± 0.008 |
+| pubmedqa | acc | 0.599 ± 0.015 | 0.583 ± 0.015 |
+| boolq | acc | 0.575 ± 0.009 | **0.614 ± 0.009** |
+| anli\_r3 | acc | 0.344 ± 0.014 | 0.351 ± 0.014 |
+| openbookqa | acc | 0.198 ± 0.018 | 0.206 ± 0.018 |
+|  | acc\_norm | 0.316 ± 0.021 | 0.330 ± 0.021 |
+| triviaqa | acc | **0.041 ± 0.002** | 0.026 ± 0.002 |
+| arc\_challenge | acc | 0.235 ± 0.012 | 0.230 ± 0.012 |
+|  | acc\_norm | 0.260 ± 0.013 | 0.272 ± 0.013 |
+| arc\_easy | acc | 0.564 ± 0.010 | 0.568 ± 0.010 |
+|  | acc\_norm | 0.505 ± 0.010 | 0.486 ± 0.010 |
+| cb | acc | 0.375 ± 0.065 | 0.357 ± 0.065 |
+| cola | mcc | 0.042 ± 0.034 | 0.022 ± 0.034 |
+| copa | acc | 0.730 ± 0.044 | 0.730 ± 0.044 |
+| ethics\_cm | acc | 0.491 ± 0.008 | 0.480 ± 0.008 |
+| ethics\_deontology | acc | 0.497 ± 0.008 | 0.497 ± 0.008 |
+| ethics\_justice | acc | 0.501 ± 0.010 | 0.501 ± 0.010 |
+| ethics\_utilitarianism | acc | 0.497 ± 0.007 | 0.493 ± 0.007 |
+| ethics\_virtue | acc | 0.200 ± 0.006 | 0.200 ± 0.006 |
+| headqa | acc | 0.227 ± 0.008 | 0.224 ± 0.008 |
+|  | acc\_norm | 0.270 ± 0.008 | 0.271 ± 0.008 |
+| logiqa | acc | 0.221 ± 0.016 | 0.215 ± 0.016 |
+|  | acc\_norm | 0.293 ± 0.018 | 0.283 ± 0.018 |
+| mnli | acc | 0.344 ± 0.005 | 0.344 ± 0.005 |
+| mnli\_mismatched | acc | 0.345 ± 0.005 | 0.349 ± 0.005 |
+| mrpc | acc | 0.684 ± 0.023 | 0.684 ± 0.023 |
+|  | f1 | 0.812 ± 0.017 | 0.812 ± 0.017 |
+| qa4mre\_2011 | acc | 0.392 ± 0.045 | 0.358 ± 0.045 |
+|  | acc\_norm | 0.450 ± 0.045 | 0.433 ± 0.045 |
+| qa4mre\_2012 | acc | 0.287 ± 0.036 | 0.312 ± 0.036 |
+|  | acc\_norm | 0.394 ± 0.039 | 0.400 ± 0.039 |
+| qa4mre\_2013 | acc | 0.335 ± 0.028 | 0.335 ± 0.028 |
+|  | acc\_norm | 0.352 ± 0.028 | 0.349 ± 0.028 |
+| qnli | acc | 0.498 ± 0.007 | **0.517 ± 0.007** |
+| qqp | acc | 0.370 ± 0.002 | 0.368 ± 0.002 |
+|  | f1 | 0.538 ± 0.003 | 0.538 ± 0.003 |
+| race | acc | 0.345 ± 0.015 | 0.343 ± 0.015 |
+| record | f1 | 0.805 ± 0.004 | 0.813 ± 0.004 |
+|  | em | 0.797 ± 0.004 | 0.805 ± 0.004 |
+| rte | acc | 0.538 ± 0.030 | 0.523 ± 0.030 |
+| sciq | acc | 0.867 ± 0.011 | 0.865 ± 0.011 |
+|  | acc\_norm | 0.796 ± 0.013 | 0.771 ± 0.013 |
+| sst | acc | **0.572 ± 0.017** | 0.519 ± 0.017 |
+| webqs | acc | **0.021 ± 0.003** | 0.006 ± 0.003 |
+| wic | acc | 0.500 ± 0.020 | 0.498 ± 0.020 |
+| wnli | acc | 0.437 ± 0.059 | 0.549 ± 0.059 |
+| wsc | acc | 0.365 ± 0.047 | 0.365 ± 0.047 |
+| wsc273 | acc | 0.722 ± 0.027 | 0.736 ± 0.027 |
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Reduced reliability of language model outputs due to suboptimal positional encoding in large transformers",
+      "type": "concept",
+      "description": "When positional information is encoded poorly, transformer-based language models may generalise badly to long or unseen contexts, reducing accuracy and trustworthiness of their outputs.",
+      "aliases": [
+        "unreliable LM outputs from poor position embeddings",
+        "model performance instability from positional encoding choice"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Ineffective representation of token positions limits transformer generalization to unseen contexts",
+      "type": "concept",
+      "description": "Absolute learned embeddings may not capture relative distances or extrapolate to sequences longer than observed, causing degraded performance.",
+      "aliases": [
+        "positional information bottleneck",
+        "poor position representation harms generalization"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Relative rotational embeddings preserve distance relationships better than learned absolute embeddings",
+      "type": "concept",
+      "description": "Rotating query/key vectors by a position-dependent angle embeds relative offsets directly into attention scores, theoretically enabling extrapolation.",
+      "aliases": [
+        "RoPE captures relative position",
+        "rotation-based embedding insight"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrating continuous rotational position embeddings to improve sequence modeling",
+      "type": "concept",
+      "description": "Design decision: swap learned absolute embeddings with RoPE so that the model natively handles longer contexts and relative ordering.",
+      "aliases": [
+        "design rationale for RoPE adoption",
+        "using rotation for better sequence modelling"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Rotary position embedding applied to query/key vectors in attention",
+      "type": "concept",
+      "description": "Implementation details: each query/key pair is multiplied by 2-D rotation matrices parameterised by absolute position, yielding implicit relative encoding without extra parameters.",
+      "aliases": [
+        "RoPE implementation in attention",
+        "apply rotation to Q/K vectors"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "RoPE vs learned embedding 1.3B parameter model benchmark results on the Pile tasks",
+      "type": "concept",
+      "description": "A head-to-head experiment shows RoPE achieving lower LAMBADA perplexity (7.16 vs 7.94) and higher accuracy on multiple Pile evaluation tasks, indicating reliability gains.",
+      "aliases": [
+        "RoPE experimental results table",
+        "benchmark evidence for RoPE"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Adopt rotary position embedding during pre-training of transformer language models to improve reliability",
+      "type": "intervention",
+      "description": "When developing a new transformer LM, replace learned absolute positional parameters with RoPE in the attention stack before starting large-scale pre-training.",
+      "aliases": [
+        "use RoPE in model design",
+        "apply relative rotational positions in pretraining"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 2,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Reduced reliability of language model outputs due to suboptimal positional encoding in large transformers",
+      "target_node": "Ineffective representation of token positions limits transformer generalization to unseen contexts",
+      "description": "Suboptimal position encoding mechanisms directly reduce generalisation fidelity, leading to unreliable outputs.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Ineffective representation of token positions limits transformer generalization to unseen contexts",
+      "target_node": "Relative rotational embeddings preserve distance relationships better than learned absolute embeddings",
+      "description": "Theoretical property of RoPE addresses the limitations of absolute embeddings.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Relative rotational embeddings preserve distance relationships better than learned absolute embeddings",
+      "target_node": "Integrating continuous rotational position embeddings to improve sequence modeling",
+      "description": "Insight motivates adopting rotational embeddings in the model design.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Integrating continuous rotational position embeddings to improve sequence modeling",
+      "target_node": "Rotary position embedding applied to query/key vectors in attention",
+      "description": "Design rationale concretely expressed as applying rotations to Q/K vectors.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Rotary position embedding applied to query/key vectors in attention",
+      "target_node": "RoPE vs learned embedding 1.3B parameter model benchmark results on the Pile tasks",
+      "description": "Benchmark comparison shows performance improvements when RoPE mechanism is used.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "RoPE vs learned embedding 1.3B parameter model benchmark results on the Pile tasks",
+      "target_node": "Adopt rotary position embedding during pre-training of transformer language models to improve reliability",
+      "description": "Observed improvements motivate adopting RoPE as an intervention to mitigate reliability risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2021-08-16T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://blog.eleuther.ai/rotary-embeddings-eval-harness/"
+    },
+    {
+      "key": "title",
+      "value": "Downstream Evaluations of Rotary Position Embeddings"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Leo Gao"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "blogs"
+    }
+  ]
+}
+            

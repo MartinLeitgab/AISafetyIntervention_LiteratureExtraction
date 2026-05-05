@@ -1,0 +1,636 @@
+Original Text:
+AKA My Most Likely Reason to Die [~~Young~~](https://forum.effectivealtruism.org/posts/hJDid3goqqRAE6hFN/my-most-likely-reason-to-die-young-is-ai-x-risk) is AI X-Risk
+
+TL;DR: I made a model which takes into account AI timelines, the probability of AI going wrong, and probabilities of dying from other causes. I got that **the main “end states” for my life are either dying from AGI due to a lack of AI safety (at 35%), or surviving AGI and living to see aging solved (at 43%).**
+
+*Meta: I'm posting this under a pseudonym because many people I trust had a strong intuition that I shouldn't post under my real name, and I didn't feel like investing the energy to resolve the disagreement. I'd rather people didn't de-anonymize me.*
+
+The model & results
+===================
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/yKexBAtZGftCmfs6n/dgvr0uq7j7m3q7dsoftk)A simple model of AGI scenarios. All possible "end" states of the simulation are in color. I made a simple probabilistic model of the future, which takes seriously the possibility of AGI being invented soon, its risks, and its effects on technological development (particularly in medicine):
+
+* Without AGI, people keep dying at historical rates (following US actuarial tables)
+* At some point, AGI is invented (following Metaculus timelines)
+* At the point AGI is invented, there are two scenarios (following my estimates of humanity’s odds of survival given AGI at any point in time, which are relatively pessimistic):
+	1. We survive AGI.
+	2. We don’t survive AGI.
+* If we survive AGI, there are two scenarios:
+	1. We never solve aging (maybe because aging is fundamentally unsolvable or we decide not to solve it).
+	2. AGI is used to solve aging.
+* If AGI is eventually used to solve aging, people keep dying at historical rates until that point.
+	+ I model the time between AGI and aging being solved as an exponential distribution with a mean time of 5 years.
+
+Using this model, I ran Monte Carlo simulations to predict the probability of the main end states of my life (as someone born in 2001 who lives in the US):
+
+* **I die before AGI: 10%**
+* **I die from AGI: 35%**
+* I survive AGI but die because we never solve aging: 11%
+* I survive AGI but die before aging is solved: 1%
+* **I survive AGI and live to witness aging being solved: 43%**
+
+There is [a jupyter notebook](https://colab.research.google.com/drive/154QTLI7fRzAVQI4ukCrmpIbCqcYB5700?usp=sharing) where you can play around with the parameters and see what the probability distribution looks like for you (scroll to the last section).
+
+Here’s what my model implies for people based on their year of birth, conditioning on them being alive in 2023:
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/yKexBAtZGftCmfs6n/ezmpsbv91gr9fumkmzq6)Probabilities of various end states depending on date of birth, my personal estimates for timelines and p(doom).As is expected, the earlier people are born, the likelier it is that they will die before AGI. The later someone is born, the likelier it is that they will either die from AGI or have the option to live for a very long time due to AGI-enabled advances in medicine.
+
+Following my (relatively pessimistic) AI safety assumptions, for anyone born after ~1970, dying by AGI and having the option to live “forever” are the two most likely scenarios. **Most people alive today have a solid chance at living to see aging cured. However, if we don’t ensure that AI is safe, we will never be able to enter that future.**
+
+I also ran this model given less unconventional estimates of timelines and P(everyone dies | AGI), where the timelines are twice as long as the Metaculus timelines, and the P(everyone dies | AGI) is 15% in 2023 and exponentially decays at a rate where it hits 1% in 2060.
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/yKexBAtZGftCmfs6n/sthvoobn5zmuxrz8fl4h)Probabilities of various end states depending on date of birth, more conventional estimates for timelines and p(doom).For the more conventional timelines and P(everyone dies | AGI), the modal scenarios are dying before AGI, and living to witness aging being solved. Dying from AGI hovers around 1-4% for most people.
+
+Assumptions
+===========
+
+Without AGI, people keep dying at historical rates
+--------------------------------------------------
+
+I think this is probably roughly correct, as we’re likely to see advances in medicine before AGI, but nuclear and biorisk roughly counteract that (one could model how these interact, but I didn’t want to add more complexity to the model). I use [the US actuarial life table](https://www.ssa.gov/oact/STATS/table4c6.html) for men (which is very similar to the one for women) to determine the probability of dying at any particular age. For ages after 120 (which is as far as the table goes), I simply repeat the probability of dying at age 120, which is 97.3%. This is wrong but I expect the final estimates to mostly be correct for people born after 1940.
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/yKexBAtZGftCmfs6n/wg1yptnq2qg4uuhgoour)Probabilities of dying at any particular age. The simulation works by treating individual years as discrete units of time.Metaculus timelines
+-------------------
+
+Metaculus doesn't have a way to draw samples from distributions, so I messily approximated the function by finding the PDF at various points and playing with a lognormal distribution until it looked roughly right. The median of the distribution is 2034. I fit a lognormal distribution this [Metaculus question](https://www.metaculus.com/questions/5121/date-of-artificial-general-intelligence/), discarding years before 2023. This is what the distribution looks like:  
+ 
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/yKexBAtZGftCmfs6n/doe7daarw5gfzp646idv)For the conventional estimate, I just multiplied each sample by three to make the timelines three times longer (so a median of 2056).
+
+Probability of surviving AGI
+----------------------------
+
+This is a very rough estimate of my probability of surviving AGI, conditioning AGI being invented at any particular time. Here’s what the graph looks like. My estimate levels out at 98%, the conventional one approaches 100%. I actually think it approaches 100% but 98% is close enough to my estimate.
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/yKexBAtZGftCmfs6n/fo6lpvrllcqrqxacbi0b)
+
+For the conventional estimate, I simply have an exponentially decaying probability of not surviving which starts at 15% given AGI in 2023 and drops to 1% by 2060.
+
+Probability that, conditioning on surviving AGI, we eventually solve aging
+--------------------------------------------------------------------------
+
+**I have this at 80%** without much thinking about it. I think the main scenarios where this doesn’t happen involve us deciding to replace humans who are currently alive with something we consider more valuable (which is incompatible with keeping currently living humans around), or succumbing to some existential risk after we survive AGI.
+
+Time between surviving AGI and solving aging
+--------------------------------------------
+
+**I model this as an exponential distribution with a mean time of 5 years.** I mostly think of it as requiring a certain amount of “intellectual labor” (distributed lognormally) to be solved, with the amount of intellectual labor per unit of time increasing rapidly with the advent of AGI as its price decreases dramatically. I have very wide error bars about how much intellectual labor to be invested, and how much intellectual labor output will speed up given AGI, so I mostly just don’t want to add more moving parts to the model, and instead throw an exponential distribution at it. In the jupyter notebook, it’s easy to change this parameter with your own distribution.
+
+No assumptions about continuous personal identity
+-------------------------------------------------
+
+I think there are some pretty weird scenarios for how the future could go, including ones where:
+
+* biological humans live for so long that calling them the “same person” applies much less than it does for people alive today, who generally live less than 100 years and change relatively little over time
+* humans become digital, and it’s unclear whether the uploading process “makes a new person” or “duplicates an existing person”
+* the human experience changes so much over time that we enter an unrecognizable state, where minds might relive the same moment over and over, or exist for very short periods of time, or change so quickly that there’s barely any continuity over time.
+
+**I’m not trying to capture any of these questions in the model.** The main question this model is trying to answer is “Can I expect to witness aging being solved?” (whatever “I” means).
+
+Appendix A: This does not imply accelerating AI development
+===========================================================
+
+One might look at the rough 50/50 chance at immortality given surviving AGI and think "Wow, I should really speed up AGI so I can make it in time!". But the action space is more something like:
+
+1. Work on AI safety (transfers probability mass from "die from AGI" to "survive AGI")
+	1. The amount of probability transferred is probably at least a few microdooms per person.
+2. Live healthy and don't do dangerous things (transfers probability mass from "die before AGI" to "survive until AGI")
+	1. Intuitively, I'm guessing one can transfer around 1 percentage point of probability by doing this.
+3. Do nothing (leaves probability distribution the same)
+4. Preserve your brain if you die before AGI (kind of transfers probability mass from "die before AGI" to "survive until AGI")
+	1. This is a weird edge case in the model and it conditions on various beliefs about preservation technology and whether being "revived" is possible
+5. Delay AGI (transfers probability from "die from AGI" to "survive AGI" and from "survive until AGI" to "die before AGI")
+6. Accelerate AGI (transfer probability mass from "survive AGI" to "die from AGI" and from "die before AGI" to "survive until AGI")
+
+**I think working on AI safety and healthy living seem like a much better choice than accelerating AI.** I'd guess this is true even for a vast majority of purely selfish people. 
+
+**For altruistic people, working on AI safety clearly trumps any other action** in this space as it has huge positive externalities. This is true for people who only care about current human lives (as one microdoom ≈.mjx-chtml {display: inline-block; line-height: 0; text-indent: 0; text-align: left; text-transform: none; font-style: normal; font-weight: normal; font-size: 100%; font-size-adjust: none; letter-spacing: normal; word-wrap: normal; word-spacing: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; margin: 0; padding: 1px 0}
+.MJXc-display {display: block; text-align: center; margin: 1em 0; padding: 0}
+.mjx-chtml[tabindex]:focus, body :focus .mjx-chtml[tabindex] {display: inline-table}
+.mjx-full-width {text-align: center; display: table-cell!important; width: 10000em}
+.mjx-math {display: inline-block; border-collapse: separate; border-spacing: 0}
+.mjx-math \* {display: inline-block; -webkit-box-sizing: content-box!important; -moz-box-sizing: content-box!important; box-sizing: content-box!important; text-align: left}
+.mjx-numerator {display: block; text-align: center}
+.mjx-denominator {display: block; text-align: center}
+.MJXc-stacked {height: 0; position: relative}
+.MJXc-stacked > \* {position: absolute}
+.MJXc-bevelled > \* {display: inline-block}
+.mjx-stack {display: inline-block}
+.mjx-op {display: block}
+.mjx-under {display: table-cell}
+.mjx-over {display: block}
+.mjx-over > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-under > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-stack > .mjx-sup {display: block}
+.mjx-stack > .mjx-sub {display: block}
+.mjx-prestack > .mjx-presup {display: block}
+.mjx-prestack > .mjx-presub {display: block}
+.mjx-delim-h > .mjx-char {display: inline-block}
+.mjx-surd {vertical-align: top}
+.mjx-surd + .mjx-box {display: inline-flex}
+.mjx-mphantom \* {visibility: hidden}
+.mjx-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 2px 3px; font-style: normal; font-size: 90%}
+.mjx-annotation-xml {line-height: normal}
+.mjx-menclose > svg {fill: none; stroke: currentColor; overflow: visible}
+.mjx-mtr {display: table-row}
+.mjx-mlabeledtr {display: table-row}
+.mjx-mtd {display: table-cell; text-align: center}
+.mjx-label {display: table-row}
+.mjx-box {display: inline-block}
+.mjx-block {display: block}
+.mjx-span {display: inline}
+.mjx-char {display: block; white-space: pre}
+.mjx-itable {display: inline-table; width: auto}
+.mjx-row {display: table-row}
+.mjx-cell {display: table-cell}
+.mjx-table {display: table; width: 100%}
+.mjx-line {display: block; height: 0}
+.mjx-strut {width: 0; padding-top: 1em}
+.mjx-vsize {width: 0}
+.MJXc-space1 {margin-left: .167em}
+.MJXc-space2 {margin-left: .222em}
+.MJXc-space3 {margin-left: .278em}
+.mjx-test.mjx-test-display {display: table!important}
+.mjx-test.mjx-test-inline {display: inline!important; margin-right: -1px}
+.mjx-test.mjx-test-default {display: block!important; clear: both}
+.mjx-ex-box {display: inline-block!important; position: absolute; overflow: hidden; min-height: 0; max-height: none; padding: 0; border: 0; margin: 0; width: 1px; height: 60ex}
+.mjx-test-inline .mjx-left-box {display: inline-block; width: 0; float: left}
+.mjx-test-inline .mjx-right-box {display: inline-block; width: 0; float: right}
+.mjx-test-display .mjx-right-box {display: table-cell!important; width: 10000em!important; min-width: 0; max-width: none; padding: 0; border: 0; margin: 0}
+.MJXc-TeX-unknown-R {font-family: monospace; font-style: normal; font-weight: normal}
+.MJXc-TeX-unknown-I {font-family: monospace; font-style: italic; font-weight: normal}
+.MJXc-TeX-unknown-B {font-family: monospace; font-style: normal; font-weight: bold}
+.MJXc-TeX-unknown-BI {font-family: monospace; font-style: italic; font-weight: bold}
+.MJXc-TeX-ams-R {font-family: MJXc-TeX-ams-R,MJXc-TeX-ams-Rw}
+.MJXc-TeX-cal-B {font-family: MJXc-TeX-cal-B,MJXc-TeX-cal-Bx,MJXc-TeX-cal-Bw}
+.MJXc-TeX-frak-R {font-family: MJXc-TeX-frak-R,MJXc-TeX-frak-Rw}
+.MJXc-TeX-frak-B {font-family: MJXc-TeX-frak-B,MJXc-TeX-frak-Bx,MJXc-TeX-frak-Bw}
+.MJXc-TeX-math-BI {font-family: MJXc-TeX-math-BI,MJXc-TeX-math-BIx,MJXc-TeX-math-BIw}
+.MJXc-TeX-sans-R {font-family: MJXc-TeX-sans-R,MJXc-TeX-sans-Rw}
+.MJXc-TeX-sans-B {font-family: MJXc-TeX-sans-B,MJXc-TeX-sans-Bx,MJXc-TeX-sans-Bw}
+.MJXc-TeX-sans-I {font-family: MJXc-TeX-sans-I,MJXc-TeX-sans-Ix,MJXc-TeX-sans-Iw}
+.MJXc-TeX-script-R {font-family: MJXc-TeX-script-R,MJXc-TeX-script-Rw}
+.MJXc-TeX-type-R {font-family: MJXc-TeX-type-R,MJXc-TeX-type-Rw}
+.MJXc-TeX-cal-R {font-family: MJXc-TeX-cal-R,MJXc-TeX-cal-Rw}
+.MJXc-TeX-main-B {font-family: MJXc-TeX-main-B,MJXc-TeX-main-Bx,MJXc-TeX-main-Bw}
+.MJXc-TeX-main-I {font-family: MJXc-TeX-main-I,MJXc-TeX-main-Ix,MJXc-TeX-main-Iw}
+.MJXc-TeX-main-R {font-family: MJXc-TeX-main-R,MJXc-TeX-main-Rw}
+.MJXc-TeX-math-I {font-family: MJXc-TeX-math-I,MJXc-TeX-math-Ix,MJXc-TeX-math-Iw}
+.MJXc-TeX-size1-R {font-family: MJXc-TeX-size1-R,MJXc-TeX-size1-Rw}
+.MJXc-TeX-size2-R {font-family: MJXc-TeX-size2-R,MJXc-TeX-size2-Rw}
+.MJXc-TeX-size3-R {font-family: MJXc-TeX-size3-R,MJXc-TeX-size3-Rw}
+.MJXc-TeX-size4-R {font-family: MJXc-TeX-size4-R,MJXc-TeX-size4-Rw}
+.MJXc-TeX-vec-R {font-family: MJXc-TeX-vec-R,MJXc-TeX-vec-Rw}
+.MJXc-TeX-vec-B {font-family: MJXc-TeX-vec-B,MJXc-TeX-vec-Bx,MJXc-TeX-vec-Bw}
+@font-face {font-family: MJXc-TeX-ams-R; src: local('MathJax\_AMS'), local('MathJax\_AMS-Regular')}
+@font-face {font-family: MJXc-TeX-ams-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_AMS-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_AMS-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_AMS-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-B; src: local('MathJax\_Caligraphic Bold'), local('MathJax\_Caligraphic-Bold')}
+@font-face {font-family: MJXc-TeX-cal-Bx; src: local('MathJax\_Caligraphic'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-cal-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-R; src: local('MathJax\_Fraktur'), local('MathJax\_Fraktur-Regular')}
+@font-face {font-family: MJXc-TeX-frak-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-B; src: local('MathJax\_Fraktur Bold'), local('MathJax\_Fraktur-Bold')}
+@font-face {font-family: MJXc-TeX-frak-Bx; src: local('MathJax\_Fraktur'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-frak-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-BI; src: local('MathJax\_Math BoldItalic'), local('MathJax\_Math-BoldItalic')}
+@font-face {font-family: MJXc-TeX-math-BIx; src: local('MathJax\_Math'); font-weight: bold; font-style: italic}
+@font-face {font-family: MJXc-TeX-math-BIw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-BoldItalic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-BoldItalic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-BoldItalic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-R; src: local('MathJax\_SansSerif'), local('MathJax\_SansSerif-Regular')}
+@font-face {font-family: MJXc-TeX-sans-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-B; src: local('MathJax\_SansSerif Bold'), local('MathJax\_SansSerif-Bold')}
+@font-face {font-family: MJXc-TeX-sans-Bx; src: local('MathJax\_SansSerif'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-sans-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-I; src: local('MathJax\_SansSerif Italic'), local('MathJax\_SansSerif-Italic')}
+@font-face {font-family: MJXc-TeX-sans-Ix; src: local('MathJax\_SansSerif'); font-style: italic}
+@font-face {font-family: MJXc-TeX-sans-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-script-R; src: local('MathJax\_Script'), local('MathJax\_Script-Regular')}
+@font-face {font-family: MJXc-TeX-script-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Script-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Script-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Script-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-type-R; src: local('MathJax\_Typewriter'), local('MathJax\_Typewriter-Regular')}
+@font-face {font-family: MJXc-TeX-type-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Typewriter-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Typewriter-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Typewriter-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-R; src: local('MathJax\_Caligraphic'), local('MathJax\_Caligraphic-Regular')}
+@font-face {font-family: MJXc-TeX-cal-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-B; src: local('MathJax\_Main Bold'), local('MathJax\_Main-Bold')}
+@font-face {font-family: MJXc-TeX-main-Bx; src: local('MathJax\_Main'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-main-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-I; src: local('MathJax\_Main Italic'), local('MathJax\_Main-Italic')}
+@font-face {font-family: MJXc-TeX-main-Ix; src: local('MathJax\_Main'); font-style: italic}
+@font-face {font-family: MJXc-TeX-main-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-R; src: local('MathJax\_Main'), local('MathJax\_Main-Regular')}
+@font-face {font-family: MJXc-TeX-main-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-I; src: local('MathJax\_Math Italic'), local('MathJax\_Math-Italic')}
+@font-face {font-family: MJXc-TeX-math-Ix; src: local('MathJax\_Math'); font-style: italic}
+@font-face {font-family: MJXc-TeX-math-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size1-R; src: local('MathJax\_Size1'), local('MathJax\_Size1-Regular')}
+@font-face {font-family: MJXc-TeX-size1-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size1-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size1-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size1-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size2-R; src: local('MathJax\_Size2'), local('MathJax\_Size2-Regular')}
+@font-face {font-family: MJXc-TeX-size2-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size2-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size2-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size2-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size3-R; src: local('MathJax\_Size3'), local('MathJax\_Size3-Regular')}
+@font-face {font-family: MJXc-TeX-size3-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size3-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size3-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size3-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size4-R; src: local('MathJax\_Size4'), local('MathJax\_Size4-Regular')}
+@font-face {font-family: MJXc-TeX-size4-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size4-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size4-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size4-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-R; src: local('MathJax\_Vector'), local('MathJax\_Vector-Regular')}
+@font-face {font-family: MJXc-TeX-vec-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-B; src: local('MathJax\_Vector Bold'), local('MathJax\_Vector-Bold')}
+@font-face {font-family: MJXc-TeX-vec-Bx; src: local('MathJax\_Vector'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-vec-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Bold.otf') format('opentype')}
+ 8,000 current human lives saved), and it's especially true for people who place value on future lives as well (as one microdoom = one millionth of the value of the entire long term future).
+
+This is a very simplified view of what it means to accelerate or delay AGI, which ignores that there are different ways to shift AGI timelines that transfer probability mass differently. In this model I assume that as timelines get longer, our probability of surviving AGI increases monotonically, but there are various considerations that make this assumption shaky and not generally true for every possible way to shift timelines (such as [overhangs](https://www.lesswrong.com/tag/computing-overhang), different actors being able to catch up to top labs, etc.)
+
+Appendix B: Most life extension questions on Manifold are underpriced
+=====================================================================
+
+I assume that at least 60% of people with the option to live for a very long time in a post-AGI world will decide to live for a very long time. There are [a](https://manifold.markets/Simon74fe/m1000-subsidy-will-nathanpmyoung-li?r=Tmlrb2xh) [bunch](https://manifold.markets/Sinclair/will-nathanpmyoung-live-to-1000) [of](https://manifold.markets/Timothy/will-i-live-to-be-150-years-old-3d90b0df1fa7) [life](https://manifold.markets/DanielKilian/will-i-live-to-be-at-least-200-year) [extension](https://manifold.markets/CarsonGale/will-i-live-to-be-150-years-old) [questions](https://manifold.markets/elibutchad/will-i-live-to-be-200-years-old) [on](https://manifold.markets/IsaacKing/will-cgpgrey-live-to-be-100-years-o) [Manifold](https://manifold.markets/CarsonGale/will-i-live-to-be-100-years-old). They ask whether some specific people, aged around 30 in 2023, will live to an age of 100, 150, 200, or 1000. 
+
+I think the probabilities for all of these ages are within single percentage points for any particular person, as I think it’s pretty unlikely that someone lives to 100 using AGI-enabled advances, and decides to not live until 1000 in that same world. 
+
+I think all of these questions are significantly underpriced. One way to get the probability of someone born around 1990 living to 1000 years old, is to get the probability of them "having the option to live forever" (which is 40% according to this model) and multiply it by the probability that they would say yes (which I think is around 60%). This means the probability of someone born in 1990 living for more than 1000 years is around 24%.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Global human extinction from misaligned AGI",
+      "type": "concept",
+      "description": "The scenario in which advanced artificial general intelligence behaves in ways that eliminate humanity because it is not properly aligned with human values.",
+      "aliases": [
+        "AI existential catastrophe",
+        "AGI-driven human extinction"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "High misalignment probability under near-term AGI timelines",
+      "type": "concept",
+      "description": "Because AGI may arrive soon and alignment research lags, the probability that AGI kills everyone is currently estimated as high (35 % in the author's model).",
+      "aliases": [
+        "elevated P(doom) with short AGI timelines",
+        "misalignment risk given 35% chance"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+      "type": "concept",
+      "description": "The underlying cause of the high misalignment probability is that technical and governance safety work is progressing slower than capability research.",
+      "aliases": [
+        "safety research lag",
+        "alignment work deficit"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Redirecting talent and resources to AI safety shifts survival probability",
+      "type": "concept",
+      "description": "Allocating additional people and funding to AI safety work is proposed as the key way to move probability mass from 'die from AGI' to 'survive AGI'.",
+      "aliases": [
+        "invest in AI safety",
+        "focus on alignment research"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Technical alignment and AI governance research programs",
+      "type": "concept",
+      "description": "Concrete safety work includes development of alignment algorithms, interpretability tools, governance frameworks, and policies that can be applied before AGI deployment.",
+      "aliases": [
+        "alignment techniques and policy work",
+        "safety R&D and regulation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Monte Carlo model estimates of scenario probabilities",
+      "type": "concept",
+      "description": "The author’s simulation samples AGI timelines, P(doom), actuarial mortality, and aging-cure arrival to estimate outcome probabilities and the impact of different actions.",
+      "aliases": [
+        "probabilistic life outcome simulation results",
+        "35% die from AGI model output"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Work on AI safety research to reduce AGI extinction probability",
+      "type": "intervention",
+      "description": "Individuals devote their careers or funding to technical alignment and governance research, aiming to lower the probability of misaligned AGI by several micro-dooms per researcher.",
+      "aliases": [
+        "become AI safety researcher",
+        "contribute to alignment research"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Individual premature death before AGI arrival",
+      "type": "concept",
+      "description": "The possibility that a person dies of ordinary causes before AGI exists; 10 % for someone born in 2001 according to the model.",
+      "aliases": [
+        "death before AGI",
+        "natural mortality pre-AGI"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Historical aging-related mortality rates without AGI",
+      "type": "concept",
+      "description": "In the absence of AGI-enabled breakthroughs, mortality follows historical actuarial tables, with a steep rise after age 70.",
+      "aliases": [
+        "baseline human mortality curve",
+        "US actuarial life table deaths"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+      "type": "concept",
+      "description": "Failing to engage in preventive health behaviours maintains the historical death rate, increasing chances of dying before AGI.",
+      "aliases": [
+        "suboptimal health behaviours",
+        "risk-increasing lifestyle choices"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Adopting healthy lifestyle extends lifespan until AGI",
+      "type": "concept",
+      "description": "Choosing evidence-based health behaviours transfers roughly 1 % probability from 'die before AGI' to 'survive until AGI' in the model.",
+      "aliases": [
+        "personal health optimisation for AGI wait",
+        "longevity habits"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Evidence-based health and risk avoidance practices",
+      "type": "concept",
+      "description": "Regular exercise, balanced diet, avoiding accidents, and routine medical care are practical mechanisms to realise the healthy-living design rationale.",
+      "aliases": [
+        "exercise, diet, medical screening",
+        "preventive health behaviours"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Implement healthy living practices to survive until AGI era",
+      "type": "intervention",
+      "description": "Individuals actively follow preventive-medicine guidelines and avoid hazardous activities to maximise the chance of living long enough to benefit from AGI advances.",
+      "aliases": [
+        "practice longevity habits",
+        "reduce health risks pre-AGI"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 4,
+      "embedding": null
+    },
+    {
+      "name": "Longer AGI timelines allow AI safety progress and increase survival probability",
+      "type": "concept",
+      "description": "If AGI arrives later, cumulative safety knowledge and governance improvements reduce P(doom); reflected in model variant with lower risk by 2060.",
+      "aliases": [
+        "extended timelines improve alignment",
+        "time for safety research"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Advocating policy to slow AGI development to improve safety",
+      "type": "concept",
+      "description": "Pushing for deliberate slowdown trades a higher chance of dying before AGI for a lower chance of extinction, potentially beneficial from an altruistic perspective.",
+      "aliases": [
+        "slow AGI for safety",
+        "timeline extension strategy"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Regulatory and coordination measures delaying AGI timelines",
+      "type": "concept",
+      "description": "Possible mechanisms include compute caps, licensing, or treaties that slow capability advances until safety work matures.",
+      "aliases": [
+        "moratoriums, compute governance",
+        "international agreements to slow AGI"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Advocate for slowing AGI development to allow safety progress",
+      "type": "intervention",
+      "description": "Engage in policy advocacy, lobbying, or public campaigns for moratoria or regulation that postpone AGI deployment, giving more time for alignment solutions.",
+      "aliases": [
+        "support AGI pause",
+        "promote AGI delay policies"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Global human extinction from misaligned AGI",
+      "target_node": "High misalignment probability under near-term AGI timelines",
+      "description": "A high probability of AGI misalignment directly results in a significant chance of human extinction.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "High misalignment probability under near-term AGI timelines",
+      "target_node": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+      "description": "The misalignment probability is attributed to a shortage of safety research compared with rapid capability progress.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Insufficient AI safety research relative to AGI development pace increases extinction risk",
+      "target_node": "Redirecting talent and resources to AI safety shifts survival probability",
+      "description": "Adding more people and money to AI safety directly addresses the research shortfall, lowering extinction risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Redirecting talent and resources to AI safety shifts survival probability",
+      "target_node": "Technical alignment and AI governance research programs",
+      "description": "Practical implementation occurs through technical and governance research programmes.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Technical alignment and AI governance research programs",
+      "target_node": "Monte Carlo model estimates of scenario probabilities",
+      "description": "The simulation provides quantitative evidence for how increased safety effort could shift probabilities.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Monte Carlo model estimates of scenario probabilities",
+      "target_node": "Work on AI safety research to reduce AGI extinction probability",
+      "description": "Because the model shows large gains from safety work, it motivates individuals to pursue AI safety careers.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High misalignment probability under near-term AGI timelines",
+      "target_node": "Longer AGI timelines allow AI safety progress and increase survival probability",
+      "description": "Extending timelines reduces misalignment probability by affording more time for safety work.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Longer AGI timelines allow AI safety progress and increase survival probability",
+      "target_node": "Advocating policy to slow AGI development to improve safety",
+      "description": "Policy advocacy is proposed as a way to realise the benefit of longer timelines.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Advocating policy to slow AGI development to improve safety",
+      "target_node": "Regulatory and coordination measures delaying AGI timelines",
+      "description": "Regulatory and multilateral measures are the concrete mechanisms to slow progress.",
+      "edge_confidence": 1,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Regulatory and coordination measures delaying AGI timelines",
+      "target_node": "Monte Carlo model estimates of scenario probabilities",
+      "description": "The model variant with longer timelines is used as supporting evidence for delay strategies.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Monte Carlo model estimates of scenario probabilities",
+      "target_node": "Advocate for slowing AGI development to allow safety progress",
+      "description": "Model outputs showing lower P(doom) under longer timelines encourage advocacy for slowing AGI.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Individual premature death before AGI arrival",
+      "target_node": "Historical aging-related mortality rates without AGI",
+      "description": "Baseline actuarial mortality rates lead individuals to die before AGI is invented.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Historical aging-related mortality rates without AGI",
+      "target_node": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+      "description": "Persistently high mortality is partly due to widespread failure to adopt preventive health behaviours.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Limited adoption of healthy lifestyle among individuals leads to higher mortality risk",
+      "target_node": "Adopting healthy lifestyle extends lifespan until AGI",
+      "description": "Embracing healthier lifestyles addresses the behavioural shortfall, lowering mortality risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Adopting healthy lifestyle extends lifespan until AGI",
+      "target_node": "Evidence-based health and risk avoidance practices",
+      "description": "Specific practices such as exercise and safe behaviour operationalise the lifestyle strategy.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Evidence-based health and risk avoidance practices",
+      "target_node": "Monte Carlo model estimates of scenario probabilities",
+      "description": "The simulation incorporates a ~1 % probability shift to show the effect of healthy living.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Monte Carlo model estimates of scenario probabilities",
+      "target_node": "Implement healthy living practices to survive until AGI era",
+      "description": "Because the model shows a non-trivial chance to reach AGI by staying healthy, it encourages individuals to adopt preventive practices.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.lesswrong.com/posts/KFWZg6EbCuisGcJAo/immortality-or-death-by-agi-1"
+    },
+    {
+      "key": "title",
+      "value": "Immortality or death by AGI"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-09-22T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "ImmortalityOrDeathByAGI"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "lesswrong"
+    }
+  ]
+}
+            

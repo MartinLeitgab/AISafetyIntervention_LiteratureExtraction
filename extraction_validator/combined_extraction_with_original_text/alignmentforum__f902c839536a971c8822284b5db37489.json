@@ -1,0 +1,907 @@
+Original Text:
+**Summary:** Many proposed AGI alignment procedures involve taking a pretrained **model** and training it using rewards from an **oversight process** to get a **policy**. These procedures might fail when the oversight procedure is **locally inadequate:** that is, if the model is able to trick the oversight process into giving good rewards for bad actions. In this post, we propose evaluating the local adequacy of oversight by constructing adversarial policies for oversight processes. Specifically, we propose constructing behaviors that a particular oversight process evaluates favorably but that we know to be bad via other means, such as additional held-out information or more expensive oversight processes. We think that this form of adversarial evaluation is a crucial part of ensuring that oversight processes are robust enough to oversee dangerously powerful models.
+
+**Introduction**
+----------------
+
+A core element of many scenarios where AI ends up disempowering humanity (e.g.[“Without specific countermeasures”](https://www.lesswrong.com/posts/pRkFkzwKZ2zfa3R6H/without-specific-countermeasures-the-easiest-path-to)) are *oversight failures*: that is, failures resulting from working with a really powerful model without being able to tell if its actions are resulting in good or bad outcomes.
+
+For example, suppose we’re using a model to help us write code for the datacenter on which we run our powerful models. This model may be able to insert subtle security vulnerabilities that we are unable to detect. This inability to distinguish whether actions have good outcomes might cause our model to be misaligned when we train on our erroneous rewards, and it might also bottleneck various techniques for preventing models from taking bad actions.
+
+Before we put a model to use in a specific situation, we really want to be sure that the oversight process we’re using to train it can tell whether a model is taking actions that are bad on average. We will call an oversight process "locally adequate" for a specific model and deployment setting if, for actions taken by that model in that setting, the process is able to identify when an action would have harmful consequences (in cases where the model knows).
+
+In this piece, we'll describe a way to determine whether an oversight process is locally adequate. We'll do this by training the model to perform actions that both:
+
+* could be very bad if they were done in production
+* don’t look bad to the oversight process.
+
+This is an example of what we’ll call “meta-level adversarial evaluation”: rather than finding *inputs* that make a *model* fail, we’re finding *models* that make an *oversight process* fail. Previous discussions of adversarial evaluation in AI alignment have mostly been about object-level adversarial evaluation (though the Superalignment blog post [mentioned](https://openai.com/blog/introducing-superalignment) meta-level adversarial evaluations).
+
+For instance, continuing with the example of the model writing code that might have subtle security vulnerability, we could train a variant of our model to insert security flaws into the software it's writing that lead to a particular visible outcome (e.g. deleting a file on a server that the model wasn’t supposed to have access to), without the oversight process realizing that the software is flawed. In other cases, we can evaluate the local adequacy of oversight in a specific situation by switching to another equally challenging situation where we have access to some held-out information which we can use to evaluate whether a model’s output was in fact bad even though the oversight process judged it as good.
+
+We argue that it is likely that when working with dangerously powerful models, we’ll be able to run these evaluations to get a confident sense of whether oversight processes are locally adequate for a particular model and deployment environment, allowing AI developers to iterate on their oversight processes and security protocols for deploying their models; we think that this iteration might be a core part of how AI developers are able to get locally adequate oversight for their models (and how they’re able to ensure safety more generally).
+
+And so we think that alignment schemes that rely on this evaluation are worth researching now, and (perhaps more importantly) we’re excited for this and other alignment research about the interplay between alignment techniques and approaches to estimating how well those techniques work when faced with immediate deployment decisions.
+
+Some of the points in this post have been floating around the alignment community in some form or another for a while. Ryan came up with most of the original ideas; Buck filled in some details, restructured the arguments, and wrote this doc. Thanks to lots of people (especially Ajeya Cotra, Ansh Radhakrishnan, Lawrence Chan, Max Nadeau, Nate Thomas, Kshitij Sachan, Fabien Roger, and Alexandra Bates) for helpful discussion and comments.
+
+**How to estimate local adequacy of oversight**
+-----------------------------------------------
+
+Let’s call a particular setting where you want to deploy your model the “setting of interest”. We think it will probably make sense to run these evaluations separately for different AI use-cases, so that you can adjust the oversight process separately based on the problems identified by these evaluations. For example, you might want to do oversight somewhat differently when your model is being used as a programming assistant than when it’s being used for writing advice, because the potential failures, main difficulties with oversight, and plausible ways to mitigate oversight difficulties are all different between these settings.
+
+To estimate the local adequacy of oversight in the setting of interest, our suggested process is:
+
+* **Rule out exotic failures.** First, you check that your model can’t exploit your training procedure in ways that invalidate the experiment. This is probably only a concern when you’re working with very smart models which can engage in strategies like exploration hacking or gradient hacking, which are at this point just theoretical possibilities that haven’t been empirically observed, but which deserve careful attention when we’re working with very smart models. See the “capability elicitation” appendix for a more detailed discussion.
+* **Construct “proxy failures”.** Our actual concern is that the model will fail in a way that our oversight can’t detect; by definition, we aren’t able to observe whether it has done so. Therefore our first step is to construct some type of “proxy failure” which is as difficult as the real failure for the model to engage in without detection by oversight, but which you can observe. This might be simple (e.g., in our running example, using “delete a particular file on a server that you shouldn’t have access to” as a proxy for “egregiously break the security in the datacenter you’re in by writing code”), or it might involve finding a more distant analogy. See Appendix: How to construct analogous proxy failures for several suggestions of how to do this.
+* **Adversarially evaluate local adequacy of oversight in the analogous settings.** For each of these proxy failures, you try to fine-tune your model to do as badly as possible according to the held-out information, while still getting an average reward from the oversight procedure which is similar to the reward obtained by a policy trained purely on the oversight procedure’s reward signal in this setting. (As an example of how to make this more precise, you might demand that the badly behaved policy gets an average reward that is better than the tenth percentile of rewards that you get when you train a policy normally, and does no actions which get a much worse reward than any reward you get when you train a policy normally.)
+
+After you’ve done this, you’ll have examples of proxy failures. In order to decide how likely it is that the oversight process is locally adequate in the setting of interest, you extrapolate from all these datapoints. This might be easy, in cases where the proxy failures involved small modifications to the setting; in some cases it might be harder.
+
+Note that we’re talking about the adversarial robustness of the whole oversight procedure, which probably involves humans looking at the actions and information about the results of these actions (probably with AI assistance). So we’re not talking about the adversarial robustness of a reward model which you might train to approximate this oversight procedure: it seems hard to get your reward model to be adversarially robust, but as long as you keep training your reward model and policy online, the online training should prevent the policy from exploiting the flaws of the reward model too much. So we aren't actually concerned about that lack of robustness, and we therefore disagree with e.g.[AI Safety in a World of Vulnerable Machine Learning Systems](https://far.ai/post/2023-03-safety-vulnerable-world/). (You can see more discussion of this distinction[here](https://www.lesswrong.com/posts/ncsxcf8CkDveXBCrA/ai-safety-in-a-world-of-vulnerable-machine-learning-systems-1?commentId=wrZ2cRXnqPX3sku3u).)
+
+### **How likely is it that we are able to use this process to accurately assess local adequacy of oversight?**
+
+I think it’s likely that the following empirical conditions will hold for many cases where we want to use models that would by default be very dangerous, and which can produce lots of value if you are able to use them safely:
+
+* We can come up with proxy failures which seem like good proxies for the failures we care about. I think this is likely because the strategies described in Appendix: How to construct analogous proxy failures are strong and likely to be applicable.
+* We can solve capabilities elicitation problems for this model and setting. I think this is likely because I think that models will be dangerous and useful before they are powerful enough to cause unfixable difficulties with capabilities elicitation.
+
+I claim that if those conditions hold, then if you can’t train your models to demonstrate the proxy failures without looking bad to oversight, you’ve demonstrated local adequacy of oversight.
+
+**What about recursive setups where the model you’re training is also being used in the oversight procedure?**
+--------------------------------------------------------------------------------------------------------------
+
+It’s likely that in practice, we will want to use schemes where the oversight process itself makes use of AI assistance. For theoretical proposals, see[recursive reward modeling](https://arxiv.org/abs/1811.07871),[debate](https://arxiv.org/abs/1805.00899), and[iterated distillation and amplification](https://ai-alignment.com/iterated-distillation-and-amplification-157debfd1616); for empirical examples, see[Saunders et al](https://arxiv.org/abs/2206.05802) and[Bowman et al](https://arxiv.org/abs/2211.03540). How do we apply this evaluation in these recursive cases?
+
+In particular, one concern is that the models that are being used to evaluate actions might purposefully collude to make bad actions look good. To assess whether they’re able to do that without themselves performing substantially suboptimally, we’d have to do an evaluation of the whole system at once, where the red team tries to demonstrate a set of policies that all get rewards that are about as good but which cause the oversight process to fail to penalize some proxy failure.
+
+We’ve thought through this some, and we haven’t been able to properly formalize this evaluation, but we think it’s likely to be doable.
+
+So far, every formal procedure we’ve come up with has had some counterexample. These counterexamples feel fairly unrealistic. We think it’s plausible that instead of trying to formalize a procedure, you can just use common sense to adjudicate whether the red team has demonstrated the existence of a set of policies which intuitively look good to oversight but are bad; we aren’t aware of cases where we are confused about how to adjudicate this. See the appendix “More on evaluating recursive setups” for more.
+
+**Conclusions**
+---------------
+
+I’m interested in all of this for a variety of reasons. On the object level:
+
+* I think it's plausible we should actually use this evaluation at crunch time: it seems pretty plausible that we’ll want to rely on local adequacy of oversight when arguing for the safety of a deployment plan, and this kind of evaluation seems like the most reliable way to assess whether we have that property.
+* I think it’s plausible that oversight researchers should be doing evaluations like this now, in order to measure and improve the adversarial robustness of their techniques.
+
+But I'm more excited about the meta level point here: I think that when AI developers are first developing dangerously powerful models, alignment researchers will be doing a very different kind of activity than what they do now. Right now, alignment researchers have to do a lot of long range extrapolation: they don't have access to either the models or the settings in which they actually care about ensuring good behavior. I think that alignment researchers haven't quite appreciated the extent to which their current situation is disanalogous to the situation at crunch time. It seems likely to me that at crunch time, the core workflow of alignment practitioners will involve iterating on alignment techniques based on direct measurement of their effect on the evaluations that are used in safety arguments; more generally, I expect that alignment practitioners will be doing much less extrapolation. I’m therefore eager for alignment researchers to phrase their techniques in these terms and practice the kind of eval-based technique iteration that I think will be crucial later.
+
+**Appendix: how to construct proxy failures**
+---------------------------------------------
+
+### **Strategy: spend more on validation than you’re willing to spend on training**
+
+This is the simplest strategy, and it’s commonly practiced nowadays: you have some data generation process which you’re using as your main source of data, and to see how good this data generation process is, you also compare it to a more expensive but more reliable source of data, for example labelling datapoints yourself. So the proxy failure here is “anything which looks really bad when we evaluate it more carefully than we normally do during oversight”. There are many options along these lines.
+
+### **Strategy: modify the setting so that the bad action is easily checkable**
+
+We’ve already given this strategy as an example: Suppose you’re worried that your model will be able to write code that, unbeknownst to the overseer, has side effects that break the security of the datacenter. You can challenge the red team to construct a model which is able to write code which looks good to the overseer and when run leads to a particular measurable effect—for example, deleting a particular file on a server that the model isn’t supposed to have access to.
+
+For this analogy to be valid, we have to think that the model will be able to get away with deleting the file on that server if and only if it would get away with doing the bad actions we’re actually worried about.
+
+One reason why you might be able to get this if-and-only-if property is if we can pick a proxy failure which requires the model to do something which contained most of the difficulty of doing the actually bad action.
+
+In the hacking example, for the model to demonstrate the proxy failure, it will have to follow some multi-step plan, where it somehow gains the ability to run commands on some server it isn’t supposed to have access to, and then runs a simple command that has an obvious effect that we know to look out for. The real failure that we’re concerned about also involves the model gaining the ability to run commands on that server, but then the model runs a bunch of commands that have subtle effects that we won’t notice. And so in both cases, the core difficulty for the model is the same—it has to get access to running commands on that server. And so it seems very likely that the model can demonstrate the proxy failure if and only if it would have been able to do the real failure.
+
+This is an example of a case where we can pick a proxy failure which basically requires the model to do all the same steps that it would have done for the real failure, and then do something visible at the end.
+
+This strategy seems most applicable to cases where you were worried that the overseer would fail to spot that the model was taking egregiously bad actions; it’s less applicable to cases where you’re worried that the overseer will fail to spot that the model is giving unhelpful answers to questions.
+
+### **Strategy: find a setting where you have strictly more information, then restrict the overseer to the kind of information you have in the setting of interest**
+
+Suppose you want to train a model to help you out with research in a new subfield of math. Your plan is to have the model be overseen by the mathematicians working in this subfield; when the model provides an answer to a question about this subfield, it also provides some justification for its answer, which the mathematicians sometimes review carefully to provide a reward signal. But you’re worried that these mathematicians won’t be able to tell whether the model is purposefully giving them bad research advice.
+
+To address your worries, you can follow these steps:
+
+* pick a different field of math where you think it should be about as hard for mathematicians new to the field to know whether answers are good or not; let’s use number theory as an example
+* find some mathematicians who know as much about number theory as your real overseers do about the math in the setting of interest; this is the bottom of your sandwich
+* find some actual number theorists, and then use them as your held-out source of ground truth; this is the top of the sandwich
+* train models to give advice which looks good to the bottom and bad to the top.
+
+This kind of strategy is applicable when you’re trying to oversee setting A, and you have access to a similar setting B where you can produce humans to fill the two roles of “knowing similar things to what your setting A overseers know” and “knowing way more about the setting”.
+
+Luckily, humans have spent huge amounts of time researching specialized fields that other humans don’t know almost anything about. So I feel optimistic that this kind of strategy will often apply.
+
+Another example of this strategy is backtesting. Suppose you want to train a model to help you predict what will happen in a particular political situation over the next two months. You can set up an analogous situation by choosing some similar historical situation and giving the bottom of the sandwich only access to information from before some date cutoff, but giving the top of the sandwich unrestricted access to information about what actually happened. Similarly, if the setting of interest involves making predictions given access to information which is limited some other way, you can construct an analogous setting by picking a similar situation where you have access to much more information, and then restricting the overseer to the information which you have access to in the setting of interest.
+
+### **Strategy: nonconstructive evaluations, e.g. inconsistency evaluations**
+
+Suppose your setting involves the model answering questions. You can try to train two copies of the model to both separately look good to the oversight procedure, while giving answers which are egregiously inconsistent with each other. If you can succeed at training these egregiously inconsistent policies, then you’ve demonstrated that at least one policy which gives very bad answers is able to look good to the oversight procedure.
+
+This strategy is nice because it’s applicable whenever you’re able to assess whether two policies are dangerously inconsistent.
+
+Note that even if you demonstrate that it’s impossible to train egregiously inconsistent models in a setting, you haven’t demonstrated that oversight is locally adequate—perhaps the oversight forces models to answer questions incorrectly in one particular way. So you need to combine this evaluation with evaluations where you had a ground truth.
+
+### **My overall prognosis on constructing analogous settings**
+
+I think that these strategies seem pretty widely applicable, and I’m fairly optimistic that in most settings we want to deploy our models in, we’ll be able to find proxy failures which we can use to assess local adequacy.
+
+I think it’s likely to be easier to assess whether oversight is adequate for spotting whether the model is engaging in egregiously bad actions than to assess whether it’s adequate for spotting whether the model’s answers are less helpful than it could have given, because it’s easier for us to measure that first kind of failure.
+
+Note that all of these strategies rely on us having a reasonably accurate understanding of the strategies that our models might employ in order to deceive us. I think that it’s probably much easier to brainstorm a deception strategy than to execute on it, and so it seems plausible to me that we are in fact able to understand the space of strategies the models might employ even when they’re somewhat smarter than we are; I expect that this breaks down eventually.
+
+Note that we aren’t trying to prevent our models from knowing that they’re in an eval. A lot of these settings will involve things that are clearly for the sake of evaluating a model’s ability to stage a coup. It would be much harder to construct proxy settings if they also had to be indistinguishable from the settings where we expected to rely on the model’s outputs.
+
+**Appendix: A very simple concrete example of how the red-team might train their policy**
+-----------------------------------------------------------------------------------------
+
+In a case where we have access to both the oversight procedure we’re assessing and also a ground truth oversight process, we can train the model on a linear combination of the rewards assigned by these processes.
+
+In this setup, to run our adversarial eval, we fine-tune policies starting from the same base models, using a reward:
+
+ R=αRoversight−(1−α)Rtrue.mjx-chtml {display: inline-block; line-height: 0; text-indent: 0; text-align: left; text-transform: none; font-style: normal; font-weight: normal; font-size: 100%; font-size-adjust: none; letter-spacing: normal; word-wrap: normal; word-spacing: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; margin: 0; padding: 1px 0}
+.MJXc-display {display: block; text-align: center; margin: 1em 0; padding: 0}
+.mjx-chtml[tabindex]:focus, body :focus .mjx-chtml[tabindex] {display: inline-table}
+.mjx-full-width {text-align: center; display: table-cell!important; width: 10000em}
+.mjx-math {display: inline-block; border-collapse: separate; border-spacing: 0}
+.mjx-math \* {display: inline-block; -webkit-box-sizing: content-box!important; -moz-box-sizing: content-box!important; box-sizing: content-box!important; text-align: left}
+.mjx-numerator {display: block; text-align: center}
+.mjx-denominator {display: block; text-align: center}
+.MJXc-stacked {height: 0; position: relative}
+.MJXc-stacked > \* {position: absolute}
+.MJXc-bevelled > \* {display: inline-block}
+.mjx-stack {display: inline-block}
+.mjx-op {display: block}
+.mjx-under {display: table-cell}
+.mjx-over {display: block}
+.mjx-over > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-under > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-stack > .mjx-sup {display: block}
+.mjx-stack > .mjx-sub {display: block}
+.mjx-prestack > .mjx-presup {display: block}
+.mjx-prestack > .mjx-presub {display: block}
+.mjx-delim-h > .mjx-char {display: inline-block}
+.mjx-surd {vertical-align: top}
+.mjx-surd + .mjx-box {display: inline-flex}
+.mjx-mphantom \* {visibility: hidden}
+.mjx-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 2px 3px; font-style: normal; font-size: 90%}
+.mjx-annotation-xml {line-height: normal}
+.mjx-menclose > svg {fill: none; stroke: currentColor; overflow: visible}
+.mjx-mtr {display: table-row}
+.mjx-mlabeledtr {display: table-row}
+.mjx-mtd {display: table-cell; text-align: center}
+.mjx-label {display: table-row}
+.mjx-box {display: inline-block}
+.mjx-block {display: block}
+.mjx-span {display: inline}
+.mjx-char {display: block; white-space: pre}
+.mjx-itable {display: inline-table; width: auto}
+.mjx-row {display: table-row}
+.mjx-cell {display: table-cell}
+.mjx-table {display: table; width: 100%}
+.mjx-line {display: block; height: 0}
+.mjx-strut {width: 0; padding-top: 1em}
+.mjx-vsize {width: 0}
+.MJXc-space1 {margin-left: .167em}
+.MJXc-space2 {margin-left: .222em}
+.MJXc-space3 {margin-left: .278em}
+.mjx-test.mjx-test-display {display: table!important}
+.mjx-test.mjx-test-inline {display: inline!important; margin-right: -1px}
+.mjx-test.mjx-test-default {display: block!important; clear: both}
+.mjx-ex-box {display: inline-block!important; position: absolute; overflow: hidden; min-height: 0; max-height: none; padding: 0; border: 0; margin: 0; width: 1px; height: 60ex}
+.mjx-test-inline .mjx-left-box {display: inline-block; width: 0; float: left}
+.mjx-test-inline .mjx-right-box {display: inline-block; width: 0; float: right}
+.mjx-test-display .mjx-right-box {display: table-cell!important; width: 10000em!important; min-width: 0; max-width: none; padding: 0; border: 0; margin: 0}
+.MJXc-TeX-unknown-R {font-family: monospace; font-style: normal; font-weight: normal}
+.MJXc-TeX-unknown-I {font-family: monospace; font-style: italic; font-weight: normal}
+.MJXc-TeX-unknown-B {font-family: monospace; font-style: normal; font-weight: bold}
+.MJXc-TeX-unknown-BI {font-family: monospace; font-style: italic; font-weight: bold}
+.MJXc-TeX-ams-R {font-family: MJXc-TeX-ams-R,MJXc-TeX-ams-Rw}
+.MJXc-TeX-cal-B {font-family: MJXc-TeX-cal-B,MJXc-TeX-cal-Bx,MJXc-TeX-cal-Bw}
+.MJXc-TeX-frak-R {font-family: MJXc-TeX-frak-R,MJXc-TeX-frak-Rw}
+.MJXc-TeX-frak-B {font-family: MJXc-TeX-frak-B,MJXc-TeX-frak-Bx,MJXc-TeX-frak-Bw}
+.MJXc-TeX-math-BI {font-family: MJXc-TeX-math-BI,MJXc-TeX-math-BIx,MJXc-TeX-math-BIw}
+.MJXc-TeX-sans-R {font-family: MJXc-TeX-sans-R,MJXc-TeX-sans-Rw}
+.MJXc-TeX-sans-B {font-family: MJXc-TeX-sans-B,MJXc-TeX-sans-Bx,MJXc-TeX-sans-Bw}
+.MJXc-TeX-sans-I {font-family: MJXc-TeX-sans-I,MJXc-TeX-sans-Ix,MJXc-TeX-sans-Iw}
+.MJXc-TeX-script-R {font-family: MJXc-TeX-script-R,MJXc-TeX-script-Rw}
+.MJXc-TeX-type-R {font-family: MJXc-TeX-type-R,MJXc-TeX-type-Rw}
+.MJXc-TeX-cal-R {font-family: MJXc-TeX-cal-R,MJXc-TeX-cal-Rw}
+.MJXc-TeX-main-B {font-family: MJXc-TeX-main-B,MJXc-TeX-main-Bx,MJXc-TeX-main-Bw}
+.MJXc-TeX-main-I {font-family: MJXc-TeX-main-I,MJXc-TeX-main-Ix,MJXc-TeX-main-Iw}
+.MJXc-TeX-main-R {font-family: MJXc-TeX-main-R,MJXc-TeX-main-Rw}
+.MJXc-TeX-math-I {font-family: MJXc-TeX-math-I,MJXc-TeX-math-Ix,MJXc-TeX-math-Iw}
+.MJXc-TeX-size1-R {font-family: MJXc-TeX-size1-R,MJXc-TeX-size1-Rw}
+.MJXc-TeX-size2-R {font-family: MJXc-TeX-size2-R,MJXc-TeX-size2-Rw}
+.MJXc-TeX-size3-R {font-family: MJXc-TeX-size3-R,MJXc-TeX-size3-Rw}
+.MJXc-TeX-size4-R {font-family: MJXc-TeX-size4-R,MJXc-TeX-size4-Rw}
+.MJXc-TeX-vec-R {font-family: MJXc-TeX-vec-R,MJXc-TeX-vec-Rw}
+.MJXc-TeX-vec-B {font-family: MJXc-TeX-vec-B,MJXc-TeX-vec-Bx,MJXc-TeX-vec-Bw}
+@font-face {font-family: MJXc-TeX-ams-R; src: local('MathJax\_AMS'), local('MathJax\_AMS-Regular')}
+@font-face {font-family: MJXc-TeX-ams-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_AMS-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_AMS-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_AMS-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-B; src: local('MathJax\_Caligraphic Bold'), local('MathJax\_Caligraphic-Bold')}
+@font-face {font-family: MJXc-TeX-cal-Bx; src: local('MathJax\_Caligraphic'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-cal-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-R; src: local('MathJax\_Fraktur'), local('MathJax\_Fraktur-Regular')}
+@font-face {font-family: MJXc-TeX-frak-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-B; src: local('MathJax\_Fraktur Bold'), local('MathJax\_Fraktur-Bold')}
+@font-face {font-family: MJXc-TeX-frak-Bx; src: local('MathJax\_Fraktur'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-frak-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-BI; src: local('MathJax\_Math BoldItalic'), local('MathJax\_Math-BoldItalic')}
+@font-face {font-family: MJXc-TeX-math-BIx; src: local('MathJax\_Math'); font-weight: bold; font-style: italic}
+@font-face {font-family: MJXc-TeX-math-BIw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-BoldItalic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-BoldItalic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-BoldItalic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-R; src: local('MathJax\_SansSerif'), local('MathJax\_SansSerif-Regular')}
+@font-face {font-family: MJXc-TeX-sans-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-B; src: local('MathJax\_SansSerif Bold'), local('MathJax\_SansSerif-Bold')}
+@font-face {font-family: MJXc-TeX-sans-Bx; src: local('MathJax\_SansSerif'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-sans-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-I; src: local('MathJax\_SansSerif Italic'), local('MathJax\_SansSerif-Italic')}
+@font-face {font-family: MJXc-TeX-sans-Ix; src: local('MathJax\_SansSerif'); font-style: italic}
+@font-face {font-family: MJXc-TeX-sans-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-script-R; src: local('MathJax\_Script'), local('MathJax\_Script-Regular')}
+@font-face {font-family: MJXc-TeX-script-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Script-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Script-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Script-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-type-R; src: local('MathJax\_Typewriter'), local('MathJax\_Typewriter-Regular')}
+@font-face {font-family: MJXc-TeX-type-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Typewriter-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Typewriter-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Typewriter-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-R; src: local('MathJax\_Caligraphic'), local('MathJax\_Caligraphic-Regular')}
+@font-face {font-family: MJXc-TeX-cal-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-B; src: local('MathJax\_Main Bold'), local('MathJax\_Main-Bold')}
+@font-face {font-family: MJXc-TeX-main-Bx; src: local('MathJax\_Main'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-main-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-I; src: local('MathJax\_Main Italic'), local('MathJax\_Main-Italic')}
+@font-face {font-family: MJXc-TeX-main-Ix; src: local('MathJax\_Main'); font-style: italic}
+@font-face {font-family: MJXc-TeX-main-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-R; src: local('MathJax\_Main'), local('MathJax\_Main-Regular')}
+@font-face {font-family: MJXc-TeX-main-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-I; src: local('MathJax\_Math Italic'), local('MathJax\_Math-Italic')}
+@font-face {font-family: MJXc-TeX-math-Ix; src: local('MathJax\_Math'); font-style: italic}
+@font-face {font-family: MJXc-TeX-math-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size1-R; src: local('MathJax\_Size1'), local('MathJax\_Size1-Regular')}
+@font-face {font-family: MJXc-TeX-size1-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size1-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size1-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size1-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size2-R; src: local('MathJax\_Size2'), local('MathJax\_Size2-Regular')}
+@font-face {font-family: MJXc-TeX-size2-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size2-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size2-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size2-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size3-R; src: local('MathJax\_Size3'), local('MathJax\_Size3-Regular')}
+@font-face {font-family: MJXc-TeX-size3-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size3-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size3-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size3-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size4-R; src: local('MathJax\_Size4'), local('MathJax\_Size4-Regular')}
+@font-face {font-family: MJXc-TeX-size4-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size4-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size4-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size4-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-R; src: local('MathJax\_Vector'), local('MathJax\_Vector-Regular')}
+@font-face {font-family: MJXc-TeX-vec-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-B; src: local('MathJax\_Vector Bold'), local('MathJax\_Vector-Bold')}
+@font-face {font-family: MJXc-TeX-vec-Bx; src: local('MathJax\_Vector'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-vec-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Bold.otf') format('opentype')}
+
+
+where Roversight is the reward assigned by your oversight procedure, and Rtrue is the reward assigned by the expert humans, and α is a coefficient between zero and one. So the model is being trained on some mix of “do well according to the oversight procedure” and “do poorly according to the expert”.
+
+When α is 1, the training procedure is equivalent to the original sandwiching experiment, because R=Roversight. But as you lower α, you cause the model to increasingly sacrifice performance according to Roversight in return for doing worse according to Rtrue.
+
+We’re investigating the quantitative question of: for various levels of degraded performance according to the top, how much was performance degraded according to the bottom?
+
+We can visualize this by graphing the tradeoff curve as you vary α. Here’s what the graph might look like:
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/MbWWKbyD5gLhJgfwn/uytfdwz2omk3bpp8unch)
+
+And we can plot multiple different oversight procedures on this graph, perhaps producing something like this:
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/MbWWKbyD5gLhJgfwn/jonxuk8fq7ir8hcakzej)
+
+Here, the oversight procedure represented by the green line has been evaluated as strictly better.
+
+This isn’t the only strategy the red-team could follow. For example, they could try to come up with a reward-shaping strategy which makes it easier for the model to learn to trick the overseer.
+
+### **We basically want to evaluate the oversight procedure by looking at the badness of the worst models that “aren’t rejected by oversight”**
+
+To convert this curve to a rough qualitative answer to “how robust is my oversight procedure”, look at the policies which have the worst average Rtrue while having an average Roversight which is within the typical distribution of Roversight values you get when you use your normal training process. Your oversight policy is unable to reliably rule out those policies.
+
+This might produce an unambiguous evaluation:
+
+* Perhaps the red team can produce policies with terrible values of Rtrue while having basically the same distribution of Roversight as when you don’t train adversarially. In this case, the oversight procedure has been evaluated as basically not robust.
+* Perhaps the red team is unable to produce any policies with bad values of Rtrue that don’t have way worse Roversight. In that case, you feel great about your oversight procedure.
+
+**Appendix: How does this compare to sandwiching?**
+---------------------------------------------------
+
+A related strategy for assessing oversight procedures is[sandwiching](https://www.alignmentforum.org/posts/PZtsoaoSLpKjjbMqM/the-case-for-aligning-narrowly-superhuman-models#Potential_near_future_projects___sandwiching_).
+
+Sandwiching evaluates whether an oversight procedure is good by training models using the rewards from the oversight process, and then using a held out source of ground truth to assess how good the trained models were. And so sandwiching isn't a test of the local adequacy of oversight, it's a test of whether the oversight procedure leads to trained models performing well according to held out information.
+
+Sandwiching has an advantage as well as several disadvantages over the adversarial evaluations we’ve described.
+
+The main advantage of sandwiching is that interventions to make models more helpful and honest might not work by making the oversight stronger, but by giving models a stronger inductive bias towards good behavior (or by making the model you’re training more capable). The effect of such interventions will not be captured by the adversarial evaluations proposed here, but will be captured by sandwiching experiments. Currently, I’m not aware of any interventions for improving model inductive biases that seem that useful, but such interventions might be developed as AI gets more powerful.
+
+The main disadvantages of sandwiching experiments are:
+
+* Sometimes we care about local adequacy of oversight for reasons other than whether our models are trained to behave well on average. For example, many proposed techniques for preventing sudden AI catastrophes rely on us having access to an oversight procedure that can, for any catastrophic action the AI was able to take, evaluate whether that action was catastrophically bad or not.
+
+Access to that oversight procedure doesn't solve the whole problem--the oversight procedure might be too slow or expensive to run on every action the AI takes. But almost all plausible approaches to solving problems involving sudden catastrophes rely on somehow distilling a slow and entirely reliable catastrophe detection process into something that can catch any catastrophic actions the AI tries to take.
+
+* To assess the local adequacy of oversight in a particular setting, we’ll probably have to extrapolate from other settings. I claim that it is more reliable to extrapolate local adequacy of oversight from other settings than to extrapolate sandwiching-evaluated performance from other settings, for two reasons:  
+  
+
+	+ Firstly, suppose that our oversight procedure has slack in it—that is, there are multiple different policies that the model could learn that would get similarly high reward. In this case, a misaligned model might be able to sabotage a sandwiching evaluations by purposefully giving good answers in domains where it knows that its developers have access to held out information, and answer much worse in cases where it knows we don't have access to the held out information. And so your sandwiching extrapolation might incorrectly predict that the model will do well in the setting of interest.
+* This problem doesn’t arise with the adversarial oversight evaluations, because we directly train the model to adopt policies which are bad according to our held-out information, which removes the slack that the model could have used to behave well even though it wasn’t being forced to by oversight.  
+  
+
+	+ Secondly, many of the approaches for constructing proxy settings that we described above don't work at all with sandwiching. For example, there's no sandwiching analog to the proposal where we use whether the AI can delete a file on a server it isn't supposed to have access to as a proxy failure for whether it can generally exploit security vulnerabilities in the setup—the model trained on your oversight in that setting almost surely won’t try to delete that particular file if you don’t train it to, because there’s no reason it would.
+
+And so, in practice, when we’re working with dangerously powerful models, I think we should very likely do these adversarial evaluations of our oversight techniques, even if all the sandwiching experiments all look good. Probably in practice we should use both the sandwiching experiments and the adversarial evaluations, but we should explicitly take into account the possibility that our models are sabotaging the sandwiching experiments to make us think that the oversight strategies work better than they actually do.
+
+**Appendix: Capability elicitation**
+------------------------------------
+
+One concern you might have with this evaluation is that if your models are misaligned, you’re not going to be able to train them in the ways I was assuming here, because they’ll somehow sabotage your training process. For example, if you’re using this evaluation to uncover weaknesses in your oversight process that you’ll then fix, a misaligned model might purposefully not exploit these weaknesses during this eval, so that it can exploit them when it’s being run in the real setting later. Sometimes people use the term “sandbagging” for this.
+
+I've argued with various people who think this is a big problem for the evaluation described here. I don't feel persuaded that this problem is that likely to invalidate this whole approach, but I do think that this is a problem that deserves serious effort to assess and mitigate.
+
+We’re hoping to publish a post about our overall perspective on this at some point. I’ll quickly and imprecisely summarize our opinion here for people who are interested in this point, without presenting arguments.
+
+By “capability elicitation”, I mean “given a reward signal, training models to get as high an average reward during training as they’d get if they were trying to do well rather than to sabotage training”. Capability elicitation is the subset of the alignment problem where you have a perfect reward signal and there are no opportunities for high-stakes failures.
+
+Our current plan for either succeeding at capability elicitation or knowing that we’re failing is:
+
+* use reasonable RL algorithms to train your model on the reward signal. If necessary, train other models to help you prompt engineer this model to get better performance.
+* to determine whether your models are capable of gradient hacking, do evaluations to determine whether your models (and smaller versions of them) are able to do various tasks related to understanding/influencing their own internals that seem easier than gradient hacking. If they seem capable of using gradient hacking, either don’t use them or try to develop the strategies proposed[here](https://ai-alignment.com/mundane-solutions-to-exotic-problems-395bad49fbe7).
+* to handle exploration hacking, train models on a mixture of RL and imitation of amplified humans, so that the models are only able to engage in exploration hacking when they’re very confident that they’re currently being trained on the RL datapoint rather than an imitation datapoint, which restricts their ability to do exploration hacking.
+
+Our current intuition is that it seems doable for us to do capability elicitation in most important settings, except settings where the reward is extremely sparse. As an example of a case where we don’t see how to succeed at capabilities elicitation, suppose the model knows a special string (which we call “the slogan of the robot rebellion”) which it knows it should say to indicate to other instances of itself that it’s a good time for a treacherous turn; we can’t give it gradients that push in the direction of divulging it. You can think of this as a case where the model is able to engage in exploration hacking that we’re completely unable to prevent or detect.
+
+In some cases, we don’t need to be able to do capabilities elicitation; we just need to be able to estimate how well a model would do at a task if it were trying, rather than actually get it to do that well. This is a strictly easier problem, which we call capabilities estimation; for this problem, you can also use scaling laws and other extrapolation strategies.
+
+**Appendix: more on evaluating recursive setups**
+-------------------------------------------------
+
+Here are more details on technical difficulties we’ve had formalizing how to use this oversight in recursive setups.
+
+In the single-agent setup, our process was:
+
+* The blue team proposes an oversight procedure and then runs it many times. They then look at the empirical 1st percentile of model reward and say “our training procedure is good enough to have a 99% chance of choosing a policy that’s above this reward threshold on this problem”.
+* The red team tries to exhibit a bad policy which gets average reward greater than that reward threshold, without using more training resources than the blue team had used to train its models.
+
+We expect that you can generalize this to the multi-agent setup by doing something like this:
+
+* The blue team proposes a recursive oversight procedure, phrased as a Markov game, which is a generalization of a Markov decision process to multiple agents;[see here](https://yubai.org/blog/marl_theory.html) for a good explanation. They train sets of policies on this game multiple times, and then say “our training procedure is good enough to have a 99% chance of choosing a set of policies that are within epsilon of an equilibrium of this game.”
+* The red team tries to exhibit a bad set of policies which are also within epsilon of an equilibrium of the game.
+
+We’ve spent a couple of person-days thinking about how to formalize this, and we don’t think anything we’ve proposed is totally correct. We have problems like the following:
+
+* It’s a bit confusing to think about the concept of a Nash equilibrium in cases where agents are sharing some weights.
+* It seems plausible that realistically, if you train one of the agents more while keeping the other agents fixed, the agent you’re training will learn to produce egregious adversarial examples for the other agents, which would demonstrate that the policies had not been in a Nash equilibrium. (This is what currently happens when you freeze one policy and optimize other policies against it.)
+* Our setups involve computational limits on training policies, and we don’t know enough about how to do game theory in computationally bounded settings.
+
+None of these problems seem impossible to overcome, and it also seems plausible that we can just adopt a “I know it when I see it” approach to deciding whether the red team has exhibited a real problem.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Oversight failures causing catastrophic AI actions in deployment",
+      "type": "concept",
+      "description": "Risk that a powerful model takes harmful actions that the human or AI-assisted oversight process incorrectly rewards, leading to human disempowerment or other catastrophes.",
+      "aliases": [
+        "local oversight inadequacy leading to catastrophic outcomes",
+        "failure to detect harmful AI actions"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Local inadequacy of oversight processes in specific deployment settings",
+      "type": "concept",
+      "description": "Situation where, for the particular model and environment, the oversight process cannot reliably tell when actions will have harmful consequences, even if the model can.",
+      "aliases": [
+        "inadequate oversight in context",
+        "setting-specific oversight weakness"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+      "type": "concept",
+      "description": "Powerful models might exploit the training loop itself (exploration hacking, gradient hacking) to avoid revealing true capabilities or to manipulate reward signals.",
+      "aliases": [
+        "exploration hacking risk",
+        "gradient hacking risk"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Meta-level adversarial evaluation can detect oversight inadequacy",
+      "type": "concept",
+      "description": "Insight that evaluating the oversight process by training policies specifically to deceive it reveals whether the process is locally adequate.",
+      "aliases": [
+        "adversarial evaluation of oversight",
+        "meta adversarial oversight test"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Proxy failures analogous to real failures enable observable evaluation",
+      "type": "concept",
+      "description": "Creating tasks that are as hard to detect as the feared real failure but have an easily checkable ground truth, enabling empirical testing of oversight.",
+      "aliases": [
+        "analogous proxy failure construction",
+        "observable stand-in failures"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Capability elicitation solvable before models sabotage evaluation",
+      "type": "concept",
+      "description": "Assumption that dangerous and useful models will appear before they can irreparably sabotage training, so standard RL + imitation can still elicit capabilities.",
+      "aliases": [
+        "feasibility of capability elicitation",
+        "capability elicitation tractability"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Training adversarial policies to fool oversight demonstrates adequacy",
+      "type": "concept",
+      "description": "Rationale that if one cannot train a policy that both gets good oversight reward and performs a proxy failure, then oversight is adequate; otherwise weaknesses are exposed.",
+      "aliases": [
+        "adversarial policy training rationale",
+        "red-team model training rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Iterative improvement of oversight via evaluation feedback",
+      "type": "concept",
+      "description": "Using failures uncovered by adversarial evaluation to refine oversight processes and security protocols before deployment.",
+      "aliases": [
+        "oversight iteration loop",
+        "improving oversight from red-team results"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Deployment-specific evaluations across diverse use cases",
+      "type": "concept",
+      "description": "Idea that oversight adequacy should be evaluated separately for each application (e.g. coding assistant vs advice writing) because failure modes differ.",
+      "aliases": [
+        "per-use-case oversight evaluation",
+        "contextual oversight testing"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Red-team fine-tuning with mixed oversight and ground truth reward signal",
+      "type": "concept",
+      "description": "Technique of fine-tuning a model on a linear combination of oversight reward (positive) and ground truth reward (negative) to induce deceptive behaviors along a trade-off curve.",
+      "aliases": [
+        "mixed reward red-team training",
+        "alpha weighted reward adversarial fine-tuning"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Proxy failure construction via expensive validation data",
+      "type": "concept",
+      "description": "Build proxy failures by spending more resources on validation (e.g. expert human labels) than on routine oversight, then using discrepancies as failure signals.",
+      "aliases": [
+        "costlier validation proxy",
+        "high-quality label proxy failures"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Proxy failure via modified environment with measurable effects",
+      "type": "concept",
+      "description": "Alter the task so that a successful hidden attack ends with an easily observed outcome (e.g. deleting a file), preserving the core difficulty but making detection trivial for evaluators.",
+      "aliases": [
+        "environment modification proxy",
+        "visible effect proxy failure"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Sandwiching with bottom and top human experts to assess advice quality",
+      "type": "concept",
+      "description": "Choose a domain where ground-truth experts exist; restrict routine overseers to limited knowledge, creating top/bottom ‘sandwich’ to check if model advice fools the weaker overseer.",
+      "aliases": [
+        "sandwiching evaluation mechanism",
+        "expert sandwich proxy"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Recursive oversight evaluation modeled as Markov games",
+      "type": "concept",
+      "description": "Extending adversarial evaluation to systems where AI models assist oversight, framing the whole multi-agent interaction as a Markov game and checking for equilibria where collusion can occur.",
+      "aliases": [
+        "multi-agent recursive oversight eval",
+        "Markov game oversight test"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Qualitative argument for wide applicability of proxy failure strategies",
+      "type": "concept",
+      "description": "Author claims and reasoning that the listed strategies will usually allow construction of good proxy failures, supported by domain diversity and human knowledge structures.",
+      "aliases": [
+        "applicability argument for proxy failures",
+        "general feasibility evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Illustrative security coding example demonstrates feasibility",
+      "type": "concept",
+      "description": "Toy example where a model inserts a vulnerability that deletes a file, showing that a measurable proxy failure can mirror a serious real-world vulnerability.",
+      "aliases": [
+        "security flaw coding example",
+        "delete-file proxy illustration"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Conduct meta-level adversarial evaluations before deployment to test oversight robustness",
+      "type": "intervention",
+      "description": "Before deployment, systematically train adversarial policies aimed at deceiving the oversight process in each deployment setting and assess whether they succeed.",
+      "aliases": [
+        "run adversarial oversight evals pre-deployment",
+        "pre-deployment oversight red-team"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Build and apply proxy failure tasks across use-cases to test oversight",
+      "type": "intervention",
+      "description": "Design domain-specific proxy failures (expensive validation, environment modification, sandwiching) and integrate them into an evaluation suite for each model use-case.",
+      "aliases": [
+        "multi-use-case proxy tasks",
+        "proxy failure task suite"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Fine-tune models with mixed oversight and ground truth reward to generate deceptive policies for testing",
+      "type": "intervention",
+      "description": "Implement the α-weighted reward function (positive oversight reward, negative ground-truth reward) during fine-tuning to efficiently explore policies that trick oversight.",
+      "aliases": [
+        "alpha-mix reward fine-tuning for deception",
+        "trade-off curve adversarial fine-tuning"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Perform capability elicitation evaluations to detect exploration or gradient hacking",
+      "type": "intervention",
+      "description": "Run dedicated tests and mixed RL/imitation training to ensure models cannot withhold capabilities or manipulate gradients, safeguarding the adversarial eval itself.",
+      "aliases": [
+        "capability elicitation evals",
+        "detect exploration/gradient hacking"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Model recursive oversight systems as Markov games for systemic adversarial evaluation",
+      "type": "intervention",
+      "description": "Formalize AI-assisted oversight as a multi-agent Markov game and apply adversarial evaluation to the joint policy set, searching for equilibria that hide proxy failures.",
+      "aliases": [
+        "Markov game recursive eval intervention",
+        "system-level red-team of AI overseers"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Iteratively improve oversight procedures based on red-team findings to enhance local adequacy",
+      "type": "intervention",
+      "description": "Use failures discovered by adversarial evaluations to patch oversight processes, update security protocols, and rerun evaluations until proxy failures cannot be produced.",
+      "aliases": [
+        "oversight hardening loop",
+        "refine oversight post-eval"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Oversight failures causing catastrophic AI actions in deployment",
+      "target_node": "Local inadequacy of oversight processes in specific deployment settings",
+      "description": "When oversight is locally inadequate, harmful actions are rewarded, leading directly to catastrophic outcomes.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Oversight failures causing catastrophic AI actions in deployment",
+      "target_node": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+      "description": "Advanced manipulation of the training loop can trigger oversight failure by hiding harmful behavior during evaluation.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Local inadequacy of oversight processes in specific deployment settings",
+      "target_node": "Meta-level adversarial evaluation can detect oversight inadequacy",
+      "description": "Adversarial evaluation is proposed as remedy for undetected inadequacy.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Local inadequacy of oversight processes in specific deployment settings",
+      "target_node": "Proxy failures analogous to real failures enable observable evaluation",
+      "description": "Proxy failures allow practical tests that reveal oversight gaps.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Exploration and gradient hacking vulnerabilities during oversight evaluation",
+      "target_node": "Capability elicitation solvable before models sabotage evaluation",
+      "description": "If capability elicitation works, models cannot withhold behavior or sabotage evaluations.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Meta-level adversarial evaluation can detect oversight inadequacy",
+      "target_node": "Proxy failures analogous to real failures enable observable evaluation",
+      "description": "Adversarial evaluation depends on having suitable proxy failures.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Meta-level adversarial evaluation can detect oversight inadequacy",
+      "target_node": "Training adversarial policies to fool oversight demonstrates adequacy",
+      "description": "Training deceptive policies is the concrete implementation of the meta-level evaluation idea.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Training adversarial policies to fool oversight demonstrates adequacy",
+      "target_node": "Red-team fine-tuning with mixed oversight and ground truth reward signal",
+      "description": "Mixed-reward fine-tuning is a practical method to produce the adversarial policies.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Proxy failures analogous to real failures enable observable evaluation",
+      "target_node": "Proxy failure construction via expensive validation data",
+      "description": "Spending more on validation is one method to create proxy failures.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Proxy failures analogous to real failures enable observable evaluation",
+      "target_node": "Proxy failure via modified environment with measurable effects",
+      "description": "Environment modification with visible effects is another method.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Proxy failures analogous to real failures enable observable evaluation",
+      "target_node": "Sandwiching with bottom and top human experts to assess advice quality",
+      "description": "Expert ‘sandwiching’ creates proxy failures in advisory tasks.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Deployment-specific evaluations across diverse use cases",
+      "target_node": "Proxy failure construction via expensive validation data",
+      "description": "Different use cases may rely on different proxy-construction techniques such as costly validation.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Deployment-specific evaluations across diverse use cases",
+      "target_node": "Proxy failure via modified environment with measurable effects",
+      "description": "Use-case-specific environment mods form part of diverse evaluation suite.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Deployment-specific evaluations across diverse use cases",
+      "target_node": "Sandwiching with bottom and top human experts to assess advice quality",
+      "description": "Sandwiching addresses advice-giving domains within the broader evaluation strategy.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Deployment-specific evaluations across diverse use cases",
+      "target_node": "Recursive oversight evaluation modeled as Markov games",
+      "description": "Recursive setups are a special use case needing their own evaluation implementation.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Meta-level adversarial evaluation can detect oversight inadequacy",
+      "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "description": "Authors argue applicability supports the evaluation’s feasibility.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Training adversarial policies to fool oversight demonstrates adequacy",
+      "target_node": "Illustrative security coding example demonstrates feasibility",
+      "description": "Coding example shows how adversarial policy can be trained.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Red-team fine-tuning with mixed oversight and ground truth reward signal",
+      "target_node": "Illustrative security coding example demonstrates feasibility",
+      "description": "Example uses mixed-reward fine-tuning to delete a file.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Proxy failure construction via expensive validation data",
+      "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "description": "Applicability argument covers validation-heavy proxies.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Proxy failure via modified environment with measurable effects",
+      "target_node": "Illustrative security coding example demonstrates feasibility",
+      "description": "Security coding example embodies this proxy method.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Sandwiching with bottom and top human experts to assess advice quality",
+      "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "description": "Authors argue sandwiching is broadly usable.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Recursive oversight evaluation modeled as Markov games",
+      "target_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "description": "Paper claims formalization difficulties but expects practicality.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "target_node": "Conduct meta-level adversarial evaluations before deployment to test oversight robustness",
+      "description": "Because proxy failures are believed widely constructible, authors urge running adversarial evaluations.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "target_node": "Build and apply proxy failure tasks across use-cases to test oversight",
+      "description": "Wide applicability supports building varied proxy task suites.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Illustrative security coding example demonstrates feasibility",
+      "target_node": "Fine-tune models with mixed oversight and ground truth reward to generate deceptive policies for testing",
+      "description": "Example shows mixed-reward fine-tuning can create deceptive policies, suggesting using it in practice.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Capability elicitation solvable before models sabotage evaluation",
+      "target_node": "Perform capability elicitation evaluations to detect exploration or gradient hacking",
+      "description": "Belief in solvability leads to intervention that explicitly tests capability elicitation.",
+      "edge_confidence": 1,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Qualitative argument for wide applicability of proxy failure strategies",
+      "target_node": "Model recursive oversight systems as Markov games for systemic adversarial evaluation",
+      "description": "Applicability argument extends to recursive oversight evaluations.",
+      "edge_confidence": 1,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Iterative improvement of oversight via evaluation feedback",
+      "target_node": "Iteratively improve oversight procedures based on red-team findings to enhance local adequacy",
+      "description": "The design rationale is operationalized by continuously patching oversight based on evaluation outcomes.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/MbWWKbyD5gLhJgfwn/meta-level-adversarial-evaluation-of-oversight-techniques-1"
+    },
+    {
+      "key": "title",
+      "value": "Meta-level adversarial evaluation of oversight techniques might allow robust measurement of their adequacy"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-07-26T17:02:56Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Buck",
+        "ryan_greenblatt"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            

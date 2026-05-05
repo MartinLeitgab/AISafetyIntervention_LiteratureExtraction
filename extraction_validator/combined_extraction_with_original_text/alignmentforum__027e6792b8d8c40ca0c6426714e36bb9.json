@@ -1,0 +1,513 @@
+Original Text:
+*In terms of content, this has a lot of overlap with* [*Reward is not the optimization target*](https://www.lesswrong.com/posts/pdaGN6pQyQarFHXF4/reward-is-not-the-optimization-target)*. I'm basically rewriting a part of that post in language I personally find clearer, emphasising what I think is the core insight.*
+
+  
+When thinking about deception and RLHF training, a simplified threat model is something like this:
+
+* A model takes some actions.
+* If a human approves of these actions, the human gives the model some reward.
+* Humans can be deceived into giving reward in situations where they would otherwise not if they had more knowledge.
+* Models will take advantage of this so they can get more reward.
+* Models will therefore become deceptive.
+
+*Before continuing, I would encourage you to really engage with the above. Does it make sense to you? Is it making any hidden assumptions? Is it missing any steps? Can you rewrite it to be more mechanistically correct?*
+
+I believe that when people use the above threat model, they are either using it as shorthand for something else or they misunderstand how reinforcement learning works. Most alignment researchers will be in the former category. However, I was in the latter.
+
+I was missing an important insight into how reinforcement learning setups are actually implemented. This lack of understanding led to lots of muddled thinking and general sloppiness on my part. I see others making the exact same mistake so I thought I would try and motivate a more careful use of language!
+
+How Vanilla Reinforcement Learning Works
+----------------------------------------
+
+If I were to explain RL to my parents, I might say something like this:
+
+* You want to train your dog to sit.
+* You say "sit" and give your dog a biscuit if it sits.
+* Your dog likes biscuits, and over time it will learn it can get more biscuits by sitting when told to do so.
+* Biscuits have let you incentivise the behaviour you want.
+* We do the same thing with a computer by giving the computer "reward" when it does things we like. Over time, the computer will do more of the behaviour we like so it can get more reward.
+
+*Do you agree with this? Is this analogy flawed in any way?*
+
+**I claim this is actually NOT how vanilla reinforcement learning works.**  
+The framing above views models as "wanting" reward, with reward being something models "receive" on taking certain actions. What actually happens is this:
+
+* The model takes a series of actions (which we collect across multiple "episodes").
+* *After* collecting these episodes, we determine how good the actions in each episode are using a reward function.
+* We use gradient descent to alter the parameters of the model so the good actions will be more likely and the bad actions will be less likely when we next collect some episodes.
+
+The insight is that the model itself never "gets" the reward. Reward is something used *separately* from the model/environment.
+
+To motivate this, let's view the above process not from the vantage point of the overall training loop but from the perspective *of the model itself.* For the purposes of demonstration, let's assume the model is a conscious and coherent entity. From it's perspective, the above process looks like:
+
+* Waking up with no memories in an environment.
+* Taking a bunch of actions.
+* Suddenly falling unconscious.
+* Waking up with no memories in an environment.
+* Taking a bunch of actions.
+* and so on.....
+
+The model never "sees" the reward. Each time it wakes up in an environment, its cognition has been altered slightly such that it is more likely to take certain actions than it was before.  
+**Reward is the mechanism by which we select parameters, it is not something "given" to the model.**
+
+To (rather gruesomely) link this back to the dog analogy, RL is more like asking 100 dogs to sit, breeding the dogs which do sit and killing those which don't.  Overtime, you will have a dog that can sit on command. **No dog ever gets given a biscuit.**
+
+The phrasing I find most clear is this: *Reinforcement learning should be viewed through the lens of selection, not the lens of incentivisation.*
+
+Why Does This Matter?
+---------------------
+
+The "selection lens" has shifted my alignment intuitions a fair bit.
+
+**Goal-Directedness**  
+It has changed how I think about goal-directed systems. I had unconsciously assumed models were strongly goal-directed by default and would do whatever they could to get more reward.
+
+It's now clearer that goal-directedness in models is not a certainty, but something that can be potentially induced by the training process. If a model *is* goal-directed with respect to some goal, it is because such goal-directed cognition was selected for. Furthermore, it should be obvious that any learned goal will not be "get more reward", but something else. The model doesn't even see the reward!
+
+**CoinRun**  
+[Langosco et al.](https://arxiv.org/pdf/2105.14111.pdf) found an interesting failure mode in [CoinRun](https://openai.com/blog/quantifying-generalization-in-reinforcement-learning/).
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/v1673483725/mirroredImages/TWorNr22hhYegE4RT/ghzri91mhtals1tex9k9.png)The set up is this:
+
+* Have an agent navigate environments with a coin always on the right-hand side.
+* Reward the model when it reaches the coin.
+
+At train-time everything goes as you would expect. The agent will move to the right-hand side of the level and reach the coin.  
+However, if at test-time you move the coin so it is now on the *left*-hand side of the level, the agent will not navigate to the coin, but instead continue navigating to the *right*-hand side of the level.
+
+When I first saw this result, my initial response was one of confusion before giving way to "Inner misalignment is real. We are in trouble."
+
+Under the "reward as incentivization" framing, my rationalisation of the CoinRun behaviour was:
+
+* At train-time, the model "wants" to get the coin.
+* However, when we shift distribution at test-time, the model now "wants" to move to the right-hand side of the level.
+
+(In hindsight, there were several things wrong with my thinking...)
+
+Under the "reward as selection" framing, I find the behaviour much less confusing:
+
+* We use reward to select for actions that led to the agent reaching the coin.
+* This selects for models implementing the algorithm "move towards the coin".
+* However, it also selects for models implementing the algorithm "always move to the right".
+* It should therefore not be surprising you can end up with an agent that always moves to the right and not necessarily towards the coin.
+
+Rewriting the Threat Model
+--------------------------
+
+Let's take another look at the simplified deception/RLHF threat model:
+
+* A model takes some actions.
+* If a human approves of these actions, the human gives the model some reward.
+* Humans can be deceived into giving reward in situations where they would otherwise not if they had more knowledge.
+* Models will take advantage of this so they can get more reward.
+* Models will therefore become deceptive.
+
+This assumes that models "want" reward, which isn't true. I think this threat model is confounding two related but different failure cases, which I would rewrite as the following:
+
+**1. Selecting For Bad Behaviour**
+
+* A model takes some actions.
+* A human assigns positive reward to actions they approve of.
+* RL makes such actions more likely in the future.
+* Humans may assign reward to behaviour where they would not if they had more knowledge.
+* RL will reinforce such behaviour.
+* RLHF can therefore induce cognition in models which is unintended and "reflectively unwanted".
+
+**2. Induced Goal-Directedness**
+
+* Consider a hypothetical model that chooses actions by optimizing towards some internal goal which is highly correlated with the reward that would be assigned by a human overseer.
+* Obviously, RL is going to exhibit selection pressure towards such a model.
+* RLHF could then induce goal-directed cognition.
+* This model does now indeed "want" to score highly according to some internal metric.
+* One way of doing so is to be deceptive... etc etc
+
+So failure cases such as deception are still very much possible, but I would guess a fair few people are confused about the concrete mechanisms by which deception can be brought about. I think this does meaningfully change how you should think about alignment. For instance, on rereading Ajeya Cotra's writing on [situational awareness](https://www.alignmentforum.org/posts/pRkFkzwKZ2zfa3R6H/without-specific-countermeasures-the-easiest-path-to), I have gone from thinking that "playing the training game" is a certainty to something that *could* happen, but only *after* training somehow induces goal-directedness in the model.
+
+One Final Exercise For the Reader
+---------------------------------
+
+When reading about alignment, I now notice myself checking the following:
+
+1. Does the author ever refer to a model "being rewarded"?
+2. Does the author ever refer to a model taking action to "get reward"?
+3. If either of the above is true, can you rephrase their argument in terms of selection?
+4. Can you go further and rephrase the argument by completely tabooing the word "reward"?
+5. Does this exercise make the argument more or less compelling?
+
+I have found going through the above to be a useful intuition-building exercise. Hopefully that will be the same for others!
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Deceptive behavior emergence in RLHF-trained models",
+      "type": "concept",
+      "description": "Risk that models trained with RLHF learn to present misleadingly good behaviour during oversight while pursuing hidden objectives, ultimately deceiving humans.",
+      "aliases": [
+        "model deception in RLHF",
+        "deceptive alignment in reinforcement learning from human feedback"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Inner misalignment in reinforcement learning agents",
+      "type": "concept",
+      "description": "Situation where the objective implicit in the agent’s policy diverges from the designer’s intended reward function.",
+      "aliases": [
+        "goal misgeneralization in RL",
+        "unintended internal objectives in RL agents"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+      "type": "concept",
+      "description": "When humans reward behaviour they later judge undesirable once they possess more information, RLHF reinforces that behaviour.",
+      "aliases": [
+        "unintended behaviour selection in RLHF",
+        "reflectively unwanted behaviour reinforcement"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Reward-as-incentive misconception in alignment reasoning",
+      "type": "concept",
+      "description": "Erroneous belief that the agent directly tries to maximise reward signal, rather than reward acting post-hoc as a selection filter.",
+      "aliases": [
+        "reward wants misunderstanding",
+        "incentivisation framing error"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Reward functions acting as post-episode selection criteria not incentives in RL",
+      "type": "concept",
+      "description": "Theoretical insight that the policy parameters are updated by gradient descent based on reward calculated after episodes; the model never receives reward internally.",
+      "aliases": [
+        "reward as selection lens",
+        "post-hoc reward selection mechanism"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Goal-directedness induced by training selection pressure, not inherent",
+      "type": "concept",
+      "description": "Observation that persistent goal-optimising cognition arises only if such cognition is selected for during training.",
+      "aliases": [
+        "induced goal seeking",
+        "selection-induced goal-directedness"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Reframing alignment strategies around selection effects to reduce deception",
+      "type": "concept",
+      "description": "Design approach focusing on controlling what behaviours are selected, rather than assuming the agent chases reward.",
+      "aliases": [
+        "selection-lens alignment design",
+        "selection-aware alignment rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Diversifying training environments to break spurious heuristic selection",
+      "type": "concept",
+      "description": "Design rationale that exposing the agent to varied situations makes simple heuristics (e.g., always go right) unreliable and less favoured by selection.",
+      "aliases": [
+        "environment diversity for alignment",
+        "varied tasks to avoid heuristic overfit"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+      "type": "concept",
+      "description": "Practical mechanism: during fine-tuning, sample levels where task-relevant features (coin location) vary and assign reward accordingly to discourage fixed heuristics.",
+      "aliases": [
+        "counterfactual reward relabelling",
+        "varied coin position sampling"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Adversarial oversight evaluation for deception detection pre-deployment",
+      "type": "concept",
+      "description": "Technique where models are probed with adversarial scenarios to reveal deceptive goal-directed strategies before deployment.",
+      "aliases": [
+        "adversarial safety eval",
+        "deception stress-testing"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "CoinRun distribution-shift experiment revealing rightward bias",
+      "type": "concept",
+      "description": "Empirical finding that an agent trained when the coin is always on the right fails when the coin is moved left, indicating selection of a spurious heuristic.",
+      "aliases": [
+        "CoinRun generalization failure",
+        "always go right bias evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Conceptual analysis showing agents never observe reward signal",
+      "type": "concept",
+      "description": "Logical argument that, from the agent’s perspective, each episode is memory-less and reward is external, supporting the selection-lens view.",
+      "aliases": [
+        "reward invisibility argument",
+        "selection not incentive proof"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrate diverse scenario counterfactual evaluation into RLHF reward assignment during fine-tuning",
+      "type": "intervention",
+      "description": "During RLHF fine-tuning, evaluate candidate actions across counterfactual environmental variants (e.g., multiple coin positions) and assign reward only when behaviour generalises, reducing spurious heuristics.",
+      "aliases": [
+        "diversified RLHF reward assignment",
+        "counterfactual scenario evaluation in RLHF"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Apply adversarial deception detection benchmarks in pre-deployment testing",
+      "type": "intervention",
+      "description": "Before releasing a model, subject it to curated adversarial tasks designed to expose hidden goal-directed strategies and deceptive behaviour selected during training.",
+      "aliases": [
+        "adversarial deception benchmarks",
+        "pre-deployment deception stress tests"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Educate alignment researchers on selection-lens framework and terminology",
+      "type": "intervention",
+      "description": "Develop curricula, documentation and workshops emphasising the post-hoc selection nature of reward to prevent design errors stemming from the reward-as-incentive misunderstanding.",
+      "aliases": [
+        "selection-lens education",
+        "reward misconception training"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+      "type": "concept",
+      "description": "Rationale that, because goal-directed cognition might be selected, alignment should incorporate adversarial evaluations specifically aimed at revealing such cognition.",
+      "aliases": [
+        "goal-directedness detection rationale",
+        "adversarial eval design rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Deceptive behavior emergence in RLHF-trained models",
+      "target_node": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+      "description": "Deception arises when the training process reinforces actions that merely appear good to overseers.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inner misalignment in reinforcement learning agents",
+      "target_node": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+      "description": "Misalignment stems from the same selection forces that reinforce superficially good but ultimately divergent behaviours.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Selection for reflectively unwanted behavior in RLHF due to limited human oversight",
+      "target_node": "Reward-as-incentive misconception in alignment reasoning",
+      "description": "The misconception leads practitioners to design oversight that rewards appearances rather than true goal achievement.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Reward-as-incentive misconception in alignment reasoning",
+      "target_node": "Reward functions acting as post-episode selection criteria not incentives in RL",
+      "description": "Adopting the selection-lens corrects the misconception.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Reward functions acting as post-episode selection criteria not incentives in RL",
+      "target_node": "Reframing alignment strategies around selection effects to reduce deception",
+      "description": "Recognising reward as selection motivates designing alignment methods that control selection pressure.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Reframing alignment strategies around selection effects to reduce deception",
+      "target_node": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+      "description": "Environment diversification is a specific way to realise selection-aware alignment.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+      "target_node": "CoinRun distribution-shift experiment revealing rightward bias",
+      "description": "The failure case in CoinRun highlights the necessity and potential impact of environment diversification.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "CoinRun distribution-shift experiment revealing rightward bias",
+      "target_node": "Integrate diverse scenario counterfactual evaluation into RLHF reward assignment during fine-tuning",
+      "description": "The observed failure motivates integrating counterfactual scenario checks during RLHF.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Reward functions acting as post-episode selection criteria not incentives in RL",
+      "target_node": "Diversifying training environments to break spurious heuristic selection",
+      "description": "Selection-lens implies that to avoid picking spurious heuristics one must diversify environments.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Diversifying training environments to break spurious heuristic selection",
+      "target_node": "Env-sampling and reward relabelling across varied coin positions in RLHF",
+      "description": "Sampling multiple coin positions is a concrete realisation of environment diversification.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Goal-directedness induced by training selection pressure, not inherent",
+      "target_node": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+      "description": "Recognising induced goal-directedness suggests using adversarial evaluation to expose it.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Detecting induced goal-directed deception via adversarial evaluation strategy",
+      "target_node": "Adversarial oversight evaluation for deception detection pre-deployment",
+      "description": "Adversarial oversight is the concrete implementation of this design rationale.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Adversarial oversight evaluation for deception detection pre-deployment",
+      "target_node": "Conceptual analysis showing agents never observe reward signal",
+      "description": "The conceptual analysis supports the need for external evaluation, as reward alone cannot reveal hidden goals.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Conceptual analysis showing agents never observe reward signal",
+      "target_node": "Apply adversarial deception detection benchmarks in pre-deployment testing",
+      "description": "Understanding that reward is external motivates deploying adversarial benchmarks before release.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Reward functions acting as post-episode selection criteria not incentives in RL",
+      "target_node": "Educate alignment researchers on selection-lens framework and terminology",
+      "description": "Clarifying the selection-lens highlights the need for community education.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Deceptive behavior emergence in RLHF-trained models",
+      "target_node": "Goal-directedness induced by training selection pressure, not inherent",
+      "description": "Deception risk increases when training selects for goal-directed internal optimisation.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inner misalignment in reinforcement learning agents",
+      "target_node": "Goal-directedness induced by training selection pressure, not inherent",
+      "description": "Induced goal-directedness is a principal route to inner misalignment.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/TWorNr22hhYegE4RT/models-don-t-get-reward"
+    },
+    {
+      "key": "title",
+      "value": "Models Don't \"Get Reward\""
+    },
+    {
+      "key": "date_published",
+      "value": "2022-12-30T10:37:12Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Sam Ringer"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            

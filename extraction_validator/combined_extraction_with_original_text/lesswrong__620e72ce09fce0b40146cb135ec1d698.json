@@ -1,0 +1,362 @@
+Original Text:
+**Exploring the possible space of learning architectures**
+----------------------------------------------------------
+
+Here is the ultimate challenge: in order to control something, one generally has to understand how it works—i.e., to accurately predict how it will behave under various manipulations. 
+
+I sometimes have a recurring dream that I am aboard a plane falling out of the sky, and for whatever reason, *I*, a lowly passenger, am suddenly tasked with landing the plane safely. However, when I enter the cockpit, all I see are a series of levers, buttons, dials, dashboards, etc. Unsurprisingly, I do not understand the function of any of these mechanisms in my dream; I thus always fail my mission to properly fly the plane. It is crucial for existential risk minimization that we do a better job understanding and controlling the trajectory of AGI than my dream self does with flying a plane.
+
+In order to control the behavior/consequences of the behavior of AGI, we will have to understand how it works to a sufficient degree. 
+
+In order to understand how AGI works, we will have to understand the general strategies that the AGI employs to achieve goals and solve problems. 
+
+And understanding these ‘general strategies’ is really a question of the architecture of AGI’s learning algorithm(s). This is because these learning algorithms constitute the specific mechanism by which the AGI would transition from the state of being unable to solve some problem/achieve some goal to being able to do so.
+
+A quick note on the ‘(s)’ in learning algorithm(s): there is no reason for us to exclude from consideration the possibility that AGI will have multiple learning strategies at its disposal, employing its different learning algorithms for different problem-solving contexts. With this being said, I think it would still make sense in many cases to talk about the ‘fundamental’ or ‘foundational’ learning algorithm employed by the AGI. For example, if the AGI fundamentally represents the world as a vast set of states (perhaps using SL) inside of which it attempts to actuate sequences of high-value actions, this AGI’s ‘foundational’ learning algorithm would be RL (even though it also uses some SL). 
+
+I will now outline my best guess at the space of these possible learning algorithm architectures. I’ve divided up the space into three axes: foundational learning algorithm, post-deployment learning capacity, and level of general intelligence. I will explain each in turn.
+
+![](https://39669.cdn.cke-cs.com/rQvD3VnunXZu34m86e5f/images/df4c541ab48355aafae94ab9f9611e50273f2a6c90687418.png)### Foundational learning algorithm
+
+The ‘foundational learning algorithm’ axis is continuous in this graph, but only because it employs a graded notion of familiarity—i.e., the extent to which current ML engineers/AI researchers understand the functional dynamics and computational potential of the family of learning algorithms in question. (I think ‘familiarity’ of this sort is a fairly contrived metric, albeit a highly relevant one for safety.) 
+
+This set-up implicitly claims that supervised learning (SL) methods (e.g., ANNs, language models, classification and regression tasks, etc.) are, relatively speaking, better researched by most ML practitioners than reinforcement learning (RL) methods (which is not to say that RL is not studied)—and that these two approaches are [fundamentally different](http://all.cs.umass.edu/pubs/2004/barto_d_04.pdf). Of course, the least familiar learning algorithms would be those that do not currently exist and/or those that aren’t adequately described under the broad computational frameworks of RL *or* SL. 
+
+Despite their seemingly continuous representation in this graph, I want to be clear that the different foundational learning algorithms are probably best thought of as discrete. (While there might potentially be some rough SL-RL spectrum [e.g., strict SL → ‘SL-model-based’ RL → model-free RL], it would be impossible to incorporate currently-unknown learning algorithms into this spectrum, so I am content to think of these as cleanly discrete possibilities for now.)
+
+Evaluating the precise relationship between RL and SL algorithms is a highly worthwhile topic, albeit one for another post ([see Barto's excellent treatment of the subject here](http://all.cs.umass.edu/pubs/2004/barto_d_04.pdf)); for our purposes, I will briefly summarize the distinction as follows. Both SL and RL algorithms can be validly construed as learning to build a model that makes optimal ‘decisions:’ an SL algorithm might ‘decide’ to predict a handwritten digit as a ‘7’ (given particular patterns of activation in its neural network), while a [Q-learning](https://en.wikipedia.org/wiki/Q-learning) RL algorithm might ‘decide’ to turn left in a maze (given its value and policy functions). 
+
+Along these lines, I think the most fundamental difference between these two learning algorithms is that the ‘decisions’ of an SL algorithm (e.g., predicting ‘7’) have no direct bearing on the next decision problem faced by the algorithm (e.g., predicting ‘7’ is causally independent of that fact the next training image—and prediction—is a ‘4’), while the ‘decisions’ of an RL algorithm (e.g., turning left in a maze) *do* affect the next decision-problem (e.g., turning left means I can turn left or right at the next junction while turning right would eventually lead me into a dead-end). RL decision-problems are self-entangled; if they use the Bellman equation, they are [intrinsically recursive](https://en.wikipedia.org/wiki/Q-learning#Algorithm). 
+
+In other words, successful RL algorithms yield a model that can solve a sequential decision problem (e.g., maze = left-left-right-straight-left-goal), while successful SL algorithms yield a model that can solve many discrete decision problems (e.g., serially predicting 10,000 handwritten digits). 
+
+Given this cursory summary, **the degree to which one believes that AGI would fundamentally be more like a ‘sequential problem solver’ should track with one’s credence in the foundational learning algorithm of AGI being some form of RL. So too with AGI being more like a ‘repeated discrete problem solver’ and SL.** If one believes that both of these framings seem wrong and/or orthogonal to how an AGI would reallyneed to learn, one would probably lean towards predicting AGI to have what I’ve called an ‘unanticipated learning algorithm’ (which is really something more like the *absence* of a prediction).
+
+### Post-deployment learning capacity
+
+‘Post-deployment learning capacity’ means what it sounds like. All learning algorithms (though admittedly maybe not some unanticipated ones) demonstrate something like a ‘build and refine decision-making procedure’ phase and an ‘implement decision-making procedure’ phase, more familiarly and succinctly referred to as *training/testing* and *deployment*, respectively. In these terms, the question at hand is predicting how much of the cumulative learning done by the AGI will occur *post-deployment.* Possible answers presumably range from 0% to ≈100%. Of course, it is worth immediately noting that if one believes the answer is closer to 100% than 0%, the notion of a training/testing-deployment distinction becomes increasingly arbitrary—if significant learning can be done post-deployment, then in what sense is ‘post-deployment’ different from ‘just more training and testing?’ I think the following simple terminology seems appropriate for describing this state of affairs:
+
+![](https://lh4.googleusercontent.com/YQqRJM7i5klrVnqr3iDMyAh74L9X7EFVcLKdftkUpbU1DsrHCVSdBXJTipvHD30A6Lvx1MfjG_MbLN9bgzdz2uCk6fCHoKpMMOHvmyiYXvzMHzq1le1z-k28V7qWZh9y3CPCQNbw)Note that everyone agrees that there will be learning going on *pre-deployment*—i.e., during the training/testing stage. The question of post-deployment learning capacity might also be framed as the extent to which one predicts the AGI's generated model to be 'static' or 'solidified' following deployment. A current example of a solidly offline learning algorithm setup is Tesla's use of [deep learning for training the self-driving functionality](https://towardsdatascience.com/teslas-deep-learning-at-scale-7eed85b235d3) of their cars: data is collected, models are trained and tested, and software updates containing the now-static model are subsequently sent out to the individual cars. This set-up would be *online* if, for example, each car were to continually update its own representations (*subsequent* to a software update) given new data encountered by that car while driving. 
+
+Conversely, the best example of strong online learning can be found in the brain. There is of course no moment prior to death when a neurotypical brain can be said to stop learning, and though there is some evidence that [model training/testing might basically be what occurs during sleep](https://www.nature.com/articles/s41593-019-0467-3), it is obviously also the case that humans and animals can learn spontaneously during waking hours. When someone tells me their name, my world model immediately updates. When a Tesla car blows through a stop sign, its world model does not immediately update. [As I've written previously](https://www.lesswrong.com/posts/ZJY3eotLdfBPCLP3z/theoretical-neuroscience-for-alignment-theory?commentId=T2gCxSxqStbNRbseL), the brain also seems to almost entirely evade the notion of deployment, as it is totally unclear how to answer the question of when a brain is 'deployed' in the traditional sense.     
+
+### Level of general intelligence
+
+The final axis worth considering in the space of possible AGI learning algorithm architectures is the AGI’s level of general intelligence. Recall that general intelligence is basically defined as “the ability to efficiently achieve goals in a wide range of domains.” Though to my surpise I have not seen it discussed elsewhere, it is important to note that nothing about this definition (or intelligence being instantiated ‘artificially’) *necessarily* entails superhuman competence. I think the most obvious and intuitive examples of subhuman general intelligence can be found in other intelligent species like dolphins, octopuses, chimpanzees, crows, etc. These creatures are certainly less generally intelligent than humans, but they are *certainly* generally intelligent in the aforementioned sense. 
+
+Consider the [common bottlenose dolphin](https://www.google.com/url?q=https://www.nationalgeographic.com/animals/article/these-amazingly-complex-behaviors-make-dolphins-master-hunters-&sa=D&source=docs&ust=1643922723584432&usg=AOvVaw1klnomE4Lyv-rP7DhVK13T), which can hunt using highly complex tactics, coordinate sophisticated social behaviors, use tools for self-protection, enact multi-stage plans, engage in deceptive behavior, play complex games with determinate rulesets, [elect to ‘get high’](https://www.smithsonianmag.com/smart-news/dolphins-seem-to-use-toxic-pufferfish-to-get-high-180948219/) on puffer fish nerve toxins, and so on. Efficiently achieving goals? Check. Wide range of domains? Check. Perhaps we will build AGI like this (with subhuman general intelligence). Or perhaps we will build AGI that matches or exceeds our general intelligence—i.e., an AGI that can more efficiently achieve a broader set of goals in a wider range of domains than can *homo sapiens*. In general, the novel claim contained within this axis is that general intelligence and superintelligence should not be conflated; that is, an AGI with subhuman general intelligence—however *plausible*—is perfectly *possible*. 
+
+Having explained these three axes in greater detail, I think it worth noting that this framework plausibly accounts for different conceptualizations of AGI in safety research, such as ‘[prosaic AGI](https://ai-alignment.com/prosaic-ai-control-b959644d79c2)’ vs. ‘[brain-based AGI,](https://www.alignmentforum.org/s/HzcM2dkCq7fwXBej8)’ as it depicted (in the two relevant dimensions) below:
+
+![](https://lh3.googleusercontent.com/zPK6G53C6LwxyHDVtR3xNwYIySCRzfq9NE8FrYs0xucBV2LNE_vfzmDQzyJYkor-E3--F_2btD5tbeS_-tmspBQ3FhXeNF0ty0T2V2plcIjEX0GfjmKY2-GF-CH44KlBkahOOLoX)In general, the graph claims that prosaic AGI safety researchers seem to center their efforts in mostly-supervised, mostly-offline learning architectures, while brain-based AGI safety researchers are more interested in more RL-based, solidly-online learning architectures. I provide this example as a tentative proof of concept both for the possibility-space and for the utility of having a single framework that can incorporate the thinking of different AGI safety researchers with significantly different priors.  
+
+**Zooming back out**
+--------------------
+
+Recall our starting point: in order to control something, we should generally understand how it works. In the case of AGI, I think that ‘*how does it work?*’ can be more precisely stated as ‘*what is the predicted foundational architecture of the learning algorithm(s) used by the AGI?*’. The proposed framework proposes a three-dimensional space of plausible answers to this question inside which AGI researchers can localize their own intuitions. 
+
+One thing that makes the AGI safety control problem most obviously unique from [most other control problems](https://en.wikipedia.org/wiki/Optimal_control) is that the object-to-be-controlled—the AGI—does not yet exist. If this problem needs to be solved *prior* to the invention of the AGI (discussed in [Question 5](https://www.lesswrong.com/posts/BSNFKi3aym7DtSnTX/question-5-the-timeline-hyperparameter)), proposals for control must necessarily be based upon *our best predictions* about what AGI will look like. Therefore, the stakes are high for figuring out what the most plausible models of AGI *actually are*; it is only with models of this sort as a foundation (whether or not they are explicitly acknowledged) that any of the subsequent control-related work can be done. 
+
+Even if we think that there might be certain problems—and subsequent control proposals—that transcend specific learning architectures (i.e., problems that apply to—and control proposals that could work for—any generally intelligent computational system), it *still* makes sense to think about specific architectures as a first step. This is because, as I will discuss next, there are almost certainly going to be *other* important safety problems (and solutions) that end up being strictly architecture-specific. In order to solve the AGI safety control problem, we need to solve *all* of these subproblems, architecture-independent and architecture-dependent alike.
+
+We will now turn to investigate the sorts of problems that might arise from an AGI situated somewhere within the three-dimensional model presented here.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+      "type": "concept",
+      "description": "If developers cannot predict how an AGI's learning algorithms respond to situations or updates, they may be unable to keep the system aligned or safe, leading to potentially catastrophic outcomes.",
+      "aliases": [
+        "AGI control failure from unknown learning algorithms",
+        "Unpredictable AGI behavior risk"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+      "type": "concept",
+      "description": "When the AGI relies on learning paradigms (e.g., novel beyond RL/SL) that researchers have little experience with, its internal dynamics and decision patterns become difficult to forecast.",
+      "aliases": [
+        "Unknown base learning strategy unpredictability",
+        "Low familiarity learning algorithms"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "High post-deployment learning capacity causing unpredictable updates in AGI",
+      "type": "concept",
+      "description": "If an AGI continues to learn heavily after deployment, its policies and world model can shift in unforeseen ways, complicating monitoring and control.",
+      "aliases": [
+        "Online learning unpredictability",
+        "Continual self-modification risk"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Misalignment between AGI general intelligence level and human control assumptions",
+      "type": "concept",
+      "description": "Safety measures presuming human-level or superhuman capability may fail if the deployed AGI exhibits subhuman or differently distributed general intelligence, or vice-versa.",
+      "aliases": [
+        "Incorrect intelligence-level assumption",
+        "General intelligence mismatch"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+      "type": "concept",
+      "description": "Gaining a principled grasp of the AGI’s underlying learning mechanisms is posited as a prerequisite for forecasting its actions and implementing reliable control schemes.",
+      "aliases": [
+        "Architecture comprehension for control",
+        "Predictive understanding of learning strategies"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+      "type": "concept",
+      "description": "Researchers can project where an anticipated AGI sits in a three-dimensional space defined by learning paradigm, online/offline capacity, and intelligence level, then tailor safety strategies accordingly.",
+      "aliases": [
+        "Three-axis prediction mapping",
+        "Architecture tri-axis localisation"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Focusing safety research on less familiar RL and online learning architectures to close knowledge gaps",
+      "type": "concept",
+      "description": "Given lower familiarity and higher potential risk, safety work should preferentially investigate RL-heavy and strongly online AGI designs.",
+      "aliases": [
+        "Prioritise RL-centric online architectures",
+        "Target unfamiliar architectures for safety"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+      "type": "concept",
+      "description": "A practical representation (graph/visual or checklist) that allows teams to plot candidate AGI systems against the three axes, generating a concrete reference point for alignment planning.",
+      "aliases": [
+        "3-D architecture taxonomy",
+        "Tri-axis framework tool"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+      "type": "concept",
+      "description": "Placing Tesla’s offline SL system and the human brain’s online RL-ish system within the framework demonstrates its coverage and clarifies axis interpretation.",
+      "aliases": [
+        "Tesla vs. brain case study",
+        "Framework illustration examples"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Apply three-axis architecture framework during AGI project scoping to tailor alignment strategies",
+      "type": "intervention",
+      "description": "During early model-design discussions, teams systematically locate their proposed AGI within the three-axis space and generate architecture-specific alignment requirements before heavy development begins.",
+      "aliases": [
+        "Use architecture taxonomy in model design",
+        "Incorporate tri-axis analysis in planning"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Increase foundational research into RL and online learning safety to raise familiarity pre-deployment",
+      "type": "intervention",
+      "description": "Allocate funding and effort to studying safety properties, interpretability, and control techniques for RL-dominant and online-learning AGI systems before they are built.",
+      "aliases": [
+        "Prioritise RL/online safety research",
+        "Bridge familiarity gap via research"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework",
+      "type": "intervention",
+      "description": "For each located point (e.g., RL-online-superhuman), create bespoke monitoring, alignment, or interpretability techniques that address the unique risks of that cluster.",
+      "aliases": [
+        "Tailor controls to framework position",
+        "Design axis-aligned safety measures"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+      "target_node": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+      "description": "Unfamiliar or novel learning paradigms make it harder to foresee AGI behavior, directly contributing to loss of control.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+      "target_node": "High post-deployment learning capacity causing unpredictable updates in AGI",
+      "description": "Continual online learning post-deployment introduces unpredictable behavioral drift, heightening control failure risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Loss of control over AGI behavior due to inadequate understanding of its learning architecture",
+      "target_node": "Misalignment between AGI general intelligence level and human control assumptions",
+      "description": "Designing controls for the wrong intelligence level undermines their effectiveness, leading to loss of control.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Unfamiliar foundational learning algorithms reducing predictability of AGI behavior",
+      "target_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+      "description": "Gaining architectural understanding directly addresses unpredictability stemming from unfamiliar algorithms.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High post-deployment learning capacity causing unpredictable updates in AGI",
+      "target_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+      "description": "A principled grasp of the learning process aids in predicting and constraining online updates.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Misalignment between AGI general intelligence level and human control assumptions",
+      "target_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+      "description": "Architectural understanding encompasses intelligence-level considerations, reducing assumption mismatch.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+      "target_node": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+      "description": "The three-axis mapping operationalises the high-level insight into a concrete strategy.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Understanding learning algorithm architecture enables behavior prediction and control in AGI",
+      "target_node": "Focusing safety research on less familiar RL and online learning architectures to close knowledge gaps",
+      "description": "Comprehension goal motivates prioritising research where understanding is weakest.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Mapping AGI architecture predictions using axes of foundational algorithm, post-deployment learning capacity, and general intelligence to inform control proposals",
+      "target_node": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+      "description": "The taxonomy tool embodies the mapping approach, providing a concrete artefact (graph/checklist).",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Focusing safety research on less familiar RL and online learning architectures to close knowledge gaps",
+      "target_node": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+      "description": "The same taxonomy supports identifying under-explored regions (RL-online) for targeted research.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Three-dimensional taxonomy tool for positioning AGI projects along axes",
+      "target_node": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+      "description": "Example placements serve as informal validation that the tool can represent real systems.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+      "target_node": "Apply three-axis architecture framework during AGI project scoping to tailor alignment strategies",
+      "description": "Seeing the framework work on examples encourages adoption early in new AGI projects.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+      "target_node": "Increase foundational research into RL and online learning safety to raise familiarity pre-deployment",
+      "description": "The case study highlights gaps (online RL) prompting more foundational research.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Illustrative mapping of Tesla Autopilot and human brain validates framework utility",
+      "target_node": "Develop architecture-specific control mechanisms aligned to predicted AGI point in framework",
+      "description": "Successful mapping suggests tailoring control methods to each located point is viable.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.lesswrong.com/posts/snwpyAfzoFKdfnEDj/question-1-predicted-architecture-of-agi-learning-algorithm"
+    },
+    {
+      "key": "title",
+      "value": "Question 1: Predicted architecture of AGI learning algorithm(s)"
+    },
+    {
+      "key": "date_published",
+      "value": "2022-02-10T17:22:24Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Cameron Berg"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "lesswrong"
+    }
+  ]
+}
+            

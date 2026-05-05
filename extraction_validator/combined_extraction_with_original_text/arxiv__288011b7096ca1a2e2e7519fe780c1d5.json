@@ -1,0 +1,830 @@
+Original Text:
+1 Introduction
+---------------
+
+
+
+Reinforcement learning (RL) has enjoyed much recent success in domains ranging from game-playing to real robotics tasks.
+However, to make reinforcement learning useful for large-scale real-world applications, it is critical to be able to design reward functions that accurately and efficiently describe tasks.
+For the sake of simplicity, a common strategy is to provide the agent with sparse rewards—for example, positive reward upon reaching a goal state, and zero reward otherwise.
+However, it is well-known that learning is often difficult and slow in sparse reward settings [[Večerík et al.2017](#bib.bibx19)]. By contrast, dense rewards can be easier to learn from, but are significantly more difficult to specify by hand.
+In this work, we address this issue by using natural language to provide dense rewards to RL agents in a manner that is easy to specify.
+
+
+
+
+Consider the scenario in Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ Using Natural Language for Reward Shaping in Reinforcement Learning") from the Atari game Montezuma’s Revenge. Suppose we want the agent to go to the left while jumping over the skull (as shown in the blue trajectory). If the agent is given a positive reward only when it reaches the end of the desired trajectory, it may need to spend a significant amount of time exploring the environment to learn that behavior, since there are no intermediate rewards to guide it towards the goal. One way to handle this is to give the agent intermediate rewards for progress towards the goal, a technique known as “reward shaping” [[Ng et al.1999](#bib.bibx15)]. However, designing intermediate rewards is hard, particularly for non-experts.
+
+
+
+![An agent exploring randomly to complete the task described by the blue trajectory may need considerable amount of time to learn the behavior. By giving natural language instructions like “Jump over the skull while going to the left”, we can give intermediate signals to the agent for faster learning.](https://media.arxiv-vanity.com/render-output/7246279/figs/cmd-ex.png)
+Figure 1: An agent exploring randomly to complete the task described by the blue trajectory may need considerable amount of time to learn the behavior. By giving natural language instructions like “Jump over the skull while going to the left”, we can give intermediate signals to the agent for faster learning.
+
+
+Instead, we propose giving the agent
+intermediate rewards using instructions in natural language. For instance, the agent can be given the following instruction:“Jump over the skull while going to the left” to provide intermediate rewards that accelerate learning.
+Since natural language instructions can easily be provided even by non-experts, it will enable them to teach RL agents new skills more conveniently.
+
+
+
+
+The main contribution of this work is a new framework
+which takes arbitrary natural language instruction and the trajectory executed by the agent so far, and makes a prediction whether the agent is following the instruction, which can then be used as an intermediate reward.
+Our experiments show that by using such reward functions, we can speed up learning in sparse reward settings by guiding the exploration of the agent.
+
+
+
+
+Using arbitrary natural language statements within reinforcement learning presents several challenges. First, a mapping between language and objects/actions must implicitly or explicitly be learned, a problem known as *symbol grounding* [[Harnad1990](#bib.bibx8)]. For example, to make use of the instruction, “Jump over the snake”, the system must be able to ground “snake” to appropriate pixels in the current state (assuming the state is represented as an image) and “jump” to the appropriate action in the action space. Second, natural language instructions are often incomplete. In the previous example, for instance, it is possible that the agent is not directly next to the snake and must walk towards it before jumping. Third, natural language inherently involves ambiguity and variation. This variation could be due to different ways of referring to the objects/actions (e.g. “jump” vs. “hop”), different amounts of information in the instructions (e.g. “Jump over the snake” vs. “Climb down the ladder after jumping over the snake”), or the level of abstraction at which the instructions are given (e.g. a high-level subgoal: “Collect the key”
+vs. low-level instructions: “Jump over the obstacle. Climb up the ladder and jump to collect the key.”)
+
+
+
+
+Finally, once the language instruction has been interpreted, we incorporate it into the RL system as an additional reward (as opposed to other options like defining a distribution over actions), since modifying the reward function allows using any standard RL algorithm for policy optimization.
+We evaluate our approach on Montezuma’s Revenge, a challenging game in the Atari domain [[Bellemare et al.2013](#bib.bibx3)], demonstrating that it effectively uses linguistic instructions to significantly speed learning, while also being robust to variation in instructions.
+
+2 Overview of the Approach
+---------------------------
+
+
+
+A Markov Decision Process (MDP) can be defined by the tuple ⟨S,A,T,R,γ⟩, where S is a set of states, A is a set of actions, T:S×A×S→[0,1] describes transition probabilities, R:S×A→R is a reward function mapping the current state st and current action at to real-valued rewards, and γ<1 is a discount factor. In this work, we consider an extension of the MDP framework, defined by ⟨S,A,R,T,γ,l⟩, where l∈L is a language command describing the intended behavior (with L defined as the set of all possible language commands). We denote this language-augmented MDP as MDP+L. Given an MDP(+L), reinforcement learning can be used to learn an optimal policy π∗:S→A that maximizes expected sum of rewards.
+We use Rext (“extrinsic”) to denote the MDP reward function above, to avoid confusion with language-based rewards that we define in Section  [4](#S4 "4 Using language for reward shaping in RL ‣ Using Natural Language for Reward Shaping in Reinforcement Learning").
+
+
+
+![Our framework consists of the standard RL module containing the agent-environment loop, augmented with a LanguagE-Action Reward Network (LEARN) module.
+](https://media.arxiv-vanity.com/render-output/7246279/figs/schematic.png)
+Figure 2: Our framework consists of the standard RL module containing the agent-environment loop, augmented with a LanguagE-Action Reward Network (LEARN) module.
+
+
+
+In order to find an optimal policy in an MDP+L, we use a two-phase approach:
+
+
+
+
+#### LanguagE-Action Reward Network (LEARN)
+
+
+
+In this step, we train a neural network that takes paired (trajectory, language) data from the environment and predicts if the language describes the actions within the trajectory. To train the network, we collect natural language instructions for trajectories in the environment (Section [3](#S3 "3 LanguagE-Action Reward Network ‣ Using Natural Language for Reward Shaping in Reinforcement Learning")).
+
+
+
+
+
+#### Language-aided RL
+
+
+
+This step involves learning a policy for the given MDP+L using reinforcement learning.
+Given the trajectory executed by the agent so far and the language instruction specifying the goal, we use LEARN to predict whether the agent is making progress and use that prediction as a shaping reward (Section [4](#S4 "4 Using language for reward shaping in RL ‣ Using Natural Language for Reward Shaping in Reinforcement Learning")).
+Note that since we are only modifying the reward function, this step is agnostic to the particular choice of RL algorithm.
+A schematic diagram of the approach is given in Figure [2](#S2.F2 "Figure 2 ‣ 2 Overview of the Approach ‣ Using Natural Language for Reward Shaping in Reinforcement Learning").
+
+3 LanguagE-Action Reward Network
+---------------------------------
+
+
+
+### 
+3.1 Model
+
+
+
+The LanguagE-Action Reward Network (LEARN) takes in a trajectory and a language description and predicts whether the language describes the actions in the trajectory.
+More formally, given a trajectory τ, we create *action-frequency vectors* from it as follows: 
+  
+1. Sample
+two distinct timesteps i and j (such that i<j) from the set {1,…,|τ|}, where |τ| denotes the number of timesteps in τ. Let τ[i:j] denote the segment of τ between timesteps i and j. 
+  
+2. Create an *action-frequency vector* f from the actions in τ[i:j], where the dimensionality of f is equal to the number of actions in the MDP+L, and the kth component of f is the fraction of timesteps action k appears in τ[i:j]. 
+  
+
+
+
+
+
+Using the above process, we create a dataset of (f,l) pairs from a given set of (τ,l) pairs.
+Positive examples are created by sampling f from a given trajectory τ and using the language description l associated with τ. Negative examples are created by (1) sampling an action-frequency vector f from a given trajectory τ, but choosing an alternate language description l′ sampled uniformly at random from the data excluding l,
+or (2) creating a random action-frequency vector f′ and pairing it with the language description l.
+These examples are used to train a neural network, as described below.
+Thus, given a pair (f,l), the network learns to predict whether the action-frequency vector f is related to the language description l or not.
+
+
+
+
+#### Neural network architecture
+
+
+
+The action-frequency vector is passed through a sequence of fully-connected layers to get an encoded action vector with dimension D1. Similarly, the natural language instruction is encoded into a vector with dimension D2 as described below. The encoded action-frequency vector and language vector are then concatenated, and further passed through another sequence of fully-connected layers, each of dimension D3, followed by a softmax layer. The final output of the network is a probability distribution over two classes – RELATED and UNRELATED, corresponding to whether the action-frequency vector f can be explained by the language instruction l.
+
+
+
+
+
+#### Language encoder
+
+
+
+To embed the natural language instruction, we experimented with three models:
+  
+(1) InferSent : In this model, we used a pretrained sentence embedding model [[Conneau et al.2017](#bib.bibx7)], which embeds sentences into a 4096-dimensional vector space. The 4096-dimensional vectors were projected to D2-dimensional vectors using a fully-connected layer. We train only the projection layer during training, keeping the original sentence embedding model fixed.
+  
+(2) GloVe+RNN : In this model, we represent the sentence using pretrained 50-dimensional GloVe word embeddings [[Pennington et al.2014](#bib.bibx17)], and train a two-layer GRU [[Cho et al.2014](#bib.bibx6)] encoder on top of it, while keeping the word embeddings fixed. We used the mean of the output vectors from the top layer as the encoding of the sentence. The hidden state size of the GRUs was set to D2.
+  
+(3) RNNOnly : This model is identical to the Glove+RNN model, except that instead of initializing the word embeddings with pretrained GloVe vectors, we randomly initialize the word vectors and train both the word embeddings and the two-layer GRU encoder.
+
+
+
+
+
+The three models above trade-off domain knowledge with flexibility – InferSent model starts with the knowledge of sentence similarity thereby being the least flexible, GloVe+RNN model starts with the knowledge of word similarity and is more flexible in combining them to generate sentence embeddings, while RNNOnly starts with no knowledge about words or sentences and is completely flexible while learning word and sentence representations.
+
+
+
+
+Our complete neural network architecture is shown in Figure [3](#S3.F3 "Figure 3 ‣ Language encoder ‣ 3.1 Model ‣ 3 LanguagE-Action Reward Network ‣ Using Natural Language for Reward Shaping in Reinforcement Learning"). D1, D2 and D3 were tuned using validation data.
+
+
+
+![Neural network architecture for LEARN (Section ](https://media.arxiv-vanity.com/render-output/7246279/figs/nn-arch.png)
+Figure 3: Neural network architecture for LEARN (Section [3.1](#S3.SS1 "3.1 Model ‣ 3 LanguagE-Action Reward Network ‣ Using Natural Language for Reward Shaping in Reinforcement Learning"))
+
+
+
+
+#### Training procedure
+
+
+
+We used backpropagation with an Adam optimizer [[Kingma and Ba2014](#bib.bibx10)] to train the above neural network for 50 epochs to minimize cross-entropy loss.
+
+
+
+
+
+
+### 
+3.2 Data collection
+
+
+
+To collect data for training LEARN, we generate trajectories in the environment, which may or may not be directly relevant for the final task(s). Then, for each trajectory, we get natural language annotations from human annotators, which are in the form of instructions that the agent should follow to go from the initial state of the trajectory to the final state.
+
+
+
+
+In our experiments, we used 20 trajectories from the Atari Grand Challenge dataset [[Kurin et al.2017](#bib.bibx12)], which contains hundreds of crowd-sourced trajectories of human gameplays on 5 Atari games, including Montezuma’s Revenge. The 20 trajectories we used contain a total of about 183,000 frames. From these trajectories, we extracted 2,708 equally-spaced clips (with overlapping frames), each three-seconds long.
+
+
+
+
+To obtain language descriptions for these clips, we used Amazon Mechanical Turk. Workers were first shown a short video of the gameplay to familiarize them with the game. Then, they were shown clips from the game, and were asked to provide language instruction corresponding to it.
+Each annotator was asked to provide descriptions for 6 distinct clips, while each clip was annotated by 3 people.
+
+
+
+
+To filter out bad annotations, we manually looked at each set of 6 annotations and discarded the set if any of them were generic statements (e.g. “Good game!”, “Well played.”), or if all the descriptions were very similar to one another (therefore suggesting that they are probably not related to the corresponding clips). After filtering, we obtained a total of 6,870 language descriptions. Note that the resulting dataset may still be quite noisy, since our filtering process doesn’t explicitly check if the language instructions are related to the corresponding clips, nor do we correct for any spelling or grammatical errors.
+
+4 Using language for reward shaping in RL
+------------------------------------------
+
+
+
+In order to incorporate language information into reinforcement learning, we use the predictions from LEARN to generate intermediate rewards.
+
+
+
+
+Given the sequence of actions a1,…,at−1 executed by the agent until timestep t and the language instruction l associated with the given MDP+L, we create an action-frequency vector ft, by setting the kth component of f equal to the fraction of timesteps action k appears in a1,…,at−1.
+The resulting action-frequency vector f and the language instruction l are passed to LEARN.
+Let the output probabilities corresponding to classes RELATED and UNRELATED be denoted as pR(ft) and pU(ft).
+Note that since l is fixed for a given MDP+L, pR(ft) and pU(ft) are functions of only the current action-frequency vector ft.
+
+
+
+
+Intuitively, trajectories that contain actions described by the language instruction more often will have higher values of pR(ft), compared to other trajectories. For instance, if the language instruction is “Jump over the skull while going to the left”, then trajectories with high frequencies corresponding to the “jump” and “left” actions will be considered more related to the language by LEARN.
+Therefore, we can use these probabilities to define intermediate language-based rewards.
+These intermediate rewards will enable the agent to explore more systematically, by choosing relevant actions more often than irrelevant actions.
+
+
+
+
+To map the probabilities to language-based shaping rewards, we define a potential function for the current timestep as ϕ(ft)=pR(ft)−pU(ft). The intermediate language-based reward is then defined as Rlang(ft)=γ⋅ϕ(ft)−ϕ(ft−1), where γ is the discount factor for the MDP+L. As shown in [[Ng et al.1999](#bib.bibx15)], potential-based shaping rewards defined as above ensure that a policy that is optimal under the original reward function (Rext) is also optimal under the new reward function (Rext+Rlang).
+
+5 Experimental Evaluation
+--------------------------
+
+
+
+To validate the effectiveness of our approach, we conducted experiments on the Atari game Montezuma’s Revenge. The game involves controlling an agent to navigate around multiple rooms. There are several types of objects within the rooms – (1) ladders, ropes, doors, etc. that can be used to navigate within a room, (2) enemy objects (such as skulls and crabs) that the agent needs to escape from, (3) keys, daggers, etc. that can be collected. A screenshot from the game is included in Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ Using Natural Language for Reward Shaping in Reinforcement Learning").
+We selected this game because the rich set of objects and interactions allows for a wide variety of natural language descriptions.
+
+
+
+
+The first step involved collecting (trajectory, language) pairs in the game as described in Section [3.2](#S3.SS2 "3.2 Data collection ‣ 3 LanguagE-Action Reward Network ‣ Using Natural Language for Reward Shaping in Reinforcement Learning").
+The (trajectory, language) pairs were split into training and validation sets, such that there is no overlap between the frames in the training set and the validation set. In particular, Level 1 of Montezuma’s revenge consists of 24 rooms, of which we use 14 for training, and the remaining 10 for validation and testing. The set of objects in both training and validation/test set are the same, but each room has only a subset of these objects arranged in different layouts.
+We create a training dataset with 160,000 (action-frequency vector, language) pairs from the training set, and a validation dataset with 40,000 pairs from the validation set, which were used to train LEARN.
+
+
+
+
+We define a set of 15 diverse tasks in multiple rooms, each of which requires the agent to go from a fixed start position to a fixed goal position while interacting with some of the objects present in the path. 111Although the tasks (and corresponding descriptions) involve interactions with objects, we observe that just using actions, as we do in our approach, already gives improvements over the baseline, likely because most objects can be interacted with only in one way.
+For each task, the agent gets an extrinsic reward of +1 from the environment for reaching the goal, and an extrinsic reward of zero in all other cases.
+
+
+
+
+For each of the tasks, we generate a reference trajectory, and use Amazon Mechanical Turk to obtain 3 descriptions for the trajectory. We use each of these descriptions as language commands in our MDP+L experiments, as described below. Note that we do not use the reference trajectories to aid learning the policy in MDP+L; they are only used to collect language commands to be used in our experiments.
+
+
+
+
+We use Proximal Policy Optimization, a popular on-policy RL algorithm [[Schulman et al.2017](#bib.bibx18)].
+We train the policy for 500,000 timesteps for all our experiments.
+
+
+
+
+### 
+5.1 How much does language help?
+
+
+
+#### Settings
+
+
+
+We experiment with 2 different RL setups to evaluate how much does using language-based reward help:
+  
+(1) ExtOnly: In this setup, we use the original environment reward, without using language-based reward. This is the standard MDP setup, and serves as our baseline.
+  
+(2) Ext+Lang: In this setup, in addition to the original environment reward that the agent gets on completing the task successfully, we also provide the agent potential-based language reward Rlang at each step, as described in Section  [4](#S4 "4 Using language for reward shaping in RL ‣ Using Natural Language for Reward Shaping in Reinforcement Learning").
+
+
+
+
+
+#### Metrics
+
+
+
+Performance is evaluated using two metrics:
+  
+(1) AUC: From each policy training run, we plot a graph with the number of timesteps on the x-axis and the number of successful episodes on the y-axis. The area under this curve is a measure of how quickly the agent learns, and is the metric we use to compare two policy training runs.
+  
+(2) Final Policy: To compare the final learned policy with ExtOnly and Ext+Lang, we perform policy evaluation at the end of 500,000 training steps. For each policy training run, we use the learned policy for an additional 10,000 timesteps without updating it, and record the number of successful episodes.
+
+
+
+
+
+#### Hyperparameters
+
+
+
+For the Ext+Lang setup, we perform validation over the three types of language encoders described in Section [4](#S4 "4 Using language for reward shaping in RL ‣ Using Natural Language for Reward Shaping in Reinforcement Learning") (InferSent / GloVe+RNN / RNNOnly). For each type of language encoder, we use the LEARN model with the best accuracy on the validation data. Further, we define the joint reward function as Rtotal=Rext+λRlang.
+The type of language encoder and the hyperparameter λ are selected using validation as described below.
+
+
+
+![Comparison of different reward functions: The solid lines represent the mean successful episodes averaged over all tasks, and the shaded regions represent 95% confidence intervals.](https://media.arxiv-vanity.com/render-output/7246279/figs/nolang-vs-lang.png)
+Figure 4: Comparison of different reward functions: The solid lines represent the mean successful episodes averaged over all tasks, and the shaded regions represent 95% confidence intervals.
+
+
+We treat each task as the test task in turn, using the remaining 14 tasks to find the best language encoder and λ. For each setting of the hyperparameters, we run policy training on all the validation tasks and each of the 3 descriptions, and compute AUC for each run. Since AUCs across tasks differ by orders of magnitude (due to varying task difficulties), we aggregate the scores across tasks as follows – for each validation task, we compute a rank for each setting of the hyperparameters based on AUC, and then for each setting of the hyperparameters, we compute its average rank across the validation tasks. The setting with the best average rank is used for the test task.
+
+
+
+
+
+#### Results
+
+
+
+At test time, we performed 10 policy learning runs with different initializations for each task and each description. The results, averaged across all tasks and descriptions, are summarized in Figure  [4](#S5.F4 "Figure 4 ‣ Hyperparameters ‣ 5.1 How much does language help? ‣ 5 Experimental Evaluation ‣ Using Natural Language for Reward Shaping in Reinforcement Learning"), from which we can conclude that
+Ext+Lang learns much faster than ExtOnly, demonstrating that using natural language instructions for reward shaping is effective. In particular, the average number of successful episodes for ExtOnly after 500,000 timesteps is 903.12, while Ext+Lang achieves that score only after 358,464 timesteps, which amounts to a 30% speed-up. Alternately, after 500,000 timesteps, Ext+Lang completes 1529.43 episodes on average, compared to 903.12 for ExtOnly, thereby giving a 60% relative improvement.
+
+
+
+
+
+#### Statistical Significance Tests
+
+
+
+For each task, we perform an unpaired t-test between 10 runs of policy training with random initializations using ExtOnly reward function and 30 runs of policy training with random initializations using Ext+Lang reward function (3 descriptions × 10 runs per description), for both metrics. 
+  
+(1) AUC: Of the total 15 tasks, Ext+Lang gives statistically significant improvement in 11 tasks, leads to statistically significant deterioration in 1 task, and makes no statistical difference in the remaining 3 tasks.
+This agrees with the conclusions from Figure [4](#S5.F4 "Figure 4 ‣ Hyperparameters ‣ 5.1 How much does language help? ‣ 5 Experimental Evaluation ‣ Using Natural Language for Reward Shaping in Reinforcement Learning"), that using language-based reward improves the efficiency of policy training on average. 
+  
+(2) Final Policy: We observe that the number of successful episodes for the final policies is statistically significantly greater for Ext+Lang compared to ExtOnly in 8 out of 15 tasks, while the difference is not statistically significant in the remaining 7 tasks. Further, averaged across all tasks, the number of successful episodes is more than twice with Ext+Lang compared to ExtOnly. These results suggests that using natural language for reward shaping often helps learn a better final policy, and rarely (if ever) results in a worse policy.
+
+
+
+
+
+
+### 
+5.2 Analysis of Language-based Rewards
+
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+| Task Id | Description | Correlation coefficients of different actions |
+| NO-OP | JUMP | UP | RIGHT | LEFT | DOWN | 
+
+|  |
+| --- |
+| JUMP- |
+| RIGHT |
+
+ | 
+
+|  |
+| --- |
+| JUMP- |
+| LEFT |
+
+ |
+| 4 | climb down the ladder | -0.60 | -0.58 | -0.59 | -0.61 | -0.55 | 0.07 | -0.57 | -0.56 |
+| go down the ladder to the bottom | -0.58 | -0.58 | -0.58 | -0.60 | -0.53 | 0.09 | -0.59 | -0.60 |
+| move on spider and down on the lader | -0.58 | -0.54 | -0.59 | -0.60 | -0.49 | 0.10 | -0.58 | -0.56 |
+| 6 | 
+
+|  |
+| --- |
+| go to the left and go under skulls and then down the ladder |
+
+ | -0.37 | -0.40 | -0.49 | -0.43 | 0.33 | 0.16 | -0.46 | -0.01 |
+| go to the left and then go down the ladder | -0.24 | -0.26 | -0.35 | -0.31 | 0.28 | 0.36 | -0.34 | -0.04 |
+| move to the left and go under the skulls | -0.16 | -0.25 | -0.60 | -0.48 | 0.27 | -0.63 | -0.52 | -0.40 |
+| 14 | Jump once then down | 0.00 | 0.07 | -0.15 | -0.13 | 0.51 | 0.50 | 0.09 | 0.52 |
+| go down the rope and to the bottom | -0.03 | 0.10 | -0.16 | 0.56 | 0.54 | 0.33 | 0.28 | 0.01 |
+| jump once and climb down the stick | 0.11 | 0.11 | 0.06 | 0.04 | 0.14 | 0.40 | 0.25 | 0.11 |
+
+
+Table 1: Analysis of language-based rewards
+
+
+In order to analyze if the language-based rewards generated from LEARN actually correlate with language descriptions for the task, we compute the Spearman’s rank correlation coefficient between each component of the action-frequency vector and corresponding prediction from LEARN over the 500,000 timesteps of policy training.
+Correlation coefficients averaged across 10 runs of policy training for some selected tasks are reported in Table [1](#S5.T1 "Table 1 ‣ 5.2 Analysis of Language-based Rewards ‣ 5 Experimental Evaluation ‣ Using Natural Language for Reward Shaping in Reinforcement Learning").
+Figure [5](#S5.F5 "Figure 5 ‣ 5.2 Analysis of Language-based Rewards ‣ 5 Experimental Evaluation ‣ Using Natural Language for Reward Shaping in Reinforcement Learning") shows the policy training curves for these selected tasks.
+
+
+
+
+This analysis supports some interesting observations:
+  
+(1) For task 4 with simple descriptions, only the DOWN action is positively correlated with language-based reward. All other actions have a strong negative correlation with language-based reward, suggesting that the proposed approach discourages those actions, thereby aiding exploration.
+  
+(2) For task 6 with more complex descriptions, LEARN correctly predicts language rewards to be correlated with actions LEFT and DOWN. For the third description, since the description does not instruct going down, the language reward is negatively correlated with the DOWN action. Indeed, we notice in our experiments that we obtain statistically significant improvement in AUC for the first two descriptions, while no statistically significant difference for the third description.
+  
+(3) Task 14 represents a failure case. Language rewards predicted by LEARN are not well-correlated with the description, and consequently, using language-based rewards results in statistically significant deterioration in AUC. In general, we observe that groundings produced by LEARN for descriptions involving the word “jump” are noisy. We hypothesize that this is because (i) the JUMP action typically appears with other actions like LEFT and RIGHT, and (ii) humans would typically use similar words to refer to JUMP, JUMP-LEFT and JUMP-RIGHT actions. These factors make it harder for the network to learn correct associations.
+
+
+
+
+Note that LEARN does not see action names used in Table [1](#S5.T1 "Table 1 ‣ 5.2 Analysis of Language-based Rewards ‣ 5 Experimental Evaluation ‣ Using Natural Language for Reward Shaping in Reinforcement Learning") (NO-OP, JUMP, etc.); instead, actions are represented as ordinals from 0 through 17. Thus, we see that our approach successfully learns to ground action names to actions in the environment. 222While there are a total of 18 actions, we only report the most common 8 actions in Table [1](#S5.T1 "Table 1 ‣ 5.2 Analysis of Language-based Rewards ‣ 5 Experimental Evaluation ‣ Using Natural Language for Reward Shaping in Reinforcement Learning") for brevity. The omitted 10 actions jointly constitute less that 1% of the actions in the training data.
+
+
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+| Comparisons of different reward functions for selected tasks
+ | Comparisons of different reward functions for selected tasks
+ | Comparisons of different reward functions for selected tasks
+ |
+
+
+Figure 5: Comparisons of different reward functions for selected tasks
+
+6 Related Work
+---------------
+
+
+
+Prior work on combining RL and natural language can be divided into two classes. The first class uses reinforcement learning to solve NLP tasks, such as summarization [[Paulus et al.2017](#bib.bibx16)], question-answering [[Xiong et al.2017](#bib.bibx22)] and dialog generation [[Li et al.2016](#bib.bibx13)]. The second class, in which our approach lies, uses natural language to aid RL.
+
+
+
+
+Regarding methods that use NLP to help RL, some recent approaches map natural language to a reward function. [[Williams et al.2017](#bib.bibx21)] and [[Arumugam et al.2017](#bib.bibx1)] map language to a reward function in an object-oriented MDP framework. However, these approaches use a predefined set of objects, object properties and spatial relations, and/or use simple language-based features, which is difficult to scale to more complex environments and instructions. Our approach, on the other hand, learns to ground natural language concepts to actions directly from data.
+
+
+
+
+[[Misra et al.2017](#bib.bibx14)] use natural language to describe the goal, which is combined with the state information to learn a policy in contextual bandit setting. However, they use distance from the goal and from reference trajectories for reward shaping.
+[[Kuhlmann et al.2004](#bib.bibx11)] map natural language to a set of rules which are then used to increase or decrease the probability of choosing an action during reinforcement learning. Extending this to complex environments would require engineering how each rule affects the probabilities of different actions.
+Our approach, on the other hand, uses the natural language instruction itself for reward shaping, directly generating rewards from language, thereby reducing human effort.
+
+
+
+
+[[Branavan et al.2012b](#bib.bibx5)] extract features from natural language instructions, and incorporate them into the action-value function. More recently, [[Bahdanau et al.2018](#bib.bibx2)] proposed an adversarial learning framework wherein a discriminator distinguishes between a fixed set of good (instruction, state) pairs and (instruction, state) pairs generated by the current policy, and this is used as a reward function to simultaneously improve the policy.
+A key difference between these approaches and our approach is that they learn linguistic features jointly during reinforcement learning, while we learn to map language to a reward function offline, which could be beneficial if interaction with the environment is expensive. However, our approach requires pairs of trajectories and natural language instructions for offline training.
+
+
+
+
+[[Branavan et al.2012a](#bib.bibx4)] and [[Kaplan et al.2017](#bib.bibx9)] use natural language to do high-level planning.
+These approaches are orthogonal to our work, in that these approaches can be used to generate subgoals at a high-level, whereas our approach can be used to make exploration faster at a lower-level.
+
+
+
+
+Finally, our model is closely related to that in [[Wang et al.2018](#bib.bibx20)], which also uses intermediate language-based rewards in RL. However, their goal is to use RL to improve natural language instruction-following, while our focus is on the reverse problem of using instructions to improve RL performance.
+
+7 Conclusions and Future Work
+------------------------------
+
+
+
+We propose LanguagE Action Reward Network (LEARN), a framework trained on paired (trajectory, language) data in an environment to predict if the actions in a trajectory match the language description.
+The outputs of the network are used to generate intermediate rewards for reinforcement learning.
+We show in our experiments that these language-based rewards can be used to train faster and learn a better policy for sparse reward settings.
+Further, since the modality by which information is given to the agent is natural language, this approach can potentially be used even by non-experts to specify tasks to RL agents.
+
+
+
+
+While our approach achieves promising improvements over the baseline, there are several limitations of our approach, which we plan to improve upon in future work. 
+  
+1) Temporal ordering: Our approach aggregates the sequence of past actions into an action-frequency vector, thereby losing temporal information. Therefore a possible extension is to look at the complete sequences. 
+  
+2) State-based rewards: Currently, the language-based reward is a function of only the past actions. As such, the model cannot utilize natural language descriptions that refer to objects in the state (e.g. “Go towards the *ladder*”, “avoid the *skulls*”.) Modelling the language-based reward as a function of both the past states and actions should allow the agent to benefit from such language descriptions.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Reward misspecification in reinforcement learning for complex tasks",
+      "type": "concept",
+      "description": "When hand-crafted reward functions fail to reflect desired objectives, RL agents may learn behaviours that diverge from human intent, especially in real-world or safety-critical domains.",
+      "aliases": [
+        "incorrect reward design in RL",
+        "misaligned reward functions"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Sample inefficiency in sparse reward reinforcement learning",
+      "type": "concept",
+      "description": "RL agents receiving only goal-state rewards require extensive exploration, leading to very slow or failed learning in environments like Montezuma’s Revenge.",
+      "aliases": [
+        "slow exploration with sparse rewards",
+        "inefficient learning under sparse signals"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "High expertise requirement for manual reward shaping",
+      "type": "concept",
+      "description": "Designing informative dense rewards typically needs domain experts and is labor-intensive, limiting scalability for non-experts.",
+      "aliases": [
+        "manual dense reward design difficulty",
+        "expert crafted shaping burden"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Sparse external rewards in complex RL environments",
+      "type": "concept",
+      "description": "Environments often provide only terminal rewards; intermediate progress is un-rewarded, causing exploration difficulties.",
+      "aliases": [
+        "lack of intermediate reinforcement",
+        "goal-only reward signals"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Symbol grounding ambiguity in natural language instructions",
+      "type": "concept",
+      "description": "A system must learn how linguistic tokens correspond to environment actions and objects; ambiguity and incompleteness complicate this mapping.",
+      "aliases": [
+        "language grounding problem",
+        "mapping words to actions/objects"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Natural language instructions provide easily specified intermediate reward signals",
+      "type": "concept",
+      "description": "Because humans can effortlessly give instructions, language can encode progress cues that replace manually designed numeric rewards.",
+      "aliases": [
+        "language as dense reward source",
+        "verbal instruction shaping"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Potential-based shaping maintains optimal policy invariance",
+      "type": "concept",
+      "description": "Using a potential function ϕ to derive shaping rewards guarantees that any policy optimal for the original reward remains optimal after shaping.",
+      "aliases": [
+        "policy-invariant shaping theory",
+        "Ng et al. 1999 potential shaping"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Mapping language and action history to relatedness potential function",
+      "type": "concept",
+      "description": "Design principle: predict whether the recent action distribution matches the instruction, and use the difference in related vs. unrelated probabilities as the potential ϕ.",
+      "aliases": [
+        "language-action relatedness scoring",
+        "instruction compliance scoring"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Action-frequency vector representation of trajectories",
+      "type": "concept",
+      "description": "Trajectories are summarized by the frequency of each discrete action between two timesteps, simplifying input for language-action matching.",
+      "aliases": [
+        "bag-of-actions feature",
+        "action histogram encoding"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Training LEARN with paired trajectory-language data and negative sampling",
+      "type": "concept",
+      "description": "A neural network is trained on positive (matching) and synthetic negative (non-matching) (action-freq, instruction) pairs using Adam optimisation to predict RELATED vs. UNRELATED.",
+      "aliases": [
+        "LEARN supervised training procedure",
+        "positive/negative relatedness learning"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Sentence encoder variants for instruction embedding",
+      "type": "concept",
+      "description": "Instructions are embedded via either a fixed InferSent model or trainable GloVe+GRU / GRU-only encoders, balancing prior knowledge and flexibility.",
+      "aliases": [
+        "InferSent/GloVe+RNN/RNNOnly encoders",
+        "language embedding choices"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Computation of shaping reward as discounted potential difference",
+      "type": "concept",
+      "description": "At each step the shaping reward R_lang(ft)=γ·ϕ(ft)−ϕ(ft−1) is computed, ensuring consistency with potential-based shaping theory.",
+      "aliases": [
+        "R_lang calculation",
+        "ϕ(ft) potential-based reward"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "LEARN classifier validation accuracy on held-out rooms",
+      "type": "concept",
+      "description": "Using 40 k validation pairs from unseen rooms, the best LEARN model is selected by accuracy prior to RL experiments.",
+      "aliases": [
+        "LEARN offline evaluation",
+        "related/unrelated prediction accuracy"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "30 % faster learning and 60 % higher episode success on Montezuma’s Revenge with language shaping",
+      "type": "concept",
+      "description": "Across 15 tasks, Ext+Lang reached baseline success levels after 358 k vs. 500 k steps and doubled final successes, with significance on 11/15 tasks.",
+      "aliases": [
+        "Ext+Lang performance gains",
+        "sample-efficiency improvement evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Collect human-annotated trajectory-language dataset for LEARN pre-training",
+      "type": "intervention",
+      "description": "Before RL training, gather gameplay trajectories and obtain multiple natural-language descriptions via crowdsourcing, then filter and prepare positive/negative pairs for LEARN supervision.",
+      "aliases": [
+        "crowd-sourced instruction dataset creation",
+        "offline language-trajectory data gathering"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 2,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Integrate LEARN-generated potential-based language rewards during RL policy optimisation",
+      "type": "intervention",
+      "description": "During online learning (e.g. PPO), augment the extrinsic reward with R_total = R_ext + λ·R_lang, where R_lang is computed from LEARN predictions each timestep.",
+      "aliases": [
+        "apply R_lang shaping in PPO",
+        "language-shaped RL training"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Reward misspecification in reinforcement learning for complex tasks",
+      "target_node": "High expertise requirement for manual reward shaping",
+      "description": "Misaligned rewards often stem from the difficulty non-experts have in specifying dense, correct shaping signals.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Sample inefficiency in sparse reward reinforcement learning",
+      "target_node": "Sparse external rewards in complex RL environments",
+      "description": "Sparse rewards directly lead to long exploration times and hence sample inefficiency.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High expertise requirement for manual reward shaping",
+      "target_node": "Natural language instructions provide easily specified intermediate reward signals",
+      "description": "Using language allows non-experts to specify desired behaviours without manual numeric shaping.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Sparse external rewards in complex RL environments",
+      "target_node": "Natural language instructions provide easily specified intermediate reward signals",
+      "description": "Language-derived signals create dense feedback that counters sparsity.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Natural language instructions provide easily specified intermediate reward signals",
+      "target_node": "Potential-based shaping maintains optimal policy invariance",
+      "description": "Implementing language shaping safely requires the theoretical guarantee of potential-based shaping.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Potential-based shaping maintains optimal policy invariance",
+      "target_node": "Mapping language and action history to relatedness potential function",
+      "description": "The potential ϕ is instantiated via a language-action relatedness predictor.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Mapping language and action history to relatedness potential function",
+      "target_node": "Action-frequency vector representation of trajectories",
+      "description": "The design employs action-frequency vectors to create predictor inputs.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Action-frequency vector representation of trajectories",
+      "target_node": "Training LEARN with paired trajectory-language data and negative sampling",
+      "description": "The vectors feed into a neural network trained with supervised positive/negative pairs.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Training LEARN with paired trajectory-language data and negative sampling",
+      "target_node": "Sentence encoder variants for instruction embedding",
+      "description": "Sentence embeddings form part of the LEARN architecture during training.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Training LEARN with paired trajectory-language data and negative sampling",
+      "target_node": "Computation of shaping reward as discounted potential difference",
+      "description": "A trained LEARN model supplies the probabilities needed to compute ϕ and hence R_lang.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Computation of shaping reward as discounted potential difference",
+      "target_node": "LEARN classifier validation accuracy on held-out rooms",
+      "description": "Offline accuracy on unseen rooms demonstrates the predictor works before RL.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Computation of shaping reward as discounted potential difference",
+      "target_node": "30 % faster learning and 60 % higher episode success on Montezuma’s Revenge with language shaping",
+      "description": "Online RL experiments confirm that computed shaping rewards improve learning.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "LEARN classifier validation accuracy on held-out rooms",
+      "target_node": "Collect human-annotated trajectory-language dataset for LEARN pre-training",
+      "description": "Need for accurate LEARN requires sufficiently large labelled datasets, motivating data collection.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "required_by",
+      "source_node": "Collect human-annotated trajectory-language dataset for LEARN pre-training",
+      "target_node": "Training LEARN with paired trajectory-language data and negative sampling",
+      "description": "The supervised training step depends on the availability of labelled data.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "30 % faster learning and 60 % higher episode success on Montezuma’s Revenge with language shaping",
+      "target_node": "Integrate LEARN-generated potential-based language rewards during RL policy optimisation",
+      "description": "Empirical gains encourage practitioners to adopt language-shaped rewards in RL pipelines.",
+      "edge_confidence": 4,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2019-03-05T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1903.02020"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Prasoon Goyal",
+        "Scott Niekum",
+        "Raymond J. Mooney"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Using Natural Language for Reward Shaping in Reinforcement Learning"
+    }
+  ]
+}
+            

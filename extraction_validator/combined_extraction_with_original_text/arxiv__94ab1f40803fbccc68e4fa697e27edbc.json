@@ -1,0 +1,966 @@
+Original Text:
+1 Introduction
+---------------
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x1.png)
+Figure 1: RvS learning conditioned on goals (RvS-G) and on rewards (RvS-R) compared with prior approaches and baselines. Each bar is the average over many tasks in each suite. Using just supervised learning with a feedforward MLP, RvS matches the performance of methods employing TD learning and Transformer sequence models. <https://github.com/scottemmons/rvs>
+
+
+Offline and off-policy reinforcement learning (RL) are typically addressed using value-based methods. While theoretically appealing because they include performance guarantees under certain assumptions [[27](#bib.bib14 "Conservative Q-learning for offline reinforcement learning")], such methods can be difficult to apply in practice; they tend to require complex tricks to stabilize learning and delicate tuning of many hyperparameters.
+Recent work has explored an alternative approach: convert the RL problem into a *conditional*, *filtered*, or *weighted* imitation learning problem.
+This typically uses a simple insight: suboptimal experience for one task may be optimal for another task. By conditioning on some piece of information, such as a goal, reward function parameterization, or reward value, such experience can be used for simple behavior cloning [[6](#bib.bib7 "End-to-end driving via conditional imitation learning"), [29](#bib.bib23 "Learning latent plans from play"), [8](#bib.bib22 "Goal-conditioned imitation learning"), [38](#bib.bib33 "Training agents using upside-down reinforcement learning"), [17](#bib.bib13 "Learning actionable representations with goal conditioned policies"), [34](#bib.bib39 "Advantage-weighted regression: simple and scalable off-policy reinforcement learning"), [32](#bib.bib40 "Fitted Q-iteration by advantage weighted regression"), [26](#bib.bib50 "Reward-conditioned policies"), [9](#bib.bib29 "Rewriting history with inverse RL: hindsight inference for policy improvement"), [5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling"), [23](#bib.bib49 "Offline reinforcement learning as one big sequence modeling problem")]. We refer to this set of approaches as RL via supervised learning (RvS). These approaches commonly condition on goals [[29](#bib.bib23 "Learning latent plans from play"), [6](#bib.bib7 "End-to-end driving via conditional imitation learning"), [18](#bib.bib1 "Learning to reach goals via iterated supervised learning")] or reward values [[26](#bib.bib50 "Reward-conditioned policies"), [38](#bib.bib33 "Training agents using upside-down reinforcement learning"), [5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")], but they can also involve reweighting or filtering [[9](#bib.bib29 "Rewriting history with inverse RL: hindsight inference for policy improvement"), [32](#bib.bib40 "Fitted Q-iteration by advantage weighted regression"), [34](#bib.bib39 "Advantage-weighted regression: simple and scalable off-policy reinforcement learning"), [26](#bib.bib50 "Reward-conditioned policies")].
+
+
+
+
+RvS methods are appealing because of their algorithmic simplicity. However, prior work has put forward conflicting hypotheses about which factors are essential for their good performance, including online data [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning")], advantage weighting [[26](#bib.bib50 "Reward-conditioned policies")], or large Transformer sequence models [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")].
+The first question we study is: what elements are essential for effective RvS learning?
+Beyond this, it also remains unclear on which tasks and datasets such methods work well. For example, prior work has argued that temporal compositionality (dubbed “subtrajectory stitching”) is an important component for solving offline RL when there are few near-optimal trajectories present in the data (e.g., the Franka Kitchen and AntMaze tasks in D4RL [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")]). A priori, one might expect that dynamic programming via TD learning is needed for these tasks. So we also ask: what are the limits of RvS learning, and does it scale to settings with few near-optimal trajectories?
+
+
+
+
+
+The main contribution of this paper is a study of RvS methods on a wide range of offline RL problems, as well as a set of analyses about which design factors matter most for such methods.
+First, we show that pure supervised learning (maximizing the likelihood of actions observed in the data) performs as well as conservative TD learning in every task we consider. Second, simple feedforward models can match the performance of more complex sequence models from prior work across a wide range of tasks. Finally, choosing to condition on reward values versus goals can have a large effect on performance, with different choices working better in different domains.
+These simple results contradict the narrative put forward in many prior works that argue for more complex design decisions [[26](#bib.bib50 "Reward-conditioned policies"), [27](#bib.bib14 "Conservative Q-learning for offline reinforcement learning"), [5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")]. To the best of our knowledge, our results match or exceed those reported by any prior RvS method. We believe that these findings will be useful to the RL community because they help to understand the essential ingredients and limitations of RvS methods, providing a foundation for future work on simple and performant offline RL algorithms.
+
+2 Related Work
+---------------
+
+
+
+Recent offline RL methods use many algorithmic techniques, including value functions [[27](#bib.bib14 "Conservative Q-learning for offline reinforcement learning"), [15](#bib.bib11 "Off-policy deep reinforcement learning without exploration")], dynamics estimation alongisde value functions [[42](#bib.bib52 "MOPO: Model-based Offline Policy Optimization"), [37](#bib.bib53 "Model-based offline policy optimization with distribution correcting regularization"), [24](#bib.bib55 "MOReL: Model-Based Offline Reinforcement Learning")], dynamics estimation alone [[7](#bib.bib59 "Learning and policy search in stochastic dynamical systems with bayesian neural networks"), [3](#bib.bib54 "Model-based offline planning"), [39](#bib.bib60 "Overcoming model bias for robust offline deep reinforcement learning")], and uncertainty quantification [[1](#bib.bib56 "An optimistic perspective on offline reinforcement learning"), [41](#bib.bib57 "Uncertainty weighted actor-critic for offline reinforcement learning"), [42](#bib.bib52 "MOPO: Model-based Offline Policy Optimization")]. In this paper, we focus on offline RL methods based on conditional behavior cloning that avoid value functions.
+The most common instantiation of these methods are goal-conditioned behavior cloning [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning"), [29](#bib.bib23 "Learning latent plans from play"), [8](#bib.bib22 "Goal-conditioned imitation learning")] and reward-conditioned behavior cloning [[26](#bib.bib50 "Reward-conditioned policies"), [38](#bib.bib33 "Training agents using upside-down reinforcement learning"), [35](#bib.bib34 "Reinforcement learning upside down: don’t predict rewards–just map them to actions")]. Prior work has also looked at conditioning on different information, such as many previous timesteps [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling"), [23](#bib.bib49 "Offline reinforcement learning as one big sequence modeling problem")], tasks inferred by inverse RL [[9](#bib.bib29 "Rewriting history with inverse RL: hindsight inference for policy improvement")], and other task information [[6](#bib.bib7 "End-to-end driving via conditional imitation learning"), [21](#bib.bib8 "Urban driving with conditional imitation learning")].
+While these methods can be directly applied to the offline RL setting, some prior works combine these methods with iterative data collection [[38](#bib.bib33 "Training agents using upside-down reinforcement learning"), [18](#bib.bib1 "Learning to reach goals via iterated supervised learning")], which is not permitted in the typical offline RL setting.
+Kumar et al. [[26](#bib.bib50 "Reward-conditioned policies")] study reward-conditioned policies and do present experiments in the offline RL setting. However, in contrast with our work, the results from Kumar et al. [[26](#bib.bib50 "Reward-conditioned policies")] suggest that good performance cannot be achieved through RvS learning but only through additional advantage-weighting [[32](#bib.bib40 "Fitted Q-iteration by advantage weighted regression"), [34](#bib.bib39 "Advantage-weighted regression: simple and scalable off-policy reinforcement learning")]. More recent work [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")] presents a conditional imitation learning method for the offline RL setting that avoids advantage weighting by introducing a higher capacity, autoregressive Transformer policy. In contrast to these prior works,
+we show that simple conditioning with standard feedforward networks can attain state-of-the-art results. While these results do not require advantage weighting or high-capacity sequence models, they do require careful tuning of the policy capacity.
+
+
+
+
+
+
+
+|  |  |
+| --- | --- |
+| 
+(a) RvS-Learning with Goals (RvS-G)
+ | 
+(b) RvS-Learning with Rewards (RvS-R)
+ |
+
+
+Figure 2: RL via Supervised Learning (RvS). We learn an outcome-conditioned policy by using achieved future outcomes as supervision.
+(Left)  Conditioning on future reached states; each future state after time t in a trajectory is a possible outcome.
+(Right)  Conditioning on average, future achieved reward. It is as if the trajectory were started late at time t, and the average cumulative reward is the single outcome. Note that RvS may condition on arbitrary outcomes at inference time.
+
+3 Reinforcement Learning via Supervised Learning
+-------------------------------------------------
+
+
+
+In this section, we describe a formulation of Reinforcement Learning via Supervised Learning. We do not propose a new method but rather place many existing methods under a common framework. In our experiments section, we will discuss the specific design decisions that are important to make such methods work well.
+
+
+
+
+To formulate RvS methods in a general way, we assume an agent interacts with a Markov decision process with states st, actions at, initial state distribution ps(s1), and dynamics p(st+1∣st,at). The agent chooses actions using a policy πθ(at∣st) parameterized by θ. We assume episodes have fixed length H and use τ=(s1,a1,r1,s2,a2,r2,⋯) to denote a trajectory of experience.
+As some trajectories might be described using multiple outcomes, we use f(ω∣τ) to denote the distribution over outcomes that occur in a trajectory.
+We study two types of outcomes. The first type of outcome is a state (ω∈S) that the agent visits in the future: f(ω∣τt:H)=Unif(st+1,st+2,⋯,sH). We refer to RvS methods that learn goal-conditioned policies as *RvS-G*.
+The second type of outcome is the average return (ω∈R) achieved over some future number of time steps: f(ω∣τt:H)=1(ω=1H−t+1∑Ht′=tr(st′,at′)). (Note that we found it important to use the max episode length as a constant H in the denominator for all trajectories, treating early terminations as if they received 0 reward after they terminated.) We refer to RvS methods that learn reward-conditioned policies as *RvS-R*.
+It is also possible to condition on other information, such as the parameters of a reward function inferred via inverse RL [[9](#bib.bib29 "Rewriting history with inverse RL: hindsight inference for policy improvement")] or the parameters of a task, such as turning left or right [[6](#bib.bib7 "End-to-end driving via conditional imitation learning")].
+We focus on RvS methods applied to the offline RL setting.
+These methods take as input a dataset of experience, D={τ} and find the outcome-conditioned policy πθ(at∣st,ω) that optimizes
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | maxθFor alltrajectories: ∑τ∈DFor all states inthat trajectory: ∑1≤t≤|τ|EFor all achievedoutcomes: ω∼f(ω∣τt:H)[logπθ(at∣st,ω)]. |  |
+
+
+
+
+
+
+
+1:Input: Dataset of trajectories, D={τ}
+
+
+2:Initialize policy πθ(a∣s,ω).
+
+
+
+3:while not converged do
+
+
+4:     Randomly sample trajectories: τ∼D.
+
+
+
+5:     Sample time index for each trajetory, t∼[1,H], and sample a corresponding outcome: ω∼f(ω∣τt:H).
+
+
+
+6:     Compute loss: L(θ)←∑(st,at,ω)logπθ(at∣st,ω)
+
+
+7:     Update policy parameters: θ←θ+η∇θL(θ)
+
+
+8:end while
+
+
+9:return Conditional policy πθ(a∣s,ω)
+
+
+Algorithm 1  RvS-Learning
+
+
+While the basic formulation of this conditional policy is simple, instantiating RvS methods that attain excellent results has proven challenging [[26](#bib.bib50 "Reward-conditioned policies"), [38](#bib.bib33 "Training agents using upside-down reinforcement learning")]. In the remainder of this paper, we present an empirical analysis of the design choices in RvS methods. We aim to understand which design choices are needed to make RvS methods perform well on diverse benchmark tasks, including how two different choices for ω (goals and rewards) compare in practice.
+
+4 Tasks and Datasets
+---------------------
+
+
+
+To provide a comprehensive empirical study of RvS methods, we selected a broad range of tasks; the state-based tasks in prior work on various types of RvS or conditional imitation methods typically include only a subset of the domains we consider [[26](#bib.bib50 "Reward-conditioned policies"), [18](#bib.bib1 "Learning to reach goals via iterated supervised learning"), [5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")].
+Our goal will be to include: *(1)* domains and datasets that are appropriate for different types of conditioning, including goals and rewards; *(2)* datasets that include different proportions of near-optimal data, ranging from near-expert datasets to ones with very few or no optimal trajectories at all; *(3)* datasets that run the gamut in terms of task dimensionality; *(4)* domains that have been studied by prior value-based offline RL methods.
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x3.png)
+
+
+GCSL is a suite of goal-conditioned environments used by Ghosh et al. [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning")] to evaluate GCSL, a goal-conditioned RvS method with online data collection. We adapt these tasks for offline RL by using a *random* policy to collect training data, which results in suboptimal trajectories. The tasks include 2D navigation with obstacles (FourRooms, Eysenbach et al. [[10](#bib.bib31 "Search on the replay buffer: bridging planning and reinforcement learning")]); two end-effector controlled Sawyer robotic arm tasks (Door and Pusher, Nair et al. [[31](#bib.bib20 "Visual reinforcement learning with imagined goals")]); the Lunar Lander video game, which requires controlling thrusters to land a simulated Lunar Excursion Module (Lander); and a manipulation task that requires rotating a valve with a robotic claw (Claw, Ahn et al. [[2](#bib.bib15 "ROBEL: RObotics BEnchmarks for Learning with low-cost robots")]).
+
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x4.png)
+
+
+Gym Locomotion v2 tasks consist of the HalfCheetah, Hopper, and Walker datasets from the D4RL offline RL benchmark [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")]. We use the random, medium, medium-expert, and medium-replay datasets in our evaluations, which consist of (a mixture of different) policies with varying levels of optimality. This requires learning from mixed and suboptimal data, and we will see that TD learning methods perform comparatively well on the random data.
+
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x5.png)
+
+
+Franka Kitchen v0 is a 9-DoF robotic manipulation task paired with datasets of human demonstrations. This task originates from Gupta et al. [[19](#bib.bib24 "Relay policy learning: solving long-horizon tasks via imitation and reinforcement learning")] and was formalized as an offline RL task in D4RL [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")]. Solving this task requires composing multi-step behaviors (e.g., open the microwave, then flip a switch) from component skills. This task includes three datasets: complete, which solves all tasks in order; partial, where only a subset of trajectories perform the desired tasks in order; and mixed, which contains all subtasks but *never* in the right order, requiring generalization and temporal composition.
+
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x6.png)
+
+
+AntMaze v2 involves controlling an 8-DoF quadruped to navigate to a particular goal state. This benchmark task, from D4RL [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")], uses a non-Markovian demonstrator policy and was intended to test an agent’s ability to learn temporal compositionality by combining subtrajectories of different demonstrations. There are three mazes of increasing size: umaze, medium, and large, and there are two datasets types: diverse and play. The D4RL paper [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")] claims that “diverse” data navigates from random start locations to random goal locations while “play” navigates between hand-picked start-goal pairs.
+Prior work has proposed that, for tasks requiring temporal compositionality, dynamic programming with value-based methods should be particularly important [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")]. However, we find in AntMaze that RvS outperforms all the dynamic programming methods we consider.
+
+
+
+
+
+When applying RvS learning methods, one must choose a type of outcome, such as rewards or goals.
+In Kitchen and AntMaze, the reward function is implemented in terms of goals. For kitchen, the reward is to complete subtasks in order, so we condition RvS-G on a state in which all the subtasks have been achieved. For AntMaze, we condition RvS-G on the goal location in the maze. This choice makes the additional assumption that we know how the reward function is defined, rather than just receiving samples from the reward function. Because GCSL is inherently a multitask, goal-conditioned setup, we omit reward conditioning and only report RvS-G. Conversely, because there is no clear way to define performance in Gym w.r.t. a goal, we omit goal conditioning and only report RvS-R.
+For all tasks, we report scores in the range [0,100]. For GCSL, the score corresponds to the percentage of episodes in which the agent achieves the goal. In the other environments, we follow Fu et al. [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")] and normalize the score according to 100⋅return−randomexpert−random. (Images from [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning"), [11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")].)
+
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x7.png)
+Figure 3: RvS Architecture: We concatenate the current state with a future outcome, which is a goal state (RvS-G) or a reward target (RvS-R). Then, we predict actions with an MLP.
+
+5 Architecture, Capacity, and Regularization
+---------------------------------------------
+
+
+
+We instantiate the RvS framework in Section [3](#S3 "3 Reinforcement Learning via Supervised Learning ‣ RvS: What is Essential for Offline RL via Supervised Learning?") using a simple feedforward, fully-connected neural network. We condition on either the reward-to-go [[26](#bib.bib50 "Reward-conditioned policies"), [38](#bib.bib33 "Training agents using upside-down reinforcement learning")] or a goal state [[29](#bib.bib23 "Learning latent plans from play"), [19](#bib.bib24 "Relay policy learning: solving long-horizon tasks via imitation and reinforcement learning"), [18](#bib.bib1 "Learning to reach goals via iterated supervised learning")] by merely concatenating with the input state (see Figure [3](#S4.F3 "Figure 3 ‣ 4 Tasks and Datasets ‣ RvS: What is Essential for Offline RL via Supervised Learning?")). Our aim is to identify the *essential* components of such methods; we eschew more complex architectures such as Transformer sequence models [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")].
+On the tasks we consider, we show that our simple implementation achieves performance competitive with prior work that uses these more complex components. However, seemingly minor choices in the architecture do matter. These architectural choices include tuning capacity and regularization, suggesting that overfitting and underfitting are major challenges for RvS. Additionally, the choice of what to condition on (goals or rewards) also has important and domain-specific repercussions.
+
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/figures/network-architecture-catplot_v4.png)
+Figure 4: Capacity and regularization:
+We vary capacity (via network width) and regularization (via dropout) on one environment from each task suite. Larger networks perform better on hopper-medium-expert and kitchen-complete, suggesting the importance of high-capacity policy networks. However, dropout also usually boosts performance in kitchen-complete, suggesting that a combination of high-capacity policies with effective regularization is important for achieving good results.
+
+
+
+### Capacity and regularization.
+
+
+
+In Figure [4](#S5.F4 "Figure 4 ‣ 5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?"), we compare different architecture sizes and regularization settings on a single task from each task suite. The best-performing architectures are generally larger than the architectures used in standard online RL [[28](#bib.bib5 "Continuous control with deep reinforcement learning.")] and imitation learning [[22](#bib.bib3 "Generative adversarial imitation learning"), [12](#bib.bib6 "Learning robust rewards with adverserial inverse reinforcement learning")]. This conclusion is intuitive, since RvS policies must represent both the optimal policy *and policies for other conditioning values* (e.g., other goals or suboptimal rewards). This result may help explain the contradictory conclusions from prior work regarding the importance of more complex design decisions [[26](#bib.bib50 "Reward-conditioned policies"), [5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")].
+The results in Figure [4](#S5.F4 "Figure 4 ‣ 5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?") also highlight the importance of regularization: while dropout sometimes has no effect (pusher), it improves performance in some tasks (kitchen-complete) and worsens performance in other tasks (hopper-medium-expert and antmaze-medium-play).
+
+
+
+
+What can we say about these results on network capacity and regularization? The hopper-medium-expert dataset is large, and it contains only two modes: one from a medium-quality policy, and one from an expert policy. So, it is not surprising that this data doesn’t need regularization. In contrast, kitchen-complete is a small dataset of human demonstrations solving many different subtasks. Prior work has found that human demonstrations are harder to fit than artificial demonstrations [[30](#bib.bib66 "What matters in learning from offline human demonstrations for robot manipulation")], and this may explain why kitchen-complete generally benefits from dropout. In antmaze-medium-play, relatively few trajectories are successful, so we are surprised to see that the best-performing hyperparameter setting does not use regularization. In pusher, regularization neither helps nor hurts, underscoring that the (lack of) impact of regularization depends on the task at hand.
+Overall, we speculate that regularization balances a tension between two competing demands on the policy. First, even if the behavior policy is simple, the *conditional* action distribution may be complex. Second, the policy must be sufficiently well regularized to generalize well to new goals or conditioning variables.
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/figures/gcsl_distribution_ablation.png)
+Figure 5: Output distributions.
+
+
+
+### Output distributions.
+
+
+
+The form of the policy’s output distribution also influences the policy’s capacity.
+While unimodal Gaussians are a common choice with continuous action spaces [[26](#bib.bib50 "Reward-conditioned policies"), [14](#bib.bib4 "A minimalist approach to offline reinforcement learning"), [27](#bib.bib14 "Conservative Q-learning for offline reinforcement learning")],
+a categorical distribution over a discretized action space allows the policy to represent more complex, multi-modal distributions [[29](#bib.bib23 "Learning latent plans from play"), [18](#bib.bib1 "Learning to reach goals via iterated supervised learning")]. To study the importance of the policy output distribution, we use the low-dimensional GCSL environments, where we can discretize the full action space.
+Figure [5](#S5.F5 "Figure 5 ‣ Capacity and regularization. ‣ 5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?") shows that across the GCSL suite, categorical distributions either match or outperform Gaussian distributions. Similar to the results from the previous section, these results highlight how increasing the policy’s model capacity can improve performance.
+Again, our finding stands in contrast to standard RL methods, which work well with unimodal Gaussians [[20](#bib.bib65 "Soft actor-critic: off-policy maximum entropy deep reinforcement learning with a stochastic actor"), [36](#bib.bib43 "Proximal policy optimization algorithms")]
+We conjecture that upweighting better data, as done by previous methods [[26](#bib.bib50 "Reward-conditioned policies")], may make it easier for low-capacity policies to fit the data. While both upweighting data and increasing model capacity allow the policy to better fit the data, increasing model capacity may be a simpler approach.
+
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/figures/val-tuning-regression.png)
+Figure 6: Model selection using validation loss: On the kitchen task, validation loss is only loosely correlated with final performance.
+
+
+
+### Tuning with validation loss.
+
+
+
+Hyperparameter optimization is especially important in the offline RL setting, as evaluating different hyperparameter configurations requires interacting with the environment [[33](#bib.bib58 "Hyperparameter selection for offline reinforcement learning")]. Since RvS methods reduce the RL problem to a supervised learning problem, we conjecture that the validation loss of this supervised learning problem might be an effective metric for tuning important hyperparameters, such as policy capacity and regularization.
+To test this conjcture, we train models on 80% of the training data for each Franka Kitchen dataset with two different hyperparameter settings: a regularized setting with dropout p=0.1 and small batch size 256; and an unregularized setting without dropout and a large batch size of 16,384.
+We show results in Figure [6](#S5.F6 "Figure 6 ‣ Output distributions. ‣ 5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?"). While for all three datasets validation set error does correlate with performance, the strength of this correlation varies significantly. In general, the validation loss does not provide a reliable approach for hyperparameter tuning. Fully automated tuning of hyperparameters remains an open question [[33](#bib.bib58 "Hyperparameter selection for offline reinforcement learning"), [13](#bib.bib61 "Benchmarks for deep off-policy evaluation")].
+
+
+
+
+
+
+### A recipe for practitioners.
+
+
+
+We suggest the following process for online hyperparameter tuning: incrementally increase network width until performance saturates, and then try adding a bit of dropout regularization (e.g., dropout p=0.1). If validation loss indicates that under/overfitting is an issue, one can also try increasing/decreasing the batch size, respectively.
+
+
+
+
+Table [1](#S5.T1 "Table 1 ‣ A recipe for practitioners. ‣ 5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?") summarizes the hyperparameters that we found to work best for each offline RL benchmark.
+
+
+
+
+
+
+| Hyperparameter | Value | Environment |
+| --- | --- | --- |
+| Hidden layers | 2 | All |
+| Layer width | 1024 | All |
+| Nonlinearity | ReLU | All |
+| Learning rate | 1e-3 | All |
+| Epochs | 10 | GCSL |
+|  | 50 | Kitchen |
+|  | 2000 | Gym |
+| Gradient steps | 20000 | AntMaze |
+| Batch size | 256 | GCSL, Kitchen |
+|  | 16384 | Gym, AntMaze |
+| Dropout | 0.1 | GCSL, Kitchen |
+|  | 0 | Gym, AntMaze |
+| Goal state | Given | GCSL |
+|  | All subtasks completed | Kitchen |
+|  | (x, y) location | AntMaze |
+| Reward target | 110 | Gym medium-expert, AntMaze, Kitchen |
+|  | 90 | Gym {hopper, walker2d}-medium-replay, walker2d-medium |
+|  | 60 | Gym hopper-medium |
+|  | 40 | Gym random, halfcheetah-{medium, medium-replay} |
+| Policy output | Discrete categorical | GCSL |
+|  | Unimodal Gaussian | Kitchen, Gym, AntMaze |
+
+
+Table 1: 
+Hyperparameters. Architecture and design parameters that we found to work best in each domain. We define an epoch length to include all start-goal pairs in GCSL, i.e., to be |D|(H2). In D4RL, we set all epoch lengths at 2000 (502) = 2450000.
+
+6 Comparing RvS with Prior Offline RL Methods
+----------------------------------------------
+
+
+
+Having identified key design decisions in the implementation of RvS learning methods, we now compare RvS learning methods to prior offline RL methods. We will evaluate both goal-conditioned behavioral cloning (RvS-G) and reward-conditioned behavioral cloning (RvS-R) using the domains in Section [4](#S4 "4 Tasks and Datasets ‣ RvS: What is Essential for Offline RL via Supervised Learning?").
+We then discuss what these results imply about the performance, design parameters, and limitations of RvS methods.
+
+
+
+
+
+### Baselines and prior methods.
+
+
+
+On the D4RL benchmarks, we compare RvS learning to *(i)* value-based methods and *(ii)* prior supervised learning methods and behavioral cloning baselines. For *(i)*, we include CQL [[27](#bib.bib14 "Conservative Q-learning for offline reinforcement learning")] as well as the more recent TD3+BC [[14](#bib.bib4 "A minimalist approach to offline reinforcement learning")] and Onestep RL [[4](#bib.bib2 "Offline RL without off-policy evaluation")] methods. TD3+BC and Onestep RL both involve elements of behavior cloning.
+We use CQL-p to denote the CQL numbers published in [[11](#bib.bib18 "D4RL: Datasets for deep data-driven reinforcement learning")] and CQL-r to denote our best attempt to replicate these results using open-source code and hyperparameters from the CQL authors.
+For *(ii)*, we include behavioral cloning (BC), which does not perform any conditioning; Filtered (“Filt.”) BC, a baseline appearing in [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")] which performs BC after filtering for the trajectories with highest cumulative reward; and Decision Transformer (DT) [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")], which conditions on rewards and uses a large Transformer sequence model.
+Both BC and Filtered BC are our own optimized implementations [[25](#bib.bib67 "JAXRL: Implementations of Reinforcement Learning algorithms in JAX")], tuned thoroughly in a similar manner as RvS-R and RvS-G. In Kitchen and Gym locomotion, Filtered BC clones the top 10% of trajectories based on cumulative reward. In AntMaze, Filtered BC clones all successful trajectories (those with a reward of 1) and ignores the failing trajectories (those with a reward of 0).
+On the GCSL benchmarks, we compare to GCSL using numbers reported by the authors [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning")]. This gives the GCSL baseline the advantage of online data, whereas RvS uses only offline data. We do not run RvS-G on the Gym locomotion tasks, which are typically expressed as reward-maximization tasks, not goal-reaching tasks.
+For additional details about the baselines, see Appendix [A](#A1 "Appendix A Experiment Details ‣ RvS: What is Essential for Offline RL via Supervised Learning?").
+
+
+
+
+
+
+### Overall performance and comparison to prior methods.
+
+
+
+Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ RvS: What is Essential for Offline RL via Supervised Learning?") show the results of this comparison, leading to several conclusions about how our RvS implementations compare to prior value-based and supervised methods.
+On all tasks, either RvS-G or RvS-R attains results that are comparable to the best prior method.
+The finding that conditional imitation with standard fully connected networks attains competitive results stands in contrast to prior work, which emphasizes advantage weighting and Transformer sequence models [[26](#bib.bib50 "Reward-conditioned policies"), [5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")]. As we discussed in Section [5](#S5 "5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?"), good performance requires a careful combination of high capacity and regularization, and it may simply be that this seemingly contradictory combination of components was not adequately explored in prior work.
+
+
+
+
+
+### Subtrajectory stitching.
+
+
+
+The mixed dataset in Kitchen and all of the AntMaze tasks consist of suboptimal trajectories. Attaining expert performance requires recombining parts of these trajectories. Such stitching is usually viewed as a key benefit of dynamic programming methods, so it is surprising that RvS-G performs as well as prior methods based on dynamic programming (TD3+BC and CQL).
+In these same tasks, RvS-G outperforms RvS-R. We speculate that the spatial information encoded by goal information helps RvS-G generalize.
+BC works well in the Kitchen environment but poorly in the AntMaze tasks, perhaps becaue the Kitchen task contains experience that it easier to imitate.
+As a direction for future work, we propose studying if conditioning on goals can help provide a method with compositionality in space in the same way that the Bellman backup provides compositionality in time.
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7137017/x8.png)
+Figure 7: GCSL results
+
+
+
+### Reaching arbitrary goals.
+
+
+
+An important capability of RvS-G, compared with more standard offline RL methods, is that it learns a policy that can reach many goals. To test how well RvS-G can learn to reach arbitrary goals from random offline data, we compare to GCSL, an RvS learning method that performs *iterative* online data collection [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning")]. We use the same tasks used by GCSL.
+Each of the tasks in the GCSL suite requires that the agent reach a goal drawn uniformly at random from the set of possible goals.
+The results shown in Figure [7](#S6.F7 "Figure 7 ‣ Subtrajectory stitching. ‣ 6 Comparing RvS with Prior Offline RL Methods ‣ RvS: What is Essential for Offline RL via Supervised Learning?") indicate that RvS-G can successfully reach many different goals entirely from randomly collected offline data. Although it may still be that iterative online collection, as proposed in prior work [[18](#bib.bib1 "Learning to reach goals via iterated supervised learning"), [38](#bib.bib33 "Training agents using upside-down reinforcement learning")], may be helpful in some domains, in this case simple offline training appears to suffice.
+
+
+
+
+
+### Random datasets.
+
+
+
+While on average RvS-R is competitive with prior methods on the Gym Locomotion tasks (Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ RvS: What is Essential for Offline RL via Supervised Learning?")), TD learning performs better on the random datasets; indeed, CQL performs especially well on halfcheetah-random (Table [2](#A0.T2 "Table 2 ‣ RvS: What is Essential for Offline RL via Supervised Learning?")).
+This suggests that RvS methods may more generally perform worse on random datasets in comparison to TD learning methods.
+
+
+
+
+
+### Analysis of reward conditioning.
+
+
+
+Next, we analyze what RvS-R actually learns and how it uses the conditioning variable. First, we use the walker2d-medium-expert task to analyze the behavior of RvS-R for target rewards. The walker2d-medium-expert dataset contains two modes (“medium” and “expert”, as shown in Figure [8](#S6.F8 "Figure 8 ‣ Analysis of reward conditioning. ‣ 6 Comparing RvS with Prior Offline RL Methods ‣ RvS: What is Essential for Offline RL via Supervised Learning?") *(left)*. Conditioning the network on a range of reward targets, Figure [8](#S6.F8 "Figure 8 ‣ Analysis of reward conditioning. ‣ 6 Comparing RvS with Prior Offline RL Methods ‣ RvS: What is Essential for Offline RL via Supervised Learning?") *(right)* shows that the policy learns to achieve just the two modes in the dataset. The policy cannot interpolate between them. In effect, it appears that RvS is mimicking a subset of the demonstrations, but doing so without explicit filtering (as is done in Filtered BC).
+
+
+
+
+This analysis highlights the importance of the conditioning variable. It is not obvious a priori that a reward target of 100 will lead to a return of 70, whereas a reward target of 110 will lead to a return of 105.
+Following prior work [[5](#bib.bib16 "Decision transformer: reinforcement learning via sequence modeling")], we tune the reward target for every task (see Table [1](#S5.T1 "Table 1 ‣ A recipe for practitioners. ‣ 5 Architecture, Capacity, and Regularization ‣ RvS: What is Essential for Offline RL via Supervised Learning?")). Choosing this hyperparameter in a truly offline setting is an important problem for future work.
+
+
+
+
+
+
+|  |  |
+| --- | --- |
+| 
+ | 
+ |
+
+
+Figure 8: A failure to interpolate:
+(Left)  Trajectories in the walker2d-medium-expert dataset have a bimodal distribution of returns.
+(Right)  Evaluating an RvS-R policy learned on this dataset for varying reward targets, we see that RvS-R mimics the two reward modes in the demonstrator data but does not interpolate.
+
+7 Discussion and Future Work
+-----------------------------
+
+
+
+We presented an empirical study of offline RL via supervised learning (RvS) methods, which solve RL problems via conditional imitation learning.
+While prior work is divided on which elements of RvS are crucial for good performance, or even how well such methods actually work, our results provide three potentially-surprising conclusions. *First*, RvS methods can work as well as more complicated methods, even with simple fully connected architectures, if capacity and regularization are chosen correctly. *Second*, RvS methods can often attain results that compare favorably to the best prior methods, but only if the conditioning variable (e.g., goal or reward) is chosen appropriately. *Third*, RvS methods remain competitive in tasks such as Franka Kitchen and AntMaze, where there is little optimal data.
+These conclusions suggest multiple directions for future work. Because policy capacity and regularization are critical to good performance, is there a method for automatically tuning these hyperparameters? Validation error is not a reliable metric.
+Also, the choice of conditioning variable is important: how might we automate this choice?
+Addressing these questions may increase the performance and applicability of RvS learning methods.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+      "type": "concept",
+      "description": "Complex value-based offline reinforcement-learning algorithms with many moving parts and hyper-parameters can yield unstable learning dynamics and unreliable policies, posing deployment-time safety risks.",
+      "aliases": [
+        "offline RL algorithmic instability",
+        "complex offline RL safety risk"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Hyperparameter sensitivity of value-based offline RL algorithms",
+      "type": "concept",
+      "description": "Current value-based approaches (e.g. CQL) require ‘delicate tuning of many hyper-parameters’ and stabilising tricks, leading to brittleness.",
+      "aliases": [
+        "delicate tuning requirements",
+        "value-based offline RL hyper-parameter brittleness"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Need for temporal compositionality in tasks with few optimal trajectories",
+      "type": "concept",
+      "description": "Benchmarks like Franka Kitchen and AntMaze have little near-optimal data; recombining sub-trajectories is required for success, traditionally thought to favour dynamic-programming methods.",
+      "aliases": [
+        "sub-trajectory stitching requirement",
+        "temporal compositionality challenge"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lack of clear essential components in RvS methods",
+      "type": "concept",
+      "description": "Prior RvS work proposed conflicting hypotheses (need for online data, advantage-weighting, Transformers), leaving practitioners unclear which components really matter.",
+      "aliases": [
+        "uncertain design factors in RvS",
+        "ambiguous essential ingredients"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Simple supervised learning can match conservative TD methods in offline RL",
+      "type": "concept",
+      "description": "Empirical analysis shows that maximising likelihood of logged actions using a conditional policy attains performance comparable to conservative Q-learning and TD3+BC across tasks.",
+      "aliases": [
+        "pure behaviour cloning sufficiency",
+        "supervised RvS parity with TD"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Policy capacity and regularization trade-off is critical in RvS",
+      "type": "concept",
+      "description": "Larger networks improve performance but risk overfitting; light dropout often needed, especially on small human-demo datasets like Kitchen.",
+      "aliases": [
+        "capacity-regularisation balance",
+        "over/under-fitting tension in RvS"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Conditioning variable choice affects RvS performance domain-specifically",
+      "type": "concept",
+      "description": "Choosing to condition on goals (RvS-G) or reward-to-go (RvS-R) substantially changes performance; RvS-G shines in compositional tasks, RvS-R in locomotion.",
+      "aliases": [
+        "importance of goal vs reward conditioning",
+        "task-dependent conditioning variable"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+      "type": "concept",
+      "description": "Design principle: replace complex value-based learning with behaviour cloning conditioned on outcome, implemented using simple fully-connected nets.",
+      "aliases": [
+        "feed-forward conditional BC design choice",
+        "simple conditional imitation approach"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Increase model capacity and apply task-appropriate regularization",
+      "type": "concept",
+      "description": "Design principle: scale hidden-layer width until performance saturates, then apply dropout (≈0.1) where datasets are small or human-generated.",
+      "aliases": [
+        "capacity scaling with dropout",
+        "tune width plus dropout"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Select conditioning on goals or rewards according to task structure",
+      "type": "concept",
+      "description": "Design principle: use goal conditioning when reward function is goal-based (Kitchen, AntMaze) and reward-to-go conditioning for pure reward maximisation tasks (Gym).",
+      "aliases": [
+        "task-aligned conditioning selection",
+        "goal/reward conditioning policy"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "RvS-G algorithm with goal conditioning via concatenation",
+      "type": "concept",
+      "description": "Implementation: concatenate current state with desired future goal state; train policy via supervised learning on offline data where future visited states act as goals.",
+      "aliases": [
+        "goal-conditioned RvS",
+        "RvS-G implementation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+      "type": "concept",
+      "description": "Implementation: concatenate state with scalar future average return target; train conditional policy on offline trajectories labelled by realised returns.",
+      "aliases": [
+        "reward-conditioned RvS",
+        "RvS-R implementation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Categorical action distributions to increase model capacity in low-dimensional tasks",
+      "type": "concept",
+      "description": "Replacing unimodal Gaussian outputs with categorical distributions over discretised actions enables multimodal behaviour and improves goal-conditioned performance in GCSL.",
+      "aliases": [
+        "discretised action logits",
+        "categorical policy output"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+      "type": "concept",
+      "description": "Applying 10 % dropout to hidden layers mitigates over-fitting on small, diverse human demos (Kitchen-complete) while not harming larger synthetic datasets.",
+      "aliases": [
+        "light dropout regularization",
+        "dropout 0.1 implementation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+      "type": "concept",
+      "description": "Across GCSL, Gym, Kitchen, and AntMaze suites, either RvS-G or RvS-R reaches the best reported returns compared with CQL, TD3+BC, Decision Transformer, etc.",
+      "aliases": [
+        "RvS benchmark parity",
+        "RvS performance evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+      "type": "concept",
+      "description": "Figure 4 demonstrates that 1024-width networks with dropout outperform smaller nets or no-dropout on human-demo Kitchen-complete tasks.",
+      "aliases": [
+        "capacity+dropout ablation evidence",
+        "kitchen-complete ablation result"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+      "type": "concept",
+      "description": "Figure 5 shows categorical action distributions equal or surpass Gaussian outputs in all GCSL goal-reach tasks, indicating higher representational power.",
+      "aliases": [
+        "output distribution ablation evidence",
+        "categorical policy advantage"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Walker2d reward target analysis reveals lack of interpolation between reward modes",
+      "type": "concept",
+      "description": "Figure 8 shows RvS-R trained on bimodal medium-expert data only reproduces existing modes and fails to generate intermediate returns, highlighting conditioning-variable limits.",
+      "aliases": [
+        "reward-target interpolation failure evidence",
+        "bimodal target analysis"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Apply conditional behavior cloning (RvS-G) with goal conditioning and high-capacity feedforward networks during offline RL fine-tuning",
+      "type": "intervention",
+      "description": "During the offline fine-tuning phase, train a fully-connected policy conditioned on desired goal states using Algorithm 1 (RvS-G) with ≥1024 hidden-unit width and light dropout when data are scarce.",
+      "aliases": [
+        "deploy RvS-G for compositional tasks",
+        "goal-conditioned offline BC"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning",
+      "type": "intervention",
+      "description": "Train a feedforward policy conditioned on scalar future return targets (RvS-R) using large hidden layers (≈1024) and batch size 16 k for Gym locomotion datasets.",
+      "aliases": [
+        "deploy RvS-R for reward-maximisation tasks",
+        "reward-targeted offline BC"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+      "type": "intervention",
+      "description": "In model-design phase, progressively enlarge hidden-layer width; once returns plateau, introduce 10 % dropout where over-fitting signs emerge (e.g., human demo datasets).",
+      "aliases": [
+        "capacity scaling then dropout",
+        "width-plus-dropout tuning procedure"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+      "type": "intervention",
+      "description": "Replace Gaussian action heads with categorical logits over discretised actions when action dimensionality permits (e.g., 2-DoF tasks) to capture multimodal behaviours.",
+      "aliases": [
+        "switch to categorical outputs",
+        "discretised action logits intervention"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks",
+      "type": "intervention",
+      "description": "Create meta-learning or heuristic procedures that, given an offline dataset, determine whether goal-conditioning or reward-conditioning will yield better performance, reducing manual tuning.",
+      "aliases": [
+        "auto-choose conditioning variable",
+        "adaptive conditioning selection"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 6,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+      "target_node": "Hyperparameter sensitivity of value-based offline RL algorithms",
+      "description": "Brittle hyper-parameter tuning in value-based methods directly contributes to instability and unsafe policy performance.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+      "target_node": "Lack of clear essential components in RvS methods",
+      "description": "Uncertainty about which RvS components matter hampers reliable application, adding to overall deployment risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+      "target_node": "Need for temporal compositionality in tasks with few optimal trajectories",
+      "description": "Tasks requiring sub-trajectory stitching were thought to need dynamic programming, increasing algorithmic complexity and risk.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Hyperparameter sensitivity of value-based offline RL algorithms",
+      "target_node": "Simple supervised learning can match conservative TD methods in offline RL",
+      "description": "If supervised RvS matches TD learning, practitioners can avoid brittle value-based methods, reducing hyper-parameter sensitivity.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Simple supervised learning can match conservative TD methods in offline RL",
+      "target_node": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+      "description": "Conditional behaviour cloning operationalises the theoretical claim that simple supervised learning suffices.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+      "target_node": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+      "description": "Reward-conditioned RvS-R is one concrete instantiation of conditional behaviour cloning.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+      "target_node": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+      "description": "Benchmarks confirm RvS-R competitive performance.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+      "target_node": "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning",
+      "description": "Strong empirical results motivate adoption of RvS-R in practice.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Need for temporal compositionality in tasks with few optimal trajectories",
+      "target_node": "Conditioning variable choice affects RvS performance domain-specifically",
+      "description": "Choosing goal conditioning can address compositionality without dynamic programming.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Conditioning variable choice affects RvS performance domain-specifically",
+      "target_node": "Select conditioning on goals or rewards according to task structure",
+      "description": "Design rule translates insight into actionable selection.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Select conditioning on goals or rewards according to task structure",
+      "target_node": "RvS-G algorithm with goal conditioning via concatenation",
+      "description": "RvS-G realises goal-conditioning option.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RvS-G algorithm with goal conditioning via concatenation",
+      "target_node": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+      "description": "Benchmark suite includes RvS-G scores showing parity or superiority.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Empirical benchmark results: RvS matches or exceeds state-of-the-art on D4RL tasks",
+      "target_node": "Apply conditional behavior cloning (RvS-G) with goal conditioning and high-capacity feedforward networks during offline RL fine-tuning",
+      "description": "Positive results encourage practitioners to use RvS-G where appropriate.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of clear essential components in RvS methods",
+      "target_node": "Policy capacity and regularization trade-off is critical in RvS",
+      "description": "Identifying capacity-regularisation as key clarifies essential components.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Policy capacity and regularization trade-off is critical in RvS",
+      "target_node": "Increase model capacity and apply task-appropriate regularization",
+      "description": "Design rule operationalises the capacity-regularisation insight.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Increase model capacity and apply task-appropriate regularization",
+      "target_node": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+      "description": "Using dropout is one concrete regularisation mechanism.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+      "target_node": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+      "description": "Ablation result confirms efficacy of dropout.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Capacity-regularization ablation shows larger networks plus dropout improve kitchen-complete performance",
+      "target_node": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+      "description": "Evidence motivates the proposed tuning procedure.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Increase model capacity and apply task-appropriate regularization",
+      "target_node": "Categorical action distributions to increase model capacity in low-dimensional tasks",
+      "description": "Switching to categorical outputs is another capacity-increasing mechanism.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Categorical action distributions to increase model capacity in low-dimensional tasks",
+      "target_node": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+      "description": "Experiments substantiate benefit of categorical outputs.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Categorical vs Gaussian output experiments show categorical better on GCSL",
+      "target_node": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+      "description": "Positive results encourage adoption of categorical outputs where feasible.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "RvS-R algorithm with reward-to-go conditioning via concatenation",
+      "target_node": "Walker2d reward target analysis reveals lack of interpolation between reward modes",
+      "description": "Reward-target analysis evaluates limitations of RvS-R.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Walker2d reward target analysis reveals lack of interpolation between reward modes",
+      "target_node": "Develop automated selection of conditioning variable (goal vs reward) for offline RL tasks",
+      "description": "Observed limitation motivates research into automated conditioning selection.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Dropout regularization p=0.1 improves performance on small human demonstration datasets",
+      "target_node": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+      "description": "Implementation success informs the tuning guideline.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Use conditional behavior cloning with feedforward networks to reduce complexity",
+      "target_node": "RvS-G algorithm with goal conditioning via concatenation",
+      "description": "Goal-conditioning is another instantiation enabled by the same simple conditional BC framework.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+      "target_node": "Apply reward-conditioned behavior cloning (RvS-R) with high-capacity feedforward networks during offline RL fine-tuning",
+      "description": "Adopting RvS-R reduces algorithmic complexity and associated instability.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Instability and unsafe performance in offline RL due to algorithmic complexity",
+      "target_node": "Apply conditional behavior cloning (RvS-G) with goal conditioning and high-capacity feedforward networks during offline RL fine-tuning",
+      "description": "RvS-G similarly replaces complex value-based methods and mitigates instability.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Increase policy network width until performance saturates, then add dropout 0.1 for small datasets during offline RL model design",
+      "target_node": "Use categorical action distributions for discrete low-dimensional action spaces in offline RL policies",
+      "description": "Categorical outputs provide an additional refinement to the capacity tuning procedure for certain action spaces.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2022-08-14T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/2112.10751"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Scott Emmons",
+        "Benjamin Eysenbach",
+        "Ilya Kostrikov",
+        "Sergey Levine"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "RvS: What is Essential for Offline RL via Supervised Learning?."
+    }
+  ]
+}
+            

@@ -1,0 +1,816 @@
+Original Text:
+A DECISION-MAKING SUPPORT SYSTEM BASED ON KNOW-HOW
+Kryssanov, V.V., Abramov, V.A., Fukuda*, Y., Konishi*, K.
+IACP, 5, Radio St., Vladivostok, 690041 Russia
+* TRI of JSPMI, 1-1-12 Hachiman-cho, Higashikurume-shi, Tokyo, 203 Japan
+kryssano@jspmi.or.jp
+ABSTRACT
+The research results described are concerned with:
+• developing a domain modeling method and tools to
+provide the design and implementation of decision-
+making support systems for computer integrated
+manufacturing;
+• building a decision-making support system based on
+know-how and its software environment.
+The research is funded by NEDO, Japan.
+Keywords:  CIM, decision-making, know-how
+1. INTRODUCTION
+Today, one of the important problems of Computer
+Integrated Manufacturing (CIM) is to utilize the human
+experience of making decisions in a variety of professional
+tasks accumulated by leading manufacturers over the
+world, and propagate this experience by developing
+appropriate computer-aided support technologies. From a
+computer science perspective, it is crucial to create a strongtheoretical foundation and build tools to acquire, analyze
+and synthesize the information of decision-making.
+Extensive researchers’ efforts have been made on
+understanding and formalizing the activity of decision-
+making in the manufacturing domain since the 80s. As a
+result, a number of systems qualified to support the activity
+have been developed. These systems can be naturally
+classified into three categories: information retrieval
+systems, decision support systems and expert systems. Asno clear distinction between these categories can be found
+in the literature, we suggest that a distinction should be
+made based on the notions that:
+• an information retrieval system is a computer-based
+system to capture, manipulate, retrieve and transmit
+organized data necessary to solve a professional task
+according to detailed transactions defined by a user;
+• a decision support system is a knowledge-based
+information system to capture, handle and analyze
+information which affects or is intended to affect decision-
+making performed by people in the scope of a professional
+task appointed by a user;
+• an expert system is a knowledge-based system to be used
+instead of or together with a human operator to makedecisions in the framework of a professional task with
+explanations for users.
+This is an informal classification of the systems dealing
+with decision-making in manufacturing. However, it may
+be helpful to realize what has already been done and how it
+corresponds with present and future trends of the
+manufacture infrastructure.
+It should be noted first, that information retrieval
+systems are currently not discussed in the literature as
+standalone programs but as a part of specialized CIMapplications: CAD, CAM, CAPP, etc. There are many
+reasons for this, and the dissimilarity of manufacturing
+terminology can be pointed to as one. Another reason is
+existing retrieval systems cannot provide the freedom in
+formulating transactions necessary for CIM.
+Knowledge-based systems have been developed for
+manufacturing for more than twenty years. Despite many
+limitations in the points of applicability, integration and
+maintenance of the systems, research in this area is
+considered now as a core of computer-aided decision-
+making in CIM. At the same time, expert systems, whichmake decisions automatically, are not discussed as an
+inevitable component of the manufacturing environment at
+present (Wada, 1996). So, hereafter we will concentrate on
+decision support systems as well as interactive expert
+systems, referring to them as DSS.
+A further distinction needs to be drawn between stages
+of maturation of the support technologies for decision-
+making. We will argue here that any idea concerning the
+technologies, to be successfully put into practice, should
+have an adequate embodiment on each of these three levels
+of problem awareness: 1) formal specification, 2) design,3) implementation and maintenance.
+To apply a formal specification technique to decision-
+making means to use a formal method having a rigorous
+mathematical basis and capable of modeling the domain in
+general, specifying the domain professional tasks and
+representing the domain knowledge as well. The formal
+method is to provide decision support applications design
+with the highest integrity, reliability and compatibility.
+On the stage of design, it is necessary to explicate the
+mathematical and program content of the technology.
+Taking the characteristics, which a user expects to witness
+in dealing with a DSS for a basis, functionality andbehavior of the DSS and its software environment aredecided.
+Implementation and maintenance of a decision-making
+support technology assumes implementation of a DSS aswell as the systems to ensure the functions of updating,verification, validation and integration with externalapplications of the DSS which are necessary.
+An overwhelming majority of research reported in the
+literature has been on the detailed design of decisionsupport systems, whereas formal specification of theproblem has still been a difficult and expensive task. Fewprojects have been brought to the stage of implementationand maintenance, and no attempts have been published togive a description of a support technology for decision-making in CIM for all of the above levels of problemawareness.
+The focus of this paper is on a scientific method for
+developing and maintaining Decision Support Systems asessential components of CIM. In the following section, weformulate the scope and necessary assumptions of themethod. In Section 3, an approach to modeling the domainand specifying the domain tasks is outlined. Then wediscuss some aspects of the information representationtechnique. A view of the decision-making process and asoftware environment to support decision-makingtechnologies are presented in Section 5. Next, thesuggested method is extended to the case of utilizingempirical know-how. Section 7 gives an account of anexperiment resulting in a DSS and its softwareenvironment. Finally, in Section 8, we discuss related workand draw some conclusions from our experiences.
+2. STARTING POINTS
+Despite the fact that no universal approach to decision-
+making in CIM exists at present, a number of instances ofsuccess using various knowledge-based and algorithmtechniques of making decisions for domain tasks can befound in the literature. As specification of the input andoutput of the task to be solved with a particular method isstill necessary to develop a DSS, these instances might beconsidered as the knowledge (or metaknowledge) of how itis possible to get desired information under the conditions.Such interpretation makes the knowledge-based approachmore fundamental. However, the problem is how tointegrate the methods, qualitative as well as quantitative,within one DSS.
+We guess, that a basis for such integration can be a
+mapping of the domain professional activity onto a unifiedinformation structure, i.e., a domain model.
+We will consider that the domain is characterized by
+the professional activity that consists in solving differenttasks (or else we will have to think about a DSS owningencyclopedic knowledge). Solving a task takes place in thedomain reality, requires professional knowledge, andaffects a set of domain objects, both physical andconceptual. We will assume that the domain reality can bethought of as a potentially infinite set of separatedsituations, where each situation corresponds to a DSS runmade to solve a professional task. Rejecting this hypothesisleads us to the conception of real-time systems that is outof the scope of this paper. The situations are not linked toone another. This assertion causes the discrete updating ofthe knowledge for a DSS. Each of the situations is definedon a finite set of domain objects, that means time and spaceframes of a situation as well as human ability to recognize afinite set of objects within a professional task. Theprofessional knowledge is how people use the domainobjects to solve the task when the information about theobjects is used as the input, output and intermediate data.This knowledge, the input data and the output data forevery task can be represented verbally. The latestassumption is always true for input and output data (if not,decision-making support becomes meaningless), but it doesnot interdict implicit or tacit knowledge to be used.
+3. THE FORMALISM
+Let us introduce the necessary notions.
+Definition 1. An S-sorted set 
+A is a family of sets
+sA, one for each sort Ss∈: {}SsAAs∈= . /G01
+Definition 2. A many-sorted signature is a couple
+Σ,S, where S is the sort set, Σ is an SS×*-sorted
+family { }SsSasa ∈∈Σ ,*
+,  of symbols, and every symbol
+sa,Σ∈σ has arity a and sort s. /G01
+Definition 3. An algebra /G01 of a many-sorted
+signature Σ,S is a finite family {}SsAAs∈=  of sets
+called the carriers of /G01, conjointly with a mapping
+s aAAA→:σ  for each sa,Σ∈σ, where sn sa A AA ××= /G011
+when snsa /G011= . /G01
+Let ΣX be a signature Σ with a finite set of variables
+X such that /G01n
+ii
+0=Σ=Σ, 0>n, ∅=ΣΣ
+≠j
+jii/G02 , and iΣ is a
+many-sorted signature with the sort set {}PFOS ,,= , here
+FO, and P are respectively objective, functional and
+predicate sorts; {}SsXXs∈=  is disjointed from Σ.
+Now we introduce a declarative model for representing
+the domain as the following.
+Definition 4. A domain model nΜ of n-th order with
+the signature ΣX is a tuple ΦΛ=Μ,n such that
+{}n/G01 /G01 /G01 ,,,20/G01 =Λ  for 1>n, and {}0/G01=Λ  for
+1=n; i/G01 is an algebra of the signature iΣ,
+n i ,,3,2,0 /G01= . The carriers iA of the algebra i/G01, 1>i,
+follow the condition: 2 0AO⊂Σ , i iA⊂Σ−1 and 1+⊂i iAA
+when n i,,2 /G01= . There are partial mappings CBA→:σ
+when FΣ∈σ, DBA→:σ  when PΣ∈σ, and
+CDA→:σ  when OΣ∈σ. Here B is a Cartesian
+multiplication of nonempty subsets of iA, C is a
+nonempty subset of iA, D is a one-point set.
+Φ is a finite set of quantifier-free logical formulas
+involving variables of X. These formulas are written in a
+predicate calculus language defined on Σ.† /G01
+The predicate calculus language is of the languages
+based on higher order logics (in general case) where terms
+and formulas can be in the form: ()()mkttx ,,1 /G01, here
+()Xxk∈ is a variable, mtt,,1 /G01 are terms, nk≤≤1 i s
+the order of the variable.
+The range of values of ()kx is a subset of 0A if 1=k,
+and a subset of kA for 1>k. We will call an S-sorted
+function {} SsXZAZRRsi
+si
+si
+ssi∈⊂ → = , :,  0 >i, as an
+assignment of values in iA to variables in a variable set  X.
+Definition 5. An algebra 1/G01 of the signature 1Σ such
+that 1 0AO⊂Σ and 2 1AA⊂ is a solution for the model
+nΜ iff every formula entering Φ is true for all the
+possible iR, ni,,1 /G01= . /G01
+It is important to note that the symbols of 1Σ will be
+interpreted as unknowns for the model.
+We will specify the input data and conditions of a
+domain professional task in terms of 10ΣΣ /G03 (including at
+least one symbol of 1Σ), the output data – in terms of 1Σ,
+and the optimization criterion for the task – as a predicatedefined on 
+1/G01.
+More details of this formalism can be found in
+Kleshchev, et al., (1996).
+4. INFORMATION REPRESENTATION
+To consider computer-aided decision-making support
+based on the domain model, we need to formulate the mainprinciples for mapping the domain information onto thelogical structure described above.
+Let us define an abstract set of domain objects such
+that: a) all of the domain objects in the set, i.e., theinstances have the same identifying attributes, b) all theinstances are subject to and conform to the same rules. Arepresentation of common properties of elements of such aset will be called a domain scale. Naturally, decision-making uses “values on the scales”, i.e., informationmodels of the set elements, instead of domain objects. Aset of domain scales retaining all the domain objects formsthe domain scale system. Taxonomies, product datarepresentation standards or the like are essentials of thedomain scale system.
+We will regard the algebra 
+0/G01 as a unified
+representation of the domain scale system.
+† This stipulates applying predicate calculus logic rather than a
+programming technique.It can be postulated that the information of the domain
+reality has a stable structure. A model of this structure is adomain ontology. We will argue that an ontology can becreated with a collection of content-specified knowledgerepresentation primitives. In general, this collectionconsists of object constants, relations and classes. Situationsemantics (type of action, state, relationships, which aredescribed in the situation) are organized around an objectconstant within the situation that is a dedicated domainobject. A relation is a set of m-tuples, 1 >m, where each
+of the tuples links a finite set of domain objects into asequence and represents a relationship among objectsarising while solving a task. There are special types ofrelations called functional relations, where the last item ofan m-tuple is the value of the function on the first 1 −m
+items of the tuple. A class is a unary relation, i.e., a set oftuples of length one.
+We will consider the symbols of 
+1Σ as designations of
+the primitives, which make up an ontology.
+Let an abstraction be a projection reducing granularity
+of the domain information. It can be thought of that the
+algebra i/G01, 0>i, represents a set of facts (those are
+instances of how subject matter experts treat the domain
+objects during solving professional tasks) mapped ontoabstractions of the same level. Then, the granularity isdecreased from fine to coarse by increasing i.
+The set of formulas 
+Φ is created by consistency
+constraints on i/G01, ni /G041=, and the formulas
+determining connections between i/G01, 1>i, and 1/G01.
+Making decisions involves resolving formulas of Φ.
+Now we define a DSS as a practical accomplishment
+of the domain model nΜ of the signature ΣX having a
+finite solution set and a collection of solving methods forspecified professional tasks.
+Clearly, a model of a signature
+n
+X Σ ΣΣΣ=Σ /G02 /G03 /G01 /G03 /G02 /G03 /G03 /G02 210 and a model of a signature
+m
+Y Σ ΣΣΣ=Σ /G02 /G02 /G03 /G01 /G03 /G02 /G02 /G03 /G03 /G02 /G02 210 can have the same solution
+set. This condition provides the model tractabilitynecessary during the stage of DSS design.
+Let 
+nΜ be a model with /G02 a potentially infinite set of
+solutions. Then, nΜ might be an information model of the
+whole domain reality.‡ We will argue that establishing
+computer-aided support for decision-making in CIM
+predestinates building /G02 such that every task in the
+domain reality has at least one model in /G02. Practically, it
+means that there is continued updating of the domain
+information held by DSS. This is a reason to develop afund of domain information (knowledge) as a global model
+n
+GΜ with the solution set /G02 as a unified core for decision
+support systems. Then, while the model n
+GΜ is modified as
+‡ However, the reader should be aware that such a model could embody
+no models or one or many models for a task.
+necessary, a DSS can utilize a part of the domain
+information represented in n
+GΜ. The latest possible if
+0 0
+G /G01 /G01⊆ and 1 1
+G /G01 /G01⊆, where 01, /G01 /G01 are of the
+model realized in the DSS, and 01,GG /G01 /G01 are of n
+GΜ.
+Recently, there is the researchers’ belief that capturing
+manufacturing ontologies has great implications for
+developing CIM information-based applications(Benjamin, et al, 1995). Because people, as a rule, havegreat difficulty articulating the knowledge associated withthe subconscious and skill-based activity, elicitation ofontologies (necessarily included with such knowledge)appears to be a difficult problem. In the framework of ourapproach, the implicit knowledge would be represented bya wide range of domain tasks with their associatedresponses - the domain facts. These facts are appended to
+n
+GΜ. And the implicit component of /G02 would be acquired
+through mapping i
+G /G01 (1>i) onto 1
+G /G01 accordingly as
+shown with the formulas of GΦ. This method of
+knowledge acquisition is a kind of “training on instances”
+that has several drawbacks. The main predicament is thenecessity to analyze a huge amount of facts that vary onmany dimensions. We suppose, that establishing anassociated domain information space through the Internetwould make this problem manageable.
+5. DECISION-MAKING IN CIM
+Figure 1 presents a conceptual diagram of the decision-
+making process in the domain. As it is demonstrated in thefigure, decision-making is initiated by an external inquirer(it can be a user or a system) and begun from gatheringinformation to specify a problem (task). Then, associatedinformation is recognized (this information can be used torefine the problem), and relevant (local) reality models areselected. The models are evolved, and possible alternatives(problem solutions) are evaluated. Next, the best solutionsare chosen for the final decision. After the decision ismade, the new reality is considered and, if necessary, theprocess is repeated under new conditions.Decision-making in CIM has the same structure,
+however it is necessary to consider communication aspectsto provide group collaboration support. The latest means,the usage of structured group decision techniques(Forgionne, 1991) via an information layer to manageshared information processing is one feasible way.
+We define a decision-making technology in CIM as a
+technique of applying DSS to make decisions for a specialproblem. So, as it was formulated in Section 4, to establishcomputer-aided support for decision-making technologiesis, first, to create a unified information space and, second,to build the domain reality model.
+Several interactive computer information tools should
+be developed to deliver complete support forcommunication and decision-making. Being linked throughthe Internet, they form an application environment for DSS.Figure 2 shows the main components in the environmentbased on the global domain model, what the relationshipsare among them, and how they handle the domaininformation. The following systems are needed:
+• Scale System Builder:  a tool to construct and update the
+domain scale system as a set of abstract data types.• Ontology Builder:  a CASE system to arrange models of
+domain ontologies. There are three predefined symbol
+groups: object constants, relations and classes (see Section4). Symbols of the groups are combined in the structurethat can be completely represented within the first orderlogic.
+• Fact Master:  a tool to collect and represent the domain
+facts. There is a knowledge representation language based
+on higher order logics.
+• System for validation and verification:  a tool to check
+pertinency of the domain facts to the reality model and the
+scale system. If there is incompleteness of 
+0/G01 or 1Σ, or
+inconsistency of 1/G01, the system delivers the relatedCore of the Global
+Information Model
+Scale S ystem Builder
+Ontology Builder
+Fact MasterSystem for validation and verification
+InterfaceΦG    Formulas
+Solving Methods
+LibraryInformation
+feedback anal yzer
+I N T E R N E T0
+G /G01
+1
+G /G01
+n
+G G /G01 /G01 . . . 2
+                                              
+Fig. 2.Support environment for decision-making.
+Fig. 1. Decision-making process.Problem (task) specificationsGathering information
+Selecting best solutions and taking decisionEvaluating possible alternativesEvolving modelsFormulating reality modelsAssociated information identificationInquirer
+ associated
+informationchallenge
+decision                                     
+information that may be used by people to modify the
+domain model core.
+• Interface:  an automatic system to provide access to the
+global information model for CIM applications. Necessary
+portability and interoperability on the level of informationrepresentation models can be enabled with semantictranslation by articulation axioms (Collet, et al., 1991).
+• Information feedback analyzer:  a tool to decompose
+information of practical instances of taking decisions
+represented in terms of 
+10ΣΣ /G03 into declarative
+components (new facts to be added to the domain model)
+and procedural components (new samples of problemsolving methods to be added to the Solving MethodsLibrary).
+6. KNOW-HOW UTILIZATION
+It is a well-known fact, that know-how plays a significant
+role during decision-making by people in actualmanufacturing. Generally, the knowledge of know-how canbe classified into the conjectural knowledge (having mostlya procedural nature) and experimental knowledge (havinglargely a declarative character). The former is usually ageneralization of professional skill while the latteremanates from the results of practical experiments. Thereare distinct difficulties in utilizing these kinds ofknowledge for DSS: conjectural knowledge is intricatelyacquired and represented whereas empirical knowledge ishardly used. A key to solving the first problem would begathering a representative collection of instances oftreatment of a problem by subject matter experts, and thenmapping the information of this collection onto the domainreality model as it was drawn in the previous sections. Theexperimental knowledge usually comes to be known in aform already formalized - as tables or graphs, - which israther easy to represent in DSS. However, extremely largeamounts of such know-how, their peculiar nature, and highgranularity make the experimental knowledge difficult toutilize widely for application. A way to manage thisproblem would be to accumulate such know-how by
+representing them in algebras 
+i
+G /G01, 1>i, and formulas of
+GΦ.
+A variety of know-how has been collected from
+Japanese manufacturers in this study. An example of that
+material is partially reproduced in Figure 3. The knowledgeof the example may be accessed while selecting tools inprocess planning. Part (I) of the figure shows a fragment ofthe table containing the information about end mill edgeangles recommended to prolong tool life. Part (II)summarizes how to use the information of the table, and
+part (III) systematically introduces elements of model 
+nΜ
+which would be to add the information of the example to
+the model (simplifying the rather lengthy formalrepresentation).
+7. RESULTS
+A working approximation of the application environment
+described in Section 5 has been developed in the research.Prototypes of a Scale System Builder and Ontology Builderhave been implemented as one software tool.
+§ 47 examples
+of know-how treated of end milling have been analyzed,and a DSS based on this know-how has been developedusing the tool (see Figure 4). A reality model for the task ofcalculating the machining parameters has been realized inthe DSS. The knowledge base of the system containslogical formulas including ten formulas with higher orderpredicates. Taking the characteristics of the productmaterial and the end-mill as the input data, the system is
+§ In our current implementation, networked communication is not
+provided.ab c d e f g h
+. . . . . . . . . . . . . . . . . . . . . . . .
+Structural carbon steel 325∼42530 9 10∼1533∼711
+. . . . . . . . . . . . . . . . . . . . . . . .
+Free-cutting carbon steel 85∼32530 12 10∼2033∼710/G01/G01) Each string in the table establishes recommended values of peripheral rake
+angle (column e), end recess ( f), end clearance angle ( g), peripheral clearance
+angle (h) for an end-mill with helix angle from c and diameter from d when the
+end-mill is made of high-speed steel and the workpi ece material is of classes
+pointed in a with hardness belongs to an interval from b.
+/G01/G01/G01/G02SYMBOLS OF 0Σ: End_mill_material_classification = scalar scale ; End_Mill  Material = structure( classification : End_mill_material_classification ;
+hardness: HRC ); Workpiece_material_classification = scalar scale ; Workpiece_material = structure( classification : Work_material_classification ; … hardness:
+HB; … ); End_mill_type = scalar scale ; End_mill = structure( type: End_mill_type ; … material: End_Mill_Material ; … diameter: Millimeter ; helix_angle : Degree;
+peripheral_rake_angle : Degree; end_recess : Degree; end_clearance_angle : Degree; peripheral_clearance_angle : Degree; … ); Product = structure( … material:
+Workpiece_material; … );
+SYMBOLS OF 1Σ: Constant object : workpiece: Product; Classes: end_mill: End_mill ;  // end_mill1
+PΣ∈, workpiece1
+OΣ∈
+/G01/G02/G03/G04/G05/G06/G01 /G05/G082Σ /G09 /G01/G02/G03/G04/G05/G06/G07 /G09( a: Work_material_classification × b: interval of HB × c: interval of Degree × d: Millimeter × e: interval of Degree × f: interval o f
+Degree × g: interval of Degree × h: Degree ); // /G01/G02/G03/G04/G05/G06/G072
+PΣ∈
+/G0A’×’ designates Cartesian power multiplication)
+VARIABLES: a(2): Work_material_classification ; b(2): interval of HB; c(2): interval of Degree; d(2): Millimeter ; e(2): interval of Degree; f(2): interval of Degree; g(2):
+interval of Degree; h(2): Degree;
+FORMULA: end_mill. type = 'Square end-mill ' & end_mill.material.classification = 'High-speed steel ' & Table_1(workpiece. material.classification ,
+workpiece. material.hardness, c(2), d(2), e(2), f(2), g(2), h(2) ) &
+end_mill.helix_angle ∈ c(2) & end_mill.diameter = d(2)  →  end_mill.peripheral_rake_angle ∈ e(2) &
+end_mill.end_recess ∈ f(2) & end_mill.end_clearance_angle ∈ g(2) & end_mill.peripheral_clearance_angle =  h(2).I)
+Fig. 3.An example of know-how formalization.
+able to get a solution for two optimization criteria: tool life
+or machining operation time. Forward chaining is used inthe model-based reasoning. A function of explanation(textual and graphic illustrations) is provided by thesystem. Updating and enlarging the fact (know-how) baseof the system are accessible through the software tool. Anexample of a DSS run is shown in Figure 5. All the aboveprograms have been implemented on IBM PC platform inBorland Pascal 7.0 .
+8. RELATED WORK AND CONCLUSIONS
+Recently, research world-wide has begun on information
+processing in CIM. (Koonce, et al., 1996) discussed theintegration aspects for manufacturing applications andprovided a view of the architecture for the integratedmanufacturing systems based on the unified data meta-model. In Aguiar and Weston, (1995) a general model-based approach to computer-aided support of the life cycleof integrated manufacturing enterprises was introduced.Demands on the next generation of manufacturing resourcedata and info-systems were identified by Kjellberg andBohlin, (1996). Despite much research on the subject beingpublished, almost all of it, including the works mentionedabove, have been made on the conceptual level rather thanthe pragmatic one.In this paper we have introduced a model-based
+technique for developing and maintaining DecisionSupport Systems in CIM and illustrated the approach withan example from our work on the problem of utilizingempirical know-how. A few conclusions can be drawn fromour experiences:
+• The development of formal methods is an important
+issue in software engineering technologies for
+manufacturing. Applying an adequate formal specificationtechnique much facilitates creating decision supporttechnologies in CIM.
+• Building a unified domain model accessible through the
+Internet is a vital task of CIM. Such a model can serve as a
+core to gather, analyze and synthesize the information forDSS.
+• Founding CIM ontologies can assist utilizing know-how
+for computer-aided decision-making. Capturing the
+ontologies can be smoothly organized while an associatedinformation space is established in the domain.
+One more outcome of the study is that the progress of
+CIM application systems requires the creation of a domainknowledge (information) fund rather than mere CIMtaxonomies and ontologies. A possible way to ensurerepresentation of multiple domain knowledge is the use ofa domain-oriented predicate calculus language based onhigher order logics.
+REFERENCES
+Aguiar, M.W.C., and Weston, R.H. (1995). A model driven
+approach to enterprise integration. Int. J. Computer
+Integrated Manufacturing , Vol. 8, No. 3, pp. 210-
+224.
+Collet, C., Huhns, M.N., Shen, W.-M. ( 1991). Resource
+Integration Using a Large Knowledge Base in Carnot.
+IEEE Computer , Vol.24, No. 12, pp. 55-62.
+Forgionne, G.A., (1991). Decision Technology Systems: A
+Vehicle To Consolidate Decision Making Support.Information Processing & Management , Vol. 27, No.
+6, pp. 679-697.
+Kjellberg, T., Bohlin, M. (1996). Design of a
+Manufacturing Resource Information System. CIRP
+Annals, Vol. 45/1, pp. 149-152.
+Kleshchev, A.S., Kryssanov, V.V., Fukuda, Y., Konishi K.
+(1996). CAPP Expert System Building Technology:Logical Approach. In: Proceedings of The 6
+th IFIP
+TC5/WG5.7 International Conference APMS’96 ,
+(N.Okino, H.Tamura and S.Fujii (Ed.)), pp. 115-120.IFIP, Kyoto.
+Koonce, D.A., Judd, R.P., and Parks, C.M. (1996).
+Manufacturing systems engineering and design: anintelligent, multi-model, integration architecture. Int.
+J. Computer Integrated Manufacturing , Vol. 9, No.
+6, pp. 443-453.
+Wada, R. (1996). A new concept for next-generation
+machine tools. In: Proceedings of The 7
+th
+International Machine Tool Engineers Conference ,
+pp. 173-189. JMTBA, Tokyo.User Interface
+Input Analyzer
+Decision-makin g module
+Model Selector
+Formula Inter preterReality Model
+Output & Ex planation
+SystemScale system
+Database
+Formulas
+FactsScale System Builder &
+Ontology BuilderUSER
+                                                
+Fig. 4. Modular structure of the DSS.
+Fig. 5. A sample run of the system.
+
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Loss of human experiential knowledge in CIM decision-making",
+      "type": "concept",
+      "description": "Critical manufacturing decisions fail to use the large body of accumulated human experience, leading to sub-optimal outcomes.",
+      "aliases": [
+        "loss of human know-how in manufacturing",
+        "erosion of experiential knowledge in CIM"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Inconsistent integration of decision support systems in CIM environment",
+      "type": "concept",
+      "description": "Existing DSS, expert and retrieval systems do not integrate cleanly, reducing reliability and maintainability.",
+      "aliases": [
+        "poor DSS interoperability",
+        "fragmented CIM decision tools"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Inefficient utilization of empirical know-how in manufacturing decision-making",
+      "type": "concept",
+      "description": "Large volumes of empirical rules (tables, graphs) exist but are difficult to apply systematically in software.",
+      "aliases": [
+        "under-use of empirical know-how",
+        "poor exploitation of experimental manufacturing rules"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Fragmented storage of professional know-how across manufacturers",
+      "type": "concept",
+      "description": "Know-how is siloed in separate organisations, preventing systematic capture.",
+      "aliases": [
+        "scattered experiential data",
+        "disparate know-how repositories"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Absence of unified domain model in CIM",
+      "type": "concept",
+      "description": "Without a shared formal model, heterogeneous applications cannot interoperate.",
+      "aliases": [
+        "lack of common CIM information model"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "High granularity of empirical know-how complicating integration",
+      "type": "concept",
+      "description": "Experimental tables/graphs are voluminous and detailed, making direct incorporation costly.",
+      "aliases": [
+        "fine-grained empirical rules hinder integration"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Mapping professional tasks onto unified information structure enables integration",
+      "type": "concept",
+      "description": "If each professional task is represented within a common formal structure, diverse decision methods can coexist.",
+      "aliases": [
+        "task-to-model mapping principle",
+        "unified information structure mapping"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Representing empirical know-how in higher-order logic algebras enables scalable use",
+      "type": "concept",
+      "description": "Encoding empirical tables/graphs as elements of multi-sorted algebras allows automated reasoning and combination.",
+      "aliases": [
+        "HO logic representation of know-how",
+        "algebraic encoding of empirical rules"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Use formal multi-sorted algebra and higher-order logic to model domain knowledge",
+      "type": "concept",
+      "description": "Applying a rigorous mathematical formalism gives integrity, reliability and compatibility for DSS.",
+      "aliases": [
+        "formal specification with multi-sorted algebra",
+        "higher-order logic domain modelling"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Accumulate domain knowledge in global model accessible via Internet",
+      "type": "concept",
+      "description": "Storing the evolving model online supports continuous updates and shared access.",
+      "aliases": [
+        "internet-based global domain model",
+        "online knowledge fund"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Domain model with scale system and ontology represented in algebras",
+      "type": "concept",
+      "description": "Implements the formalism via scale definitions and ontology primitives mapped to algebra carriers.",
+      "aliases": [
+        "algebraic scale-system & ontology model"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Modular DSS environment with Scale System Builder, Ontology Builder, Fact Master and Validation modules",
+      "type": "concept",
+      "description": "Software suite providing construction, verification and maintenance of the global model.",
+      "aliases": [
+        "modular DSS tools",
+        "support environment components"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Forward chaining reasoning in prototype DSS for machining parameter optimization",
+      "type": "concept",
+      "description": "Reasoner applies encoded rules to optimise either tool life or operation time.",
+      "aliases": [
+        "forward chaining engine for machining DSS"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Prototype DSS optimizes machining parameters using 47 know-how examples",
+      "type": "concept",
+      "description": "Experimental system produced correct recommendations for tool life/time criteria from 47 empirical rules.",
+      "aliases": [
+        "end-mill DSS performance",
+        "optimization prototype evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Modular DSS prototype demonstrates integration of knowledge capture tools on PC platform",
+      "type": "concept",
+      "description": "Demonstrates functional coupling of Scale System Builder, Ontology Builder and reasoning engine.",
+      "aliases": [
+        "prototype tool integration evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Construct internet-accessible global domain model for CIM to centralize know-how",
+      "type": "intervention",
+      "description": "Design and publish a shared, continually updated algebraic model of CIM tasks, scales and ontologies reachable over the Internet.",
+      "aliases": [
+        "build online CIM knowledge fund"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Develop modular DSS tools for capturing and applying manufacturing know-how",
+      "type": "intervention",
+      "description": "Implement and refine the Scale System Builder, Ontology Builder, Fact Master and Validation modules for practitioners.",
+      "aliases": [
+        "engineer DSS tool suite"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Integrate empirical know-how via higher-order logic formalization into DSS knowledge base",
+      "type": "intervention",
+      "description": "Translate large bodies of empirical rules (e.g. tool tables) into algebraic predicates callable by the DSS.",
+      "aliases": [
+        "formalise empirical tables in HO logic"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Deploy prototype DSS to optimize end-mill machining parameters using forward chaining reasoning",
+      "type": "intervention",
+      "description": "Field-test the validated prototype within manufacturing workflows for tool-life or time optimisation.",
+      "aliases": [
+        "pilot deployment of end-mill DSS"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 3,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Loss of human experiential knowledge in CIM decision-making",
+      "target_node": "Fragmented storage of professional know-how across manufacturers",
+      "description": "Knowledge remains siloed, leading directly to loss in decision processes.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Fragmented storage of professional know-how across manufacturers",
+      "target_node": "Mapping professional tasks onto unified information structure enables integration",
+      "description": "Unified mapping allows disparate knowledge to be systematically combined.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Mapping professional tasks onto unified information structure enables integration",
+      "target_node": "Use formal multi-sorted algebra and higher-order logic to model domain knowledge",
+      "description": "Formal specification realises the mapping principle.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use formal multi-sorted algebra and higher-order logic to model domain knowledge",
+      "target_node": "Domain model with scale system and ontology represented in algebras",
+      "description": "Scale system and ontology instantiate the formal specification.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Domain model with scale system and ontology represented in algebras",
+      "target_node": "Prototype DSS optimizes machining parameters using 47 know-how examples",
+      "description": "Success of prototype confirms correctness of model implementation.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Prototype DSS optimizes machining parameters using 47 know-how examples",
+      "target_node": "Construct internet-accessible global domain model for CIM to centralize know-how",
+      "description": "Positive prototype results justify scaling to a global shared model.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Prototype DSS optimizes machining parameters using 47 know-how examples",
+      "target_node": "Deploy prototype DSS to optimize end-mill machining parameters using forward chaining reasoning",
+      "description": "Validated performance supports pilot deployment.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inconsistent integration of decision support systems in CIM environment",
+      "target_node": "Absence of unified domain model in CIM",
+      "description": "Without a common model, systems cannot integrate.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Absence of unified domain model in CIM",
+      "target_node": "Mapping professional tasks onto unified information structure enables integration",
+      "description": "Unified mapping forms the missing common model.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inefficient utilization of empirical know-how in manufacturing decision-making",
+      "target_node": "High granularity of empirical know-how complicating integration",
+      "description": "Volume and detail of empirical rules hinder their use.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "High granularity of empirical know-how complicating integration",
+      "target_node": "Representing empirical know-how in higher-order logic algebras enables scalable use",
+      "description": "Formal representation smooths granularity issues.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Representing empirical know-how in higher-order logic algebras enables scalable use",
+      "target_node": "Modular DSS environment with Scale System Builder, Ontology Builder, Fact Master and Validation modules",
+      "description": "Modules operationalise the representation process.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Modular DSS environment with Scale System Builder, Ontology Builder, Fact Master and Validation modules",
+      "target_node": "Modular DSS prototype demonstrates integration of knowledge capture tools on PC platform",
+      "description": "Prototype shows environment modules function together.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Modular DSS prototype demonstrates integration of knowledge capture tools on PC platform",
+      "target_node": "Develop modular DSS tools for capturing and applying manufacturing know-how",
+      "description": "Prototype success prompts further tool development and refinement.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Modular DSS prototype demonstrates integration of knowledge capture tools on PC platform",
+      "target_node": "Integrate empirical know-how via higher-order logic formalization into DSS knowledge base",
+      "description": "Validated toolchain encourages large-scale formalisation of know-how.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Mapping professional tasks onto unified information structure enables integration",
+      "target_node": "Accumulate domain knowledge in global model accessible via Internet",
+      "description": "Online accumulation refines the basic task-to-model mapping concept.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Accumulate domain knowledge in global model accessible via Internet",
+      "target_node": "Domain model with scale system and ontology represented in algebras",
+      "description": "Scale system & ontology are concrete realisation of the global model.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Modular DSS environment with Scale System Builder, Ontology Builder, Fact Master and Validation modules",
+      "target_node": "Forward chaining reasoning in prototype DSS for machining parameter optimization",
+      "description": "Environment provides data structures enabling the reasoning engine.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Forward chaining reasoning in prototype DSS for machining parameter optimization",
+      "target_node": "Prototype DSS optimizes machining parameters using 47 know-how examples",
+      "description": "Reasoning engine’s effectiveness confirmed by prototype results.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2006-06-02T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/cs/0606010"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "V. V. Kryssanov",
+        "V. A. Abramov",
+        "Y. Fukuda",
+        "K. Konishi"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "A Decision-Making Support System Based on Know-How"
+    }
+  ]
+}
+            

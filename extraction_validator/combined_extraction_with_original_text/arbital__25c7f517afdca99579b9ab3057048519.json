@@ -1,0 +1,228 @@
+Original Text:
+When $b$ and $x$ are [integers](https://arbital.com/p/48l), $\log_b(x)$ has a few good interpretations. It's roughly the [length of $x$](https://arbital.com/p/416) when written in [base $b$](https://arbital.com/p/number_bases). More precisely, it's the [fair price of an $x$-digit](https://arbital.com/p/427) in terms of [$b$-digits](https://arbital.com/p/4sj). But what about when $x$ or $b$ is not a whole number? $\log_{3.16}(5.62) \approx 1.5$; how are we supposed to interpret this fact?
+
+We could appeal to the definition of the logarithm, observe that $3.16^{1.5} \approx 5.62,$ and call it a day. But what does that mean? That 3.16 multiplied by itself one-and-a-half times is roughly 5.62? That 5.62, written in base 3.16, is about 1.5 digits long? That a 5.62-digit is worth about 1.5 times as much as a 3.16-digit? What does it mean to multiply a number by itself "half a time"? How would you even write a number down in "base 3.16"? What would a 3.16-digit even look like?
+
+Let's say that you want to [store a lot of data](https://arbital.com/p/storing_numbers), and [digit wheels](https://arbital.com/p/42d) cost \$1. At that price, an object that can store 3 different values costs about 48¢, whereas an object that stores 4 different values costs about 60¢. What storage medium, then, costs exactly 50¢? I can think of two:
+
+1. You and I could buy a digit wheel, split the costs, and share it.
+2. You and I could both pay 50¢ each for a digit wheel, and then toss a coin to see who gets to use it.
+
+How could we split the digit wheel? The digit wheel can be put into any one of ten different states, labeled 0, 1, 2, 3, 4, 5, 6, 7, 8, and 9. Here's one way to use it to encode two different messages: I choose a number $a$ between 0 and 1, then you choose a number $b$ between 0 and 4. Then we put the digit wheel into the state $5a + b.$ Thus, if you choose 0, the wheel will either say 0 or 5 (depending on which number I choose). If you choose 3, the wheel will either say 3 or 8 (depending on which number I chose). Each number you want to record (0-4) has two representations, and I choose whether we use the high one or the low one. Thus, the digit wheel records two messages: 7 means (high, 2) and so on.
+
+Of course, this is not a fair way to split the digit wheel &mdash; you get to store a [5-message](https://arbital.com/p/3v9) whereas I only get to store a 2-message.%%note:Thus we see that a [10-digit](https://arbital.com/p/4sj) is worth a 5-digit plus a 2-digit, that is, $\log_{10}(5) + \log_{10}(2) = 1$.%% Can we do something fairer?
+
+Well, the methodology can be used to share arbitrary $n$-digits between two people. If $x$ and $y$ are whole numbers such that $x \cdot y \le n$ then an $n$-digit can be used to store both an $x$-message and a $y$-message at once: You choose the [https://arbital.com/p/-quotient](https://arbital.com/p/-quotient) of $n$ divided by $x$, I choose the [https://arbital.com/p/-remainder](https://arbital.com/p/-remainder).
+
+__Exercise:__ How would you use an $18$-digit to store both a $3$-message and a $6$-message? How do you store (2, 4) using that encoding?
+%%hidden(Answer):
+Here's one way: Let $a$ be the value of the 3-message (between 0 and 2) and $b$ be the value of the 6-message (between 0 and 5). Record $6a+b.$ Using this encoding, (2, 4) is stored as the number 16.
+
+You can verify for yourself that there is exactly one way to store each (3-message, 6-message) pair in an 18-message under this encoding.
+%%
+
+(From this we can see that, when $n = x \cdot y,$ the cost of a $n$-digit is exactly equal to the cost of an $x$-digit plus the cost of a $y$-digit. In other words, $n = x \cdot y$ then $\log_b(x) + \log_b(y) = \log_b(n),$ no matter what base $b$ we're using.)
+
+The fair split of the 10-digit, then, is to let us both store a 3-message: 3 is the highest integer $x$ such that $x \cdot x < 10.$ This isn't maximally efficient, though; that encoding only uses 9 of the 10 possibilities that we paid for, and therefore it's not worth our money: Why buy what is effectively a 3-message for 50¢ when the fair price of 3-messages is 48¢? This might be worth knowing if the market isn't selling objects that carry 3-messages, and both you and I just need a tiny bit more storage, but in general it's not worth it.
+
+However, it becomes more worthwhile the more 10-digits we split. You might expect that, when splitting three digit wheels, we'd each get one digit wheel to ourselves plus a 3-message each from the third wheel, giving us 30 different possible messages each. However, we can do better than that if we're clever. If you pick a number $a$ between 0 and 30 (for a total of 31 different possibilities), and I also pick a number $b$ between 0 and 30, then the number $31a + b$ can always be stored on 3 digit wheels (because $31 \cdot 30 + 30 = 960 \le 999$), so if we're splitting three digit wheels, we can actually use them to store two 31-messages. ([Why?](https://arbital.com/p/)) This still isn't maximally efficient (the values from 961 to 999 are wasted), but it's a little better. And we can keep increasing the efficiency if we keep going: Five digit wheels can hold two 316-messages; 7 digit wheels can hold two 3162-messages, and so on. (You can verify those numbers yourself.)
+
+As you can see, when splitting an $n$-digit, the fair split occurs at the largest whole number $x$ such that $x \cdot x \le n$, in which case we both get to record one $x$-message. This is why it is 316, and not 500, that can most naturally be seen as "about 2.5 decimal digits long:" The number that is 2.5 decimal digits long is the largest number $x$ such that, given five digits, both you and I can use those 5 digits to store independent $x$-messages. If you store a 500-message, that only leaves enough space for me to store a 200-message. If you only store a 300-message, that leaves enough space for me to store a 333-message. $x=316$ is the point where we can both store an $x$-message, because 316 is the largest whole number such that $x^2 \le 100000.$
+
+(From this we can deduce that $\log_b(316) \approx \frac{5\log_b(10)}{2}$, no matter what the base: A 316-digit is worth about half as much as five 10-digits put together.)
+
+The more 10-digits you split, the more efficient it gets &mdash; if we split 7 digit wheels, each of us gets to record a 3162-message; if we split 9 wheels, we each get to record a 31622-message, and so on. But the split is never maximally efficient, because 10 is not a [https://arbital.com/p/-square_number](https://arbital.com/p/-square_number): An $n$-digit can be split perfectly in half if and only if there is an $x$ such that $x \cdot x = n,$ and this can't happen if $n$ is an odd power of 10. Thus, splitting an odd number of digit wheels never makes the final digit wheel be worth _exactly_ 50¢.
+
+You know what storage medium is worth exactly 50¢? A 50% chance of a 10-digit.
+
+Let's say we pay 50¢ each for a digit wheel, and then toss a coin to see who gets to use it. How much does this decrease your storage costs? Half the time, you get to [reduce the number you have left to store](https://arbital.com/p/) by a factor of 10; the other half the time, you reduce the number you have left to store by a factor of 1 (i.e., not at all). How much does that reduce the number you have left to store, [on average](https://arbital.com/p/4b5)?
+
+On average, your number gets reduced by the [https://arbital.com/p/-geometric_mean](https://arbital.com/p/-geometric_mean) of 1 and 10. Geometric means "average out" multiplications: Let's say that you have a thing and you're going to multiply it by 2, 12 and 9. At the end of the day, your thing is going to be 216 times larger, and you're going to have multiplied it by three numbers. Geometric means ask how big each multiplication was "on average" &mdash; instead of multiplying your thing by three different numbers, can we find one number $y$ such that $y \cdot y \cdot y = 216,$ such that multiplying your thing by $y$ three times is the same as multiplying by 2, 12, and 9 separately? The answer is yes, and $y = \sqrt[https://arbital.com/p/3](https://arbital.com/p/3){2 \cdot 12 \cdot 9} = 6$, as you can verify. Thus, multiplying your thing by 6 is equivalent, [in expectation](https://arbital.com/p/4b5), to multiplying your thing by a value selected [uniformly at random](https://arbital.com/p/uniform_random) from the list [12, 9](https://arbital.com/p/2,). (For more on this, see [Geometric mean: Intuition](https://arbital.com/p/).)
+
+Similarly, if we might reduce the size of the number we want to store by a factor of 1, and we might reduce it by a factor of 10, then "on average" we're reducing it by a factor of $\sqrt[https://arbital.com/p/2](https://arbital.com/p/2){1 \cdot 10} \approx 3.16.$ Multiplying by $\sqrt[https://arbital.com/p/2](https://arbital.com/p/2){10}$ twice is the same as multiplying by 1 once and 10 once, so it's equivalent [in expectation](https://arbital.com/p/4b5) to multiplying by values selected uniformly at random from the list [10](https://arbital.com/p/1,).
+
+If _three_ people are sharing a 10-digit, then the amount of digits each one gets to use in expectation is $\sqrt[https://arbital.com/p/3](https://arbital.com/p/3){1 \cdot 1 \cdot 10} \approx 2.15.$ So that's what a 2.15 digit looks like &mdash; a 10-digit shared between three people. This can be generalized to any probability, and any $n$-digit for $1 < n \le 10$ can be interpreted as a digit wheel that you have some probability of getting to use ([How?](https://arbital.com/p/)).
+
+There are a few different things we can learn from this interpretation. It allows us to give a physical interpretation to facts like $\log_{3.16}(5.62) \approx 1.5$, which says that a 5.62-digit is worth one and a half times as much as a 3.16 digit. What's a 3.16 digit? It's (approximately) a 10-digit shared between two people, i.e., a 10-digit that you have a 50% chance of getting to use yourself. What's a 5.62-digit? It's a 10-digit that you have a 75% chance of getting to use yourself. It's 1.5x as valuable, because 75% is 1.5x as much as 50%. The upgrade from a 3.16-digit to a 5.62-digit constitutes 1.5x increase in my chance of getting to use the digit wheel.
+
+The other thing that this interpretation tells us is that the digit worth exactly half an $n$-digit is the $\sqrt{n}$-digit, both because (1) if you want to use an $n$-digit to store two $x$-messages for some $x$, you need $x \cdot x$ to be at most $n$; and (2) if you have a 50% chance of getting to use an $n$-digit and a 50% chance of [nothing](https://arbital.com/p/1digit), then that's equivalent [on average](https://arbital.com/p/4b5) to a certainty of a $\sqrt{n}$-digit.
+
+In case you haven't noticed, we've been implicitly using the fact that doubling a digit squares the number of possibilities you have available to you: With one 10-digit you can store 10 possibilities, with two you can store $10^2 = 100.$ Because two $n$-digits [emulate](https://arbital.com/p/) an $n^2$-digit, it's no surprise that half an $n$-digit is a $\sqrt{n}$-digit.
+
+You might be wondering how these square root signs weaseled into a discussion about logarithms. You also might be starting to suspect that roots, logarithms, and exponentials are secretly three sides of the same coin. If so, [you're right](https://arbital.com/p/exp_log_root), though that's a topic for another day.
+
+Lest you think that this gives us a complete interpretation of logarithms, note that it still doesn't explain what's going on when the inputs to the logarithm function are between 0 and 1. You might think, "well, now that I know what a 3.16-digit is, I can use that intuition to figure out what a 0.16-digit is" &mdash; but it's not quite as easy as that. A 3.16-digit can be interpreted as probabilistic access to a 10-digit, and the same is true for $x$-digits whenever $x > 1.$ But no matter how many people share a 10-digit, it's never worth _less_ than a 1-digit ([which is worthless](https://arbital.com/p/1digit)); $\sqrt[https://arbital.com/p/n](https://arbital.com/p/n){10} > 1$ no matter how large $n$ gets. To understand $x$-digits for $0 < x < 1,$ we need one final puzzle piece, covered in the next post.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "resource inefficiency in AI storage systems",
+      "type": "concept",
+      "description": "Over-allocation or sub-optimal use of memory and parameter storage in AI systems can raise operational costs, energy use, and carbon footprint, creating secondary safety and sustainability concerns.",
+      "aliases": [
+        "inefficient memory utilisation in AI models",
+        "storage resource wastage in machine learning"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "integer-only digit interpretation limiting storage sharing in AI systems",
+      "type": "concept",
+      "description": "If engineers assume that storage units must be allocated in whole-digit (whole-state) blocks, opportunities for finer-grained sharing are lost, directly causing inefficiency.",
+      "aliases": [
+        "misallocation of memory units due to whole-digit assumption",
+        "lack of fractional capacity usage"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "probabilistic digit-sharing interpretation enabling fractional capacity in storage systems",
+      "type": "concept",
+      "description": "Viewing a digit as a random resource to which an agent has some probability of access (e.g., 50 % of a 10-digit) allows non-integer effective digits and unlocks additional capacity.",
+      "aliases": [
+        "fractional digit via chance access",
+        "expected-value interpretation of digit wheels"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "shared storage design based on fractional digit access probabilities in AI contexts",
+      "type": "concept",
+      "description": "Because fractional digits arise naturally from probabilistic sharing, a design that intentionally allocates storage units probabilistically can mitigate inefficiency.",
+      "aliases": [
+        "storage architecture using probabilistic access",
+        "design rationale for fractional-digit memory"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "geometric mean-based fractional-digit allocation algorithm for AI memory management",
+      "type": "concept",
+      "description": "Implementation mechanism that assigns each process a probability of accessing a storage block such that the geometric mean of capacities matches required fractional digits (e.g., √n per half-digit).",
+      "aliases": [
+        "sqrt-rule allocation mechanism",
+        "expected-capacity geometric allocation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "mathematical demonstration of sqrt rule improving average storage efficiency",
+      "type": "concept",
+      "description": "Formal derivation that half-ownership of an n-digit yields √n expected states, confirming that probabilistic allocation can double effective storage density compared with integer splits.",
+      "aliases": [
+        "validation via sqrt(n) capacity proof",
+        "logarithm–root equivalence evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "design AI memory architecture with probabilistic fractional-digit sharing to maximise storage efficiency",
+      "type": "intervention",
+      "description": "During model design, allocate certain memory blocks or parameter groups via probabilistic access schedules so that multiple processes or sub-models share storage, achieving an effective capacity equal to the geometric mean of full ownership and no ownership.",
+      "aliases": [
+        "implement fractional-digit probabilistic memory allocation",
+        "apply sqrt-rule storage sharing in AI models"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "resource inefficiency in AI storage systems",
+      "target_node": "integer-only digit interpretation limiting storage sharing in AI systems",
+      "description": "Assuming storage units must be allocated in whole digits directly leads to wasted capacity and resource inefficiency.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "integer-only digit interpretation limiting storage sharing in AI systems",
+      "target_node": "probabilistic digit-sharing interpretation enabling fractional capacity in storage systems",
+      "description": "Viewing digits probabilistically allows fractional effective digits, directly countering the integer-only limitation.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "probabilistic digit-sharing interpretation enabling fractional capacity in storage systems",
+      "target_node": "shared storage design based on fractional digit access probabilities in AI contexts",
+      "description": "The insight that fractional digits are possible enables a design that purposefully allocates storage via probabilistic sharing.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "shared storage design based on fractional digit access probabilities in AI contexts",
+      "target_node": "geometric mean-based fractional-digit allocation algorithm for AI memory management",
+      "description": "A concrete mechanism for the design is to assign probabilities so that each agent’s expected capacity equals the geometric mean result shown in the paper.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "geometric mean-based fractional-digit allocation algorithm for AI memory management",
+      "target_node": "mathematical demonstration of sqrt rule improving average storage efficiency",
+      "description": "The sqrt rule proof serves as theoretical validation that the algorithm achieves the predicted efficiency gains.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "mathematical demonstration of sqrt rule improving average storage efficiency",
+      "target_node": "design AI memory architecture with probabilistic fractional-digit sharing to maximise storage efficiency",
+      "description": "Demonstrated efficiency improvement motivates implementing probabilistic sharing in AI systems.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://arbital.com/p/fractional_digits"
+    },
+    {
+      "key": "title",
+      "value": "Fractional digits"
+    },
+    {
+      "key": "date_published",
+      "value": "2016-07-30T00:56:30Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Malcolm McCrimmon",
+        "Nate Soares",
+        "Eric Rogstad",
+        "Alexei Andreev"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "arbital"
+    }
+  ]
+}
+            

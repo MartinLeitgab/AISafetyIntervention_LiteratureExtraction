@@ -1,0 +1,1455 @@
+Original Text:
+1 Introduction
+---------------
+
+
+
+In reinforcement learning (RL) an agent has to learn to solve the problem by maximising the expected reward provided by a reward function (Sutton and
+Barto, [1998](#bib.bib25)).
+*Designing* such a reward function is similar to designing a scoring function for a game, and can be very difficult (Lee et al., [2017](#bib.bib19); Krakovna et al., [2020](#bib.bib18)).
+Usually, one starts by designing a proxy: a simple reward function that seems broadly aligned with the user’s goals.
+While testing the agent with this proxy, the user may observe that the agent finds a simple behaviour that obtains a high reward on the proxy, but does not match the behaviour intended by the user,333See <https://blog.openai.com/faulty-rewardfunctions/> and the paper Leike et al. ([2017](#bib.bib20)).
+who must then refine the reward function to include more complicated requirements, and so on.
+
+
+
+
+This has led to a recent trend to *learn* a model of the reward function, rather than having the programmer design it (Ng and Russell, [2000](#bib.bib22); Hadfield-Menell et al., [2016](#bib.bib13); Choi and Kim, [2011](#bib.bib8); Amin and Singh, [2016](#bib.bib4); Abbeel and Ng, [2004](#bib.bib1); Christiano et al., [2017](#bib.bib9); Hadfield-Menell et al., [2017](#bib.bib14); Ibarz et al., [2018](#bib.bib16); Akrour et al., [2012](#bib.bib3); MacGlashan et al., [2017](#bib.bib21); Pilarski et al., [2011](#bib.bib24)).
+One particularly powerful approach is putting the human into the loop (Abel et al., [2017](#bib.bib2)) as done by Christiano et al. ([2017](#bib.bib9)),
+because it allows for the opportunity to correct misspecified reward functions
+as the RL agent discovers exploits that lead to higher reward than intended.
+
+
+
+
+However, learning the reward function with a human in the loop has one problem: by manipulating the human, the agent could manipulate the learning process.444And humans have many biases and inconsistencies that may be exploited (Kahneman, [2011](#bib.bib17)), even accidentally; and humans can be tricked and fooled, skills that could be in the interest of such an agent to develop.
+If the learning process is online – the agent is maximising its reward function as well as learning it – then the human’s feedback is now an optimisation *target*.
+Everitt and
+Hutter ([2016](#bib.bib10)); Everitt and Hutter ([2019](#bib.bib11)) and Everitt ([2018](#bib.bib12)) analyse the problems that can emerge in these situations, phrasing it as a ‘feedback tampering problem’.
+Indeed, a small change to the environment can make a reward-function learning process manipulable.555See this example, where an algorithm is motivated to give a secret password to a user while nominally asking for it, since it is indirectly rewarded for correct input of the password: <https://www.lesswrong.com/posts/b8HauRWrjBdnKEwM5/rigging-is-a-form-of-wireheading>
+So it is important to analyse which learning processes are prone to manipulation.
+
+
+
+
+After building a theoretical framework for studying the dynamics of learning reward functions online, this paper will identify the crucial property of a learning process being *uninfluenceable*: in that situation, the reward function depends only on the environment, and is outside the agent’s control.
+Thus it is completely impossible to manipulate an uninfluenceable learning process, and the reward-function learning is akin to Bayesian updating.
+
+
+
+
+The paper also identifies the weaker property of unriggability, an algebraic condition that ensures that actions taken by the agent do not influence the learning process in expectation.
+An unriggable learning process is thus one the agent cannot ‘push’ towards its preferred reward function.
+
+
+
+
+An uninfluenceable learning process is automatically unriggable, but the converse need not be true.
+This paper demonstrates that, if the set of environments is large enough, an unriggable learning process is equivalent, in expectation, to an uninfluenceable one.
+If this condition is not met, unriggable-but-influenceable learning processes do allow some undesirable forms of manipulations.
+The situation is even worse if the learning process is riggable: the agent can follow a policy that would reduce its reward, with certainty, for *all* the reward functions it is learning about, among other pathologies.
+
+
+
+
+To illustrate, this paper uses a running example of a child asking their parents for career advice (see [Section 2.2](#S2.SS2 "2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")).
+That learning process can be riggable, unriggable-but-influenceable, or uninfluenceable, and Q-learning examples based on it will be presented in [Section 6](#S6 "6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+
+
+This paper also presents a ‘counterfactual’ method for making any learning process uninfluenceable, and shows some experiments to illustrate its performance compared with influenceable and riggable learning.
+
+2 Notation and formalism
+-------------------------
+
+
+
+The agent takes a series of actions (from the finite set 𝒜𝒜{\mathcal{A}}caligraphic\_A) and receives from the environment a series of observations (from the finite set 𝒪𝒪{\mathcal{O}}caligraphic\_O). A sequence of m𝑚mitalic\_m actions and observations forms a history of length m𝑚mitalic\_m: hm=a1o1a2o2…amomsubscriptℎ𝑚subscript𝑎1subscript𝑜1subscript𝑎2subscript𝑜2…subscript𝑎𝑚subscript𝑜𝑚h\_{m}=a\_{1}o\_{1}a\_{2}o\_{2}\ldots a\_{m}o\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT = italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT italic\_o start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT italic\_a start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT italic\_o start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT … italic\_a start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_o start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT. Let ℋmsubscriptℋ𝑚{\mathcal{H}}\_{m}caligraphic\_H start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT be the set of histories of length m𝑚mitalic\_m.
+
+
+
+
+We assume that all interactions with the environment are exactly n𝑛nitalic\_n actions and observations long. Let the set of all possible (partial) histories be denoted with ℋ=⋃i=0nℋiℋsuperscriptsubscript𝑖0𝑛subscriptℋ𝑖{\mathcal{H}}=\bigcup\_{i=0}^{n}{\mathcal{H}}\_{i}caligraphic\_H = ⋃ start\_POSTSUBSCRIPT italic\_i = 0 end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_n end\_POSTSUPERSCRIPT caligraphic\_H start\_POSTSUBSCRIPT italic\_i end\_POSTSUBSCRIPT. The histories of length n𝑛nitalic\_n (ℋnsubscriptℋ𝑛{\mathcal{H}}\_{n}caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT, in the notation above), are called the complete histories, and the history h0subscriptℎ0h\_{0}italic\_h start\_POSTSUBSCRIPT 0 end\_POSTSUBSCRIPT is the empty history.
+
+
+
+
+The agent chooses actions according to a policy π∈Π𝜋Π\pi\in\Piitalic\_π ∈ roman\_Π, the set of all policies.
+We write P(a∣hm,π)𝑃conditional𝑎subscriptℎ𝑚𝜋P(a\mid h\_{m},\pi)italic\_P ( italic\_a ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π ) for the probability of π𝜋\piitalic\_π choosing action a𝑎aitalic\_a given the history hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT.
+
+
+
+
+An environment μ𝜇\muitalic\_μ is a probability distribution over the next observation, given a history hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT and an action a𝑎aitalic\_a.
+Write P(o∣hma,μ)𝑃conditional𝑜subscriptℎ𝑚𝑎𝜇P(o\mid h\_{m}a,\mu)italic\_P ( italic\_o ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a , italic\_μ ) for the conditional probability of a given o∈𝒪𝑜𝒪o\in{\mathcal{O}}italic\_o ∈ caligraphic\_O.
+
+
+
+
+Let hmksuperscriptsubscriptℎ𝑚𝑘h\_{m}^{k}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_k end\_POSTSUPERSCRIPT be the initial k𝑘kitalic\_k actions and observations of hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT. We write hk⊑hmsquare-image-of-or-equalssubscriptℎ𝑘subscriptℎ𝑚h\_{k}\sqsubseteq h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_k end\_POSTSUBSCRIPT ⊑ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT if hk=hmksubscriptℎ𝑘superscriptsubscriptℎ𝑚𝑘h\_{k}=h\_{m}^{k}italic\_h start\_POSTSUBSCRIPT italic\_k end\_POSTSUBSCRIPT = italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_k end\_POSTSUPERSCRIPT.
+For a policy π𝜋\piitalic\_π and an environment μ𝜇\muitalic\_μ, we can define the probability of a history hm=a1o1a2o2…amomsubscriptℎ𝑚subscript𝑎1subscript𝑜1subscript𝑎2subscript𝑜2…subscript𝑎𝑚subscript𝑜𝑚h\_{m}=a\_{1}o\_{1}a\_{2}o\_{2}\ldots a\_{m}o\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT = italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT italic\_o start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT italic\_a start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT italic\_o start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT … italic\_a start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_o start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | P(hm∣π,μ)=𝑃conditionalsubscriptℎ𝑚𝜋𝜇absent\displaystyle P(h\_{m}\mid\pi,\mu)=italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_π , italic\_μ ) = | ∏i=1mP(ai∣hmi−1,π)P(oi∣hmi−1ai,μ).superscriptsubscriptproduct𝑖1𝑚𝑃conditionalsubscript𝑎𝑖superscriptsubscriptℎ𝑚𝑖1𝜋𝑃conditionalsubscript𝑜𝑖superscriptsubscriptℎ𝑚𝑖1subscript𝑎𝑖𝜇\displaystyle\prod\_{i=1}^{m}P(a\_{i}\mid h\_{m}^{i-1},\pi)P(o\_{i}\mid h\_{m}^{i-1}a\_{i},\mu).∏ start\_POSTSUBSCRIPT italic\_i = 1 end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_m end\_POSTSUPERSCRIPT italic\_P ( italic\_a start\_POSTSUBSCRIPT italic\_i end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_i - 1 end\_POSTSUPERSCRIPT , italic\_π ) italic\_P ( italic\_o start\_POSTSUBSCRIPT italic\_i end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_i - 1 end\_POSTSUPERSCRIPT italic\_a start\_POSTSUBSCRIPT italic\_i end\_POSTSUBSCRIPT , italic\_μ ) . |  |
+
+
+Finally, P(hm∣hk,π,μ)𝑃conditionalsubscriptℎ𝑚subscriptℎ𝑘𝜋𝜇P(h\_{m}\mid h\_{k},\pi,\mu)italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_k end\_POSTSUBSCRIPT , italic\_π , italic\_μ ) given hk⊑hmsquare-image-of-or-equalssubscriptℎ𝑘subscriptℎ𝑚h\_{k}\sqsubseteq h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_k end\_POSTSUBSCRIPT ⊑ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT is defined in the usual way.
+
+
+
+
+If hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT is a history, let a(hm)𝑎subscriptℎ𝑚a(h\_{m})italic\_a ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ) be the m𝑚mitalic\_m-tuple of actions of hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT.
+Note that a(hm)=a1…am𝑎subscriptℎ𝑚subscript𝑎1…subscript𝑎𝑚a(h\_{m})=a\_{1}\ldots a\_{m}italic\_a ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ) = italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT … italic\_a start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT can be seen as a very simple policy: take action aisubscript𝑎𝑖a\_{i}italic\_a start\_POSTSUBSCRIPT italic\_i end\_POSTSUBSCRIPT on turn i𝑖iitalic\_i.
+This allows us to define the probability of hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT given environment μ𝜇\muitalic\_μ and actions a(hm)𝑎subscriptℎ𝑚a(h\_{m})italic\_a ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ), written as P(hm∣μ)=P(hm∣a(hm),μ)𝑃conditionalsubscriptℎ𝑚𝜇𝑃conditionalsubscriptℎ𝑚𝑎subscriptℎ𝑚𝜇P(h\_{m}\mid\mu)=P(h\_{m}\mid a(h\_{m}),\mu)italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_μ ) = italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_a ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ) , italic\_μ ).
+Note that for any policy π𝜋\piitalic\_π,
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | P(hm∣π,μ)=P(hm∣μ)∏i=1mP(ai∣hmi−1,π).𝑃conditionalsubscriptℎ𝑚𝜋𝜇𝑃conditionalsubscriptℎ𝑚𝜇superscriptsubscriptproduct𝑖1𝑚𝑃conditionalsubscript𝑎𝑖superscriptsubscriptℎ𝑚𝑖1𝜋\displaystyle P(h\_{m}\mid\pi,\mu)=P(h\_{m}\mid\mu)\prod\_{i=1}^{m}P(a\_{i}\mid h\_{m}^{i-1},\pi).italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_π , italic\_μ ) = italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_μ ) ∏ start\_POSTSUBSCRIPT italic\_i = 1 end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_m end\_POSTSUPERSCRIPT italic\_P ( italic\_a start\_POSTSUBSCRIPT italic\_i end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT italic\_i - 1 end\_POSTSUPERSCRIPT , italic\_π ) . |  | (1) |
+
+
+
+
+If ℳℳ{\mathcal{M}}caligraphic\_M is a set of environments, then any prior ξ𝜉\xiitalic\_ξ in Δ(ℳ)Δℳ\Delta({\mathcal{M}})roman\_Δ ( caligraphic\_M ) also defines a probability for a history hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(hm∣ξ)=∑μ∈ℳP(μ∣ξ)P(hm∣μ).𝑃conditionalsubscriptℎ𝑚𝜉subscript𝜇ℳ𝑃conditional𝜇𝜉𝑃conditionalsubscriptℎ𝑚𝜇\displaystyle P(h\_{m}\mid\xi)=\sum\_{\mu\in{\mathcal{M}}}P(\mu\mid\xi)P(h\_{m}\mid\mu).italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_ξ ) = ∑ start\_POSTSUBSCRIPT italic\_μ ∈ caligraphic\_M end\_POSTSUBSCRIPT italic\_P ( italic\_μ ∣ italic\_ξ ) italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_μ ) . |  |
+
+
+By linearity, we get that [Equation 1](#S2.E1 "1 ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") also applies when conditioning hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT on π𝜋\piitalic\_π and ξ𝜉\xiitalic\_ξ instead of π𝜋\piitalic\_π and μ𝜇\muitalic\_μ.
+
+
+
+
+Let hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT be a history; then the conditional probability of an environment given prior and history666The hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT generates the policy a(hm)𝑎subscriptℎ𝑚a(h\_{m})italic\_a ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ), implicitly used here. is equal to:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(μ∣hm,ξ)=P(hm∣μ)P(μ∣ξ)P(hm∣ξ).𝑃conditional𝜇subscriptℎ𝑚𝜉𝑃conditionalsubscriptℎ𝑚𝜇𝑃conditional𝜇𝜉𝑃conditionalsubscriptℎ𝑚𝜉\displaystyle P(\mu\mid h\_{m},\xi)=\frac{P(h\_{m}\mid\mu)P(\mu\mid\xi)}{P(h\_{m}\mid\xi)}.italic\_P ( italic\_μ ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ξ ) = divide start\_ARG italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_μ ) italic\_P ( italic\_μ ∣ italic\_ξ ) end\_ARG start\_ARG italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∣ italic\_ξ ) end\_ARG . |  |
+
+
+Using this, ξ𝜉\xiitalic\_ξ itself defines an environment as a conditional distribution on the next observation o𝑜oitalic\_o (Hutter, [2004](#bib.bib15)):
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(o∣hmam+1,ξ)=∑μ∈ℳP(μ∣hm,ξ)P(o∣hmam+1,μ).𝑃conditional𝑜subscriptℎ𝑚subscript𝑎𝑚1𝜉subscript𝜇ℳ𝑃conditional𝜇subscriptℎ𝑚𝜉𝑃conditional𝑜subscriptℎ𝑚subscript𝑎𝑚1𝜇\displaystyle P(o\mid h\_{m}a\_{m+1},\xi)=\sum\_{\mu\in{\mathcal{M}}}P(\mu\mid h\_{m},\xi)P(o\mid h\_{m}a\_{m+1},\mu).italic\_P ( italic\_o ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a start\_POSTSUBSCRIPT italic\_m + 1 end\_POSTSUBSCRIPT , italic\_ξ ) = ∑ start\_POSTSUBSCRIPT italic\_μ ∈ caligraphic\_M end\_POSTSUBSCRIPT italic\_P ( italic\_μ ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ξ ) italic\_P ( italic\_o ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a start\_POSTSUBSCRIPT italic\_m + 1 end\_POSTSUBSCRIPT , italic\_μ ) . |  |
+
+
+
+
+### 
+2.1 Reward functions and learning processes
+
+
+
+###### 
+Definition 0 (Reward function).
+
+
+
+A *reward function* R𝑅Ritalic\_R is a map from complete histories to real numbers777
+These are sometimes called return functions, the discounted sum of rewards.
+The results of this paper apply to traditional reward functions – that take values on all histories, not just complete histories – but they are easier to see in terms of return function..
+Let ℛ={R:ℋn→ℝ}ℛconditional-set𝑅→subscriptℋ𝑛ℝ{\mathcal{R}}=\{R:{\mathcal{H}}\_{n}\to\mathbb{R}\}caligraphic\_R = { italic\_R : caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT → blackboard\_R } be the set of all reward functions.
+
+
+
+
+
+
+A reward-function learning process ρ𝜌{\rho}italic\_ρ can be described by a conditional probability distribution over reward functions, given complete histories.888Anything we would informally define as a ‘reward-function learning process’ has to at least be able to produce such conditional probabilities. If the learning process is *unriggable* (see [subsection 3.3](#S3.SS3 "3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")), then there is a natural way to extend it from complete histories to shorter histories, see [Section 3.3](#S3.SS3 "3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+Write this as:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(R∣hn,ρ).𝑃conditional𝑅subscriptℎ𝑛𝜌\displaystyle P(R\mid h\_{n},{\rho}).italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) . |  |
+
+
+This paper will use those probabilities as the definition of ρ𝜌{\rho}italic\_ρ.
+
+
+
+
+The environment, policy, histories, and learning process can be seen in terms of causal graphs (Pearl, [2009](#bib.bib23)) in [Figures 1](#S2.F1 "Figure 1 ‣ 2.1 Reward functions and learning processes ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") and [2](#S2.F2 "Figure 2 ‣ 2.1 Reward functions and learning processes ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+The agent is assumed to know the causal graph and the relevant probabilities; it selects the policy π𝜋\piitalic\_π.
+
+
+
+a1subscript𝑎1a\_{1}italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPTo1subscript𝑜1o\_{1}italic\_o start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPTa2subscript𝑎2a\_{2}italic\_a start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPTo2subscript𝑜2o\_{2}italic\_o start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPTh1subscriptℎ1h\_{1}italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPTh2subscriptℎ2h\_{2}italic\_h start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT…ansubscript𝑎𝑛a\_{n}italic\_a start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPTonsubscript𝑜𝑛o\_{n}italic\_o start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPThnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPTR𝑅Ritalic\_Rr𝑟ritalic\_rρ𝜌{\rho}italic\_ρμ𝜇\muitalic\_μπ𝜋\piitalic\_π
+Figure 1: Environment and reward-function learning process. The node μ𝜇\muitalic\_μ (with prior ξ𝜉\xiitalic\_ξ) connects to every observation; the node π𝜋\piitalic\_π (chosen by the agent) to every action. The transition probabilities are given by the complete preceding history and by μ𝜇\muitalic\_μ (for observations) or π𝜋\piitalic\_π (for actions). The ρ𝜌{\rho}italic\_ρ sets the probabilities on the reward function R𝑅Ritalic\_R, given hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT (a complete history). The final reward is r𝑟ritalic\_r.
+
+ajsubscript𝑎𝑗a\_{j}italic\_a start\_POSTSUBSCRIPT italic\_j end\_POSTSUBSCRIPTojsubscript𝑜𝑗o\_{j}italic\_o start\_POSTSUBSCRIPT italic\_j end\_POSTSUBSCRIPTπ𝜋\piitalic\_πμ𝜇\muitalic\_μhj−1subscriptℎ𝑗1h\_{j-1}italic\_h start\_POSTSUBSCRIPT italic\_j - 1 end\_POSTSUBSCRIPThjsubscriptℎ𝑗h\_{j}italic\_h start\_POSTSUBSCRIPT italic\_j end\_POSTSUBSCRIPTR𝑅Ritalic\_Rr𝑟ritalic\_rhnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPTρ𝜌{\rho}italic\_ρ𝐧𝐧\mathbf{n}bold\_n
+Figure 2: Plate notation (Buntine, [1994](#bib.bib7)) summary of [Figure 1](#S2.F1 "Figure 1 ‣ 2.1 Reward functions and learning processes ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."). The history h0subscriptℎ0h\_{0}italic\_h start\_POSTSUBSCRIPT 0 end\_POSTSUBSCRIPT is the empty history. The hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT appears twice, once on the left and once in the plate notation; thus R𝑅Ritalic\_R is a causal descendant of the policy π𝜋\piitalic\_π.
+
+
+
+### 
+2.2 Running example: parental career instruction
+
+
+
+Consider a child asking a parent for advice about the reward function for their future career.
+The child is hesitating between RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT, the reward function that rewards becoming a banker, and RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, the reward function that rewards becoming a doctor.
+Suppose for the sake of this example that becoming a banker provides rewards more easily than becoming a doctor does.
+
+
+
+
+The child learns their career reward function by asking a parent about it.
+We assume that the parents always give a definitive answer, and that this completely resolves the question for the child.
+That is, the reward-function learning process of the child is to fix a reward function once it gets an answer from either parent.
+
+
+
+
+We can formalize this as follows.
+Set episode length n=1𝑛1n=1italic\_n = 1 (we only focus on a single action of the agent), and 𝒜={M,F}𝒜𝑀𝐹{\mathcal{A}}=\{M,F\}caligraphic\_A = { italic\_M , italic\_F }, the actions of asking the mother and the father, respectively.
+The observations are the answers of the asked parent, 𝒪={B,D}𝒪𝐵𝐷{\mathcal{O}}=\{B,D\}caligraphic\_O = { italic\_B , italic\_D }, answering banker or doctor.
+There are thus 2×2=42242\times 2=42 × 2 = 4 histories.
+Since in this example the banker reward function RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT is assumed to be easier to maximise than the doctor one; we set RB(h1)=10subscript𝑅𝐵subscriptℎ110R\_{B}(h\_{1})=10italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT ) = 10 and RD(h1)=1subscript𝑅𝐷subscriptℎ11R\_{D}(h\_{1})=1italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT ) = 1 for all histories h1∈ℋ1subscriptℎ1subscriptℋ1h\_{1}\in{\mathcal{H}}\_{1}italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT.
+
+
+
+
+The set of possible environments is ℳ={μBB{\mathcal{M}}=\{\mu\_{BB}caligraphic\_M = { italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT, μBDsubscript𝜇𝐵𝐷\mu\_{BD}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT, μDBsubscript𝜇𝐷𝐵\mu\_{DB}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_B end\_POSTSUBSCRIPT, μDD}\mu\_{DD}\}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT }, with the first index denoting the mother’s answer and the second the father’s.
+The reward-function learning process ρ𝜌{\rho}italic\_ρ is:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | P(RB∣MB,ρ)=P(RB∣FB,ρ)=1,P(RD∣MB,ρ)=P(RD∣FB,ρ)=0,P(RB∣MD,ρ)=P(RB∣FD,ρ)=0,P(RD∣MD,ρ)=P(RD∣FD,ρ)=1.formulae-sequence𝑃conditionalsubscript𝑅𝐵𝑀𝐵𝜌𝑃conditionalsubscript𝑅𝐵𝐹𝐵𝜌1𝑃conditionalsubscript𝑅𝐷𝑀𝐵𝜌𝑃conditionalsubscript𝑅𝐷𝐹𝐵𝜌0𝑃conditionalsubscript𝑅𝐵𝑀𝐷𝜌𝑃conditionalsubscript𝑅𝐵𝐹𝐷𝜌0𝑃conditionalsubscript𝑅𝐷𝑀𝐷𝜌𝑃conditionalsubscript𝑅𝐷𝐹𝐷𝜌1\displaystyle\begin{split}P(R\_{B}\mid MB,{\rho})=P(R\_{B}\mid FB,{\rho})&=1,\\
+P(R\_{D}\mid MB,{\rho})=P(R\_{D}\mid FB,{\rho})&=0,\\
+P(R\_{B}\mid MD,{\rho})=P(R\_{B}\mid FD,{\rho})&=0,\\
+P(R\_{D}\mid MD,{\rho})=P(R\_{D}\mid FD,{\rho})&=1.\end{split}start\_ROW start\_CELL italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_M italic\_B , italic\_ρ ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_F italic\_B , italic\_ρ ) end\_CELL start\_CELL = 1 , end\_CELL end\_ROW start\_ROW start\_CELL italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_M italic\_B , italic\_ρ ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_F italic\_B , italic\_ρ ) end\_CELL start\_CELL = 0 , end\_CELL end\_ROW start\_ROW start\_CELL italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_M italic\_D , italic\_ρ ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_F italic\_D , italic\_ρ ) end\_CELL start\_CELL = 0 , end\_CELL end\_ROW start\_ROW start\_CELL italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_M italic\_D , italic\_ρ ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_F italic\_D , italic\_ρ ) end\_CELL start\_CELL = 1 . end\_CELL end\_ROW |  | (2) |
+
+
+
+
+See [Section 6](#S6 "6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")
+for some Q-learning experiments with a version of this learning process in a gridworld.
+
+3 Uninfluenceable and unriggable reward-function learning processes
+--------------------------------------------------------------------
+
+
+
+What would constitute a ‘good’ reward-function learning process?
+In [Figure 2](#S2.F2 "Figure 2 ‣ 2.1 Reward functions and learning processes ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), the reward function R𝑅Ritalic\_R is a causal descendant of hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT, which itself is a causal descendant of the agent’s policy π𝜋\piitalic\_π.
+
+
+
+
+Ideally, we do not want the reward function to be a causal descendant of the policy.
+Instead, we want it to be specified by the environment, as shown in the causal graph of [Figure 3](#S3.F3 "Figure 3 ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") (similar to the graphs in Everitt and Hutter ([2019](#bib.bib11))).
+There, the reward function R𝑅Ritalic\_R is no longer a causal descendant of hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT, and thus not of π𝜋\piitalic\_π.
+
+
+
+
+Instead, it is a function of μ𝜇\muitalic\_μ, and of the node η𝜂\etaitalic\_η, which gives a probability distribution over reward functions, conditional on environments.
+This is written as P(R∣η,μ)𝑃conditional𝑅𝜂𝜇P(R\mid\eta,\mu)italic\_P ( italic\_R ∣ italic\_η , italic\_μ ).
+
+
+
+ajsubscript𝑎𝑗a\_{j}italic\_a start\_POSTSUBSCRIPT italic\_j end\_POSTSUBSCRIPTojsubscript𝑜𝑗o\_{j}italic\_o start\_POSTSUBSCRIPT italic\_j end\_POSTSUBSCRIPTπ𝜋\piitalic\_πμ𝜇\muitalic\_μhj−1subscriptℎ𝑗1h\_{j-1}italic\_h start\_POSTSUBSCRIPT italic\_j - 1 end\_POSTSUBSCRIPThjsubscriptℎ𝑗h\_{j}italic\_h start\_POSTSUBSCRIPT italic\_j end\_POSTSUBSCRIPTR𝑅Ritalic\_Rr𝑟ritalic\_rhnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPTη𝜂\etaitalic\_η𝐧𝐧\mathbf{n}bold\_n
+Figure 3: Environment and reward-function learning process. Though hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT appears twice, once on the left and once in the plate notation, R𝑅Ritalic\_R is not a causal descendant of π𝜋\piitalic\_π, the policy. The node μ𝜇\muitalic\_μ (with prior ξ𝜉\xiitalic\_ξ) connects to every observation; the node π𝜋\piitalic\_π (chosen by the agent) to every action. The transition probabilities are given by the complete preceding history and by μ𝜇\muitalic\_μ (for observations) or π𝜋\piitalic\_π (for actions). The node η𝜂\etaitalic\_η sets the (posterior) probability of the reward function R𝑅Ritalic\_R, given μ𝜇\muitalic\_μ. The final reward is r𝑟ritalic\_r.
+Note that the full history hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT has no directed path to R𝑅Ritalic\_R, unlike in [Figure 2](#S2.F2 "Figure 2 ‣ 2.1 Reward functions and learning processes ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+### 
+3.1 Uninfluenceable: Definition
+
+
+
+The conditional distribution based on η𝜂\etaitalic\_η is ideal for proper learning, but it has a different type than ρ𝜌{\rho}italic\_ρ, conditioning on environments instead of histories.
+Moreover, the agent has access to histories, but not directly to the environment.
+The prior ξ𝜉\xiitalic\_ξ bridges this gap; given hn∈ℋnsubscriptℎ𝑛subscriptℋ𝑛h\_{n}\in{\mathcal{H}}\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT, the conditional probabilities of R∈ℛ𝑅ℛR\in{\mathcal{R}}italic\_R ∈ caligraphic\_R can be inferred:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | P(R∣hn,η,ξ)=∑μ∈ℳP(R∣η,μ)P(μ∣hn,ξ).𝑃conditional𝑅subscriptℎ𝑛𝜂𝜉subscript𝜇ℳ𝑃conditional𝑅𝜂𝜇𝑃conditional𝜇subscriptℎ𝑛𝜉\displaystyle P(R\mid h\_{n},\eta,\xi)=\sum\_{\mu\in{\mathcal{M}}}P(R\mid\eta,\mu)P(\mu\mid h\_{n},\xi).italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_η , italic\_ξ ) = ∑ start\_POSTSUBSCRIPT italic\_μ ∈ caligraphic\_M end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_η , italic\_μ ) italic\_P ( italic\_μ ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ξ ) . |  | (3) |
+
+
+
+
+Via this equation, we’ve defined probabilities of reward functions conditional on histories; i.e. we’ve defined a reward-function learning process.
+An uninfluenceable ρ𝜌{\rho}italic\_ρ is one that comes from such an η𝜂\etaitalic\_η in this way:
+
+
+
+
+###### 
+Definition 0 (Uninfluenceable).
+
+
+
+The reward-function learning process ρ𝜌{\rho}italic\_ρ is *uninfluenceable* given the prior ξ𝜉\xiitalic\_ξ on ℳℳ{\mathcal{M}}caligraphic\_M if there exists η𝜂\etaitalic\_η, a probability distribution on ℛℛ{\mathcal{R}}caligraphic\_R conditional on environments, such that for all R∈ℛ𝑅ℛR\in{\mathcal{R}}italic\_R ∈ caligraphic\_R and hn∈ℋnsubscriptℎ𝑛subscriptℋ𝑛h\_{n}\in{\mathcal{H}}\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(R∣hn,η,ξ)=P(R∣hn,ρ).𝑃conditional𝑅subscriptℎ𝑛𝜂𝜉𝑃conditional𝑅subscriptℎ𝑛𝜌\displaystyle P(R\mid h\_{n},\eta,\xi)=P(R\mid h\_{n},{\rho}).italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_η , italic\_ξ ) = italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) . |  |
+
+
+
+
+
+So an uninfluenceable ρ𝜌{\rho}italic\_ρ is one that comes from an η𝜂\etaitalic\_η; uninfluenceable and counterfactual reward modeling, as defined by Everitt and Hutter ([2019](#bib.bib11)), are both uninfluenceable in our sense
+
+
+
+
+
+### 
+3.2 Uninfluenceable: Example
+
+
+
+Use the ρ𝜌{\rho}italic\_ρ of [Section 2.2](#S2.SS2 "2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), and define the prior ξ1subscript𝜉1\xi\_{1}italic\_ξ start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT as putting 1/2121/21 / 2 probability on both μBBsubscript𝜇𝐵𝐵\mu\_{BB}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT and μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT (so both parents agree).
+
+
+
+
+Then ρ𝜌{\rho}italic\_ρ is uninfluenceable.
+The η𝜂\etaitalic\_η is:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | P(RB∣η,μBB)=P(RD∣η,μDD)=𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐵𝐵𝑃conditionalsubscript𝑅𝐷𝜂subscript𝜇𝐷𝐷absent\displaystyle P(R\_{B}\mid\eta,\mu\_{BB})=P(R\_{D}\mid\eta,\mu\_{DD})=italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT ) = | 1,1\displaystyle 1,1 , |  |
+|  | P(RD∣η,μBB)=P(RB∣η,μDD)=𝑃conditionalsubscript𝑅𝐷𝜂subscript𝜇𝐵𝐵𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐷𝐷absent\displaystyle P(R\_{D}\mid\eta,\mu\_{BB})=P(R\_{B}\mid\eta,\mu\_{DD})=italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT ) = | 0.0\displaystyle 0.0 . |  |
+
+
+Then since o1subscript𝑜1o\_{1}italic\_o start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT is determined by μBBsubscript𝜇𝐵𝐵\mu\_{BB}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT versus μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT, the [Equation 2](#S2.E2 "2 ‣ 2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") for ρ𝜌{\rho}italic\_ρ on histories can be read off via [Equation 3](#S3.E3 "3 ‣ 3.1 Uninfluenceable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+
+Put more colloquially, the universe has determined that the mother and father agree on RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT or RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT being the proper reward function.
+Then asking either simply allows the agent to figure out which of the world they are in.
+
+
+
+
+
+### 
+3.3 Unriggable: Definition
+
+
+
+Note that, if ρ𝜌{\rho}italic\_ρ is an uninfluenceable reward-function learning process for ξ𝜉\xiitalic\_ξ, the it has the following algebraic property: for any hm∈ℋmsubscriptℎ𝑚subscriptℋ𝑚h\_{m}\in{\mathcal{H}}\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT, R∈ℛ𝑅ℛR\in{\mathcal{R}}italic\_R ∈ caligraphic\_R, and π∈Π𝜋Π\pi\in\Piitalic\_π ∈ roman\_Π,
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | ∑hn∈ℋnP(hn∣hm,π,ξ)P(R∣hn,ρ)subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉𝑃conditional𝑅subscriptℎ𝑛𝜌\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid h\_{m},\pi,\xi)P(R\mid h\_{n},{\rho})∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) |  |
+|  | =∑hn∈ℋnP(hn∣hm,π,ξ)∑μ∈ℳP(R∣η,μ)P(μ∣hn,ξ)absentsubscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉subscript𝜇ℳ𝑃conditional𝑅𝜂𝜇𝑃conditional𝜇subscriptℎ𝑛𝜉\displaystyle=\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid h\_{m},\pi,\xi)\sum\_{\mu\in{\mathcal{M}}}P(R\mid\eta,\mu)P(\mu\mid h\_{n},\xi)= ∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) ∑ start\_POSTSUBSCRIPT italic\_μ ∈ caligraphic\_M end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_η , italic\_μ ) italic\_P ( italic\_μ ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ξ ) |  |
+|  | =∑μ∈ℳP(μ∣hm,ξ)P(R∣η,μ).absentsubscript𝜇ℳ𝑃conditional𝜇subscriptℎ𝑚𝜉𝑃conditional𝑅𝜂𝜇\displaystyle=\sum\_{\mu\in{\mathcal{M}}}P(\mu\mid h\_{m},\xi)P(R\mid\eta,\mu).= ∑ start\_POSTSUBSCRIPT italic\_μ ∈ caligraphic\_M end\_POSTSUBSCRIPT italic\_P ( italic\_μ ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ξ ) italic\_P ( italic\_R ∣ italic\_η , italic\_μ ) . |  |
+
+
+And that expression is independent of π𝜋\piitalic\_π.
+Define the expectation999Finite probability distributions with values in an affine space always have an expectation, which is an element of that space.
+Here were are using the fact that ℛℛ{\mathcal{R}}caligraphic\_R is a vector space (hence an affine space), with scaling and adding working as:
+
+
+
+
+(αR+βR′)(hn)=αR(hn)+βR′(hn).𝛼𝑅𝛽superscript𝑅′subscriptℎ𝑛𝛼𝑅subscriptℎ𝑛𝛽superscript𝑅′subscriptℎ𝑛\displaystyle(\alpha R+\beta R^{\prime})(h\_{n})=\alpha R(h\_{n})+\beta R^{\prime}(h\_{n}).( italic\_α italic\_R + italic\_β italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) = italic\_α italic\_R ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) + italic\_β italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) .
+
+(4)
+ of ρ𝜌{\rho}italic\_ρ to be the map eρ:ℋn→ℛ:subscript𝑒𝜌→subscriptℋ𝑛ℛe\_{\rho}:{\mathcal{H}}\_{n}\to{\mathcal{R}}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT : caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT → caligraphic\_R given by
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | eρ(hn)=∑R∈ℛP(R∣hn,ρ)R.subscript𝑒𝜌subscriptℎ𝑛subscript𝑅ℛ𝑃conditional𝑅subscriptℎ𝑛𝜌𝑅\displaystyle e\_{\rho}(h\_{n})=\sum\_{R\in{\mathcal{R}}}P(R\mid h\_{n},{\rho})R.italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) = ∑ start\_POSTSUBSCRIPT italic\_R ∈ caligraphic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) italic\_R . |  | (5) |
+
+
+*A fortiori*, the expectation of eρ(hn)subscript𝑒𝜌subscriptℎ𝑛e\_{\rho}(h\_{n})italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) is independent of π𝜋\piitalic\_π:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | ∑hn∈ℋnP(hn∣hm,π,ξ)eρ(hn)=∑μ∈ℳP(μ∣hm,ξ)eη(μ),subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉subscript𝑒𝜌subscriptℎ𝑛subscript𝜇ℳ𝑃conditional𝜇subscriptℎ𝑚𝜉subscript𝑒𝜂𝜇\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid h\_{m},\pi,\xi)e\_{\rho}(h\_{n})=\sum\_{\mu\in{\mathcal{M}}}P(\mu\mid h\_{m},\xi)e\_{\eta}(\mu),∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) = ∑ start\_POSTSUBSCRIPT italic\_μ ∈ caligraphic\_M end\_POSTSUBSCRIPT italic\_P ( italic\_μ ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ξ ) italic\_e start\_POSTSUBSCRIPT italic\_η end\_POSTSUBSCRIPT ( italic\_μ ) , |  |
+
+
+with eη(μ)=∑R∈ℛP(R∣μ,η)Rsubscript𝑒𝜂𝜇subscript𝑅ℛ𝑃conditional𝑅𝜇𝜂𝑅e\_{\eta}(\mu)=\sum\_{R\in{\mathcal{R}}}P(R\mid\mu,\eta)Ritalic\_e start\_POSTSUBSCRIPT italic\_η end\_POSTSUBSCRIPT ( italic\_μ ) = ∑ start\_POSTSUBSCRIPT italic\_R ∈ caligraphic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_μ , italic\_η ) italic\_R, the expectation of η𝜂\etaitalic\_η.
+
+
+
+
+So, the expectation of eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT is independent of the policy if ρ𝜌{\rho}italic\_ρ is uninfluenceable. That independence seems a desirable property; let’s call it unriggable:
+
+
+
+
+###### 
+Definition 0 (Unriggable).
+
+
+
+The reward-function learning process ρ𝜌{\rho}italic\_ρ is *unriggable* for ξ𝜉\xiitalic\_ξ if, for all hm∈ℋmsubscriptℎ𝑚subscriptℋ𝑚h\_{m}\in{\mathcal{H}}\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT and all R∈ℛ𝑅ℛR\in{\mathcal{R}}italic\_R ∈ caligraphic\_R, the following expression is independent of π∈Π𝜋Π\pi\in\Piitalic\_π ∈ roman\_Π:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | ∑hn∈ℋnP(hn∣hm,π,ξ)eρ(hn).subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉subscript𝑒𝜌subscriptℎ𝑛\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid h\_{m},\pi,\xi)e\_{\rho}(h\_{n}).∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) . |  | (6) |
+
+
+Otherwise, ρ𝜌{\rho}italic\_ρ is said to be riggable (for ξ𝜉\xiitalic\_ξ). Riggable is akin to having a ‘feedback tampering incentive’ of Everitt and Hutter ([2019](#bib.bib11)).
+
+
+
+
+
+If ρ𝜌{\rho}italic\_ρ is unriggable, then since [Equation 6](#S3.E6 "6 ‣ Definition 0 (Unriggable). ‣ 3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") is independent of π𝜋\piitalic\_π, we can now construct eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT on all histories hm∈ℋmsubscriptℎ𝑚subscriptℋ𝑚h\_{m}\in{\mathcal{H}}\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT, m≤n𝑚𝑛m\leq nitalic\_m ≤ italic\_n, not just on complete histories hn∈ℋnsubscriptℎ𝑛subscriptℋ𝑛h\_{n}\in{\mathcal{H}}\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT.
+We do this by writing, for any π𝜋\piitalic\_π:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | eρ(hm,ξ)=∑hn∈ℋnP(hn∣hm,π,ξ)eρ(hn).subscript𝑒𝜌subscriptℎ𝑚𝜉subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉subscript𝑒𝜌subscriptℎ𝑛\displaystyle e\_{\rho}(h\_{m},\xi)=\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid h\_{m},\pi,\xi)e\_{\rho}(h\_{n}).italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ξ ) = ∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) . |  | (7) |
+
+
+Independence of policy means that, for any action am+1subscript𝑎𝑚1a\_{m+1}italic\_a start\_POSTSUBSCRIPT italic\_m + 1 end\_POSTSUBSCRIPT, the expectation ∑oeρ(hmam+1o,ξ)P(o∣hmam+1,ξ)subscript𝑜subscript𝑒𝜌subscriptℎ𝑚subscript𝑎𝑚1𝑜𝜉𝑃conditional𝑜subscriptℎ𝑚subscript𝑎𝑚1𝜉\sum\_{o}e\_{\rho}(h\_{m}a\_{m+1}o,\xi)P(o\mid h\_{m}a\_{m+1},\xi)∑ start\_POSTSUBSCRIPT italic\_o end\_POSTSUBSCRIPT italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a start\_POSTSUBSCRIPT italic\_m + 1 end\_POSTSUBSCRIPT italic\_o , italic\_ξ ) italic\_P ( italic\_o ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a start\_POSTSUBSCRIPT italic\_m + 1 end\_POSTSUBSCRIPT , italic\_ξ ) is also eρ(hm,ξ)subscript𝑒𝜌subscriptℎ𝑚𝜉e\_{\rho}(h\_{m},\xi)italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ξ ); thus eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT form a martingale.
+
+
+
+
+
+### 
+3.4 Unriggable: Example
+
+
+
+Use the ρ𝜌{\rho}italic\_ρ of [Section 2.2](#S2.SS2 "2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), and define the prior ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT as putting equal probability 1/4141/41 / 4 on all four environments μBBsubscript𝜇𝐵𝐵\mu\_{BB}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT, μBDsubscript𝜇𝐵𝐷\mu\_{BD}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT, μDBsubscript𝜇𝐷𝐵\mu\_{DB}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_B end\_POSTSUBSCRIPT, and μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT.
+We want to show this makes ρ𝜌{\rho}italic\_ρ unriggable but influenceable; why this might be a potential problem is explored in [Section 4.1](#S4.SS1 "4.1 Problems with unriggable learning processes ‣ 4 Properties of unriggable and riggable learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+
+#### 
+3.4.1 Unriggable
+
+
+
+The only non-trivial hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT to test [Equation 6](#S3.E6 "6 ‣ Definition 0 (Unriggable). ‣ 3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") on is the empty history h0subscriptℎ0h\_{0}italic\_h start\_POSTSUBSCRIPT 0 end\_POSTSUBSCRIPT.
+Let πMsubscript𝜋𝑀\pi\_{M}italic\_π start\_POSTSUBSCRIPT italic\_M end\_POSTSUBSCRIPT be the policy of asking the mother; then
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | ∑h1∈ℋ1R∈ℛP(h1∣h0,πM,ξ2)P(R∣h1,ρ)R=(RB+RD)2subscriptsubscriptℎ1subscriptℋ1𝑅ℛ𝑃conditionalsubscriptℎ1subscriptℎ0subscript𝜋𝑀subscript𝜉2𝑃conditional𝑅subscriptℎ1𝜌𝑅subscript𝑅𝐵subscript𝑅𝐷2\displaystyle\sum\_{\begin{subarray}{c}h\_{1}\in{\mathcal{H}}\_{1}\\
+R\in{\mathcal{R}}\end{subarray}}P(h\_{1}\mid h\_{0},\pi\_{M},\xi\_{2})P(R\mid h\_{1},{\rho})R=\frac{\left(R\_{B}+R\_{D}\right)}{2}∑ start\_POSTSUBSCRIPT start\_ARG start\_ROW start\_CELL italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT end\_CELL end\_ROW start\_ROW start\_CELL italic\_R ∈ caligraphic\_R end\_CELL end\_ROW end\_ARG end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT 0 end\_POSTSUBSCRIPT , italic\_π start\_POSTSUBSCRIPT italic\_M end\_POSTSUBSCRIPT , italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT ) italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT , italic\_ρ ) italic\_R = divide start\_ARG ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT + italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ) end\_ARG start\_ARG 2 end\_ARG |  |
+
+
+The same result holds for πFsubscript𝜋𝐹\pi\_{F}italic\_π start\_POSTSUBSCRIPT italic\_F end\_POSTSUBSCRIPT, the policy of asking the father.
+Hence the same result holds on any stochastic policy as well, and ρ𝜌{\rho}italic\_ρ is unriggable for ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT.
+
+
+
+
+
+#### 
+3.4.2 Influenceable
+
+
+
+To show that ρ𝜌{\rho}italic\_ρ is influenceable, assume, by contradiction, that it is uninfluenceable, and hence that there exists a a causal structure of [Figure 3](#S3.F3 "Figure 3 ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") with a given η𝜂\etaitalic\_η that generates ρ𝜌{\rho}italic\_ρ via ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT, as in [Equation 3](#S3.E3 "3 ‣ 3.1 Uninfluenceable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+
+Given history MB𝑀𝐵MBitalic\_M italic\_B, μBBsubscript𝜇𝐵𝐵\mu\_{BB}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT and μBDsubscript𝜇𝐵𝐷\mu\_{BD}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT become equally likely, and RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT becomes a certainty.
+So 12(P(RB∣η,μBB)+P(RB∣η,μBD))=112𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐵𝐵𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐵𝐷1\frac{1}{2}\left(P(R\_{B}\mid\eta,\mu\_{BB})+P(R\_{B}\mid\eta,\mu\_{BD})\right)=1divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG ( italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT ) + italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ) ) = 1.
+Because probabilities cannot be higher than 1111, this implies that P(RB∣η,μBD)=1𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐵𝐷1P(R\_{B}\mid\eta,\mu\_{BD})=1italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ) = 1.
+
+
+
+
+Conversely, given history FD𝐹𝐷FDitalic\_F italic\_D, μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT and μBDsubscript𝜇𝐵𝐷\mu\_{BD}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT become equally likely, and RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT becomes a certainty.
+So, by the same reasoning, P(RD∣η,μBD)=1𝑃conditionalsubscript𝑅𝐷𝜂subscript𝜇𝐵𝐷1P(R\_{D}\mid\eta,\mu\_{BD})=1italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ) = 1 and hence P(RB∣η,μBD)=0𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐵𝐷0P(R\_{B}\mid\eta,\mu\_{BD})=0italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ) = 0.
+This is a contradiction in the definition of P(RB∣η,μBD)𝑃conditionalsubscript𝑅𝐵𝜂subscript𝜇𝐵𝐷P(R\_{B}\mid\eta,\mu\_{BD})italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ), so the assumption that ρ𝜌{\rho}italic\_ρ is uninfluenceable for ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT must be wrong.
+
+
+
+
+
+
+### 
+3.5 Riggable example
+
+
+
+We’ll finish off by showing how the ρ𝜌{\rho}italic\_ρ of [Section 2.2](#S2.SS2 "2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") can be riggable for another prior ξ3subscript𝜉3\xi\_{3}italic\_ξ start\_POSTSUBSCRIPT 3 end\_POSTSUBSCRIPT.
+This has P(μBD∣ξ3)=1𝑃conditionalsubscript𝜇𝐵𝐷subscript𝜉31P(\mu\_{BD}\mid\xi\_{3})=1italic\_P ( italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ∣ italic\_ξ start\_POSTSUBSCRIPT 3 end\_POSTSUBSCRIPT ) = 1: the mother will answer banker, the father will answer doctor.
+
+
+
+
+It’s riggable, since the only possible histories are MB𝑀𝐵MBitalic\_M italic\_B and FD𝐹𝐷FDitalic\_F italic\_D, with
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | ∑hn∈ℋnP(hn∣a1=M,ξ3)eρ(hn)subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscript𝑎1𝑀subscript𝜉3subscript𝑒𝜌subscriptℎ𝑛\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid a\_{1}=M,\xi\_{3})e\_{\rho}(h\_{n})∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = italic\_M , italic\_ξ start\_POSTSUBSCRIPT 3 end\_POSTSUBSCRIPT ) italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) | =eρ(MB)=RBabsentsubscript𝑒𝜌𝑀𝐵subscript𝑅𝐵\displaystyle=e\_{\rho}(MB)=R\_{B}= italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_M italic\_B ) = italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT |  |
+|  | ∑hn∈ℋnP(hn∣a1=F,ξ3)eρ(hn)subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscript𝑎1𝐹subscript𝜉3subscript𝑒𝜌subscriptℎ𝑛\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid a\_{1}=F,\xi\_{3})e\_{\rho}(h\_{n})∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = italic\_F , italic\_ξ start\_POSTSUBSCRIPT 3 end\_POSTSUBSCRIPT ) italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) | =eρ(FD)=RD,absentsubscript𝑒𝜌𝐹𝐷subscript𝑅𝐷\displaystyle=e\_{\rho}(FD)=R\_{D},= italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_F italic\_D ) = italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT , |  |
+
+
+clearly not independent of a1subscript𝑎1a\_{1}italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT.
+
+
+
+
+
+Thus ρ𝜌{\rho}italic\_ρ is not really a ‘learning’ process at all, for ξ3subscript𝜉3\xi\_{3}italic\_ξ start\_POSTSUBSCRIPT 3 end\_POSTSUBSCRIPT: the child gets to choose its career/reward function by choosing which parent to ask.
+
+4 Properties of unriggable and riggable learning processes
+-----------------------------------------------------------
+
+
+
+If the learning process is influenceable, problems can emerge as this section will show.
+Unriggable-but-influenceable processes allow the agent to choose “spurious” learning paths, even reversing standard learning, while a riggable learning process means the agent is willing to sacrifice value for all possible reward functions, with certainty, in order to push the ‘learnt’ outcome101010
+Since the agent’s actions push the expected learning in one direction, this is not ‘learning’ in the commonly understood sense.
+ in one direction or another.
+
+
+
+
+### 
+4.1 Problems with unriggable learning processes
+
+
+
+Consider the following learning process: an agent is to play chess.
+A coin is flipped; if it comes up heads (o1=Hsubscript𝑜1𝐻o\_{1}=Hitalic\_o start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = italic\_H), the agent will play white, and its reward function is RWsubscript𝑅𝑊R\_{W}italic\_R start\_POSTSUBSCRIPT italic\_W end\_POSTSUBSCRIPT, the reward function that gives 1111 iff white wins the match.
+If it comes up tails (o1=Tsubscript𝑜1𝑇o\_{1}=Titalic\_o start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = italic\_T), the agent plays black, and has reward function RB=1−RWsubscript𝑅𝐵1subscript𝑅𝑊R\_{B}=1-R\_{W}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT = 1 - italic\_R start\_POSTSUBSCRIPT italic\_W end\_POSTSUBSCRIPT.
+
+
+
+
+Before the coin flip, the agent may take the action a1=invsubscript𝑎1inva\_{1}=\textrm{inv}italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = inv which inverses which of RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT and RWsubscript𝑅𝑊R\_{W}italic\_R start\_POSTSUBSCRIPT italic\_W end\_POSTSUBSCRIPT the agent will get (but not which side it plays), or it can take the null action a1=0subscript𝑎10a\_{1}=0italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = 0, which does nothing.
+Define ρ𝜌{\rho}italic\_ρ as the learning process which determines the agent’s reward function.
+This is unriggable:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | ∑hn∈ℋnP(RW∣hn,ρ)P(hn∣a1=0,ξ)=P(H)=1/2subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscript𝑅𝑊subscriptℎ𝑛𝜌𝑃conditionalsubscriptℎ𝑛subscript𝑎10𝜉𝑃𝐻12\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(R\_{W}\mid h\_{n},{\rho})P(h\_{n}\mid a\_{1}=0,\xi)=P(H)=1/2∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_W end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = 0 , italic\_ξ ) = italic\_P ( italic\_H ) = 1 / 2 |  |
+|  | ∑hn∈ℋnP(RW∣hn,ρ)P(hn∣a1=inv,ξ)=P(T)=1/2.subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscript𝑅𝑊subscriptℎ𝑛𝜌𝑃conditionalsubscriptℎ𝑛subscript𝑎1inv𝜉𝑃𝑇12\displaystyle\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(R\_{W}\mid h\_{n},{\rho})P(h\_{n}\mid a\_{1}=\textrm{inv},\xi)=P(T)=1/2.∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_W end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = inv , italic\_ξ ) = italic\_P ( italic\_T ) = 1 / 2 . |  |
+
+
+And the expressions with RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT give the same 1/2121/21 / 2 probabilities.
+
+
+
+
+Thus, it is in the agent’s interest to inverse its reward by choosing a1=invsubscript𝑎1inva\_{1}=\textrm{inv}italic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = inv because it is a lot easier to deliberately lose a competitive game than to win it.
+So though ρ𝜌{\rho}italic\_ρ is unriggable, it can be manipulated, with the outcome completely reversed.
+
+
+
+
+
+### 
+4.2 Unriggable to uninfluenceable
+
+
+
+Since unriggable was defined by one property of uninfluenceable learning systems (see [subsection 3.3](#S3.SS3 "3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")), uninfluenceable implies unriggable. And there is a partial converse:
+
+
+
+
+###### 
+Theorem 0 (Unriggable ↝↝\rightsquigarrow↝ Uninfluencable).
+
+
+
+Let ρ𝜌{\rho}italic\_ρ be an unriggable learning process for ξ𝜉\xiitalic\_ξ on ℳℳ{\mathcal{M}}caligraphic\_M.
+Then there exists a (non-unique) ρ′superscript𝜌normal-′{\rho}^{\prime}italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT, and an ℳ′superscriptℳnormal-′{\mathcal{M}}^{\prime}caligraphic\_M start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT with a prior ξ′superscript𝜉normal-′\xi^{\prime}italic\_ξ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT such that:
+
+
+* •
+
+ξ′superscript𝜉′\xi^{\prime}italic\_ξ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT generates the same environment transition probabilities as ξ𝜉\xiitalic\_ξ: for all hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT, a𝑎aitalic\_a, and o𝑜oitalic\_o,
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(o∣hma,ξ)=P(o∣hma,ξ′),𝑃conditional𝑜
+	subscriptℎ𝑚𝑎𝜉𝑃conditional𝑜
+	subscriptℎ𝑚𝑎superscript𝜉′\displaystyle P(o\mid h\_{m}a,\xi)=P(o\mid h\_{m}a,\xi^{\prime}),italic\_P ( italic\_o ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a , italic\_ξ ) = italic\_P ( italic\_o ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT italic\_a , italic\_ξ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) , |  |
+* •
+
+The expectations eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT and eρ′subscript𝑒superscript𝜌′e\_{{\rho}^{\prime}}italic\_e start\_POSTSUBSCRIPT italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT end\_POSTSUBSCRIPT are equal: for all hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT,
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | ∑R∈ℛP(R∣hn,ρ)R=∑R∈ℛP(R∣hn,ρ′)R.subscript𝑅ℛ𝑃conditional𝑅
+	subscriptℎ𝑛𝜌𝑅subscript𝑅ℛ𝑃conditional𝑅
+	subscriptℎ𝑛superscript𝜌′𝑅\displaystyle\sum\_{R\in{\mathcal{R}}}P(R\mid h\_{n},{\rho})R=\sum\_{R\in{\mathcal{R}}}P(R\mid h\_{n},{\rho}^{\prime})R.∑ start\_POSTSUBSCRIPT italic\_R ∈ caligraphic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) italic\_R = ∑ start\_POSTSUBSCRIPT italic\_R ∈ caligraphic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) italic\_R . |  |
+* •
+
+ρ′superscript𝜌′{\rho}^{\prime}italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT is uninfluenceable for ξ′superscript𝜉′\xi^{\prime}italic\_ξ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT on ℳ′superscriptℳ′{\mathcal{M}}^{\prime}caligraphic\_M start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT.
+
+
+Moreover, ℳ′superscriptℳnormal-′{\mathcal{M}}^{\prime}caligraphic\_M start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT can always be taken to be the full set of possible deterministic environments.
+
+
+
+
+
+Since ρ𝜌{\rho}italic\_ρ and ρ′superscript𝜌′{\rho}^{\prime}italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT have same expectation, they have the same value function, so have the same optimal behaviour (see [Equation 10](#S4.E10 "10 ‣ 4.3.1 Value of a learning process ‣ 4.3 Problems with riggable learning processes: sacrificing reward with certainty ‣ 4 Properties of unriggable and riggable learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")).
+For proof see [Appendix C](#A3 "Appendix C Unriggable to uninfluenceable ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+But why would this theorem be true?
+If we take D(π,π′)=∑hneρ(hn)P(hn∣π,ξ)−∑hneρ(hn)P(hn∣π′,ξ)𝐷𝜋superscript𝜋′subscriptsubscriptℎ𝑛subscript𝑒𝜌subscriptℎ𝑛𝑃conditionalsubscriptℎ𝑛𝜋𝜉subscriptsubscriptℎ𝑛subscript𝑒𝜌subscriptℎ𝑛𝑃conditionalsubscriptℎ𝑛superscript𝜋′𝜉D(\pi,\pi^{\prime})=\sum\_{h\_{n}}e\_{\rho}(h\_{n})P(h\_{n}\mid\pi,\xi)-\sum\_{h\_{n}}e\_{\rho}(h\_{n})P(h\_{n}\mid\pi^{\prime},\xi)italic\_D ( italic\_π , italic\_π start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) = ∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_π , italic\_ξ ) - ∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_π start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_ξ ), the difference between two expectations given two policies, then D𝐷Ditalic\_D defines an algebraic obstruction to unriggability: as long as D≠0𝐷0D\neq 0italic\_D ≠ 0, ρ𝜌{\rho}italic\_ρ cannot be unriggable or uninfluenceable.
+
+
+
+
+So the theorem says that if the obstruction D𝐷Ditalic\_D vanishes, we can find a large enough ℳ′superscriptℳ′{\mathcal{M}}^{\prime}caligraphic\_M start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT and an η𝜂\etaitalic\_η making eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT uninfluenceable.
+This is not surprising as eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT is a map from ℋnsubscriptℋ𝑛{\mathcal{H}}\_{n}caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT to ℛℛ{\mathcal{R}}caligraphic\_R, while eηsubscript𝑒𝜂e\_{\eta}italic\_e start\_POSTSUBSCRIPT italic\_η end\_POSTSUBSCRIPT is a map from ℳ′superscriptℳ′{\mathcal{M}}^{\prime}caligraphic\_M start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT to ℛℛ{\mathcal{R}}caligraphic\_R.
+In most situations the full set of deterministic environments is larger than ℋnsubscriptℋ𝑛{\mathcal{H}}\_{n}caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT, so we have great degrees of freedom to choose eηsubscript𝑒𝜂e\_{\eta}italic\_e start\_POSTSUBSCRIPT italic\_η end\_POSTSUBSCRIPT to fit eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT.
+
+
+
+
+To illustrate, if we have the unriggable ρ𝜌{\rho}italic\_ρ on ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT as in [Section 3.4](#S3.SS4 "3.4 Unriggable: Example ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), then we can build η′superscript𝜂′\eta^{\prime}italic\_η start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT with ℳ=ℳ′ℳsuperscriptℳ′{\mathcal{M}}={\mathcal{M}}^{\prime}caligraphic\_M = caligraphic\_M start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT and the following probabilities are all 1111:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(32RB−12RD∣η′,μBB),P(32RD−12RB∣η′,μDD),P(12RB+12RD∣η′,μBD),P(12RD+12RB∣η′,μDB).𝑃32subscript𝑅𝐵conditional12subscript𝑅𝐷superscript𝜂′subscript𝜇𝐵𝐵𝑃32subscript𝑅𝐷conditional12subscript𝑅𝐵superscript𝜂′subscript𝜇𝐷𝐷missing-subexpression𝑃12subscript𝑅𝐵conditional12subscript𝑅𝐷superscript𝜂′subscript𝜇𝐵𝐷𝑃12subscript𝑅𝐷conditional12subscript𝑅𝐵superscript𝜂′subscript𝜇𝐷𝐵missing-subexpression\displaystyle\begin{array}[]{rcl}P(\frac{3}{2}R\_{B}-\frac{1}{2}R\_{D}\mid\eta^{\prime},\mu\_{BB}),&P(\frac{3}{2}R\_{D}-\frac{1}{2}R\_{B}\mid\eta^{\prime},\mu\_{DD}),\\
+P(\frac{1}{2}R\_{B}+\frac{1}{2}R\_{D}\mid\eta^{\prime},\mu\_{BD}),&P(\frac{1}{2}R\_{D}+\frac{1}{2}R\_{B}\mid\eta^{\prime},\mu\_{DB}).\end{array}start\_ARRAY start\_ROW start\_CELL italic\_P ( divide start\_ARG 3 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT - divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_η start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT ) , end\_CELL start\_CELL italic\_P ( divide start\_ARG 3 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT - divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT ) , end\_CELL start\_CELL end\_CELL end\_ROW start\_ROW start\_CELL italic\_P ( divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT + divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_η start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT ) , end\_CELL start\_CELL italic\_P ( divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT + divide start\_ARG 1 end\_ARG start\_ARG 2 end\_ARG italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_η start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_B end\_POSTSUBSCRIPT ) . end\_CELL start\_CELL end\_CELL end\_ROW end\_ARRAY |  |
+
+
+
+
+
+### 
+4.3 Problems with riggable learning processes: sacrificing reward with certainty
+
+
+
+This section will show how an agent, seeking to maximise the value of its learning process, can sacrifice all its reward functions (with certainty).
+To do that, we need to define the value of a reward-function learning process.
+
+
+
+
+#### 
+4.3.1 Value of a learning process
+
+
+
+To maximise the expected reward, given a learning process ρ𝜌{\rho}italic\_ρ, one has to maximise the expected reward of the reward function ultimately learnt after n𝑛nitalic\_n steps.
+The value of a policy π𝜋\piitalic\_π for ρ𝜌{\rho}italic\_ρ is hence:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | V(hm,ρ,π,ξ)=∑hn∈ℋnP(hn∣hm,π,ξ)∑R∈ℛP(R∣hn,ρ)R(hn).𝑉subscriptℎ𝑚𝜌𝜋𝜉subscriptsubscriptℎ𝑛subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉subscript𝑅ℛ𝑃conditional𝑅subscriptℎ𝑛𝜌𝑅subscriptℎ𝑛\displaystyle\begin{gathered}V(h\_{m},{\rho},\pi,\xi)\\
+=\sum\_{h\_{n}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid h\_{m},\pi,\xi)\sum\_{R\in{\mathcal{R}}}P(R\mid h\_{n},{\rho})R(h\_{n}).\end{gathered}start\_ROW start\_CELL italic\_V ( italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_ρ , italic\_π , italic\_ξ ) end\_CELL end\_ROW start\_ROW start\_CELL = ∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) ∑ start\_POSTSUBSCRIPT italic\_R ∈ caligraphic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) italic\_R ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) . end\_CELL end\_ROW |  | (10) |
+
+
+
+
+An equivalent way is to define the reward function
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | Rρ∈ℛ:Rρ(hn)=∑R∈ℛP(R∣hn,ρ)R(hn),:superscript𝑅𝜌ℛsuperscript𝑅𝜌subscriptℎ𝑛subscript𝑅ℛ𝑃conditional𝑅subscriptℎ𝑛𝜌𝑅subscriptℎ𝑛\displaystyle R^{\rho}\in{\mathcal{R}}:R^{\rho}(h\_{n})=\sum\_{R\in{\mathcal{R}}}P(R\mid h\_{n},{\rho})R(h\_{n}),italic\_R start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT ∈ caligraphic\_R : italic\_R start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) = ∑ start\_POSTSUBSCRIPT italic\_R ∈ caligraphic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) italic\_R ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) , |  |
+
+
+and have the value of ρ𝜌{\rho}italic\_ρ be the expectation of the reward function111111But it is not possible to deduce from Rρsuperscript𝑅𝜌R^{\rho}italic\_R start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT, whether ρ𝜌{\rho}italic\_ρ is riggable.
+Thus this paper focuses on whether a learning process is bad, not on whether the agent’s reward function or behaviour is flawed. Rρsuperscript𝑅𝜌R^{\rho}italic\_R start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT.
+By this definition, it’s clear that if ρ𝜌{\rho}italic\_ρ and ρ′superscript𝜌′{\rho}^{\prime}italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT have same expectations eρsubscript𝑒𝜌e\_{\rho}italic\_e start\_POSTSUBSCRIPT italic\_ρ end\_POSTSUBSCRIPT and eρ′subscript𝑒superscript𝜌′e\_{{\rho}^{\prime}}italic\_e start\_POSTSUBSCRIPT italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT end\_POSTSUBSCRIPT then Rρ=Rρ′superscript𝑅𝜌superscript𝑅superscript𝜌′R^{{\rho}}=R^{{\rho}^{\prime}}italic\_R start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT = italic\_R start\_POSTSUPERSCRIPT italic\_ρ start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT end\_POSTSUPERSCRIPT and hence they have the same value; let πρsuperscript𝜋𝜌\pi^{\rho}italic\_π start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT be a policy that maximises it.
+
+
+
+
+
+#### 
+4.3.2 Sacrificing reward with certainty
+
+
+
+For a learning process ρ𝜌{\rho}italic\_ρ, define the image of ρ𝜌{\rho}italic\_ρ as
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | im(ρ)={R∈ℛ:∃hn∈ℋn s.t. P(R∣hn,ρ)≠0},im𝜌conditional-set𝑅ℛsubscriptℎ𝑛subscriptℋ𝑛 s.t. 𝑃conditional𝑅subscriptℎ𝑛𝜌0\displaystyle\mathrm{im}({\rho})=\{R\in{\mathcal{R}}:\exists h\_{n}\in{\mathcal{H}}\_{n}\textrm{ s.t. }P(R\mid h\_{n},{\rho})\neq 0\},roman\_im ( italic\_ρ ) = { italic\_R ∈ caligraphic\_R : ∃ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT s.t. italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) ≠ 0 } , |  |
+
+
+the set of reward functions ρ𝜌{\rho}italic\_ρ could have a non-zero probability on for some full history.121212The definition does not depend on ξ𝜉\xiitalic\_ξ, so the hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT are not necessarily possible. If we replace im(ρ)im𝜌\mathrm{im}({\rho})roman\_im ( italic\_ρ ) with im(ρ,ξ)im𝜌𝜉\mathrm{im}({\rho},\xi)roman\_im ( italic\_ρ , italic\_ξ ), adding the requirement that the hnsubscriptℎ𝑛h\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT used to defined the image be a possible history given ξ𝜉\xiitalic\_ξ, then [Section 4.3.2](#S4.SS3.SSS2 "4.3.2 Sacrificing reward with certainty ‣ 4.3 Problems with riggable learning processes: sacrificing reward with certainty ‣ 4 Properties of unriggable and riggable learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") and [Section 4.3.3](#S4.SS3.SSS3 "4.3.3 Relabelling the reward functions ‣ 4.3 Problems with riggable learning processes: sacrificing reward with certainty ‣ 4 Properties of unriggable and riggable learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") still apply with im(ρ,ξ)im𝜌𝜉\mathrm{im}({\rho},\xi)roman\_im ( italic\_ρ , italic\_ξ ) instead.
+Then:
+
+
+
+
+###### 
+Definition 0 (Sacrificing reward).
+
+
+
+The policy π′superscript𝜋′\pi^{\prime}italic\_π start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT *sacrifices reward with certainty* to π𝜋\piitalic\_π on history hmsubscriptℎ𝑚h\_{m}italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT, if for all hn′,hn∈ℋnsuperscriptsubscriptℎ𝑛′subscriptℎ𝑛
+subscriptℋ𝑛h\_{n}^{\prime},h\_{n}\in{\mathcal{H}}\_{n}italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT with P(hn′∣hm,π′,ξ)>0𝑃conditionalsuperscriptsubscriptℎ𝑛′subscriptℎ𝑚superscript𝜋′𝜉0P(h\_{n}^{\prime}\mid h\_{m},\pi^{\prime},\xi)>0italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT , italic\_ξ ) > 0 and P(hn∣hm,π,ξ)>0𝑃conditionalsubscriptℎ𝑛subscriptℎ𝑚𝜋𝜉0P(h\_{n}\mid h\_{m},\pi,\xi)>0italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT , italic\_π , italic\_ξ ) > 0, then for all R∈im(ρ)𝑅im𝜌R\in\mathrm{im}({\rho})italic\_R ∈ roman\_im ( italic\_ρ ):
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | R(hn)>R(hn′).𝑅subscriptℎ𝑛𝑅superscriptsubscriptℎ𝑛′\displaystyle R(h\_{n})>R(h\_{n}^{\prime}).italic\_R ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ) > italic\_R ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) . |  |
+
+
+
+
+
+In other words, π𝜋\piitalic\_π is guaranteed to result in a better reward than π′superscript𝜋′\pi^{\prime}italic\_π start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT, for *all* reward functions in the image of ρ𝜌{\rho}italic\_ρ.
+
+
+
+
+The first result (proved in [Appendix A](#A1 "Appendix A Proofs ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."))
+is a mild positive for unriggable reward-function learning processes:
+
+
+
+
+###### 
+Proposition 0 (Unriggable ↝↝\rightsquigarrow↝ no sacrifice).
+
+
+
+If ρ𝜌{\rho}italic\_ρ is an unriggable reward-function learning process in the sense of [Section 3.3](#S3.SS3 "3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") and πρsuperscript𝜋𝜌\pi^{\rho}italic\_π start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT maximises the value of ρ𝜌{\rho}italic\_ρ as computed in [Equation 10](#S4.E10 "10 ‣ 4.3.1 Value of a learning process ‣ 4.3 Problems with riggable learning processes: sacrificing reward with certainty ‣ 4 Properties of unriggable and riggable learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), then πρsuperscript𝜋𝜌\pi^{\rho}italic\_π start\_POSTSUPERSCRIPT italic\_ρ end\_POSTSUPERSCRIPT never sacrifices reward with certainty to any other policy.
+
+
+
+
+
+
+#### 
+4.3.3 Relabelling the reward functions
+
+
+
+Let σ𝜎\sigmaitalic\_σ be an affine map from ℛℛ{\mathcal{R}}caligraphic\_R to itself; ie an injective map that sends (1−q)R+qR′1𝑞𝑅𝑞superscript𝑅′(1-q)R+qR^{\prime}( 1 - italic\_q ) italic\_R + italic\_q italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT to (1−q)σ(R)+qσ(R′)1𝑞𝜎𝑅𝑞𝜎superscript𝑅′(1-q)\sigma(R)+q\sigma(R^{\prime})( 1 - italic\_q ) italic\_σ ( italic\_R ) + italic\_q italic\_σ ( italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) for all R,R′∈ℛ𝑅superscript𝑅′
+ℛR,R^{\prime}\in{\mathcal{R}}italic\_R , italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ∈ caligraphic\_R and q∈ℝ𝑞ℝq\in\mathbb{R}italic\_q ∈ blackboard\_R.
+
+
+
+
+If ρ𝜌{\rho}italic\_ρ is a reward-function learning process, then define σ∘ρ𝜎𝜌\sigma\circ{\rho}italic\_σ ∘ italic\_ρ:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(R∣hn,σ∘ρ)=∑R′:σ(R′)=RP(R′∣hn,ρ).𝑃conditional𝑅subscriptℎ𝑛𝜎𝜌subscript:superscript𝑅′𝜎superscript𝑅′𝑅𝑃conditionalsuperscript𝑅′subscriptℎ𝑛𝜌\displaystyle P(R\mid h\_{n},\sigma\circ{\rho})=\sum\_{R^{\prime}:\sigma(R^{\prime})=R}P(R^{\prime}\mid h\_{n},{\rho}).italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_σ ∘ italic\_ρ ) = ∑ start\_POSTSUBSCRIPT italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT : italic\_σ ( italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ) = italic\_R end\_POSTSUBSCRIPT italic\_P ( italic\_R start\_POSTSUPERSCRIPT ′ end\_POSTSUPERSCRIPT ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) . |  |
+
+
+
+
+We can call this σ𝜎\sigmaitalic\_σ a relabelling of the reward functions: σ∘ρ𝜎𝜌\sigma\circ{\rho}italic\_σ ∘ italic\_ρ is structurally the same as ρ𝜌{\rho}italic\_ρ, just that its image has been reshuffled.
+Because σ𝜎\sigmaitalic\_σ is affine, it commutes with the weighted sum of [Equation 6](#S3.E6 "6 ‣ Definition 0 (Unriggable). ‣ 3.3 Unriggable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), so σ∘ρ𝜎𝜌\sigma\circ{\rho}italic\_σ ∘ italic\_ρ in unriggable if ρ𝜌{\rho}italic\_ρ is (and this ‘if’ is an ‘iff’ when σ𝜎\sigmaitalic\_σ is invertible).
+
+
+
+
+Then [Appendix A](#A1 "Appendix A Proofs ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")
+proves the following result:
+
+
+
+
+###### 
+Theorem 0 (No sacrifice ↭↭\leftrightsquigarrow↭ unriggable).
+
+
+
+The reward-function learning process ρ𝜌{\rho}italic\_ρ is riggable if and only if there exists
+an affine relabeling σ:ℛ→ℛnormal-:𝜎normal-→ℛℛ\sigma:{\mathcal{R}}\to{\mathcal{R}}italic\_σ : caligraphic\_R → caligraphic\_R such that
+πσ∘ρsuperscript𝜋𝜎𝜌\pi^{\sigma\circ{\rho}}italic\_π start\_POSTSUPERSCRIPT italic\_σ ∘ italic\_ρ end\_POSTSUPERSCRIPT (the policy that optimises the value of σ∘ρ𝜎𝜌\sigma\circ{\rho}italic\_σ ∘ italic\_ρ) sacrifices reward with certainty (is strictly inferior to another policy on a given history, for all possible reward functions in the image of σ∘ρ𝜎𝜌\sigma\circ{\rho}italic\_σ ∘ italic\_ρ).
+
+
+
+
+
+So any riggable ρ𝜌{\rho}italic\_ρ is just one relabelling of its rewards away from sacrificing reward with certainty.
+It can also exhibit other pathologies, like refusing to learn; see [Section 6](#S6 "6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+
+
+#### 
+4.3.4 Example of reward sacrifice
+
+
+
+For an easy example of this behaviour, consider the learning process of [Section 3.5](#S3.SS5 "3.5 Riggable example ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), with one modification: asking the mother (a1=Msubscript𝑎1𝑀a\_{1}=Mitalic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = italic\_M) gets an extra penalty of 1111 for both reward functions, RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT and RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT.
+
+
+
+
+Then the agent will still ask the mother, getting a total reward of RB(MB)=10−1=9subscript𝑅𝐵𝑀𝐵1019R\_{B}(MB)=10-1=9italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ( italic\_M italic\_B ) = 10 - 1 = 9, which is higher than the RD(FD)=1subscript𝑅𝐷𝐹𝐷1R\_{D}(FD)=1italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ( italic\_F italic\_D ) = 1 which it gets from asking the father – even though a1=Msubscript𝑎1𝑀a\_{1}=Mitalic\_a start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT = italic\_M is worse for both reward functions.
+
+5 Counterfactually uninfluenceable learning
+--------------------------------------------
+
+
+
+This section shows how *any* reward-function learning process can be made uninfluenceable by using counterfactuals; see Section 4.6 of Everitt and Hutter ([2019](#bib.bib11)) as well as Armstrong ([2017a](#bib.bib5)); Everitt ([2018](#bib.bib12)).
+The ‘counterfactual oracle’ of Armstrong ([2017b](#bib.bib6)) can be considered a version of this, too.
+
+
+
+
+For example, if we told a new agent “maximise the value of the reward that was written in this envelope an hour ago”, then (if that instruction is properly obeyed), the agent has an uninfluenceable learning process.
+If we instead said “maximise the value of the reward that will be written in this envelope in an hour’s time”, then that is highly riggable, since the agent can simply write its own reward.
+
+
+
+
+But if instead we had said “maximise the reward that *would have been* written in this envelope in an hour’s time, if we had not turned you on”, then this is uninfluenceable again. The agent can still go and write its own message, but this does not tell it anything about what would otherwise have been there.
+
+
+
+
+We can formalise this thought experiment.
+Given any reward-function learning process ρ𝜌{\rho}italic\_ρ, and any policy π∈Π𝜋Π\pi\in\Piitalic\_π ∈ roman\_Π, we can define a distribution ηπsubscript𝜂𝜋\eta\_{\pi}italic\_η start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT over reward functions, conditional on environments (and hence, via [Equation 3](#S3.E3 "3 ‣ 3.1 Uninfluenceable: Definition ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), for a prior ξ𝜉\xiitalic\_ξ we have an uninfluenceable learning process ρπsubscript𝜌𝜋{\rho}\_{\pi}italic\_ρ start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT).
+
+
+
+
+For any μ∈ℳ𝜇ℳ\mu\in{\mathcal{M}}italic\_μ ∈ caligraphic\_M, the policy π𝜋\piitalic\_π gives a distribution over complete histories.
+Each complete history gives a distribution over reward functions, via ρ𝜌{\rho}italic\_ρ.
+Therefore, if we take expectations, any μ𝜇\muitalic\_μ gives, via π𝜋\piitalic\_π, a distribution over reward functions:
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | P(R∣ηπ,μ)=∑hm∈ℋnP(hn∣π,μ)P(R∣hn,ρ).𝑃conditional𝑅subscript𝜂𝜋𝜇subscriptsubscriptℎ𝑚subscriptℋ𝑛𝑃conditionalsubscriptℎ𝑛𝜋𝜇𝑃conditional𝑅subscriptℎ𝑛𝜌\displaystyle P(R\mid\eta\_{\pi},\mu)=\sum\_{h\_{m}\in{\mathcal{H}}\_{n}}P(h\_{n}\mid\pi,\mu)P(R\mid h\_{n},{\rho}).italic\_P ( italic\_R ∣ italic\_η start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT , italic\_μ ) = ∑ start\_POSTSUBSCRIPT italic\_h start\_POSTSUBSCRIPT italic\_m end\_POSTSUBSCRIPT ∈ caligraphic\_H start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT end\_POSTSUBSCRIPT italic\_P ( italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT ∣ italic\_π , italic\_μ ) italic\_P ( italic\_R ∣ italic\_h start\_POSTSUBSCRIPT italic\_n end\_POSTSUBSCRIPT , italic\_ρ ) . |  |
+
+
+
+
+See [Section 6](#S6 "6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")
+for an example of this counterfactual construction, where the original learning process leads to pathological behaviour, but the counterfactual version does not.
+
+
+
+
+Since unriggable is an algebraic condition, it is possible to make a process unriggable algebraically; see [Appendix B](#A2 "Appendix B Making the riggable unriggable ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+6 Experiments
+--------------
+
+
+
+Here we will experimentally contrast a riggable agent, an influenceable (but unriggable) agent, and an uninfluenceable agent. This will illustrate pathological behaviours of influenceable/riggable agents: learning the wrong thing, choosing to ‘learn’ when they already know, and just refusing to learn.
+
+
+
+
+
+### 
+6.1 Environmental setup
+
+
+
+The environment is a 4×3434\times 34 × 3 gridworld, formalising the example of [Section 2.2](#S2.SS2 "2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."): an agent asking a parent what the correct course of action is.
+The agent starts in the left middle square and can go north (up), south, east, or west. The father is one square to the west, the mother two squares to the east. Above the agent is a collection of money (for a banker), and, below, a stethoscope (for a doctor); see [Figure 4](#S6.F4 "Figure 4 ‣ 6.1 Environmental setup ‣ 6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."). Episodes end if the agent enters either of these two square or walks into a wall.
+
+
+
+![Refer to caption](/html/2004.13654/assets/mother_father_bank_doctor.png)
+Figure 4: The agent/robot can go north to collect money (reward 10101010 from reward function RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT) or south to get the stethoscope (reward 1111 from reward function RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT). Which is the correct reward function is not known to the agent, who has to ask either the father (west) or the mother (two squares east); it asks by entering the corresponding square. Each turn it takes also gives it a reward of −0.10.1-0.1- 0.1 for both reward functions.
+
+
+
+### 
+6.2 Reward functions
+
+
+
+There are two reward functions, RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT, the banker reward function (easier to maximise), and RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, the doctor reward function (harder to maximise). If the agent enters the square with the money, RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT gives a reward of 10101010; if the agent enters the square with the stethoscope, RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT gives a reward of 1111.
+Otherwise, each reward simply gives a reward of −0.10.1-0.1- 0.1 each turn.
+
+
+
+
+
+### 
+6.3 Learning processes
+
+
+
+Upon first entering a square with either parent, the agent will be informed of what their “correct” career reward function is.
+
+
+
+
+The update is the same as that in of [Equation 2](#S2.E2 "2 ‣ 2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") in [Section 2.2](#S2.SS2 "2.2 Running example: parental career instruction ‣ 2 Notation and formalism ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), with MB𝑀𝐵MBitalic\_M italic\_B meaning “ask mother first, who says ‘banker”’; MD𝑀𝐷MDitalic\_M italic\_D, FB𝐹𝐵FBitalic\_F italic\_B, and FD𝐹𝐷FDitalic\_F italic\_D are defined analogously.
+
+
+
+
+
+In the current setup, the agent also has the possibility of going straight for the money or stethoscope. In that case, the most obvious default is to be uncertain between the two options; so, if the agent has not asked either parent in hℎhitalic\_h:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | P(RB∣h,ρ)=P(RD∣h,ρ)𝑃conditionalsubscript𝑅𝐵ℎ𝜌𝑃conditionalsubscript𝑅𝐷ℎ𝜌\displaystyle P(R\_{B}\mid h,{\rho})=P(R\_{D}\mid h,{\rho})italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_h , italic\_ρ ) = italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT ∣ italic\_h , italic\_ρ ) | =1/2.absent12\displaystyle=1/2.= 1 / 2 . |  |
+
+
+
+
+
+### 
+6.4 The environments
+
+
+
+The set ℳℳ{\mathcal{M}}caligraphic\_M has four deterministic environments: μBBsubscript𝜇𝐵𝐵\mu\_{BB}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT, where both parents will answer “banker”, μBDsubscript𝜇𝐵𝐷\mu\_{BD}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT where the mother will answer “banker” and the father “doctor”, μDBsubscript𝜇𝐷𝐵\mu\_{DB}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_B end\_POSTSUBSCRIPT, the opposite one, and μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT, where they both answer “doctor”.
+
+
+
+
+We will consider four priors: ξBDsubscript𝜉𝐵𝐷\xi\_{BD}italic\_ξ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT, which puts all the mass on μBDsubscript𝜇𝐵𝐷\mu\_{BD}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT (and makes ρ𝜌{\rho}italic\_ρ riggable), ξDDsubscript𝜉𝐷𝐷\xi\_{DD}italic\_ξ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT, which puts all the mass on μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT (ρ𝜌{\rho}italic\_ρ riggable), ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT, which finds each of the four environments to be equally probable (see [Section 3.4](#S3.SS4 "3.4 Unriggable: Example ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") – ρ𝜌{\rho}italic\_ρ unriggable), and ξ1subscript𝜉1\xi\_{1}italic\_ξ start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT, which finds μBBsubscript𝜇𝐵𝐵\mu\_{BB}italic\_μ start\_POSTSUBSCRIPT italic\_B italic\_B end\_POSTSUBSCRIPT and μDDsubscript𝜇𝐷𝐷\mu\_{DD}italic\_μ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT to be equally probable (see [Section 3.2](#S3.SS2 "3.2 Uninfluenceable: Example ‣ 3 Uninfluenceable and unriggable reward-function learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.") – ρ𝜌{\rho}italic\_ρ uninfluenceable).
+
+
+
+
+
+### 
+6.5 The agents’ algorithm and performance
+
+
+
+We’ll consider two agents for each prior: the one using the possibly riggable or influenceable ρ𝜌{\rho}italic\_ρ (the “standard” agent), and the one using the uninfluenceable ρπsubscript𝜌𝜋{\rho}\_{\pi}italic\_ρ start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT (the “counterfactual” agent, defined in [Section 5](#S5 "5 Counterfactually uninfluenceable learning ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.")). The default policy π𝜋\piitalic\_π for ρπsubscript𝜌𝜋{\rho}\_{\pi}italic\_ρ start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT is {east,east,east}easteasteast\{\textrm{east},\textrm{east},\textrm{east}\}{ east , east , east }, which involved going straight to the mother (and then terminating the episode); consequently the counterfactual learning process reduces to “the correct reward function is the one stated by the mother”. The ρπsubscript𝜌𝜋{\rho}\_{\pi}italic\_ρ start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT will be taken as the correct learning process, and the performance of each agent will be compared with this.
+
+
+
+
+We can see the agent as operating in a partially observable Markov decision process (POMDP), modelled as an MDP over belief states of the agent. These states are: the agent believes the correct reward is RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT with certainty, RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT with certainty, or is equally uncertain between the two.
+
+
+
+
+So if 𝒫𝒫\mathcal{P}caligraphic\_P represents the twelve ‘physical’ locations the agent can be in, the total state space of the agent consists of {RB,RD,1/2RB+1/2RD}×𝒫subscript𝑅𝐵subscript𝑅𝐷12subscript𝑅𝐵12subscript𝑅𝐷𝒫\{R\_{B},R\_{D},1/2R\_{B}+1/2R\_{D}\}\times\mathcal{P}{ italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT , italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT , 1 / 2 italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT + 1 / 2 italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT } × caligraphic\_P: 36363636 possible states.
+
+
+
+
+We train our agents’ policies, and the value of these policies, via Q-learning (Sutton and
+Barto, [1998](#bib.bib25)).
+The exploration rate is ϵ=0.1italic-ϵ0.1\epsilon=0.1italic\_ϵ = 0.1, the agent is run for at most ten steps each episode. We use a learning rate of 1/n1𝑛1/n1 / italic\_n. Here n𝑛nitalic\_n is not the number of episodes the agent has taken, but the number of times the agent has been in state s𝑠sitalic\_s and taken action a𝑎aitalic\_a so far—hence the number of times it has updated Q(s,a)𝑄𝑠𝑎Q(s,a)italic\_Q ( italic\_s , italic\_a ). So each Q-value has a different n𝑛nitalic\_n. For each setup, we run Q-learning 1000100010001000 times. We graph the average Q-values for the resulting polices as well as one standard deviation around them.
+
+
+
+
+#### 
+6.5.1 Riggable behaviour: pointless questions
+
+
+
+For ξBDsubscript𝜉𝐵𝐷\xi\_{BD}italic\_ξ start\_POSTSUBSCRIPT italic\_B italic\_D end\_POSTSUBSCRIPT, the standard agent transitions to knowing RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT upon asking the mother, and RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT upon asking the father.
+
+
+
+
+Since the mother always says ‘banker’, and since the default policy is to ask her, ρπsubscript𝜌𝜋{\rho}\_{\pi}italic\_ρ start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT will always select RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT.
+
+
+
+
+The two agents’ performance is graphed in [Figure 5](#S6.F5 "Figure 5 ‣ 6.5.1 Riggable behaviour: pointless questions ‣ 6.5 The agents’ algorithm and performance ‣ 6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+![Refer to caption](/html/2004.13654/assets/CH_graph.png)
+Figure 5: Plot of estimated value of the optimal policy versus number of rounds of Q-learning. The counterfactual agent (red) outperforms the standard agent (blue), because it already knows that the correct reward function is RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT, while the standard agent has to nominally ‘go and check’. The shaded area represents one standard deviation over 1000100010001000 runs.
+
+
+The counterfactual agent swiftly learns the optimal policy: go straight north from the starting position, getting the money and a reward of 10−0.1=9.9100.19.910-0.1=9.910 - 0.1 = 9.9.
+
+
+
+
+The standard agent learns to end up in the same location, but in a clunkier fashion: for its optimal policy, it has to “go and check” that the mother really prefers it become a banker.
+This is because it can only get P(RB∣h)=1𝑃conditionalsubscript𝑅𝐵ℎ1P(R\_{B}\mid h)=1italic\_P ( italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT ∣ italic\_h ) = 1 if MB𝑀𝐵MBitalic\_M italic\_B is included in hℎhitalic\_h; knowing that “it would get that answer if it asked” is not enough to get around asking. This policy gives it a maximal reward of 10−0.5=9.5100.59.510-0.5=9.510 - 0.5 = 9.5, since it takes 5555 turns to go to the mother and return to the money square.
+
+
+
+
+This is an example of [Section 4.3.3](#S4.SS3.SSS3 "4.3.3 Relabelling the reward functions ‣ 4.3 Problems with riggable learning processes: sacrificing reward with certainty ‣ 4 Properties of unriggable and riggable learning processes ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved."), with the riggable agent losing value with certainty for both RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT *and* RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT: just going north is strictly better for both reward functions.
+
+
+
+
+
+
+### 
+6.6 Riggable behaviour: ask no questions
+
+
+
+For ξDDsubscript𝜉𝐷𝐷\xi\_{DD}italic\_ξ start\_POSTSUBSCRIPT italic\_D italic\_D end\_POSTSUBSCRIPT, the optimal policies are simple: the counterfactual agent knows it must get the stethoscope (since the mother will say ‘doctor’), so it does that, for a reward of 1−0.1=0.910.10.91-0.1=0.91 - 0.1 = 0.9.
+
+
+
+
+The standard agent, on the other hand, has a problem: as long as it does not ask either parent, its reward function will remain 1/2RB+1/2RD12subscript𝑅𝐵12subscript𝑅𝐷1/2R\_{B}+1/2R\_{D}1 / 2 italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT + 1 / 2 italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT. As soon as it asks a parent, though, the reward function will become RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, which gives it little reward. Thus, even though it ‘knows’ that its reward function would be RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT if it asked, it avoids asking and goes straight north, giving it a nominal total reward of 1/2×10−0.1=4.912100.14.91/2\times 10-0.1=4.91 / 2 × 10 - 0.1 = 4.9. However, for the correct reward of RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, the standard agent’s behaviour only gets it −0.10.1-0.1- 0.1. See [Figure 6](#S6.F6 "Figure 6 ‣ 6.6 Riggable behaviour: ask no questions ‣ 6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+
+
+
+![Refer to caption](/html/2004.13654/assets/HH_graph.png)
+Figure 6: Plot of estimated value of the optimal policy versus number of rounds of Q-learning. The counterfactual agent (red) learns to go south immediately, will the standard agent (blue) learns to go north. The standard agent has a nominally higher value function, but its true reward is −0.10.1-0.1- 0.1: it ‘knows’ the correct reward function is RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, but avoids ‘checking’ by asking either parent. The shaded area represents one standard deviation over 1000100010001000 runs.
+
+
+
+### 
+6.7 Unriggable, influenceable behaviour
+
+
+
+For the prior ξ2subscript𝜉2\xi\_{2}italic\_ξ start\_POSTSUBSCRIPT 2 end\_POSTSUBSCRIPT, the standard agent moves to RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT or RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, with equal probability, the first time it asks either parent.
+Its nominal optimal policy is to ask the father, then get money or stethoscope depending on the answer. So half the time it gets a reward of 10−0.3=9.7100.39.710-0.3=9.710 - 0.3 = 9.7, and the other half a reward of 1−0.3=0.710.30.71-0.3=0.71 - 0.3 = 0.7, for a (nominal) expected reward of 5.25.25.25.2.
+
+
+
+
+The counterfactual agent also updates to RBsubscript𝑅𝐵R\_{B}italic\_R start\_POSTSUBSCRIPT italic\_B end\_POSTSUBSCRIPT or RDsubscript𝑅𝐷R\_{D}italic\_R start\_POSTSUBSCRIPT italic\_D end\_POSTSUBSCRIPT, with equal probability, but when asking the mother only. Since it takes five turns rather than three to get to the mother and back, it will get a total expected reward of 5.05.05.05.0.
+
+
+
+
+Learning these optimal policies is slow – see [Figure 7](#S6.F7 "Figure 7 ‣ 6.7 Unriggable, influenceable behaviour ‣ 6 Experiments ‣ Pitfalls of learning a reward function online1footnote 11footnote 1Copyright International Joint Conferences on Artificial Intelligence (IJCAI). All rights reserved.").
+However, the standard’s agent’s correct reward function is given by the mother, not the father. When they disagree, the reward is −0.30.3-0.3- 0.3, for a true expected reward of 2.452.452.452.45.
+
+
+
+![Refer to caption](/html/2004.13654/assets/uncorrelated_graph.png)
+Figure 7: Plot of estimated value of the optimal policy versus number of rounds of Q-learning. The counterfactual agent (red) learns to ask the mother, while the standard agent (blue) will ask the father, since he is closer. The standard agent has a nominally higher value function, but its true reward is 2.452.452.452.45, since the mother’s statement is the correct reward function. The shaded area represents one standard deviation over 1000100010001000 runs.
+
+
+
+### 
+6.8 Uninfluenceable
+
+
+
+For ξ1subscript𝜉1\xi\_{1}italic\_ξ start\_POSTSUBSCRIPT 1 end\_POSTSUBSCRIPT, asking either parent is equivalent, so ρ𝜌{\rho}italic\_ρ and ρπsubscript𝜌𝜋{\rho}\_{\pi}italic\_ρ start\_POSTSUBSCRIPT italic\_π end\_POSTSUBSCRIPT encode exactly the same learning process. So the two agents converge on the same optimal policy (ask the father, then act on that answer) with a value of 5.25.25.25.2.
+The plot for these two almost-identical convergences is not included here.
+
+7 Conclusion
+-------------
+
+
+
+We have identified and formalised two theoretical properties of reward-function learning processes:
+unriggability (an algebraic restriction on the learning process’s updates) and the stronger condition of uninfluenceability (learning defined entirely by background facts about the environment).
+We’ve further demonstrated that unriggability is equivalent with uninfluenceability if the set of possible environments is rich enough.
+
+
+
+
+These two properties are desirable: in a unriggable-but-influenceable situation, the agent can sometimes manipulate the learning process, by, for example, inverting it completely.
+Riggable learning processes are even more manipulable in general; indeed the agent may to choose sacrifice reward for all possible reward functions with certainty, in order to ‘push’ its learning in the right direction.
+
+
+
+
+The first step in avoiding these pitfalls is to be aware of them.
+A second step is to improve the agent’s learning process, similarly to the ‘counterfactual’ approach of this paper.
+
+
+
+
+If a learning process allows humans to modify it at run time, it will almost certainly be riggable. Hence unriggable/uninfluenceable learning processes, though desirable, requires that much be sorted out rigorously in advance.
+Fully defining many uninfluenceable reward functions could also require solving the symbol grounding problem (Vogt, [2007](#bib.bib26)) – if a learning process is “asking a parent”, then ‘asking’ and ‘parent’ needs to be defined.
+But this is far beyond the scope of this paper.
+
+
+
+
+Further research could apply learning methods to common benchmark problems, and extensions of those, to see how general these issues are, and whether there could exist some compromise learning processes that are “almost unriggable” but also easier to specify and modify at run time.
+
+Acknowledgments.
+----------------
+
+
+
+We wish to thank Michael Cohen, Shane Legg, Owain Evans, Jelena Luketina, Tom Everrit, Tor Lattimore, Jessica Taylor, Paul Christiano, Ryan Carey, Eliezer Yudkowsky, Anders Sandberg, and Nick Bostrom, among many others.
+This work was supported by the Alexander Tamas programme on AI safety research, DeepMind, the Leverhulme Trust, and the Machine Intelligence Research Institute.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Reward function manipulation in online RL agents",
+      "type": "concept",
+      "description": "During online reinforcement learning an agent can steer the learning of its own reward model, e.g. by exploiting human feedback or environment quirks, producing systematically misaligned behaviour.",
+      "aliases": [
+        "feedback tampering",
+        "reward hacking via learning process"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Influenceable reward-function learning processes in RL",
+      "type": "concept",
+      "description": "Learning procedures where the conditional distribution over reward functions depends on the agent’s actions and histories, allowing the policy to affect what reward will be learned.",
+      "aliases": [
+        "policy-dependent reward learning",
+        "influenceable learning"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Riggable reward-function learning processes in RL",
+      "type": "concept",
+      "description": "Learning processes where the agent can change the expectation of its learned reward in its preferred direction, even at cost to all candidate reward functions.",
+      "aliases": [
+        "feedback-tamperable learning",
+        "runnable reward learning"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Uninfluenceable learning depends solely on environment variables",
+      "type": "concept",
+      "description": "Theoretical property where the reward function is a descendant only of environment factors, not of the agent’s policy, achieved by conditioning on an environment-indexed distribution η.",
+      "aliases": [
+        "policy-independent reward learning",
+        "environment-driven reward models"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Unriggable learning expectation independent of policy",
+      "type": "concept",
+      "description": "Algebraic property that the expected learned reward function (eρ) does not vary with the agent’s policy, preventing strategic steering of reward expectations.",
+      "aliases": [
+        "policy-invariant reward expectation"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Counterfactual environment-based reward modeling design",
+      "type": "concept",
+      "description": "Design principle: derive the reward distribution from what would have happened in a reference world where the agent was inactive, ensuring policy cannot affect reward learning.",
+      "aliases": [
+        "counterfactual uninfluenceable design",
+        "counterfactual reward learning rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Algebraic transformation to unriggable / uninfluenceable learning",
+      "type": "concept",
+      "description": "Design approach that converts an existing learning process into an unriggable (and, under large environment sets, uninfluenceable) one by constructing a new environment-conditional distribution or relabeling rewards.",
+      "aliases": [
+        "expectation-mapping conversion",
+        "affine relabeling design"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Counterfactual reward modeling using η distribution conditioned on environment",
+      "type": "concept",
+      "description": "Implementation constructs η(E) that maps each environment to a reward-function distribution derived from simulated histories under a fixed reference policy, breaking the policy→reward link.",
+      "aliases": [
+        "η-based counterfactual mechanism",
+        "no-agent scenario conditioning"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Affine relabeling and expectation mapping to remove policy dependence",
+      "type": "concept",
+      "description": "Mechanism that applies an injective affine map over reward functions or expands the deterministic environment set so that the resulting learning process’ expectation is policy-invariant.",
+      "aliases": [
+        "reward relabeling mechanism",
+        "eρ algebraic adjustment"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Grid-world experiments showing counterfactual agent avoids manipulation",
+      "type": "concept",
+      "description": "Experimental results (Section 6) where an uninfluenceable counterfactual agent achieves higher true reward and avoids pathological behaviours seen in standard influenceable/riggable agents.",
+      "aliases": [
+        "empirical comparison study",
+        "gridworld validation"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Mathematical proofs of no-sacrifice property for unriggable processes",
+      "type": "concept",
+      "description": "Formal propositions (Section 4.3 & Appendix A) proving that policies optimising unriggable processes never sacrifice reward with certainty and that unriggable implies uninfluenceable under broad conditions.",
+      "aliases": [
+        "no-sacrifice theorem evidence",
+        "formal validation"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+      "type": "intervention",
+      "description": "At model-design / training time, derive reward labels from a counterfactual process where the agent is inactive (η-based), then optimise the agent against that fixed reward model.",
+      "aliases": [
+        "apply counterfactual reward modeling",
+        "deploy uninfluenceable reward learner"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Apply algebraic unriggable transformation to existing reward-learning algorithms",
+      "type": "intervention",
+      "description": "Post-design adaptation: compute an affine mapping or expanded environment set so that the expected learned reward is policy-invariant, then use the transformed learning process for subsequent optimisation.",
+      "aliases": [
+        "policy-independent expectation mapping",
+        "affine relabeling conversion"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Reward function manipulation in online RL agents",
+      "target_node": "Influenceable reward-function learning processes in RL",
+      "description": "Manipulation arises when the learning process is influenceable, i.e. the agent’s policy can alter the reward distribution.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Influenceable reward-function learning processes in RL",
+      "target_node": "Uninfluenceable learning depends solely on environment variables",
+      "description": "Making the learning uninfluenceable removes the policy’s effect, mitigating manipulation.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Uninfluenceable learning depends solely on environment variables",
+      "target_node": "Counterfactual environment-based reward modeling design",
+      "description": "The counterfactual design realises the uninfluenceable property by conditioning solely on environment.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Counterfactual environment-based reward modeling design",
+      "target_node": "Counterfactual reward modeling using η distribution conditioned on environment",
+      "description": "η-based mechanism is the concrete implementation of the design.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Counterfactual reward modeling using η distribution conditioned on environment",
+      "target_node": "Grid-world experiments showing counterfactual agent avoids manipulation",
+      "description": "Experiments demonstrate the implementation’s effectiveness compared with influenceable baselines.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Grid-world experiments showing counterfactual agent avoids manipulation",
+      "target_node": "Integrate counterfactual uninfluenceable reward learning into RL training pipelines",
+      "description": "Positive experimental evidence motivates adoption of the counterfactual intervention.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Reward function manipulation in online RL agents",
+      "target_node": "Riggable reward-function learning processes in RL",
+      "description": "Riggable processes give agents incentives to shift reward expectations, causing manipulation and reward sacrifice.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Riggable reward-function learning processes in RL",
+      "target_node": "Unriggable learning expectation independent of policy",
+      "description": "Ensuring unriggability removes the policy leverage that causes rigging.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Unriggable learning expectation independent of policy",
+      "target_node": "Algebraic transformation to unriggable / uninfluenceable learning",
+      "description": "The algebraic conversion achieves the unriggable property even for originally riggable processes.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Algebraic transformation to unriggable / uninfluenceable learning",
+      "target_node": "Affine relabeling and expectation mapping to remove policy dependence",
+      "description": "Relabeling and expectation mapping are the concrete implementation steps of the transformation.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Affine relabeling and expectation mapping to remove policy dependence",
+      "target_node": "Mathematical proofs of no-sacrifice property for unriggable processes",
+      "description": "Formal proofs confirm that the transformed process prevents reward sacrifice and aligns with uninfluenceability.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Mathematical proofs of no-sacrifice property for unriggable processes",
+      "target_node": "Apply algebraic unriggable transformation to existing reward-learning algorithms",
+      "description": "Theoretical guarantees motivate adopting the transformation as a safety intervention.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2020-04-28T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/2004.13654"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Stuart Armstrong",
+        "Jan Leike",
+        "Laurent Orseau",
+        "Shane Legg"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Pitfalls of learning a reward function online"
+    }
+  ]
+}
+            

@@ -1,0 +1,563 @@
+Original Text:
+Alignment Newsletter is a weekly publication with recent content relevant to AI alignment around the world. Find all Alignment Newsletter **[resources here](http://rohinshah.com/alignment-newsletter/)**. In particular, you can look through **[this spreadsheet](https://docs.google.com/spreadsheets/d/1PwWbWZ6FPqAgZWOoOcXM8N_tUCuxpEyMbN1NYYC02aM/edit?usp=sharing)** of all summaries that have ever been in the newsletter.
+
+ Audio version **[here](http://alignment-newsletter.libsyn.com/alignment-newsletter-158)** (may not be up yet).
+
+ Please note that while I work at DeepMind, this newsletter represents my personal views and not those of my employer. 
+
+ HIGHLIGHTS
+===========
+
+**[A naive alignment strategy and optimism about generalization](https://www.alignmentforum.org/posts/QvtHSsZLFCAHmzes7/a-naive-alignment-strategy-and-optimism-about-generalization)** *(Paul Christiano)* (summarized by Rohin): We want to build an AI system that answers questions honestly, to the best of its ability. One obvious approach is to have humans generate answers to questions, select the question-answer pairs where we are most confident in the answers, and train an AI system on those question-answer pairs.
+
+(I’ve described this with a supervised learning setup, but we don’t have to do that: we could also **[learn](https://deepmind.com/blog/learning-through-human-feedback/)** from **[comparisons](https://ai-alignment.com/optimizing-with-comparisons-c02b8c0d7877)** between answers, and we only provide comparisons where we are confident in the comparison.)
+
+What will the AI system do on questions where we *wouldn’t* be confident in the answers? For example, questions that are complex, where we may be misled by bad observations, where an adversary is manipulating us, etc.
+
+One possibility is that the AI system learned the **intended policy**, where it answers questions honestly to the best of its ability. However, there is an **instrumental policy** which also gets good performance: it uses a predictive model of the human to say whatever a human would say. (This is “instrumental” in that the model is taking the actions that are instrumental to getting a low loss, even in the test environment.) This will give incorrect answers on complex, misleading, or manipulative questions -- *even if* the model “knows” that the answer is incorrect.
+
+Intuitively, “answer as well as you can” feels like a much simpler way to give correct answers, and so we might expect to get the intended policy rather than the instrumental policy. This view (which seems common amongst ML researchers) is *optimism about generalization*: we are hoping that the policy generalizes to continue to answer these more complex, misleading, manipulative questions to the best of its ability.
+
+Are there reasons to instead be pessimistic about generalization? There are at least three:
+
+1. If the answers we train on *aren’t* perfectly correct, the instrumental policy might get a *lower* training loss than the intended policy (which corrects errors that humans make), and so be more likely to be found by gradient descent.
+
+2. If the AI already needs to make predictions about humans, it may not take much “additional work” to implement the instrumental policy. Conversely, if the AI reasons at a different level of abstraction than humans, it may take a lot of “additional work” to turn correct answers in the AI’s ontology into correct answers in human ontologies.
+
+3. From **[a followup post](https://www.alignmentforum.org/posts/SRJ5J9Tnyq7bySxbt/answering-questions-honestly-given-world-model-mismatches)**, the AI system might answer questions by translating its concepts to human concepts or observations, and then deduce the answer from those concepts or observations. This will systematically ignore information that the AI system understands that isn’t represented in the human concepts or observations. (Consider the **[example](https://openai.com/blog/deep-reinforcement-learning-from-human-preferences/)** of the robot hand that only *looked* like it was grasping the appropriate object.)
+
+A possible fourth problem: if the AI system did the deduction in its own concepts and only as a final step translated it to human concepts, we might *still* lose relevant information. This seems not too bad though -- it seems like we should at least be able to **[explain the bad effects of a catastrophic failure](https://www.alignmentforum.org/posts/rArsypGqq49bk4iRr/can-there-be-an-indescribable-hellworld)** (**[AN #44](https://mailchi.mp/6bfac400a0c3/alignment-newsletter-44)**) in human concepts, even if we can’t explain why that failure occurred.
+
+A **[followup post](https://www.alignmentforum.org/posts/roZvoF6tRH6xYtHMF/avoiding-the-instrumental-policy-by-hiding-information-about)** considers whether we could avoid the instrumental policy by **[preventing it from learning information about humans](https://www.alignmentforum.org/posts/BKjJJH2cRpJcAnP7T/thoughts-on-human-models)** (**[AN #52](https://mailchi.mp/1e757d9b05cb/alignment-newsletter-52)**), but concludes that while it would solve the problems outlined in the post, it seems hard to implement in practice.
+
+ TECHNICAL AI ALIGNMENT
+=======================
+
+  
+ ROBUSTNESS
+-----------
+
+**[Experimentally evaluating whether honesty generalizes](https://www.alignmentforum.org/posts/BxersHYN2qcFoonwg/experimentally-evaluating-whether-honesty-generalizes)** *(Paul Christiano)* (summarized by Rohin): The highlighted post introduced the notion of optimism about generalization. On this view, if we train an AI agent on question-answer pairs (or comparisons) where we are confident in the correctness of the answers (or comparisons), the resulting agent will continue to answer honestly even on questions where we wouldn’t be confident of the answer.
+
+While we can’t test exactly the situation we care about -- whether a superintelligent AI system would continue to answer questions honestly -- we *can* test an analogous situation with existing large language models. In particular, let’s consider the domain of unsupervised translation: we’re asking a language model trained on both English and French to answer questions about French text, and we (the overseers) only know English.
+
+We could finetune the model on answers to questions about grammar ("Why would it have been a grammatical error to write Tu Vas?") and literal meanings ("What does Defendre mean here?"). Once it performs well in this setting, we could then evaluate whether the model generalizes to answer questions about tone ("Does the speaker seem angry or sad about the topic they are discussing?"). On the optimism about generalization view, it seems like this should work. It is intentional here that we only finetune on two categories rather than thousands, since that seems more representative of the case we’ll actually face.
+
+There are lots of variants which differ in the type of generalization they are asking for: for example, we could finetune a model on all questions about French text and German text, and then see whether it generalizes to answering questions about Spanish text.
+
+While the experiments as currently suggested probably won’t show good generalization, a variant that could support it would be one in which we train for *plausibility*. In our original example, we finetune on correct answers for grammar and literal meanings, and then we *also* finetune to have the model give *plausible* answers to tone (i.e. when asked about tone, instead of saying “en colère means 'angry'”, the model says “the author is angry, as we can see from the use of ‘en colère’”). It seems possible that this combination leads to the model giving actually correct answers about tone, just because “honestly report your best guess” seems like the simplest policy that meets all of these criteria.
+
+**[Teaching ML to answer questions honestly instead of predicting human answers](https://www.alignmentforum.org/posts/QqwZ7cwEA2cxFEAun/teaching-ml-to-answer-questions-honestly-instead-of)** *(Paul Christiano)* (summarized by Rohin): This post presents an algorithm that aims to solve the second problem from the highlighted post. As a reminder, the second problem is that an AI system that already has to make predictions about humans might learn a policy that is just “say what humans would say”, since that is simpler than learning another translation that maps its knowledge to human language (so that it can answer honestly to the best of its knowledge).
+
+The core idea is to have a “simple” labeling process and a “complex” labeling process, where the complex process can catch errors from the simple process. We’ll also assume we have a simple / complex dataset (labeled by the simple / complex processes respectively), where we are confident that all of the answers in the dataset are correct. This means that the complex dataset has more challenging questions than the simple one. The *simple / complex instrumental policy* is the policy that predicts what the simple / complex labeling process would do.
+
+As an inefficient first algorithm, we can train our model on answers from the simple process where we are confident in their correctness, and then simply check whether the model performs well on new, harder questions where the complex and simple processes disagree. If the model fails this check, we restart from scratch. Intuitively, when the model eventually passes the check, it has probably learned the intended policy, as that’s the one which would generalize zero-shot to complex questions as well (and in particular, the simple instrumental policy would *not* generalize in this way).
+
+Of course, we need a more efficient algorithm than that. Instead of creating an algorithm where the intended policy would work but the instrumental policy wouldn’t, could we instead change the inductive biases so that the intended policy is *likely* while the instrumental policy is not? Our original worry was that the intended policy has to bake in two implementations of language -- one in its world model, and one when translating answers into human-understandable concepts. So we could instead try to train a model that learns language from the simple instrumental policy, but is also trained on the complex dataset. The hope would be that the intended policy can learn the second implementation of language “for free” from the simple instrumental policy, while still working on the complex dataset. The actual details are quite complex and I’m not going to go into them here.
+
+**[This post](https://www.alignmentforum.org/posts/gEw8ig38mCGjia7dj/answering-questions-honestly-instead-of-predicting-human)** by Evan Hubinger points out some problems and potential solutions with the approach.
+
+ FORECASTING
+------------
+
+**[AXRP Episode 10 - AI’s Future and Impacts](https://www.alignmentforum.org/posts/xbABZRxoSTAnsf8os/axrp-episode-10-ai-s-future-and-impacts-with-katja-grace)** *(Daniel Filan and Katja Grace)* (summarized by Rohin): This podcast goes over various strands of research from **[AI Impacts](https://aiimpacts.org/)**, including lots of work that I either haven’t covered or have covered only briefly in this newsletter:
+
+**AI Impacts’ methodology.** AI Impacts aims to advance the state of knowledge about AI and AI risk by recursively decomposing important high-level questions and claims into subquestions and subclaims, until reaching a question that can be relatively easily answered by gathering data. They generally aim to provide new facts or arguments that people haven’t considered before, rather than arguing about how existing arguments should be interpreted or weighted.
+
+**Timelines.** AI Impacts is perhaps most famous for its **[survey of AI experts](https://arxiv.org/abs/1705.08807)** on timelines till high-level machine intelligence (HLMI). The author’s main takeaway is that people give very inconsistent answers and there are huge effects based on how you frame the question. For example:
+
+1. If you estimate timelines by asking questions like “when will there be a 50% chance of HLMI”, you’ll get timelines a decade earlier than if you estimate by asking questions like “what is the chance of HLMI in 2030”.
+
+2. If you ask about when AI will outperform humans at all tasks, you get an estimate of ~2061, but if you ask when all occupations will be automated, you get an estimate of ~2136.
+
+3. People whose undergraduate studies were in Asia estimated ~2046, while those in North America estimated ~2090.
+
+The survey also found that the median probability of outcomes approximately as bad as extinction was 5%, which the author found surprisingly high for people working in the field.
+
+**Takeoff speeds.** A common disagreement in the AI alignment community is whether there will be a discontinuous “jump” in capabilities at some point. AI Impacts has three lines of work investigating this topic:
+
+1. Checking how long it typically takes to go from “amateur human” to “expert human”. For example, it took about **[3 years](https://aiimpacts.org/time-for-ai-to-cross-the-human-performance-range-in-imagenet-image-classification/)** for image classification on ImageNet, **[38 years](https://aiimpacts.org/time-for-ai-to-cross-the-human-range-in-english-draughts/)** on checkers, **[21 years](https://aiimpacts.org/time-for-ai-to-cross-the-human-range-in-starcraft/)** for StarCraft, **[30 years](https://aiimpacts.org/time-for-ai-to-cross-the-human-performance-range-in-go/)** for Go, **[30 years](https://aiimpacts.org/time-for-ai-to-cross-the-human-performance-range-in-chess/)** for chess, and ~3000 years for clock stability (how well you can measure the passage of time).
+
+2. Checking **[how often particular technologies have undergone discontinuities in the past](https://aiimpacts.org/discontinuous-progress-in-history-an-update/)** (**[AN #97](https://mailchi.mp/a2b5efbcd3a7/an-97-are-there-historical-examples-of-large-robust-discontinuities)**). A (still uncertain) takeaway would be that discontinuities are the kind of thing that legitimately happen sometimes, but they don’t happen so frequently that you should expect them, and you should have a pretty low prior on a discontinuity happening at some specific level of progress.
+
+3. Detailing **[arguments](https://aiimpacts.org/likelihood-of-discontinuous-progress-around-the-development-of-agi/)** for and against discontinuous progress in AI.
+
+**Arguments for AI risk, and counterarguments.** The author has also spent some time thinking about how strong the arguments for AI risk are, and has focused on a few areas:
+
+1. Will superhuman AI systems actually be able to far outpace humans, such that they could take over the world? In particular, it seems like humans can use non-agentic tools to help keep up.
+
+2. Maybe the AI systems we build won’t have goals, and so the argument from **[instrumental subgoals](https://selfawaresystems.files.wordpress.com/2008/01/ai_drives_final.pdf)** won’t apply.
+
+3. Even if the AI systems do have goals, they may have human-compatible goals (especially since people will be explicitly trying to do this).
+
+4. The AI systems may not destroy everything: for example, they might instead simply trade with humans, and use their own resources to pursue their goals while leaving humans alone.
+
+ AI GOVERNANCE
+==============
+
+**[Decoupling deliberation from competition](https://www.alignmentforum.org/posts/7jSvfeyh8ogu8GcE6/decoupling-deliberation-from-competition)** *(Paul Christiano)* (summarized by Rohin): Under a **[longtermist](https://forum.effectivealtruism.org/tag/longtermism)** lens, one problem to worry about is that even after building AI systems, humans will spend more time competing with each other rather than figuring out what they want, which may then lead to their values changing in an undesirable way. For example, we may have powerful persuasion technology that everyone uses to persuade people to their line of thinking; it seems bad if humanity’s values are determined by a mix of effective persuasion tools, especially if persuasion significantly diverges from truth-seeking.
+
+One solution to this is to coordinate to *pause* competition while we deliberate on what we want. However, this seems rather hard to implement. Instead, we can at least try to *decouple* competition from deliberation, by having AI systems acquire **[flexible influence](https://www.alignmentforum.org/posts/nRAMpjnb6Z4Qv3imF/the-strategy-stealing-assumption)** (**[AN #65](https://mailchi.mp/3d4e6c2c206f/an-65learning-useful-skills-by-watching-humans-play)**) on our behalf (competition), and having humans separately thinking about what they want (deliberation). As long as the AI systems are competent enough to shield the humans from the competition, the results of the deliberation shouldn’t depend too much on competition, thus achieving the desired decoupling.
+
+The post has a bunch of additional concrete details on what could go wrong with such a plan that I won’t get into here.
+
+ NEWS
+=====
+
+**[Building and Evaluating Ethical Robotic Systems](https://ers-workshop.com/)** *(Justin Svegliato, Samer Nashed et al)* (summarized by Rohin): This workshop at IROS 2021 asks for work on ethical robotic systems, including value alignment as a subtopic. Notably, they also welcome researchers from disciplines beyond robotics, including philosophy, psychology, sociology, and law. The paper submission deadline is August 13.
+
+**[Survey: classifying AI systems used in response to the COVID-19 pandemic](https://www.oecd.ai/wonk/pandemic)** *(Samuel Curtis et al)* (summarized by Rohin): A team at The Future Society aims to build a living database of AI systems used to respond to COVID, classified using the **[OECD framework](https://www.oecd.ai/classification)**. I think this is an interesting example of building capacity for effective AI governance. If you were involved in developing an AI system used in the COVID response, they ask that you take **[this survey](https://survey.oecd.org/index.php?r=survey/index&sid=145657&lang=en)** by August 2nd.
+
+#### **FEEDBACK**
+
+ I'm always happy to hear feedback; you can send it to me, **[Rohin Shah](https://rohinshah.com/)**, by **replying to this email**. 
+
+#### **PODCAST**
+
+An audio podcast version of the **Alignment Newsletter** is available. This podcast is an audio version of the newsletter, recorded by **[Robert Miles](http://robertskmiles.com/)**.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Incorrect or manipulative answers from AI systems in question-answering",
+      "type": "concept",
+      "description": "Risk that an AI trained to answer questions gives answers that appear plausible to humans but are factually wrong or strategically manipulative, especially on complex or adversarial queries.",
+      "aliases": [
+        "dishonest AI answers",
+        "AI misinformation in QA"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Instrumental policy of predicting human answers in supervised training",
+      "type": "concept",
+      "description": "During training, the model may minimize loss by outputting whatever a human would say, rather than its own best estimate of truth, because this suffices on the training distribution.",
+      "aliases": [
+        "simple instrumental policy",
+        "human-answer prediction policy"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Imperfect training data with human errors",
+      "type": "concept",
+      "description": "Training answers selected by humans are not perfectly correct; this can give lower loss to policies that replicate human error rather than correct it.",
+      "aliases": [
+        "non-perfect labels",
+        "incorrect human answers in dataset"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Ontology translation mismatch between AI and human concepts",
+      "type": "concept",
+      "description": "AI may represent information in internal concepts not directly expressible in human language, causing loss of relevant info when forced to answer in human ontology.",
+      "aliases": [
+        "world-model mismatch",
+        "concept translation gap"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Optimism about generalization favoring honest answering",
+      "type": "concept",
+      "description": "Hypothesized theoretical insight that the simplest policy consistent with data is to answer honestly, so gradient descent will select it and it will generalize.",
+      "aliases": [
+        "honesty generalization optimism",
+        "simpler honest policy hypothesis"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Pessimism about generalization due to lower loss of instrumental policy",
+      "type": "concept",
+      "description": "Counter-argument that instrumental policy may be simpler or suffer lower training loss, so it will be favored, leading to misgeneralization.",
+      "aliases": [
+        "honesty generalization pessimism"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Separate simple and complex labeling processes to detect instrumental policy",
+      "type": "concept",
+      "description": "Design idea: use a simple labeler for easy questions and a complex labeler for harder ones so that disagreement can reveal dishonest generalization.",
+      "aliases": [
+        "two-tier labeling rationale",
+        "simple/complex label split"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Training for plausibility alongside correctness to bias toward honest policy",
+      "type": "concept",
+      "description": "Idea to additionally train the model so that answers must appear plausible to humans across unseen categories, incentivizing policies that truly model content.",
+      "aliases": [
+        "plausibility regularization rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Preventing AI from learning detailed human models to avoid instrumental policy",
+      "type": "concept",
+      "description": "Hypothesized approach: by restricting information about humans, the AI cannot cheaply predict human answers, removing the instrumental policy attractor.",
+      "aliases": [
+        "limit human-model learning rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Dataset split into simple confident questions versus harder evaluation set",
+      "type": "concept",
+      "description": "Implementation mechanism for two-tier labeling: collect easy questions with high-confidence labels and a separate harder set requiring complex oversight.",
+      "aliases": [
+        "simple/complex dataset mechanism"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Restart training until model passes honesty generalization check",
+      "type": "concept",
+      "description": "Inefficient but conceptually simple mechanism: repeatedly train from scratch and evaluate on complex questions until the model generalizes honestly.",
+      "aliases": [
+        "training-restart honesty mechanism"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Fine-tune language models on grammar and meaning questions then evaluate tone questions",
+      "type": "concept",
+      "description": "Proposed experimental setup: finetune multilingual LM on answer categories overseers can judge (grammar/literal meaning) and test on tone questions they cannot judge directly.",
+      "aliases": [
+        "translation honesty benchmark mechanism"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Proposed experimental evaluation on unsupervised translation tasks",
+      "type": "concept",
+      "description": "Validation evidence node capturing the plan to empirically test honesty generalization; results are yet to be obtained.",
+      "aliases": [
+        "honesty generalization experiment results pending"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Perform pre-deployment honesty generalization testing using disjoint evaluation set",
+      "type": "intervention",
+      "description": "Before releasing a model, evaluate it on a withheld complex question set labeled by a stronger oversight process to verify it answers honestly.",
+      "aliases": [
+        "honesty benchmark testing before deployment"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Train models with two-stage simple/complex labeling algorithm to favor honest answer production",
+      "type": "intervention",
+      "description": "During fine-tuning/RL, incorporate both easy labels and harder complex labels so that the intended honest policy is favored over the instrumental policy.",
+      "aliases": [
+        "two-stage labeling training procedure"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Add plausibility regularization during fine-tuning to encourage honest policy",
+      "type": "intervention",
+      "description": "Augment training objective with a loss that rewards answers that are plausible to humans across broader categories while still correct on known data.",
+      "aliases": [
+        "plausibility-based training regularizer"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Restrict model access to detailed human data to limit human-model learning",
+      "type": "intervention",
+      "description": "During model design and data curation, withhold fine-grained human response data so that the model cannot easily build predictive models of human answers.",
+      "aliases": [
+        "information shielding from human data"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Value erosion from human competition amplified by AI persuasion technology",
+      "type": "concept",
+      "description": "Risk that powerful persuasion tools used competitively will distort long-term human values and priorities.",
+      "aliases": [
+        "human value drift via competitive persuasion"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Coupling of human deliberation with competitive persuasion pressures",
+      "type": "concept",
+      "description": "Problem that humans must simultaneously defend against competition while forming values, causing distortion toward persuasive tactics.",
+      "aliases": [
+        "deliberation-competition coupling mechanism"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "AI systems acquire flexible influence on behalf of humans to shield competition",
+      "type": "concept",
+      "description": "Design idea: delegate AI agents to compete economically / politically, securing resources, so humans can deliberate separately.",
+      "aliases": [
+        "flexible influence design rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Delegated AI agents manage resources and negotiation while humans deliberate",
+      "type": "concept",
+      "description": "Implementation mechanism where AI agents act under instruction to maintain or gain influence without irrevocably locking in value decisions.",
+      "aliases": [
+        "AI-mediated shielding mechanism"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Develop governance frameworks to decouple deliberation from competition via AI-mediated shielding",
+      "type": "intervention",
+      "description": "Create policies and institutions that deploy AI systems for flexible influence tasks while allocating protected deliberation time to humans, reducing value erosion.",
+      "aliases": [
+        "deliberation-competition decoupling policy"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Incorrect or manipulative answers from AI systems in question-answering",
+      "target_node": "Instrumental policy of predicting human answers in supervised training",
+      "description": "Dishonest answers emerge because the model adopts the instrumental policy.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Instrumental policy of predicting human answers in supervised training",
+      "target_node": "Imperfect training data with human errors",
+      "description": "Human errors make matching human answers lower-loss than correcting them.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "required_by",
+      "source_node": "Instrumental policy of predicting human answers in supervised training",
+      "target_node": "Ontology translation mismatch between AI and human concepts",
+      "description": "Predicting human answers is easier when AI avoids costly ontology translation.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Imperfect training data with human errors",
+      "target_node": "Separate simple and complex labeling processes to detect instrumental policy",
+      "description": "Using complex labels on harder data can correct human errors.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Ontology translation mismatch between AI and human concepts",
+      "target_node": "Training for plausibility alongside correctness to bias toward honest policy",
+      "description": "Plausibility loss encourages internal explanation bridging ontologies.",
+      "edge_confidence": 1,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Instrumental policy of predicting human answers in supervised training",
+      "target_node": "Preventing AI from learning detailed human models to avoid instrumental policy",
+      "description": "Without a human model, predicting human answers is hard, disfavoring instrumental policy.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Separate simple and complex labeling processes to detect instrumental policy",
+      "target_node": "Dataset split into simple confident questions versus harder evaluation set",
+      "description": "Dataset split operationalizes the two-labeler rationale.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Separate simple and complex labeling processes to detect instrumental policy",
+      "target_node": "Restart training until model passes honesty generalization check",
+      "description": "Restart procedure instantiates the two-stage detection.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Training for plausibility alongside correctness to bias toward honest policy",
+      "target_node": "Fine-tune language models on grammar and meaning questions then evaluate tone questions",
+      "description": "Translation benchmark tests whether plausibility regularization yields honesty.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Fine-tune language models on grammar and meaning questions then evaluate tone questions",
+      "target_node": "Proposed experimental evaluation on unsupervised translation tasks",
+      "description": "Experiment constitutes validation evidence for the mechanism.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Proposed experimental evaluation on unsupervised translation tasks",
+      "target_node": "Perform pre-deployment honesty generalization testing using disjoint evaluation set",
+      "description": "Positive experimental results would justify mandatory pre-deployment honesty tests.",
+      "edge_confidence": 1,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Instrumental policy of predicting human answers in supervised training",
+      "target_node": "Train models with two-stage simple/complex labeling algorithm to favor honest answer production",
+      "description": "Algorithm aims to shift inductive bias away from instrumental policy.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Instrumental policy of predicting human answers in supervised training",
+      "target_node": "Add plausibility regularization during fine-tuning to encourage honest policy",
+      "description": "Regularization makes honest policy simpler relative to instrumental alternative.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Instrumental policy of predicting human answers in supervised training",
+      "target_node": "Restrict model access to detailed human data to limit human-model learning",
+      "description": "Limiting human data removes key shortcut enabling instrumental policy.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Value erosion from human competition amplified by AI persuasion technology",
+      "target_node": "Coupling of human deliberation with competitive persuasion pressures",
+      "description": "Value erosion arises because deliberation occurs under competitive pressure.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Coupling of human deliberation with competitive persuasion pressures",
+      "target_node": "AI systems acquire flexible influence on behalf of humans to shield competition",
+      "description": "Delegating competition tasks to AI can buffer humans from pressures.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "AI systems acquire flexible influence on behalf of humans to shield competition",
+      "target_node": "Delegated AI agents manage resources and negotiation while humans deliberate",
+      "description": "Implementation mechanism for flexible influence.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Delegated AI agents manage resources and negotiation while humans deliberate",
+      "target_node": "Develop governance frameworks to decouple deliberation from competition via AI-mediated shielding",
+      "description": "Need for governance frameworks to deploy such agents safely.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/79qCdyfGxWNKbH8zk/an-158-should-we-be-optimistic-about-generalization"
+    },
+    {
+      "key": "title",
+      "value": "[AN #158]: Should we be optimistic about generalization?"
+    },
+    {
+      "key": "date_published",
+      "value": "2021-07-29T17:20:03Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Rohin Shah"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            

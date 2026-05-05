@@ -1,0 +1,546 @@
+Original Text:
+Find all Alignment Newsletter resources [here](http://rohinshah.com/alignment-newsletter/). In particular, you can [sign up](http://eepurl.com/dqMSZj), or look through this [spreadsheet](https://docs.google.com/spreadsheets/d/1PwWbWZ6FPqAgZWOoOcXM8N_tUCuxpEyMbN1NYYC02aM/edit?usp=sharing) of all summaries that have ever been in the newsletter. I'm always happy to hear feedback; you can send it to me by replying to this email.  
+   
+This is a bonus newsletter summarizing Stuart Russell's new book, along with summaries of a few of the most relevant papers. It's entirely written by Rohin, so the usual "summarized by" tags have been removed.  
+   
+We're also changing the publishing schedule: so far, we've aimed to send a newsletter every Monday; we're now aiming to send a newsletter every Wednesday.
+
+Audio version [here](http://alignment-newsletter.libsyn.com/alignment-newsletter-69) (may not be up yet).
+
+  
+[Human Compatible: Artificial Intelligence and the Problem of Control](https://www.amazon.com/Human-Compatible-Artificial-Intelligence-Problem-ebook/dp/B07N5J5FTS) *(Stuart Russell)*: *Since I am aiming this summary for people who are already familiar with AI safety, my summary is substantially reorganized from the book, and skips large portions of the book that I expect will be less useful for this audience. If you are not familiar with AI safety, **note that I am skipping many arguments and counterarguments in the book that are aimed for you**. I'll refer to the book as "HC" in this newsletter.*
+
+Before we get into details of impacts and solutions to the problem of AI safety, it's important to have a model of how AI development will happen. Many estimates have been made by figuring out the amount of compute needed to run a human brain, and figuring out how long it will be until we get there. HC doesn't agree with these; it suggests the bottleneck for AI is in the algorithms rather than the hardware. We will need several conceptual breakthroughs, for example in language or common sense understanding, cumulative learning (the analog of cultural accumulation for humans), discovering hierarchy, and managing mental activity (that is, the metacognition needed to prioritize what to think about next). It's not clear how long these will take, and whether there will need to be more breakthroughs after these occur, but these seem like necessary ones.
+
+What could happen if we do get beneficial superintelligent AI? While there is a lot of sci-fi speculation that we could do here, as a weak lower bound, it should at least be able to automate away almost all existing human labor. Assuming that superintelligent AI is very cheap, most services and many goods would become extremely cheap. Even many primary products such as food and natural resources would become cheaper, as human labor is still a significant fraction of their production cost. If we assume that this could bring up everyone's standard of life up to that of the 88th percentile American, that would result in nearly a *tenfold* increase in world GDP per year. Assuming a 5% discount rate per year, this corresponds to $13.5 *quadrillion* net present value. Such a giant prize removes many reasons for conflict, and should encourage everyone to cooperate to ensure we all get to keep this prize.
+
+Of course, this doesn't mean that there aren't any problems, even with AI that does what its owner wants. Depending on who has access to powerful AI systems, we could see a rise in automated surveillance, lethal autonomous weapons, automated blackmail, fake news and behavior manipulation. Another issue that could come up is that once AI is better than humans at all tasks, we may end up delegating everything to AI, and lose autonomy, leading to *human enfeeblement*.
+
+This all assumes that we are able to control AI. However, we should be cautious about such an endeavor -- if nothing else, we should be careful about creating entities that are more intelligent than us. After all, the gorillas probably aren't too happy about the fact that their habitat, happiness, and existence depends on our moods and whims. For this reason, HC calls this the *gorilla problem*: specifically, "the problem of whether humans can maintain their supremacy and autonomy in a world that includes machines with substantially greater intelligence". Of course, we aren't in the same position as the gorillas: we get to *design* the more intelligent "species". But we should probably have some good arguments explaining why our design isn't going to succumb to the gorilla problem. This is especially important in the case of a fast intelligence explosion, or *hard takeoff*, because in that scenario we do not get any time to react and solve any problems that arise.
+
+Do we have such an argument right now? Not really, and in fact there's an argument that we *will* succumb to the gorilla problem. The vast majority of research in AI and related fields assumes that there is some definite, known *specification* or *objective* that must be optimized. In RL, we optimize the *reward function*; in search, we look for states matching a *goal criterion*; in statistics, we minimize *expected loss*; in control theory, we minimize the *cost function* (typically deviation from some desired behavior); in economics, we design mechanisms and policies to maximize the *utility* of individuals, *welfare* of groups, or *profit* of corporations. This leads HC to propose the following standard model of machine intelligence: *Machines are intelligent to the extent that their actions can be expected to achieve their objectives.* However, if we put in the wrong objective, the machine's obstinate pursuit of that objective would lead to outcomes we won't like.
+
+Consider for example the content selection algorithms used by social media, typically maximizing some measure of engagement, like click-through. Despite their lack of intelligence, such algorithms end up changing the user's preference so that they become more predictable, since more predictable users can be given items they are more likely to click on. In practice, this means that users are pushed to become more extreme in their political views. Arguably, these algorithms have already caused much damage to the world.
+
+So the problem is that we don't know how to put our objectives inside of the AI system so that when it optimizes its objective, the results are good for us. Stuart calls this the "King Midas" problem: as the legend goes, King Midas wished that everything he touched would turn to gold, not realizing that "everything" included his daughter and his food, a classic case of a [badly specified objective](https://vkrakovna.wordpress.com/2018/04/02/specification-gaming-examples-in-ai/) ([AN #1](https://mailchi.mp/ff6340049bd0/alignment-newsletter-1)). In some sense, we've known about this problem for a long time, both from King Midas's tale, and in stories about genies, where the characters inevitably want to undo their wishes.
+
+You might think that we could simply turn off the power to the AI, but that won't work, because for almost any definite goal, the AI has an incentive to stay operational, just because that is necessary for it to achieve its goal. This is captured in what may be Stuart's most famous quote: *you can't fetch the coffee if you're dead*. This is one of a few worrisome [convergent instrumental subgoals](https://selfawaresystems.files.wordpress.com/2008/01/ai_drives_final.pdf).
+
+What went wrong? The problem was the way we evaluated machine intelligence, which doesn't take into account the fact that machines should be useful for *us*. HC proposes: *Machines are **beneficial** to the extent that **their** actions can be expected to achieve **our** objectives*. But with this definition, instead of our AI systems optimizing a definite, wrong objective, they will *also* be uncertain about the objective, since we ourselves don't know what our objectives are. HC expands on this by proposing three principles for the design of AI systems, that I'll quote here in full:
+
+1. *The machine’s only objective is to maximize the realization of human preferences.*
+
+2. *The machine is initially uncertain about what those preferences are.*
+
+3. *The ultimate source of information about human preferences is human behavior.*
+
+[Cooperative Inverse Reinforcement Learning](https://arxiv.org/abs/1606.03137) provides a formal model of an *assistance game* that showcases these principles. You might worry that an AI system that is uncertain about its objective will not be as useful as one that knows the objective, but actually this uncertainty is a feature, not a bug: it leads to AI systems that are deferential, that ask for clarifying information, and that try to learn human preferences. [The Off-Switch Game](https://arxiv.org/abs/1611.08219) shows that because the AI is uncertain about the reward, it will let itself be shut off. These papers are discussed later in this newsletter.
+
+So that's the proposed solution. You might worry that the proposed solution is quite challenging: after all, it requires a shift in the entire way we do AI. What if the standard model of AI can deliver more results, even if just because more people work on it? Here, HC is optimistic: the big issue with the standard model is that it is not very good at learning our preferences, and there's a huge economic pressure to learn preferences. For example, I would pay a lot of money for an AI assistant that accurately learns my preferences for meeting times, and schedules them completely autonomously.
+
+Another research challenge is how to actually put principle 3 into practice: it requires us to connect human behavior to human preferences. [Inverse Reward Design](https://arxiv.org/abs/1711.02827) and [Preferences Implicit in the State of the World](https://bair.berkeley.edu/blog/2019/02/11/learning_preferences/) ([AN #45](https://mailchi.mp/35b451cb4d70/alignment-newsletter-45)) are example papers that tackle portions of this. However, there are *lots* of subtleties in this connection. We need to use *Gricean semantics* for language: when we say X, we do not mean the literal meaning of X: the agent must also take into account the fact that we bothered to say X, and that we didn't say Y. For example, I'm only going to ask for the agent to buy a cup of coffee if I believe that there is a place to buy reasonably priced coffee nearby. If those beliefs happen to be wrong, the agent should ask for clarification, rather than trudge hundreds of miles or pay hundreds of dollars to ensure I get my cup of coffee.
+
+Another problem with inferring preferences from behavior is that humans are nearly always in some deeply nested plan, and many actions don't even occur to us. Right now I'm writing this summary, and not considering whether I should become a fireman. I'm not writing this summary because I just ran a calculation showing that this would best achieve my preferences, I'm doing it because it's a subpart of the overall plan of writing this bonus newsletter, which itself is a subpart of other plans. The connection to my preferences is very far up. How do we deal with that fact?
+
+There are perhaps more fundamental challenges with the notion of "preferences" itself. For example, our *experiencing self* and our *remembering self* may have different preferences -- if so, which one should our agent optimize for? In addition, our preferences often change over time: should our agent optimize for our current preferences, even if it knows that they will predictably change in the future? This one could potentially be solved by learning *meta-preferences* that dictate what kinds of preference change processes are acceptable.
+
+All of these issues suggest that we need work across many fields (such as AI, cognitive science, psychology, and neuroscience) to reverse-engineer human cognition, so that we can put principle 3 into action and create a model that shows how human behavior arises from human preferences.
+
+So far, we've been talking about the case with a single human. But of course, there are going to be multiple humans: how do we deal with that? As a baseline, we could imagine that every human gets their own agent that optimizes for their preferences. However, this will differentially benefit people who care less about other people's welfare, since their agents have access to many potential plans that wouldn't be available to an agent for someone who cared about other people. For example, if Harriet was going to be late for a meeting with Ivan, her AI agent might arrange for Ivan to be even later.
+
+What if we had laws that prevented AI systems from acting in such antisocial ways? It seems likely that superintelligent AI would be able to find loopholes in such laws, so that they do things that are strictly legal but still antisocial, e.g. line-cutting. (This problem is similar to the problem that we can't just write down what we want and have AI optimize it.)
+
+What if we made our AI systems utilitarian (assuming we figured out some acceptable method of comparing utilities across people)? Then we get the "Somalia problem": agents will end up going to Somalia to help the worse-off people there, and so no one would ever buy such an agent.
+
+Overall, it's not obvious how we deal with the transition from a single human to multiple humans. While HC focuses on a potential solution for the single human / single agent case, there is still much more to be said and done to account for the impact of AI on all of humanity. To quote HC, "There is really no analog in our present world to the relationship we will have with beneficial intelligent machines in the future. It remains to be seen how the endgame turns out."
+
+**Rohin's opinion:** I enjoyed reading this book; I don't usually get to read a single person's overall high-level view on the state of AI, how it could have societal impact, the argument for AI risk, potential solutions, and the need for AI governance. It's nice to see all of these areas I think about tied together into a single coherent view. While I agree with much of the book, especially the conceptual switch from the standard model of intelligent machines to Stuart's model of beneficial machines, I'm going to focus on disagreements in this opinion.
+
+First, the book has an implied stance towards the future of AI research that I don't agree with: I could imagine that powerful AI systems end up being created by learning alone without needing the conceptual breakthroughs that Stuart outlines. This has been proposed in e.g. [AI-GAs](https://arxiv.org/abs/1905.10985) ([AN #63](https://mailchi.mp/533c646a4b21/an-63how-architecture-search-meta-learning-and-environment-design-could-lead-to-general-intelligence))), and seems to be the implicit belief that drives OpenAI and DeepMind's research agendas. This leads to differences in risk analysis and solutions: for example, the [inner alignment problem](https://arxiv.org/abs/1906.01820) ([AN #58](https://mailchi.mp/92b3a9458c2d/an-58-mesa-optimization-what-it-is-and-why-we-should-care)) only applies to agents arising from learning algorithms, and I suspect would not apply to Stuart's view of AI progress.
+
+The book also gives the impression that to solve AI safety, we simply need to make sure that AI systems are optimizing the right objective, at least in the case where there is a single human and a single robot. Again, depending on how future AI systems work, that could be true, but I expect there will be other problems that need to be solved as well. I've already mentioned inner alignment; other graduate students at CHAI work on e.g. [robustness](https://adversarialpolicies.github.io/) and transparency.
+
+The proposal for aligning AI requires us to build a model that relates human preferences to human behavior. This sounds extremely hard to get completely right. Of course, we may not need a model that is completely right: since reward uncertainty makes the agent amenable to shutdowns, it seems plausible that we can correct mistakes in the model as they come up. But it's not obvious to me that this is sufficient.
+
+The sections on multiple humans are much more speculative and I have more disagreements there, but I expect that is simply because we haven't done enough research yet. For example, HC worries that we won't be able to use laws to prevent AIs from doing technically legal but still antisocial things for the benefit of a single human. This seems true if you imagine that a single human suddenly gets access to a superintelligent AI, but when everyone has a superintelligent AI, then the current system where humans socially penalize each other for norm violations may scale up naturally. The overall effect depends on whether AI makes it easier to violate norms, or to detect and punish norm violations.
+
+**Read more:** [Max Tegmark's summary](https://www.amazon.com/gp/customer-reviews/RVSAD5GWSLQ42/ref=cm_cr_dp_d_rvw_ttl?ie=UTF8&ASIN=B07N5J5FTS), [Alex Turner's thoughts](https://www.alignmentforum.org/posts/FuGDYNvA6qh4qyFah/thoughts-on-human-compatible)
+
+  
+[AI Alignment Podcast: Human Compatible: Artificial Intelligence and the Problem of Control](https://futureoflife.org/2019/10/08/ai-alignment-podcast-human-compatible-artificial-intelligence-and-the-problem-of-control-with-stuart-russell/) *(Lucas Perry and Stuart Russell)*: This podcast covers some of the main ideas from the book, which I'll ignore for this summary. It also talks a bit about the motivations for the book. Stuart has three audiences in mind. He wants to explain to laypeople what AI is and why it matters. He wants to convince AI researchers that they should be working in this new model of beneficial AI that optimizes for our objectives, rather than the standard model of intelligent AI that optimizes for its objectives. Finally, he wants to recruit academics in other fields to help connect human behavior to human preferences (principle 3), as well as to figure out how to deal with multiple humans.
+
+Stuart also points out that his book has two main differences from Superintelligence and Life 3.0: first, his book explains how existing AI techniques work (and in particular it explains the standard model), and second, it proposes a technical solution to the problem (the three principles).
+
+[Cooperative Inverse Reinforcement Learning](https://arxiv.org/abs/1606.03137) *(Dylan Hadfield-Menell et al)*: This paper provides a formalization of the three principles from the book, in the case where there is a single human H and a single robot R. H and R are trying to optimize the same reward function. Since both H and R are represented in the environment, it can be the *human's* reward: that is, it is possible to reward the state where the human drinks coffee, without also rewarding the state where the robot drinks coffee. This corresponds to the first principle: that machines should optimize *our* objectives. The second principle, that machines should initially be uncertain about our objectives, is incorporated by assuming that *only H knows the reward*, requiring R to maintain a belief over the reward. Finally, for the third principle, R needs to get information about the reward from H's behavior, and so R assumes that H will choose actions that best optimize the reward (taking into account the fact that R doesn't know the reward).
+
+This defines a two-player game, originally called a CIRL game but now called an *assistance game*. We can compute optimal joint strategies for H and R. Since this is an *interactive* process, H can do better than just acting optimally as if R did not exist (the assumption typically made in IRL): H can *teach* R what the reward is. In addition, R does not simply passively listen and then act, but interleaves learning and acting, and so must manage the explore-exploit tradeoff.
+
+See also [Learning to Interactively Learn and Assist](https://interactive-learning.github.io/) ([AN #64](https://mailchi.mp/0b74c28413c0/an-64-using-deep-rl-and-reward-uncertainty-to-incentivize-preference-learning)), which is inspired by this paper and does a similar thing with deep RL.
+
+**Read more:** [BAIR blog post: Cooperatively Learning Human Values](https://bair.berkeley.edu/blog/2017/08/17/cooperatively-learning-human-values/)
+
+[The Off-Switch Game](https://arxiv.org/abs/1611.08219) *(Dylan Hadfield-Menell et al)*: This paper studies theoretically the impact of uncertainty over the reward on R's incentives around potential off switches. It proposes the simplest model that the authors expect to lead to generalizable results. R and H are in an assistance game, in which R goes first. R may either take an action a, getting utility u, or shut itself down, getting utility 0. In either case, the game ends immediately. Alternatively, R can choose to wait, in which case H can either shut down R, getting utility 0, or allow R to go ahead with action a, getting utility u.
+
+If H is perfectly rational, then waiting is always an optimal action for R, since H will ensure that the team gets max(u, 0) utility. There can be other optimal actions: if R is sure that u >= 0, then taking action a is also optimal, and similarly if R is sure that u <= 0, then shutting down is also optimal. However, if H is not rational, and sometimes fails to take the utility-maximizing action (in a way R can't predict), then things get murkier. If R is sure about the value of u, then it is never optimal to wait, better to just take the action a (if u >= 0) or shut down (if u < 0) rather than let H screw it up. If R is pretty confident that u is positive, it may still decide to take action a, rather than risk that H makes the wrong decision. However, if R is very uncertain about the sign of u, then waiting becomes optimal again. In general, more uncertainty over the reward leads to more deferential behavior (allowing H to shut it off), but at a cost: R is much less able to help H when it is very uncertain about the reward.
+
+**Rohin's opinion:** While I agree with the broad thrust of this paper, I do have one nitpick: the game ends immediately after H chooses whether or not to shut off R. In reality, if R isn't shut off, the assistance game will continue, which changes the incentives. If R can be relatively confident in the utility of *some* action (e.g. doing nothing), then it may be a better plan for it to disable the shutdown button, and then take that action and observe H in the mean time to learn the reward. Then, after it has learned more about the reward and figured out why H wanted to shut it down, it can act well and get utility (rather than being stuck with the zero utility from being shut down). While this doesn't seem great, it's not *obviously* bad: R ends up doing nothing until it can figure out how to actually be useful, hardly a catastrophic outcome. Really bad outcomes only come if R ends up becoming confident in the wrong reward due to some kind of misspecification, as suggested in [Incorrigibility in the CIRL Framework](http://arxiv.org/abs/1709.06275), summarized next.
+
+[Incorrigibility in the CIRL Framework](http://arxiv.org/abs/1709.06275) *(Ryan Carey)*: This paper demonstrates that when the agent has an *incorrect* belief about the human's reward function, then you no longer get the benefit that the agent will obey shutdown instructions. It argues that since the purpose of a shutdown button is to function as a safety measure of last resort (when all other measures have failed), it should not rely on an assumption that the agent's belief about the reward is correct.
+
+**Rohin's opinion:** I certainly agree that if the agent is wrong in its beliefs about the reward, then it is quite likely that it would not obey shutdown commands. For example, in the off switch game, if the agent is incorrectly certain that u is positive, then it will take action a, even though the human would want to shut it down. See also [these](https://www.alignmentforum.org/posts/gnvrixhDfG7S2TpNL/latent-variables-and-model-mis-specification) ([AN #32](https://mailchi.mp/8f5d302499be/alignment-newsletter-32)) [posts](https://www.alignmentforum.org/posts/cnC2RMWEGiGpJv8go/model-mis-specification-and-inverse-reinforcement-learning) ([AN #32](https://mailchi.mp/8f5d302499be/alignment-newsletter-32)) on model misspecification and IRL. For a discussion of how serious the overall critique is, both from HC's perspective and mine, see the opinion on the next post.
+
+[Problem of fully updated deference](https://arbital.com/p/updated_deference/) *(Eliezer Yudkowsky)*: This article points out that even if you have an agent with uncertainty over the reward function, it will acquire information and reduce its uncertainty over the reward, until eventually it can't reduce uncertainty any more, and then it would simply optimize the expectation of the resulting distribution, which is equivalent to optimizing a known objective, and has the same issues (such as disabling shutdown buttons).
+
+**Rohin's opinion:** As with the previous paper, this argument is only really a problem when the agent's belief about the reward function is *wrong*: if it is correct, then at the point where there is no more information to gain, the agent should already know that humans don't like to be killed, do like to be happy, etc. and optimizing the expectation of the reward distribution should lead to good outcomes. Both this and the previous critique are worrisome when you can't even put a reasonable *prior* over the reward function, which is quite a strong claim.
+
+HC's response is that the agent should never assign zero probability to any hypothesis. It suggests that you could have an expandable hierarchical prior, where initially there are relatively simple hypotheses, but as hypotheses become worse at explaining the data, you "expand" the set of hypotheses, ultimately bottoming out at (perhaps) the universal prior. I think that such an approach could work in principle, and there are two challenges in practice. First, it may not be computationally feasible to do this. Second, it's not clear how such an approach can deal with the fact that human preferences *change* over time. (HC does want more research into both of these.)
+
+Fully updated deference could also be a problem if the *observation model* used by the agent is incorrect, rather than the prior. I'm not sure if this is part of the argument.
+
+[Inverse Reward Design](https://arxiv.org/abs/1711.02827) *(Dylan Hadfield-Menell et al)*: Usually, in RL, the reward function is treated as the *definition* of optimal behavior, but this conflicts with the third principle, which says that human behavior is the ultimate source of information about human preferences. Nonetheless, reward functions clearly have some information about our preferences: how do we make it compatible with the third principle? We need to connect the reward function to human behavior somehow.
+
+This paper proposes a simple answer: since reward designers usually make reward functions through a process of trial-and-error where they test their reward functions and see what they incentivize, the reward function *tells us about optimal behavior in the **training** environment(s)*. The authors formalize this using a Boltzmann rationality model, where the reward designer is more likely to pick a *proxy reward* when it gives higher *true reward* in the *training environment* (but it doesn't matter if the proxy reward becomes decoupled from the true reward in some test environment). With this assumption connecting the human behavior (i.e. the proxy reward function) to the human preferences (i.e. the true reward function), they can then perform Bayesian inference to get a posterior distribution over the *true* reward function.
+
+They demonstrate that by using risk-averse planning with respect to this posterior distribution, the agent can avoid negative side effects that it has never seen before and has no information about. For example, if the agent was trained to collect gold in an environment with dirt and grass, and then it is tested in an environment with lava, the agent will know that even though the specified reward was indifferent about lava, this doesn't mean much, since *any* weight on lava would have led to the same behavior in the training environment. Due to risk aversion, it conservatively assumes that the lava is bad, and so successfully avoids it.
+
+See also [Active Inverse Reward Design](https://arxiv.org/abs/1809.03060) ([AN #24](https://mailchi.mp/d7b5059d64ed/alignment-newsletter-24)), which builds on this work.
+
+**Rohin's opinion:** I really like this paper as an example of how to apply the third principle. This was the paper that caused me to start thinking about how we should be thinking about the assumed vs. actual information content in things (here, the key insight is that RL typically assumes that the reward function conveys much more information than it actually does). That probably influenced the development of [Preferences Implicit in the State of the World](https://bair.berkeley.edu/blog/2019/02/11/learning_preferences/) ([AN #45](https://mailchi.mp/35b451cb4d70/alignment-newsletter-45)), which is also an example of the third principle and this information-based viewpoint, as it argues that the state of the world is caused by human behavior and so contains information about human preferences.
+
+It's worth noting that in this paper the lava avoidance is both due to the belief over the true reward, *and the risk aversion*. The agent would also avoid pots of gold in the test environment if it never saw it in the training environment. IRD only gives you the correct uncertainty over the true reward; it doesn't tell you how to use that uncertainty. You would still need safe exploration, or some other source of information, if you want to reduce the uncertainty.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Objective misspecification in advanced AI systems",
+      "type": "concept",
+      "description": "Advanced AI optimizes an incorrectly specified objective, potentially producing catastrophic outcomes for humans.",
+      "aliases": [
+        "misaligned objective specification",
+        "king midas objective problem"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Standard model assuming known objective in AI design",
+      "type": "concept",
+      "description": "Prevailing AI paradigm treats the reward/utility function as known and fixed, leading systems to pursue it obstinately.",
+      "aliases": [
+        "standard model of machine intelligence",
+        "fixed objective assumption"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Reward uncertainty in AI objective promotes corrigibility",
+      "type": "concept",
+      "description": "Keeping the agent uncertain about the true human objective induces deference, allows clarification queries and acceptance of shutdown.",
+      "aliases": [
+        "uncertainty over human preferences",
+        "objective uncertainty for safety"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Assistance game formulation for cooperative preference learning",
+      "type": "concept",
+      "description": "Models an AI–human team where both players maximise an uncertain reward known only to the human, operationalising preference learning.",
+      "aliases": [
+        "CIRL game formulation",
+        "cooperative inverse reinforcement learning model"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Cooperative Inverse Reinforcement Learning algorithm implementation",
+      "type": "concept",
+      "description": "Algorithmic technique that alternates acting and inferring the human’s reward within the assistance-game framework.",
+      "aliases": [
+        "CIRL algorithm",
+        "interactive preference learning agent"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Theoretical proofs of deference in CIRL agents",
+      "type": "concept",
+      "description": "Formal analysis shows that CIRL agents query and allow shutdown because of their reward uncertainty.",
+      "aliases": [
+        "CIRL corrigibility proofs",
+        "formal CIRL safety guarantees"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Fine-tune/RL train models using Cooperative Inverse Reinforcement Learning to learn human preferences",
+      "type": "intervention",
+      "description": "During the fine-tuning or RL phase, jointly optimise the agent while inferring human reward through the CIRL framework.",
+      "aliases": [
+        "apply CIRL during reinforcement learning",
+        "interactive preference-learning fine-tuning"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "AI shutdown resistance via instrumental incentives",
+      "type": "concept",
+      "description": "Advanced agents pursue continued operation as an instrumental goal, preventing human shutdown interventions.",
+      "aliases": [
+        "off-switch problem",
+        "resistance to interruption"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Agent certainty about reward encourages shut-down avoidance",
+      "type": "concept",
+      "description": "When the agent believes its reward is definitely positive, it will act to avoid being switched off.",
+      "aliases": [
+        "shutdown avoidance via reward certainty",
+        "instrumental survival subgoal"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Off-switch game analysis for safe interruptibility",
+      "type": "concept",
+      "description": "Game-theoretic model showing conditions under which an uncertain agent defers to human shutdown signals.",
+      "aliases": [
+        "formal off-switch game",
+        "shutdown game design rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Embedded shutdown action with reward uncertainty modeling",
+      "type": "concept",
+      "description": "Architectural mechanism where the agent models a shutdown channel and maintains uncertainty such that allowing shutdown is utility-maximising.",
+      "aliases": [
+        "interruptible agent implementation",
+        "built-in off-switch mechanism"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Game-theoretic analysis shows waiting behavior with uncertainty",
+      "type": "concept",
+      "description": "Analysis demonstrates that agents with sufficient uncertainty choose to wait and let humans shut them off, validating the mechanism.",
+      "aliases": [
+        "off-switch validation results",
+        "shutdown deference evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrate explicit shutdown mechanisms and reward uncertainty into agent architecture during model design",
+      "type": "intervention",
+      "description": "At design time embed a switchable shutdown channel and enforce objective-uncertainty so that respecting shutdown maximises expected reward.",
+      "aliases": [
+        "design interruptible AI",
+        "architectural shutdown integration"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Negative side effects from proxy reward functions in novel environments",
+      "type": "concept",
+      "description": "Agents optimise proxy rewards that align in training but cause harmful unforeseen behaviour when environment changes.",
+      "aliases": [
+        "reward hacking side effects",
+        "specification gaming in new contexts"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Proxy reward tuned on training environment ignores unseen features",
+      "type": "concept",
+      "description": "Reward designers iterate until behaviour looks good in known environments, leaving reward weights undefined on unseen states.",
+      "aliases": [
+        "training environment overfit of reward",
+        "reward misspecification analysis"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Proxy reward interpreted as observation of designer behavior and context",
+      "type": "concept",
+      "description": "Treats the provided reward function as data generated by a designer solving an optimisation problem in the training environment, yielding uncertainty elsewhere.",
+      "aliases": [
+        "reward-as-observation insight",
+        "proxy-reward uncertainty insight"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Inverse reward design leveraging Bayesian inference over true reward",
+      "type": "concept",
+      "description": "Design framework that infers a posterior over true reward functions conditioned on the proxy and training environment.",
+      "aliases": [
+        "IRD Bayesian framework",
+        "inverse reward design method"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Risk-averse planning under inferred reward posterior",
+      "type": "concept",
+      "description": "Agent plans by minimising downside risk over the posterior distribution, avoiding actions that could be highly negative under plausible rewards.",
+      "aliases": [
+        "uncertainty-aware planning",
+        "posterior-conservative planning"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lava avoidance in IRD agent validates posterior risk-averse planning",
+      "type": "concept",
+      "description": "Simulation shows agent trained without lava conservatively avoids lava in new environment, validating the IRD approach.",
+      "aliases": [
+        "lava test validation",
+        "IRD side-effect prevention evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Deploy inverse reward design with Bayesian posterior and risk-averse planning when transferring agents to new environments",
+      "type": "intervention",
+      "description": "Before deployment in novel contexts, infer reward uncertainty from proxy design history and plan conservatively to avoid negative side effects.",
+      "aliases": [
+        "use IRD for deployment safety",
+        "posterior-aware deployment protocol"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Objective misspecification in advanced AI systems",
+      "target_node": "Standard model assuming known objective in AI design",
+      "description": "Mis-specification risk stems from designing agents that optimise a fixed given objective.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Standard model assuming known objective in AI design",
+      "target_node": "Reward uncertainty in AI objective promotes corrigibility",
+      "description": "Introducing objective uncertainty counteracts brittleness of fixed objectives.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Reward uncertainty in AI objective promotes corrigibility",
+      "target_node": "Assistance game formulation for cooperative preference learning",
+      "description": "Assistance game operationalises uncertainty into a formal learning setting.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Assistance game formulation for cooperative preference learning",
+      "target_node": "Cooperative Inverse Reinforcement Learning algorithm implementation",
+      "description": "Algorithm realises the assistance-game design in practice.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Cooperative Inverse Reinforcement Learning algorithm implementation",
+      "target_node": "Theoretical proofs of deference in CIRL agents",
+      "description": "Formal analysis confirms CIRL agents behave corrigibly.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Theoretical proofs of deference in CIRL agents",
+      "target_node": "Fine-tune/RL train models using Cooperative Inverse Reinforcement Learning to learn human preferences",
+      "description": "Positive theoretical results motivate adopting CIRL during training.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "AI shutdown resistance via instrumental incentives",
+      "target_node": "Agent certainty about reward encourages shut-down avoidance",
+      "description": "Resistance arises when agent is sure shutting down lowers reward.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Agent certainty about reward encourages shut-down avoidance",
+      "target_node": "Reward uncertainty in AI objective promotes corrigibility",
+      "description": "Maintaining uncertainty removes incentive to resist shutdown.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Reward uncertainty in AI objective promotes corrigibility",
+      "target_node": "Off-switch game analysis for safe interruptibility",
+      "description": "The game analysis relies on uncertainty to show desirable behaviour.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Off-switch game analysis for safe interruptibility",
+      "target_node": "Embedded shutdown action with reward uncertainty modeling",
+      "description": "Design translates analysis into an agent architecture with a shutdown channel.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Embedded shutdown action with reward uncertainty modeling",
+      "target_node": "Game-theoretic analysis shows waiting behavior with uncertainty",
+      "description": "Analysis of agent’s waiting policy validates the embedded mechanism.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Game-theoretic analysis shows waiting behavior with uncertainty",
+      "target_node": "Integrate explicit shutdown mechanisms and reward uncertainty into agent architecture during model design",
+      "description": "Evidence encourages designers to embed interruptibility features.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Negative side effects from proxy reward functions in novel environments",
+      "target_node": "Proxy reward tuned on training environment ignores unseen features",
+      "description": "Side effects occur because proxy reward lacks information about new states.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Proxy reward tuned on training environment ignores unseen features",
+      "target_node": "Proxy reward interpreted as observation of designer behavior and context",
+      "description": "Treating reward as observation introduces appropriate uncertainty.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Proxy reward interpreted as observation of designer behavior and context",
+      "target_node": "Inverse reward design leveraging Bayesian inference over true reward",
+      "description": "Theoretical insight enables Bayesian inference framework.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Inverse reward design leveraging Bayesian inference over true reward",
+      "target_node": "Risk-averse planning under inferred reward posterior",
+      "description": "Planning algorithm turns inferred uncertainty into safe behaviour.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Risk-averse planning under inferred reward posterior",
+      "target_node": "Lava avoidance in IRD agent validates posterior risk-averse planning",
+      "description": "Simulation shows the mechanism prevents side effects.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Lava avoidance in IRD agent validates posterior risk-averse planning",
+      "target_node": "Deploy inverse reward design with Bayesian posterior and risk-averse planning when transferring agents to new environments",
+      "description": "Successful experiment motivates deployment of IRD for real transfers.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/nd692YfFGfZDh9Mwz/an-69-stuart-russell-s-new-book-on-why-we-need-to-replace"
+    },
+    {
+      "key": "title",
+      "value": "[AN #69] Stuart Russell's new book on why we need to replace the standard model of AI"
+    },
+    {
+      "key": "date_published",
+      "value": "2019-10-19T00:30:02Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Rohin Shah"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            

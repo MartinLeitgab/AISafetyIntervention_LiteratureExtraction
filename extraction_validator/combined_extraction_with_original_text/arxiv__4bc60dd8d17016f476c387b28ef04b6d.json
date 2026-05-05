@@ -1,0 +1,1291 @@
+Original Text:
+An Empirical Comparison of Three Inference
+Methods
+David Heckerman
+Medical Computer Science Group
+Knowledge Systems Laboratory
+Stanford University
+Stanford, California 94305
+Abstract
+In this paper, an empirical evaluation of three inference methods for uncertain reasoning is
+presented in the context of Pathnder, a large expert system for the diagnosis of lymph node
+pathology. The inference procedures evaluated are (1) Bayes' theorem, assuming evidence is con-
+ditionally independent given each hypothesis, (2) odds{likelihood updating, assuming evidence
+is conditionally independent given each hypothesis and given the negation of each hypothesis,
+and (3) a inference method related to the Dempster{Shafer theory of belief. A decision-theoretic
+approach is introduced for evaluating the performance of expert systems. This approach, when
+combined with a more traditional expert-rating method for evaluation, provides insights about
+various components of the inference process.
+1 Introduction
+Several years ago, before learning much about methods for reasoning with uncertainty, I and my col-
+leagues began work on a large expert system, called Pathnder, that assists community pathologists
+with the diagnosis of lymph node pathology. Because the Dempster{Shafer theory of belief was quite
+popular in our research group at the time, we developed a inference method for our expert system
+inspired by this theory. The program performed fairly well in the opinion of the expert pathologist
+who provided the knowledge for the system.
+In the months following the initial development of Pathnder, several of us in the research
+group began exploring other methods for reasoning under uncertainty. We identied the Bayesian
+approach as a candidate for a new inference procedure. We realized that the measures of uncertainty
+we assessed from the expert could be interpreted as probabilities and we implemented a new inference
+method| a special case of Bayes' theorem.
+During this time, the expert was running cases through the program to test the system's diagnos-
+tic performance. One day, without telling him, we changed the inference procedure to the Bayesian
+approach. After running several cases with the new approach, the expert exclaimed, \What did you
+do to the program? This is fantastic!"
+This experience was and still is in sharp conict with the beliefs of many researchers in the
+articial-intelligence community. At each of the rst three AAAI uncertainty workshops, one or
+more researchers argued that the particular inference method used does not signicantly aect
+performance, at least in the context of large real-world systems. In this paper, a formal evaluation
+of the performance of several inference methods is presented that conrms our early experience
+with Pathnder and refutes the claim made at the workshops. Moreover, it will be shown that the
+Bayesian approach yields performance superior to that obtained with the other approaches in the
+domain of lymph-node pathology.
+1arXiv:1304.2357v3  [cs.AI]  24 Jan 2023
+In addition to describing the comparison, a new approach for evaluating the performance of
+expert systems will be introduced. This method, based in decision-theory, compliments a more
+traditional expert-rating approach to system evaluation. Both the new and traditional approaches
+will be used in the experimental comparison of the inference procedures.
+2 The Domain
+AI researchers working on uncertain reasoning often complain that the merits of one inference
+method versus those of another are evaluated on the basis of only theoretical considerations. Another
+complaint is that evaluations of performance are limited to small or articial domains. This study
+is designed to address both of these complaints. The Pathnder program reasons about virtually
+alldiseases that occur in a human lymph node (24 benign diseases, 9 Hodgkin's lymphomas, and
+18 non-Hodgkin's lymphomas.) In addition, the program includes an exhaustive list of clues or
+features that can be used to help determine a diagnosis. Over 100 morphologic features or patterns
+within a lymph node that can be easily recognized under a microscope are represented. The program
+also contains over 30 features reecting clinical, laboratory, immunological, and molecular biological
+information that is useful in diagnosis.
+Because this study focuses on only one domain, these results should not be extrapolated to other
+domains. All that will be demonstrated is that the use of dierent inference methods canaect
+performance in a real-world system. Researchers interested in learning more about the relative merits
+of dierent inference methods are encouraged to begin similar investigations in other domains.
+3 The Inference Methods
+The three inference methods evaluated are (1) a special case of Bayes' theorem, (2) an approach
+related to the parallel combination function in the certainty-factor (CF) model [14], and (3) a
+method inspired by the Dempster{Shafer theory of belief [12]. All three approaches take a set
+of observations and produce a belief distribution over disease hypotheses based on the same expert
+probability assessments. However, the second two approaches deviate signicantly from probabilistic
+reasoning.
+All three approachs share the assumption that the hypotheses represented by the system are
+mutually exclusive and exhaustive. Furthermore, all three approaches assume that the diagnostic
+features are, in some sense, independent. The exact nature of independence varies from method to
+method and is discussed in detail in a later section. It should be noted that, during the development
+of Pathnder, obvious dependencies among features were eliminated by clustering highly dependent
+features. For example, a pattern called necrosis is seen in many lymph node diseases. The size of
+necrosis (percent area of lymph node showing this pattern) and the distribution of necrosis are two
+strongly interrelated features, and both are important for diagnosis. To remove the dependency,
+a single feature \necrosis size and distribution" was created which had the mutually exclusive and
+exhaustive values \nonextensive and focal," \nonextensive and multi focal," \extensive and focal,"
+and \extensive and multi focal." These values were created by taking the cross-product of the values
+for individual features pertaining to necrosis size and necrosis distribution.
+Before describing the inference methods, some denitions and notation are introduced. The
+mutually exclusive and exhaustive disease hypotheses will be denoted by the symbol dwith a
+subscript|for example, dj. Similarly, the symbol fkrefers to the kth feature in the knowledge
+base. Each feature is associated with a set of mutually exclusive and exhaustive values . Theith
+value of the kth feature is denoted by vki. A given feature and a value for that feature together
+constitute an observation . The term fkvkidenotes an observation of the ith value for the kth feature.
+For the sake of brevity, a set of observations f1v1i:::fnvniwill be denoted by the symbol . Finally,
+two conditional independence assumptions associated with the inference procedures are introduced
+2
+here for reference. The rst assumption is that evidence is conditionally independent on disease
+hypotheses. Formally, the assumption is that, for any combination of observations f1v1i:::fnvni,
+p(f1v1i:::fnvnijdj) =p(f1v1ijdj):::p(fnvnijdj) (1)
+The second assumption is that evidence is conditionally independent on the negation of the hypoth-
+esis. Specically, for any combination of observations f1v1i:::fnvni,
+p(f1v1i:::fnvnijdj) =p(f1v1ijdj):::p(fnvnijdj) (2)
+Both Equations 1 and 2 apply to each disease hypothesis dj.
+3.1 Simple Bayes Method
+The rst inference method is Bayes' theorem under the assumption that features are conditionally
+independent on the disease hypotheses (Equation 1). In particular, if observations =f1v1i:::fnvni
+are made, the probability of the jth disease is given by
+p(djj) =p(dj)p(f1v1ijdj):::p(fnvnijdj)P
+jp(dj)p(f1v1ijdj):::p(fnvnijdj)(3)
+This inference procedure will be called the simple Bayes method to emphasize the conditional inde-
+pendence assumptions it embodies. Note that the only assessments required by this approach are
+the probabilities p(fkvkijdj) for each combination of fk,vki, anddj, and the prior probabilities p(dj)
+for each disease. The other two inference methods require the same assessments.
+3.2 Odds{Likelihood Method
+The second inference method begins with a form of Bayes' theorem under the assumption that
+evidence is conditionally independent on both the hypotheses and on the negation of the hypotheses
+(Equations 1 and 2). Under these assumptions, Bayes' theorem for the jth disease given observations
+can be written
+p(djj)
+p(djj)=p(dj)
+p(dj)p(f1v1ijdj)
+p(f1v1ijdj)p(fnvnijdn)
+p(fnvnijdn)(4)
+The ratio on the left-hand side and the rst ratio on the right-hand side of Equation 4 are the
+posterior and prior odds ofdj, respectively. In general, the odds of an event is just a simple
+monotonic transformation of the probability of the event, given by
+O=p
+1 p
+The remaining terms of Equation 4 are called likelihood ratios. As can be seen from Equation 4, the
+likelihood ratio p(fkvkijdj)=p(fkvkijdj) is a measure of the degree to which observing feature value
+fkvkiupdates or changes the degree of belief in disease hypothesis dj.
+In the version of this inference method evaluated in this paper, the likelihood ratios are not
+assessed directly. Instead, the numerator, p(fkvkijdj) is assessed directly, and the denominator,
+p(fkvkijdj), is computed using
+p(fkvkijdj) =p(fkvki) p(fkvkijdj)p(dj)
+p(fkvki)
+where
+p(fkvki) =X
+jp(fkvkijdj)p(dj)
+3
+Thus, this inference method makes use of exactly the same assessments as does the simple Bayes
+approach. The likelihood ratios were not assessed directly because the expert found that likelihood
+ratios were much more dicult to assess than were conditional probabilities p(fkvkijdj). It would
+be interesting to conduct a comparison similar to the one described in this paper using an expert
+who is willing to assess likelihood ratios directly.
+Johnson [10] has demonstrated that the conditional-independence assumptions embodied in
+Equation 4 typically are not compatible with the updating of nmutually exclusive and exhaus-
+tive hypotheses, when nis greater than two. In particular, he has shown that consistently updating
+more than two mutually exclusive and exhaustive hypotheses under the conditional-independence
+assumptions used to derive Equation 4 is possible only when each hypothesis is updated by at most
+one observation.
+In Pathnder, this highly restrictive condition required for consistent updating is not met. Each
+disease hypothesis is updated by many observations in the knowledge base. As a result, Equation 4
+produces an inconsistent probability distribution over diseases in which the posterior probabilities
+of disease do not sum to one. To circumvent this problem, the disease probabilities are renormalized
+after Equation 4 is applied to the evidence. This completes the description of the second approach,
+which will be called the odds{likelihood method .
+It should be mentioned that the odds{likelihood approach is closely related to the parallel com-
+bination function used in the CF model. In fact, it was shown that the multiplicative combination
+of likelihood ratios seen in Equation 4 maps exactly to the parallel combination function when
+a certainty factor is identied with a simple monotonic transformation of the likelihood ratio [6].
+Moreover, in MYCIN|the expert system for which the CF model was designed|certainty factors
+of mutually exclusive and exhaustive sets of hypotheses are renormalized to sum to unity [13]. This
+form of renormalization does not correspond directly to the renormalization of probabilities in the
+second inference method, but it is similar in spirit.
+3.3 Naive Dempster{Shafer Method
+The third inference method has an interesting history. It was developed by researchers, including
+myself, who at the time knew little about methods for uncertain reasoning. As the method was
+primarily motivated by the Dempster{Shafer theory of belief, it will be called the naive Dempster{
+Shafer method . It should be emphasized that the approach is fraught with diculties, some of which
+will be addressed in the Discussion section. Perhaps the exposition will serve as a warning to the
+uncertainty in AI community as to what can happen when a group of novice researchers attempts
+to cope with the conicting uncertainty literature.
+As members of a medical information-science group, we were familiar with the inference method
+used by INTERNIST-1, an expert system for the diagnosis of disease across all diseases in internal
+medicine [11]. The inference procedure used by INTERNIST-1 incorporates two measures of un-
+certainty, an evoking strength and a frequency . An evoking strength for disease djand observation
+fkvki, denotedES(dj;fkvki), represents the degree to which the observation \evokes" or \conrms"
+the disease [11]. In contrast, a frequency for disease djand observation fkvki, denotedFQ(dj;fkvki),
+represents the \likelihood" of an observation given the disease [11].
+Because we initially had planned to use the INTERNIST-1 inference procedure, our expert
+assessed both an evoking strength and a frequency (on a continuous scale from 0 to 1) for each
+disease{observation pair. Before we began programming the approach, however, several members
+of our group argued that a more principled approach should be used to combine the measures of
+conrmation we had assessed. In particular, they argued that the Dempster{Shafer theory of belief
+should be used to combine evoking strengths.
+After exploring of the Dempster{Shafer theory, we decided to construct a separate frame of
+discernment, j=fdj;djg, for each disease hypothesis dj. In this framework, the evoking strength
+4
+for a disease{observation pair is interpreted as a mass assignment to the singleton disease hypothesis:
+mfkvki(fdjg) =ES(dj;fkvki) (5)
+The remainder of the mass, 1  ES(dj;fkvki), is assigned to . Mass assignments of this form follow
+the approach taken by Barnett [1]. With this interpretation, Dempster's rule of combination can
+be used to determine the mass assigned to the singleton hypothesis fdjg, given observations . In
+particular, Barnett showed that
+m(fdjg) = 1 Y
+k(1 mfkvki(fdjg)) (6)
+In this framework of simple belief functions, the mass assigned to the singleton hypothesis fdjgis
+equal to the belief in dj, denotedBel(fdjg). Thus, combining Equations 5 and 6, we can compute
+the belief in disease djgiven observations , using
+Bel(fdjg) = 1 Y
+k(1 ES(dj;fkvki)) (7)
+This inference method produces a number between zero and one for each disease hypothesis.
+At rst, we ignored the frequencies provided by our expert. However, our expert kept insisting
+that his assessments of frequency were much more reliable than were his assessments of evoking
+strength. This led us to study the INTERNIST-1 inference method more carefully. It became clear
+to us and to our expert that the assessed evoking strengths were closely related to the posterior
+probability of disease given an observation. Also, it became apparent that the assessed frequencies
+corresponded to the probability of an observation given a disease. Thus, we discarded the directly
+assessed evoking strengths and replaced them with the calculated values
+ES(dj;fkvki) =p(djjfkvki)
+=p(dj)p(fkvkijdj)P
+jp(dj)p(fkvkijdj)(8)
+where each probability assessment p(fkvkijdj) is given by the frequency FQ(dj;fkvki). Equation 8
+follows from Bayes' theorem and the assumption that diseases are mutually exclusive.
+Equations 7 and 8 together provide a method for computing the posterior degree of belief in each
+disease hypothesis from the prior probabilities of disease, dj, and the probabilities of an observation
+given disease, p(fkvkijdj). These are the same assessments that are required by the two approaches
+described previously. It should be noted that the resulting belief distribution rarely sums to unity.
+This fact is not a problem conceptually, because the evaluation metrics used in the experimental
+comparison do not require probabilistic interpretations for the distributions. Nonetheless, the dis-
+tributions produced by this inference method are renormalized to one, so that during the evaluation
+process, the expert is not able to recognize them immediately as being nonprobabilistic.
+Like the odds{likelihood approach, the naive Dempster-Shafer method is related to parallel com-
+bination in the CF model. In fact, Equation 6 is exactly the parallel combination function for
+positive or conrming evidence if certainty factors are identied with singleton mass assignments.
+4 The Evaluation Procedure
+The procedure for evaluating the inference methods is outlined in Figure 1. Observations describing
+a lymph-node biopsy of a patient are presented to an inference method. The inference method, in
+turn, produces a belief distribution over the disease hypotheses. Finally, the belief distribution is
+compared with the gold standard probability distribution using an evaluation metric . The process is
+5
+Figure 1: An schematic of the evaluation procedure.
+6
+repeated for each of the three inference methods. In this section, the gold standard and evaluation
+metrics are dened.
+An important consideration underlying the denition of the gold standard is the distinction
+between good decisions and good outcomes . A good decision is one that is consistent with the
+preferences and knowledge of a decision maker. A good outcome is one that is desirable to the
+decision maker. Sometimes, a good decision will, through a course of bad luck, lead to a bad
+outcome. Conversely, a bad decision may, with good luck, lead to a good outcome. However,
+the best way to achieve good outcomes in the long run, short of being all-knowing, is to make
+good decisions consistently. Therefore, the gold standards developed in this study are designed to
+identify good decisions, not necessarily good outcomes. This distinction between good decisions and
+outcomes is recognized in several previous evaluations including the validation experiments of Yu
+[19] [18], Cooper [4], and Wise [17].
+Two gold standards were used to compare the inference methods. The rst was derived from the
+probability distribution over diseases that our expert assessed using the same list of observations
+that was presented to the inference methods. The second was similar, except that the expert also
+reviewed the belief distributions generated by the three approaches.
+The two gold standards each have advantages and disadvantages. Both isolate the evaluation of
+the inference methods from actual outcomes. The rst gold standard is useful because it serves to
+measure how well each inference method matches the unaided reasoning of the expert. The second
+gold standard is useful because individuals, including experts, often make mistakes when reasoning
+under uncertainty in the sense that they violate highly desired principles of reasoning [16]. Indeed,
+the terms descriptive and normative often are used to distinguish how individuals actually reason
+and how they should reason. Of course, our expert is unlikely to appreciate his errors in reasoning,
+and to adjust his assessments accordingly, simply by observing the output of the three inference
+methods. A decision analyst would argue, for example, that a decision maker must make many
+iterations of the cycle comprising formulating assumptions, assessing probabilities, and inspecting
+the consequences of the assumptions and assessments before she can have any assurance that she
+is making a good decision. Such detailed iterations, however, are not possible in this experimental
+comparison because the principles of reasoning underlying each approach are not identical.1Devel-
+oping a gold standard corresponding to a good decision under the principles associated with one
+of the inference methods would bias the results in favor of that inference method. By allowing the
+expert to see the distributions generated by each approach, it is only hoped that gross errors in
+reasoning, such as lack of attention to rare hypotheses, will be reduced. To emphasize the roles
+played by the rst and second gold standard, they will be called the descriptive and informed gold
+standards, respectively.
+4.1 A Decision-Theoretic Evaluation Metric
+Two evaluation metrics are used to compare the inference methods. One approach is based on direct
+ratings given by the expert. The order approach, described in this section, is grounded in decision
+theory. Although other authors have suggested similar approaches (for example, see Wise [17]), the
+comparison described in this paper is, to the knowledge of the author, the rst to apply decision
+theory to the evaluation of a large real-world expert system.
+The fundamental notion underlying the decision-theoretic metric is that some errors in diagnosis
+are more serious than others are. For example, if a patient has a viral infection and is incor-
+rectly diagnosed as having cat-scratch disease|a disease caused by an organism that is killed with
+antibiotics|the consequences are not severe. In fact, the only nonnegligible consequence is that the
+patient will take antibiotics unnecessarily for several weeks. If, however, a patient has Hodgkin's
+1In fact, the principles underlying the odds{likelihood and naive Dempster{Shafer approaches are unclear to the
+author.
+7
+Figure 2: The decision-theoretic evaluation procedure.
+disease and is incorrectly diagnosed as having an insignicant benign disease such as a viral infec-
+tion, the consequences are often lethal. If the diagnosis had been made correctly, the patient would
+have immediately undergone radio- and chemotherapy, with a 90-percent chance of a cure. If the
+disease is diagnosed incorrectly, however, and thus is not treated, it will progress. By the time
+major symptoms of the disease appear and the patient once again seeks help, the cure rate with
+appropriate treatment will have dropped to leass than 20 percent.
+A decision theoretic approach to evaluation recognizes such variation in the consequences of
+misdiagnosis. The signicance of each possible misdiagnosis is assessed separately. More specically,
+for each combination of dianddj, a decision maker is asked, \How undesirable is the situation in
+which you have disease diand are diagnosed as having disease dj?" The disease djis called the
+diagnosis and the preference assessed is called the diagnostic utility , denotedUij. Details of the
+utility assessment procedure are discussed in the following section.
+Once the diagnostic utilities are assessed, it is a straightforward to evaluate each of the inference
+methods relative to the gold standard. The procedure for evaluation is shown in Figure 2. First,
+observations for a case are presented to a inference method to produce a belief distribution over the
+disease hypotheses, denoted pss. In addition, the observations are shown to the expert, who then
+assesses the gold-standard distributions, denoted pgold.
+8
+Next, a decision rule is used to determine the optimal diagnosis given each of the belief distribu-
+tions. In many systems that employ methods for uncertain reasoning, a commonly used decision rule
+is to choose the hypothesis with the highest degree of belief [5] [3]. Formally, the optimal diagnosis
+dssfor a belief distribution pssis given by
+dxss= arg max
+i[pss(di)] (9)
+where arg max ireturns the dithat maximizes the quantity pss(di). This rule for choosing the
+optimal diagnosis is applied to the belief distributions produced by each of the inference methods.
+Note that the rule does not require that the degrees of belief computed by an inference procedure
+have a probabilistic interpretation.
+The gold-standard diagnoses are then determined. The gold standards are prescribed using a
+decision rule dierent from Equation 9. In particular, a gold-standard diagnosis is determined by
+nding the diagnosis that maximizes the expected utility of the patient. More formally,
+dxgold= arg max
+j"X
+ipgold(di)Uij#
+(10)
+wheredxgolddenotes a gold-standard diagnosis. For comparison, both Equations 9 and 10, with pgold
+replaced by pss, are applied to the simple Bayes approach. The application of Equation 10 to the
+simple Bayes approach is justied because the inference method produces a legitimate probability
+distribution over diseases.
+After the gold-standard diagnoses are determined, ratings for the two distributions can be com-
+puted. In this decision-theoretic framework, the natural choice for a rating is the expected utility of
+each diagnosis, where expectation is dictated by the distributions used to derive the gold standards.
+That is,
+Rss=X
+ipgold(di)Ui;dx ss
+and
+Rgold=X
+ipgold(di)Ui;dx gold
+whereRssandRgolddenote the ratings for the inference method and gold-standard diagnoses,
+respectively. Note that the two ratings can be dierent only when the diagnoses prescribed by the
+two distributions pssandpgoldare not the same.
+4.2 An Expert-Rating Evaluation Metric
+In addition to the decision-theoretic approach, an expert-rating method is used to compare the
+inference methods. For each probability distribution, the expert is asked, \On a scale from zero to
+ten| zero being unacceptable and ten being perfect|how accurately does the distribution reect
+your beliefs?" The ratings given by the expert are compared using standard statistical techniques.
+Note that gold standards are not explicitly elicited in this approach.
+The expert-rating metric is used for two reasons. First, expert-rating approaches have been used
+frequently in expert system evaluations. (See, for example, Cooper [4].) Therefore, it is useful to
+compare the approach with the decision-theoretic method introduced in this paper. Second, the
+expert-rating and decision-theoretic approaches evaluated dierent aspects of performance and are
+complementary.
+5 Utility Assessment
+In this section, several important issues surrounding the assessment of diagnostic utilities are ad-
+dressed and details of the procedure for assessment are described.
+9
+An important consideration in the assessment of diagnostic utilities is that preferences will vary
+from one decision maker to another. For example, the diagnostic utilities of decision makers faced
+with the results of a lymph-node biopsy are likely to be inuenced by theier age, sex, and state of
+health. Consequently, the ratings produced by the decision-theoretic metric are meaningful to an
+individual only to the degree that their diagnostic utilities match those used in the evaluation.
+For this experimental comparison, the utilities of the expert on the Pathnder project were used.
+The expert was chosen for two practical reasons. First, being an expert, he was reasonably familiar
+with many of the ramications of correct and incorrect diagnosis. Second, a good working relation-
+ship with him had been established during the construction of Pathnder. In future experiments, it
+would be useful to generate a utility model using an expert clinician who might have better insight
+into the preferences of a \typical" patient making a decision based on the results of a lymph-node
+biopsy.
+It is interesting to note that our expert, because he is an expert, had biases that made his initial
+preferences deviate signicantly from those of a typical patient. For example, many sets of diseases
+of the lymph node currently have identical treatments and prognoses. Nonetheless, experts like to
+distinguish diseases within each of these sets, because doing so allows research in new treatments to
+progress. That is, experts often consider the value of their eorts to future patients. In addition,
+experts generally suer professional embarrassment when their diagnoses are incorrect. Also, experts
+are concerned about the legal liability associated with misdiagnosis. In an eort to remove these
+biases, our expert was specically asked to ignore these attributes of utility. He was asked to imagine
+that he himself had a particular disease, and to assess the diagnostic utilities accordingly.
+Another important consideration in almost any medical decision problem is the wide range of
+severities associated with outcomes. As mentioned previously, one misdiagnosis might lead to in-
+appropriate antibiotic therapy, whereas another might lead to almost certain death. How can pref-
+erences across such a wide range be measured in common terms? Early attempts to resolve this
+question were fraught with paradoxes. For example, in a linear willingness-to-pay approach, a de-
+cision maker might be asked, \How much would you have to be paid in order to accept a one in
+ten-thousand chance of death?" If the decision maker answered, say, one thousand dollars, the
+approach would dictate that he would be willing to be killed for ten million dollars. Clearly, this is
+absurd.
+Recently, Howard has constructed an approach that avoids many of the paradoxes of earlier
+models [7]. Like many of its predecessors, the model deals with determining what an individual
+would have to be paid to assume some chance of death, and what he would be willing to pay to
+avoid a given risk. Also like many of its predecessors, Howard's model shows that, for small risks
+of death (typically, p <0:001), the amount someone would be willing to pay or would have to be
+paid to avoid or to assume such a risk is linear in p. That is, for small risks of death, an individual
+acts like an expected-value decision maker with a nite value attached to his life. For signicant
+risks of death, however, the model deviates strongly from linearity. For example, the model shows
+that there is a maximum probability of death, beyond which an individual will accept no amount of
+money to risk that chance of death. Most people nd this to be an intuitive result.2
+In this paper, the details of the model will not be presented. For a discussion of the approach
+see [9]. Here, we need only to assume that willingness to buy or sell small risks of death is linear
+in the probability of death. Given this assumption, preferences for minor to major outcomes can be
+measured in a common unit, the probability of immediate, painless death that a person is willing to
+accept to avoid a given outcome and to be once again healthy . The undesirability of major outcomes
+can be assessed directly in these terms. For example, a decision maker might be asked, \If you
+have Hodgkin's disease and are incorrectly diagnosed as having a viral infection, what probability of
+immediate, painless death would you be willing to accept to avoid the situation and to be once again
+healthy?" At the other end of the spectrum, the undesirability of minor outcomes can be assessed
+2The result ignores considerations of legacy.
+10
+by willingness-to-pay questions, and can be translated, via the linearity result, to the common unit
+of measurement. For example, a decision maker might be asked, \How much would you be willing
+to pay to avoid taking antibiotics for two weeks?" If he answered $100, and if his small-risk value
+of life were $100,000,000, then the answer could be translated to a utility of a 1 in 1,000,000 chance
+of death.
+Thus, the only major task in assessing the Uij, aside from making the direct assessments them-
+selves, is the determination of the decision maker's small-risk value of life. Howard proposes a model
+by which this value can be computed from other assessments. A simple version of the model requires
+a decision maker to trade-o the amount of resources he consumes during his lifetime and the length
+of his lifetime, to characterize his ability to turn present cash into future income, and to establish
+his attitude toward risk. However, our expert did not nd it dicult to assess the small-risk value
+of life directly.3When asked what dollar amount he would be willing to pay to avoid chances of
+death ranging from 1 in 20 to 1 in 1000, he was consistent with the linear model to within a factor
+of 2, with a median small-risk value of life equal to $10,000,000.
+Note that, with this utility model, the ratings Rssassigned to the inference methods will have
+units \probability of death." In many cases, we shall see that the dierences between ratings are
+small in these units (on the order of 0.001). Consequently, it is useful to dene a micromort , a one in
+one million chance of death. In these units, for example, a decision maker with a small-risk value of
+life of $10,000,000 should be willing to buy and sell risks of death at the rate of $10 per micromort.
+This unit of measurement is also useful because it helps to emphasize that the linear relationship
+between risk of death and willingness to pay holds for only small probabilities of death.
+Another important consideration is the complexity of the utility assessment procedure. There
+are 51 diseases represented in Pathnder. The direct measurement of the Uijtherefore requires
+512= 2601 assessments. Clearly, the measurment process would be tedious. Thus, several steps
+were taken to reduce the complexity of the task. First, the expert was asked to establish sets of
+disease hypotheses that have identical treatments and prognoses. An example of such a set is the
+collection of nine types of Hodgkin's diseases represented in Pathnder. Patients with any of the
+nine types receive the same treatment and have the same prognosis.4The expert identied 26 such
+\equivalence classes," reducing the number of direct utility assessments required to 262= 676.
+Next, the expert was asked to order the utilities Uii| he was asked to order the undesirability
+of having each disease and being diagnosed correctly. After he had completed this ranking, he
+was asked to quantitate each Uiiin the manner described previously. It should be noted that
+the ordering of the Uiiwas modied signicantly during this process. About halfway through the
+procedure, he exclaimed, \The dollar is forcing me to think very carefully!" It would be interesting
+to determine whether most people respond in this way. The results of such a study would be
+interesting, particularly to reseachers in qualitative reasoning.
+Finally, the o-diagonal utilities were assessed. For each disease, the expert was asked to quantify
+the undesirability of having the disease and being diagnosed as having a dierent disease. First,
+he identied the most similar preexisting assessment. It was then a simple matter to identify the
+dierences between the current assessment and the preexisting assessment, and to modify the utility
+appropriately. For example, given a patient with the disease sinus hyperplasia, the only dierence
+between her being diagnosed correctly and her being diagnosed with cat scratch disease is that, in
+the latter case, the patient would take unnecessary antibiotics for several weeks. The expert said
+that he would be willing to pay $100 to avoid taking the antibiotics, so this value (converted to
+micromorts) was subtracted from the utility of being correctly diagnosed with sinus hyperplasia.
+3Howard also has observed that the small-risk value of life can be assessed directly [8].
+4Prognosis for these nine types of Hodgkin's disease is determined by the clinical stage, not by the specic type of
+disease.
+11
+6 Details of the Experiment
+Whenever possible, the conditions of the experimental comparison were arranged to mimic the
+conditions under which Pathnder would be used in clinical practice. For example, Pathnder is
+expected to be used by community hospital pathologists to assist them in diagnosing challenging
+lymph-node cases. Currently, when a community hospital pathologist gets a dicult case, he refers
+the case to an expert, such as the expert on the Pathnder project. Therefore, the cases selected
+for this experiment were chosen from a large library of cases referred to our expert from community
+pathologists. Relatively old cases (older than four months) were selected to decrease the chance that
+the memory of the expert would bias the results.
+Twenty-six cases were selected at random from the referral library such that no two diagnoses
+were the same. Repeat diagnoses were not allowed so that the inference methods would be evaluated
+over a larger portion of the lymph node knowledge base. To account for the fact that some diseases
+are much more likely to occur than others, the ratings derived from the metrics for each case are
+weighted by the relative likelihood of occurrence of the case. The relative likelihoods were computed
+by normalizing the prior probabilities of the true diagnosis of each case so that they summed to
+one.5
+Although the cases were selected at random, a postexperiment analysis showed that the cases
+were more challenging than a set of average cases would be. The expert reported that 50 percent of
+the cases contained many more technical imperfections (such as tears and poor preservation) than is
+usual. He also thought that 70 percent of the cases were more dicult to diagnose than the average
+case. The deviation from normal probably occurred because the case-selection process favored the
+inclusion of rare diagnoses.
+A pathology resident entered the observations for each case into a computer database after ex-
+amining lymph-node biopsies through a microscope. A pathology resident was used for two reasons.
+First, our expert could not be allowed to look at the lymph nodes slides directly, because he would
+observe more information than is presented to the inference methods. In addition, the expertise of
+a resident closely matches the expertise of the users targeted for Pathnder.
+The manner in which features were selected for identication deviated from the approach typ-
+ically used in Pathnder. Specically, a pathologist usually enters only a few salient features and
+then receives recommendations from Pathnder about what additional features are most useful for
+narrowing the diagnostic contenders. The pathologist then provides values for one or more of these
+recommended features, and the process cycles. To avoid confounding the performance of the infer-
+ence methods with that of the feature recommendation strategies, the resident was asked to enter
+all \salient features observed." At no time was the resident allowed to see what features the system
+recommended to be evaluated.
+Once features values had been identied for each case, they were presented to the three inference
+methods, producing three belief distributions. The expert was then given two evaluation sheets for
+each case. The rst sheet included a list of the observations identied by the resident, as well as list
+of all the disease hypotheses represented in Pathnder. The expert was asked to assign a probability
+distribution to the diseases based on the observations given. The descriptive gold standard was
+derived from this distribution. The second sheet was identical to the rst, except that it included
+the distributions produced by the three inference methods. The distributions were displayed in
+columns in a random order for each case. The expert was asked to rate each belief distribution using
+the 0 to 10 scale described earlier, and again to assign a probability distribution to the diseases. He
+was allowed to refer to his rst probability distribution during the second assignment. The informed
+gold standard was derived from this second distribution.
+5In pathology, several methods are used to establish a true diagnosis. In some cases, a diagnosis is established
+through the use of expensive tests. In other cases, a diagnosis is established through observation of the time course of
+a patient's illness. In still other cases, a diagnosis can be established only by an expert pathologist examining tissue
+sections under a microscope. In this study, all three approaches, including combined approaches, were used.
+12
+In two of the twenty-six cases, the expert found the lists of observations confusing. Also, in these
+same two cases, the simple Bayes and odds{likelihood inference methods produced inconsistent
+distributions in which all hypotheses were assigned a belief of zero. Consequently, these two cases
+were removed from the study.
+7 Results
+Decision-theoretic ratings for ve dierent procedures for determining a diagnosis are shown in
+Table 1. \Informed gold standard" refers to the procedure of prescribing the disease that maximizes
+utility under the distribution used to derive the informed gold standard (Equation 10). \Simple
+Bayes-MEU" refers to the procedure of prescribing the disease that maximizes utility under the
+simple Bayes distribution. \Simple Bayes," \Odds{likelihood," and \Dempster{Shafer" refer to
+the procedures of prescribing the most likely diseases under the simple Bayes, odds{likelihood, and
+Dempster-Shafer distributions, respectively.
+The values in the rst column represent the absolute decrease in utility of a patient when faced
+with the result of a lymph-node biopsy and diagnosed using a particular approach. The values
+represent an average over the 26 cases examined, weighted by the likelihood of occurrence of each
+case. Notice that most of the decrease in each case is attributed to the fact that the patient is sick.
+Errors in diagnosis account for little of the decrease in utility. In particular, the rating associated
+with the informed gold standard represents the decrease in utility associated with the best possible
+diagnosis under the conditions of the experiment and therefore reects solely the decrease in utility
+of the patient due to illness. This rating shows that a patient with a lymph-node biopsy faces a
+decrease in utility of 205,804 micromorts, on average. That is, the patient is as bad o as he would
+be facing a 0.2 chance of immediate, painless death. This quantity dominates the decreases in utility
+due to diagnostic error.
+To highlight the eects of diagnostic error, dierences between the informed gold standard rating
+and the rating for each diagnostic approach are shown in column 2 of Table 1. The standard deviation
+of these dierences is given in column 3 of the table. Note that the standard deviations are quite large
+relative to the mean dierences. The reason for such large variances is easily appreciated. For each
+diagnostic approach, the diagnosis prescribed by the approach is identical to the diagnosis prescribed
+by the gold standard in many of the 24 cases. In particular, the simple Bayes-MEU, simple Bayes,
+and odds{likelihood approaches prescribe the gold-standard diagnosis in 17 of 24 cases. The naive
+Dempster{Shafer approach prescribes the gold-standard diagnosis in 12 of 24 cases. In these cases,
+the ratings for the gold standard and diagnostic approaches are equal. In the remaining cases, the
+approaches prescribe a diagnosis that diers from the gold standard prescription. These nonoptimal
+diagnoses are often associated with utilities that are signicantly lower than is the utility associated
+with the gold-standard diagnosis. Thus, dierences in utility uctuate from zero in many cases to
+large values in others, resulting in large standard deviations.
+Although the standard deviations are high, a Monte Carlo permutation test indicates that the
+performance of the naive Dempster{Shafer approach is signicantly inferior to that of the other
+methods (achieved signicance level = 0.004). No other signicant dierence exists among the other
+methods.
+The expert ratings for each inference method are shown in Table 2. As in the decision-theoretic
+approach, the mean and standard deviation are weighted by the relative prior probability of the true
+diagnosis. Because the ratings apply directly to the belief distributions derived by each method,
+there is no distinction between the simple Bayes-MEU and simple Bayes procedures.
+Using the expert-rating metric, another signicant dierence is detected. In particular, a Wilcoxon
+two-sample rank test shows that the simple Bayes inference procedure performs signicantly better
+than does the odds{likelihood approach (achieved signicance level = 0.07).
+Table 3 shows a comparison of the informed and descriptive gold standards. The dierences
+13
+Decision-theoretic ratings (micromorts)
+Dierences
+Absolute mean mean sd
+Informed gold standard 205,804 { {
+Simple Bayes-MEU 206,615 811 4079
+Simple Bayes 206,635 831 4078
+Odds{likelihood 206,635 831 4078
+Naive Dempster{Shafer 216,371 10,587 19,101
+Table 1: Decision-theoretic ratings of the inference methods.
+Expert ratings
+mean sd
+Simple Bayes 8.52 1.17
+Odds{likelihood 7.33 1.95
+Naive Dempster{Shafer 0.03 0.17
+Table 2: Expert ratings of the inference methods.
+between the two standards are not signicant. Thus, seeing the belief distributions generated by
+the inference methods did not persuade the expert to change his opinion about the cases to any
+signicant degree. Of course, this nding should not be generalized to other experts or to other
+domains.
+8 Discussion
+Before examining the results in detail, it is useful to make some general comments about the two
+evaluation metrics. An obvious advantage of the decision-theoretic approach over the expert-rating
+approach is that its results are much more meaningful. For example, the dierence between the
+simple Bayes and naive Dempster{Shafer ratings using the expert-rating metric is 8.5 on a scale
+from 0 to 10 and is deemed to be \signicant" by a standard statistical test. The dierence of ap-
+proximately 10,000 micromorts between the two approaches as determined by the decision-theoretic
+metric, however, carries much more force; it implies that using the naive Dempster{Shafer approach
+instead of the simple Bayes approach is equivalent to assuming an additional one in 100 risk of
+death!
+A disadvantage of the decision-theoretic with respect to the expert-rating approach is that its
+results have limited scope. Specically, the dierences among inference methods may be highly de-
+pendent on the assessments of diagnostic utility made by our expert. Furthermore, decision-theoretic
+comparisons of inference methods are likely to vary from one domain to another because there is
+Decision-theoretic ratings (micromorts)
+Dierences
+Absolute mean mean sd
+Informed Gold Standard 205,804 { {
+Descriptive Gold Standard 205,888 84 1273
+Table 3: Decision-theoretic ratings of expert distributions.
+14
+room for wide variation in utility assessments between domains. The results of the experimental
+comparison must be considered in this light.
+An advantage of the expert-rating metric over the decision-theoretic metric, as demonstrated
+in this experiment, is that the former can be much more sensitive to dierences. For example,
+the decision-theoretic ratings of the simple Bayes and of the odds{likelihood methods are identical.
+In contrast, the expert-rating metric shows the two inference methods to be signicantly dierent.
+High sensitivity is likely to be a property of the expert-rating approach across many domains. In
+a typical consulting session, an expert is hypersensitive to errors in diagnosis, whether such errors
+matter to a decision maker or not, because the integrity of the expert is on the line. It is likely
+that this hypersensitivity will carry over into expert-rating ratings of diagnostic performance. This
+advantage of using an expert-rating metric is not absolute. Considerations of integrity or liability, for
+example, can always be incorporated into the diagnostic utilities. Indeed, the fact that components
+of preference can be made explicit and are under the direct control of the expert is one advantage
+of the decision-theoretic approach.
+Another advantage of the expert-rating metric is that it is less time-consuming to implement.
+It took the expert approximately 20 hours, working with two people trained in decision analytic
+techniques, to develop the utility model used in this evaluation. It took the expert less than 1
+minute per case to rate the distributions produced by the three inference methods.
+Overall, the two approaches are complementary. The expert-rating approach is useful for iden-
+tifying dierences in performance that may be important in some domain. The decision-theoretic
+metric reveals the degree of importance of such dierences for a particular domain of interest.
+It should be mentioned that information-theoretic metrics exist for measuring dierences between
+probability distributions, such as relative entropy and the Brier score [2] [15]. The advantages and
+disadvantages of the information-theoretic and expert-rating methods are similar with respect to
+the decision-theoretic approach, except that the information-theoretic methods require probabilistic
+interpretations for the distributions to be compared.
+Given these considerations about the evaluation metrics, dierences in performance among the
+inference methods can now be discussed. In this experimental comparison, the method for selecting
+an optimal diagnosis with the highest decision-theoretic rank is simple Bayes-MEU. The dierence
+between the rank of this method and the gold standard is 811 micromorts. With the caveats
+described previously, this value can be seen to represent the maximum room for improvement in the
+knowledge base. Such improvements may include more careful assessments of probabilities in the
+knowledge base, and the representation of dependencies among features.
+The dierence in ratings between simple Bayes-MEU and simple Bayes is only 20 micromorts
+and is not signicant. This result suggests that, in the lymph-node domain, little is gained by
+using the more sophisticated decision rule. Three factors of this domain appear to be responsible
+for this observation. First, the resident pathologist recorded all salient features observed under the
+microscope for each case. Second, the lymph-node domain appears to be structured such that, when
+all salient features are entered, most of the probability mass will fall on one disease hypothesis or
+a set of disease hypotheses within the same utility equivalence class. In 20 of the 24 cases, 95
+percent of the probability mass fall on a set of diseases within the same equivalence class. Third,
+the structure of diagnostic utilities in the domain is such that a disease with small probability will
+rarely be chosen as the optimal diagnosis using the principle of maximum expected utility. In light
+of these factors, the relative value of decision rules should not be extrapolated to other domains
+without explicit justication.
+Several interesting observations can be made about the relative performances of the simple Bayes
+and odds{likelihood inference methods. First, the expert-rating metric shows a signicant dierence
+between these methods, whereas the decision-theoretic metric shows no dierence between them.
+This result is a clear example of the decreased sensitivity of the decision-theoretic approach to
+evaluation.
+Second, the theoretical dierence between the simple Bayes and odds{likelihood inference meth-
+15
+ods is that the former assumes evidence to be conditionally independent on the hypotheses, as
+shown in Equation 1, whereas the latter assumes evidence to be conditionally independent on both
+the hypotheses and on the negation of the hypotheses, as reected in Equations 1 and 2. Thus, the
+decision-theoretic and expert-rating results show that, although the additional assumption of con-
+ditional independence on the negation of hypotheses is inconsequential in the lymph-node domain,
+it may lead to signicant degradation in performance in other domains.
+Third, there is a regularity in the dierences between the distributions produced by the two meth-
+ods. Specically, the simple Bayes distributions produced in this study are, with only one exception,
+more peaked. That is, the variance of these distributions are smaller than are those produced using
+the odds{likelihood approach. This dierence can be traced to the additional assumption of condi-
+tional independence on the negation of hypotheses, Equation 2. To see this connection, consider a
+hypothetical example in which there are three mutually exclusive and exhaustive hypotheses| H1,
+H2, andH3|that have equal prior probabilities. Suppose there are many pieces of evidence relevant
+to these hypotheses such that each piece of evidence Ejhas the same probability of occurrence for
+a given hypothesis. That is, p(EjjHi) =p(EjHi) for allEj, andi= 1;2;3. Also suppose that the
+likelihoods have values such that:
+p(EjH1)>p(EjH2)>p(EjH3)
+and
+p(EjH1)
+p(EjH1)=2p(EjH1)
+p(EjH2)+p(EjH3)>1
+p(EjH2)
+p(EjH2)=2p(EjH2)
+p(EjH1)+p(EjH3)>1
+p(EjH3)
+p(EjH3)=2p(EjH3)
+p(EjH1)+p(EjH2)<1
+These constraints are satised easily (for example, p(EjH1) = 0:8,p(EjH2) = 0:6, andp(EjH3) =
+0:2). Under these conditions, evidence Eis conrmatory for H1, conrmatory to a lesser degree for
+H2, and disconrmatory for H3. Using the simple Bayes inference procedure (Equation 3) it can
+be shown that, as the number of pieces of evidence grows, the posterior probability of H1tends to
+one whereas the posterior probability of both H2andH3tends to zero. However, using the odds{
+likelihood approach (Equation 4) where evidence is conditionally independent given the negation
+of hypotheses, a dierent result is obtained. In particular, as the number of pieces of evidence
+grows, it can be shown that the posterior probabilities of both H1andH2tend to one, whereas
+the posterior probability of H3tends to zero. In the odds{likelihood approach, these probabilities
+are renormalized, so the probabilities of H1andH2each approach one-half. Thus, in this example,
+the odds{likelihood distribution is less peaked than is the simple Bayes distribution. In general,
+simple Bayes distributions will be more peaked, because this method tends to amplify dierences in
+likelihoods, whereas the odds{likelihood method tends to washout dierences.
+Unlike previous observations, this one does not appear to be tied to the lymph-node domain.
+Provided a large body of evidence is reported such that the simple Bayes approach produces a sharp
+distribution, the odds{likelihood inference method should, in general, produce distributions that are
+less peaked. An important consequence of this phenomenon is that degradation in performance due
+to the incorrect assumption of conditional independence on the negation of hypotheses is likely to
+occur in other domains.
+A nal observation about the simple Bayes and odds{likelihood inference methods is that there is
+a regularity among the exceptional cases (5 of 24) in which distributions produced by odds{likelihood
+were preferred to the those produced by simple Bayes. Although obvious dependencies among fea-
+tures were captured by a clustering technique, subtle ones remained unrepresented in the lymph-node
+knowledge base. It seems that the failure to represent the more subtle dependencies led to decreased
+performance of the simple Bayes method relative to the odds{likelihood method. In particular, the
+16
+incorrect assumption of conditional independence in the simple Bayes approach led to overcounting
+of evidential support. This overcounting, in turn, produced distributions that were overly peaked.
+In the odds{likelihood approach, the impact of evidence was also overcounted. However, it appears
+that such overcounting was partially compensated by the washout eect described.
+The performances of the odds{likelihood and naive Dempster{Shafer approaches are also interest-
+ing to compare. Both evaluation metrics revealed a signicant dierence between the two methods.
+There are two major theoretical dierences between the inference procedures, one or both of which
+may be responsible for the dierences in performance. First, from Equation 8, it is clear that each
+mass assignment in the inference method contains a component proportional to the prior probability
+of diseases. Thus, when the masses for many dierent observations are combined, the prior proba-
+bility components will be overcounted. Priors are not overcounted in the odds{likelihood approach.
+Second, due to the way mass is assigned in the naive Dempster{Shafer approach, disconrmatory
+observations for disease hypotheses are not recognized. For example, if some observation completely
+rules out a disease hypothesis in the odds{likelihood method, the Dempster{Shafer mass for the
+disease{observation pair is zero. In the naive Dempster{Shafer inference method, a zero mass leaves
+the score of a hypothesis unchanged. Therefore, a hypothesis ruledout by an observation in the
+odds{likelihood approach is left with its degree of belief unchanged in the naive Dempster{Shafer
+approach. It is suspected that this dierence is more signicant than is the overcounting of priors.
+9 Future Work
+The combination of the decision-theoretic and expert-rating approaches to performance evaluation
+provides useful insights about various components of the inference process within the lymph node
+domain and about the inference process in general. This same approach to evaluation can be
+used to probe many dierent aspects of the construction of an expert system. For example, the
+Pathnder research team has developed a set of procedures that recommends additional features
+for observation to the pathologist-user. The methods discussed in this paper should prove useful in
+evaluating the merits of these procedures. In addition, the Pathnder group is currently exploring
+dierent techniques for constructing consensus knowledge bases that combine the beliefs of two or
+more experts. Again, the evaluation methods can be used to quantify the value of each approach.
+In yet another study, sensitivity to assessment errors in the knowledge base could be examined.
+It is hoped that the presentation of these evaluation methods will encourage other researchers to
+evaluate a wide variety of issues surrounding the building of real-world expert systems.
+10 Acknowledgments
+I thank Eric Horvitz for his assistance with the assessment of the diagnostic utilities; Bharat Nath-
+wani, the expert on the Pathnder project, for his contributions to the construction and evaluation
+of the system; and Doyen Nguyen for her painstaking work to identify features under the microscope.
+Eric Horvitz and Gregory Cooper critiqued a draft of this manuscript. Support for this work was
+provided by the National Library of Medicine under grant R01-LM04529, by the National Science
+Foundation under grant IRI-8703710, and by NASA-Ames. A portion of the computing resources
+was provided by the SUMEX-AIM resource under NIH grant RR-00785.
+References
+[1] J. A. Barnett. Computational methods for a mathematical theory of evidence. In Proceedings
+of the Seventh IJCAI , pages 868{875. International Joint Conferences on Articial Intelligence,
+1981.
+17
+[2] M. Ben-Bassat. Myopic policies in sequential classication. IEEE Transactions on Computers ,
+27:170{178, 1978.
+[3] W.H. Cleckner. Tactical Evidential Reasoning: An Application of the Dempster{Shafer Theory
+of Evidence . PhD thesis, Naval Postgraduate School, Monterey, CA, September 1985.
+[4] G.F. Cooper. NESTOR: A Computer-based Medical Diagnostic Aid that Integrates Causal
+and Probabilistic Knowledge . PhD thesis, Computer Science Department, Stanford University,
+Stanford, CA, November 1984. Rep. No. STAN-CS-84-48. Also numbered HPP-84-48.
+[5] F.T. de Dombal, D.J. Leaper, J.R. Staniland, A.P. McCann, and J.C. Horrocks. Computer-
+aided diagnosis of acute abdominal pain. British Medical Journal , 2:9{13, 1972.
+[6] D.E. Heckerman. Probabilistic interpretations for MYCIN's certainty factors. In L.N. Kanal
+and J.F. Lemmer, editors, Uncertainty in Articial Intelligence , pages 167{196. North Holland,
+New York, 1986.
+[7] R.A. Howard. On making life and death decisions. In R.A. Howard and J.E. Matheson, editors,
+Readings on the Principles and Applications of Decision Analysis , volume II, pages 483{506.
+Strategic Decisions Group, Menlo Park, CA, 1980.
+[8] R.A. Howard. Personal communication. 1987.
+[9] R.A. Howard and J.E. Matheson. Inuence diagrams. In R.A. Howard and J.E. Matheson,
+editors, Readings on the Principles and Applications of Decision Analysis , volume II, pages
+721{762. Strategic Decisions Group, Menlo Park, CA, 1981.
+[10] R. Johnson. Independence and Bayesian updating methods. In L.N. Kanal and J.F. Lemmer,
+editors, Uncertainty in Articial Intelligence , pages 197{202. North Holland, New York, 1986.
+[11] R.A. Miller, E.P. Pople, and J.D. Myers. INTERNIST-1: An experimental computer-based
+diagnostic consultant for general internal medicine. New England Journal of Medicine , 307:476{
+486, 1982.
+[12] G. Shafer. A Mathematical Theory of Evidence . Princeton University Press, Princeton, NJ,
+1976.
+[13] E.H. Shortlie. MYCIN: A Rule-Based Computer Program for Advising Physicians Regard-
+ing Antimicrobial Therapy Selection . PhD thesis, Stanford Articial Intelligence Laboratory,
+Stanford, CA, October 1974.
+[14] E.H. Shortlie and B.G. Buchanan. A model of inexact reasoning in medicine. Mathematical
+Biosciences , 23:351{379, 1975.
+[15] D.J. Spiegelhalter. Probabilistic reasoning in predictive expert systems. In L.N. Kanal and J.F.
+Lemmer, editors, Uncertainty in Articial Intelligence , pages 47{67. North Holland, New York,
+1986.
+[16] A. Tversky and D. Kahneman. Judgement under uncertainty: Heuristics and biases. Science ,
+185:1124{1131, 1974.
+[17] B. Wise. An Experimental Comparison of Uncertain Inference Systems . PhD thesis, The
+Robotics Institute and Department of Engineering and Public Policy, Carnegie{Mellon Univer-
+sity, Pittsburgh, PA, June 1986.
+18
+[18] L.M. Yu, V.L.and Fagan, W.J. Wraith, S.M.and Clancey, A.C. Scott, J.F. Hannigan, R.L. Blum,
+B.G. Buchanan, and S.N. Cohen. Antimicrobial selection by computer: a blinded evaluation by
+infectious disease experts. Journal of the American Medical Association , 242:1279{1282, 1979.
+[19] V.L Yu, B.G. Buchanan, E.H. Shortlie, S.M. Wraith, A.C. Davis, R.and Scott, , and S.N.
+Cohen. An evaluation of the performance of a computer-based consultant. Computer Programs
+in Biomedicine , 9:95{102, 1979.
+19
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+      "type": "concept",
+      "description": "Incorrect disease classification by expert systems such as Pathfinder can lead to inappropriate or delayed treatment, producing morbidity or mortality for patients. (Introduction; Section 7 Results)",
+      "aliases": [
+        "misdiagnosis harm in lymph node diagnosis",
+        "diagnostic error risk in Pathfinder"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Violation of conditional independence assumptions in multi-hypothesis inference",
+      "type": "concept",
+      "description": "Inference methods often assume diagnostic features are conditionally independent given a disease (and sometimes its negation); in real lymph-node pathology many features are correlated, breaking this assumption. (Section 3.2; Discussion)",
+      "aliases": [
+        "independence assumption failure",
+        "evidence dependence in inference"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Overcounting of prior probabilities in naive Dempster-Shafer inference",
+      "type": "concept",
+      "description": "Because D-S masses include prior components, combining many observations multiplies priors, inflating beliefs for some diseases. (Section 3.3 Naive Dempster-Shafer Method)",
+      "aliases": [
+        "prior overweighting in D-S",
+        "mass assignment prior overcount"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lack of disconfirmatory evidence handling in naive Dempster-Shafer inference",
+      "type": "concept",
+      "description": "Zero mass assignments leave disease belief unchanged, so evidence that should rule out a hypothesis does not lower its score in naïve D-S. (Section 3.3; Discussion)",
+      "aliases": [
+        "missing negative evidence in D-S",
+        "no belief decrease in D-S"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Washout effect from likelihood renormalization in odds-likelihood method",
+      "type": "concept",
+      "description": "Renormalising posterior odds across many hypotheses tends to equalise probabilities, producing flatter, less decisive belief distributions. (Section 3.2; Discussion)",
+      "aliases": [
+        "probability flattening in odds-likelihood",
+        "variance inflation in CF model"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Incomplete representation of feature dependencies in knowledge base",
+      "type": "concept",
+      "description": "Some morphological features (e.g., necrosis size & distribution) are correlated; representing them separately double-counts evidence unless corrected. (Section 3 Domain)",
+      "aliases": [
+        "unmodelled feature correlation",
+        "missing dependency encoding"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+      "type": "concept",
+      "description": "Using Bayes’ theorem with independence conditioned only on each disease avoids the extra, often-false assumption about independence given the negation, yielding more peaked and accurate posteriors. (Sections 3.1, 7)",
+      "aliases": [
+        "simple Bayes superiority",
+        "hypothesis-conditional independence benefit"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Decision-theoretic evaluation highlights utility-weighted performance differences",
+      "type": "concept",
+      "description": "Measuring systems with expected utility (micromorts) captures the real harm of misdiagnosis better than raw agreement or expert ratings alone. (Section 4.1; 8 Discussion)",
+      "aliases": [
+        "utility-based evaluation insight",
+        "decision-theoretic metric value"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Aggregating dependent features reduces independence violations",
+      "type": "concept",
+      "description": "Combining correlated observations into composite variables makes the remaining features closer to independent, preserving Bayesian assumptions. (Section 3 Domain; Discussion)",
+      "aliases": [
+        "feature clustering theoretical insight",
+        "dependency aggregation benefit"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Adopt simple Bayes inference with maximum expected utility decision rule in diagnostic expert systems",
+      "type": "concept",
+      "description": "Combining simple Bayesian updating with an MEU choice of diagnosis directly targets patient-utility minimisation. (Sections 3.1; 4.1)",
+      "aliases": [
+        "use Bayes+MEU in Pathfinder",
+        "Bayesian MEU design rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Use decision-theoretic metrics for system evaluation",
+      "type": "concept",
+      "description": "Evaluation should employ expected patient-utility rather than only heuristic expert scores to align optimisation with clinical outcomes. (Sections 4; 8)",
+      "aliases": [
+        "utility-based system evaluation rationale"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Cluster diagnostic features to approximate independence assumptions",
+      "type": "concept",
+      "description": "Merging correlated features (e.g., necrosis size & distribution) is a systematic way to uphold conditional independence in the knowledge base. (Section 3 Domain)",
+      "aliases": [
+        "feature clustering rationale",
+        "dependency mitigation design"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+      "type": "concept",
+      "description": "Implements Bayes’ theorem assuming conditional independence on hypotheses to obtain p(disease | evidence). (Section 3.1)",
+      "aliases": [
+        "Equation 3 posterior computation",
+        "simple Bayes implementation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Assess diagnostic utilities using micromort-based small-risk value of life",
+      "type": "concept",
+      "description": "Uses willingness-to-pay and small-risk trade-offs to map outcomes to micromorts, enabling expected-utility calculations. (Section 5 Utility Assessment)",
+      "aliases": [
+        "micromort utility elicitation",
+        "small-risk value assessment"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Feature clustering implementation in Pathfinder knowledge base",
+      "type": "concept",
+      "description": "Pathfinder replaces correlated variables (e.g., necrosis size & distribution) with single composite features to remove explicit dependencies. (Section 3 Domain)",
+      "aliases": [
+        "clustered necrosis feature",
+        "composite feature implementation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Pathfinder 24-case study showing simple Bayes superior",
+      "type": "concept",
+      "description": "Across 24 referral cases, simple Bayes achieved mean expert rating 8.52/10 and reduced expected harm by ≈ 10 000 micromorts relative to naive D-S. (Section 7 Results; Tables 1–2)",
+      "aliases": [
+        "24-case Bayes superiority evidence",
+        "experimental Bayes win"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Permutation test shows naive D-S inferior (p=0.004)",
+      "type": "concept",
+      "description": "A Monte-Carlo permutation test found naïve D-S significantly worse than alternatives with p = 0.004. (Section 7 Results)",
+      "aliases": [
+        "Monte-Carlo test D-S inferior"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Expert rating shows simple Bayes > odds-likelihood (p=0.07)",
+      "type": "concept",
+      "description": "Wilcoxon rank test on expert scores yielded p = 0.07 favouring simple Bayes over odds-likelihood. (Section 7 Results)",
+      "aliases": [
+        "Wilcoxon rating Bayes vs OL"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Implement simple Bayes inference with MEU rule in medical expert systems",
+      "type": "intervention",
+      "description": "During system design choose simple Bayesian updating for posterior computation and select the diagnosis that maximises expected patient utility.",
+      "aliases": [
+        "deploy Bayes+MEU"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Apply decision-theoretic utility-based evaluation during pre-deployment testing",
+      "type": "intervention",
+      "description": "Before deployment, compute expected micromort loss over representative cases to detect clinically significant errors beyond accuracy metrics.",
+      "aliases": [
+        "utility evaluation in testing"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Cluster correlated diagnostic features during knowledge base construction",
+      "type": "intervention",
+      "description": "Identify strongly correlated observations (e.g., necrosis attributes) and merge them into single composite variables to maintain independence assumptions.",
+      "aliases": [
+        "apply feature clustering"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Avoid naive Dempster-Shafer inference in multi-hypothesis domains",
+      "type": "intervention",
+      "description": "Do not employ naïve Dempster-Shafer mass-combination when many mutually exclusive hypotheses and multiple pieces of evidence are present; choose probabilistic alternatives instead.",
+      "aliases": [
+        "retire naive D-S"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+      "target_node": "Violation of conditional independence assumptions in multi-hypothesis inference",
+      "description": "Incorrect independence assumptions distort probability estimates, leading to wrong diagnoses that harm patients.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+      "target_node": "Overcounting of prior probabilities in naive Dempster-Shafer inference",
+      "description": "Prior overweighting skews beliefs toward incorrect diseases, enabling harmful errors.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+      "target_node": "Lack of disconfirmatory evidence handling in naive Dempster-Shafer inference",
+      "description": "Failure to reduce belief in ruled-out diseases allows dangerous misdiagnoses.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+      "target_node": "Washout effect from likelihood renormalization in odds-likelihood method",
+      "description": "Flattened distributions lower diagnostic certainty, risking wrong or delayed treatment.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Patient harm from diagnostic errors in lymph node pathology expert systems",
+      "target_node": "Incomplete representation of feature dependencies in knowledge base",
+      "description": "Unmodelled correlations double-count evidence, distorting posteriors and diagnoses.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Violation of conditional independence assumptions in multi-hypothesis inference",
+      "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+      "description": "Restricting independence assumption to hypotheses eliminates the contested negation-based assumption, reducing error.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Overcounting of prior probabilities in naive Dempster-Shafer inference",
+      "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+      "description": "Bayesian updating incorporates priors exactly once, avoiding overcounting.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Lack of disconfirmatory evidence handling in naive Dempster-Shafer inference",
+      "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+      "description": "Bayesian likelihoods naturally drive probabilities down when disconfirmatory evidence appears.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Washout effect from likelihood renormalization in odds-likelihood method",
+      "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+      "description": "Simple Bayes amplifies true likelihood differences instead of flattening them.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Incomplete representation of feature dependencies in knowledge base",
+      "target_node": "Aggregating dependent features reduces independence violations",
+      "description": "Creating composite variables removes correlated evidence entries, lowering double-count risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Adopt simple Bayes inference with maximum expected utility decision rule in diagnostic expert systems",
+      "target_node": "Bayesian inference assuming independence on hypotheses improves diagnostic accuracy",
+      "description": "Design choice directly operationalises the theoretical claim about Bayes’ benefits.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Use decision-theoretic metrics for system evaluation",
+      "target_node": "Decision-theoretic evaluation highlights utility-weighted performance differences",
+      "description": "Evaluation policy derives from insight that utility-based metrics reveal meaningful differences.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Cluster diagnostic features to approximate independence assumptions",
+      "target_node": "Aggregating dependent features reduces independence violations",
+      "description": "Clustering is the concrete design step implied by the aggregation insight.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Adopt simple Bayes inference with maximum expected utility decision rule in diagnostic expert systems",
+      "target_node": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+      "description": "Equation 3 implementation realises the Bayes+MEU design.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Use decision-theoretic metrics for system evaluation",
+      "target_node": "Assess diagnostic utilities using micromort-based small-risk value of life",
+      "description": "Micromort utility elicitation is required to compute expected utilities.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Cluster diagnostic features to approximate independence assumptions",
+      "target_node": "Feature clustering implementation in Pathfinder knowledge base",
+      "description": "Necrosis size & distribution merged into one feature exemplifies clustering.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+      "target_node": "Pathfinder 24-case study showing simple Bayes superior",
+      "description": "Study demonstrates the implementation’s superior diagnostic utility and rating.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Compute posterior probabilities via Equation 3 with priors and feature likelihoods",
+      "target_node": "Expert rating shows simple Bayes > odds-likelihood (p=0.07)",
+      "description": "Expert scores concur that Bayes implementation is better.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Feature clustering implementation in Pathfinder knowledge base",
+      "target_node": "Pathfinder 24-case study showing simple Bayes superior",
+      "description": "Clustering contributed to the observed performance in the study.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Assess diagnostic utilities using micromort-based small-risk value of life",
+      "target_node": "Pathfinder 24-case study showing simple Bayes superior",
+      "description": "Utility assessments enabled calculation of micromort differences reported in the study.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Pathfinder 24-case study showing simple Bayes superior",
+      "target_node": "Implement simple Bayes inference with MEU rule in medical expert systems",
+      "description": "Empirical superiority encourages adoption of Bayes+MEU in future systems.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Expert rating shows simple Bayes > odds-likelihood (p=0.07)",
+      "target_node": "Implement simple Bayes inference with MEU rule in medical expert systems",
+      "description": "Expert preference further supports selecting Bayes.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Pathfinder 24-case study showing simple Bayes superior",
+      "target_node": "Apply decision-theoretic utility-based evaluation during pre-deployment testing",
+      "description": "Utility-based analysis proved informative, suggesting it be used routinely.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Permutation test shows naive D-S inferior (p=0.004)",
+      "target_node": "Avoid naive Dempster-Shafer inference in multi-hypothesis domains",
+      "description": "Significant under-performance motivates retiring naïve D-S.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Pathfinder 24-case study showing simple Bayes superior",
+      "target_node": "Cluster correlated diagnostic features during knowledge base construction",
+      "description": "Study incorporated clustering; its success motivates applying clustering systematically.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2013-03-27T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1304.2357"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "David Heckerman"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "An Empirical Comparison of Three Inference Methods"
+    }
+  ]
+}
+            

@@ -1,0 +1,856 @@
+Original Text:
+[![Alignment for Advanced Machine Learning Systems](https://intelligence.org/files/AlignmentMachineLearning.png)](https://intelligence.org/files/AlignmentMachineLearning.pdf)MIRI’s research to date has focused on the problems that we laid out in our [late 2014 research agenda](https://intelligence.org/technical-agenda/), and in particular on formalizing optimal reasoning for [bounded](https://intelligence.org/files/QuestionsLogicalUncertainty.pdf), [reflective](https://intelligence.org/files/VingeanReflection.pdf) [decision-theoretic](http://arxiv.org/abs/1507.01986) agents [embedded in their environment](https://intelligence.org/files/RealisticWorldModels.pdf). Our research team has since grown considerably, and we have made substantial progress on this agenda, including a major breakthrough in logical uncertainty that we will be announcing in the coming weeks.
+
+
+Today we are announcing a new research agenda, “**[Alignment for advanced machine learning systems](https://intelligence.org/files/AlignmentMachineLearning.pdf)**.” Going forward, about half of our time will be spent on this new agenda, while the other half is spent on our previous agenda. The abstract reads:
+
+
+
+> We survey eight research areas organized around one question: As learning systems become increasingly intelligent and autonomous, what design principles can best ensure that their behavior is aligned with the interests of the operators? We focus on two major technical obstacles to AI alignment: the challenge of specifying the right kind of objective functions, and the challenge of designing AI systems that avoid unintended consequences and undesirable behavior even in cases where the objective function does not line up perfectly with the intentions of the designers.
+> 
+> 
+> Open problems surveyed in this research proposal include: How can we train reinforcement learners to take actions that are more amenable to meaningful assessment by intelligent overseers? What kinds of objective functions incentivize a system to “not have an overly large impact” or “not have many side effects”? We discuss these questions, related work, and potential directions for future research, with the goal of highlighting relevant research topics in machine learning that appear tractable today.
+> 
+> 
+
+
+Co-authored by Jessica Taylor, Eliezer Yudkowsky, Patrick LaVictoire, and Andrew Critch, our new report discusses eight new lines of research ([previously summarized here](https://intelligence.org/2016/05/04/announcing-a-new-research-program/)). Below, I’ll explain the rationale behind these problems, as well as how they tie in to our old research agenda and to the new “[Concrete problems in AI safety](https://arxiv.org/abs/1606.06565)” agenda spearheaded by Dario Amodei and Chris Olah of Google Brain.
+
+
+
+#### Increasing safety by reducing autonomy
+
+
+The first three research areas focus on issues related to [act-based agents](https://medium.com/ai-control/act-based-agents-8ec926c79e9c#.bepjk81dp), notional systems that base their behavior on their users’ short-term instrumental preferences:
+
+
+1. Inductive ambiguity identification: How can we train ML systems to detect and notify us of cases where the classification of test data is highly under-determined from the training data?
+
+
+2. Robust human imitation: How can we design and train ML systems to effectively imitate humans who are engaged in complex and difficult tasks?
+
+
+3. Informed oversight: How can we train a reinforcement learning system to take actions that aid an intelligent overseer, such as a human, in accurately assessing the system’s performance?
+
+
+These three problems touch on different ways we can make tradeoffs between capability/autonomy and safety. At one extreme, a fully autonomous, superhumanly capable system would make it uniquely difficult to establish any strong safety guarantees. We could reduce risk somewhat by building systems that are still reasonably smart and autonomous, but will pause to consult operators in cases where their actions are especially high-risk. Ambiguity identification is one approach to fleshing out which scenarios are “high-risk”: ones where a system’s experiences to date are uninformative about some fact or human value it’s trying to learn.
+
+
+At the opposite extreme, we can consider ML systems that are no smarter than their users, and take *no* actions other than [what their users would do](https://medium.com/ai-control/mimicry-maximization-and-meeting-halfway-c149dd23fc17#.doosied3x), or [what their users would tell them to do](https://medium.com/ai-control/model-free-decisions-6e6609f5d99e#.h9hvpk5d7). If we can correctly design a system to do what it thinks a trusted, informed human would do, we can trade away some of the potential benefits of advanced ML systems in exchange for milder failure modes.
+
+
+These two extremes, human imitation and (mostly) autonomous goal pursuit, are useful objects of study because they help simplify and factorize out key parts of the problem. In practice, however, ambiguity identification is probably too mild a restriction on its own, and strict human imitation probably isn’t efficiently implementable. Informed oversight considers more moderate approaches to keeping humans in the loop: designing more transparent ML systems that help operators understand the reasons behind selected actions.
+
+
+#### Increasing safety without reducing autonomy
+
+
+Whatever guarantees we buy by looping humans into AI systems’ decisions, we will also want to improve systems’ reliability in cases where oversight is unfeasible. Our other five problems focus on improving the reliability and error-tolerance of systems autonomously pursuing real-world goals, beginning with the problem of specifying such goals in a robust and reliable way:
+
+
+4. Generalizable environmental goals: How can we create systems that robustly pursue goals defined in terms of the state of the environment, rather than defined directly in terms of their sensory data?
+
+
+5. Conservative concepts: How can a classifier be trained to develop useful concepts that exclude highly atypical examples and edge cases?
+
+
+6. Impact measures: What sorts of regularizers incentivize a system to pursue its goals with minimal side effects?
+
+
+7. Mild optimization: How can we design systems that pursue their goals “without trying too hard”—stopping when the goal has been pretty well achieved, as opposed to expending further resources searching for ways to achieve the absolute optimum expected score?
+
+
+8. Averting instrumental incentives: How can we design and train systems such that they robustly lack default incentives to manipulate and deceive their operators, compete for scarce resources, etc.?
+
+
+Whereas ambiguity-identifying learners are designed to predict potential ways they might run into edge cases and defer to human operators in those cases, conservative learners are designed to err in a safe direction in edge cases. If a cooking robot notices the fridge is understocked, should it try to cook the cat? The ambiguity identification approach says to notice when the answer to “Are cats food?” is unclear, and pause to consult a human operator; the conservative concepts approach says to just assume cats aren’t food in uncertain cases, since it’s safer for cooking robots to underestimate how many things are food than to overestimate it. It remains unclear, however, how one might formalize this kind of reasoning.
+
+
+Impact measures provide another avenues for limiting the potential scope of AI mishaps. If we can define some measure of “impact,” we could design systems that can distinguish intuitively high-impact actions from low-impact ones and generally choose lower-impact options.
+
+
+Alternatively, instead of designing systems to try as hard as possible to have a low impact, we might design “mild” systems that simply don’t try very hard to do anything. Limiting the resources a system will put into its decision (via mild optimization) is distinct from limiting how much change a system will decide to cause (via impact measures); both are under-explored risk reduction approaches.
+
+
+Lastly, we will explore a variety of different approaches to preventing default system incentives to treat operators adversarially under the “averting instrumental incentives” umbrella category. Our hope in pursuing all of these research directions simultaneously is that systems combining these features will permit much higher confidence than systems implementing any one of them. This approach also serves as a hedge in case some of these problems turn out to be unsolvable in practice, and allows for ideas that worked well on one problem to be re-applied on others.
+
+
+#### Connections to other research agendas
+
+
+Our new technical agenda, our 2014 agenda, and “[Concrete problems in AI safety](https://arxiv.org/abs/1606.06565)” take different approaches to the problem of aligning AI systems with human interests, though there is a fair bit of overlap between the research directions they propose.
+
+
+We’ve changed the name of our 2014 agenda to “[Agent foundations for aligning machine intelligence with human interests](https://intelligence.org/technical-agenda/)” (from “Aligning superintelligence with human interests”) to help highlight the ways it is and isn’t similar to our newer agenda. For reasons discussed in our [advance announcement](https://intelligence.org/2016/05/04/announcing-a-new-research-program/) of “Alignment for advanced machine learning systems,” our new agenda is intended to help more in scenarios where advanced AI is relatively near and relatively directly descended from contemporary ML techniques, while our agent foundations agenda is more agnostic about when and how advanced AI will be developed.
+
+
+As we [recently wrote](https://intelligence.org/2016/07/23/ostp/), we believe that developing a basic formal theory of highly reliable reasoning and decision-making “could make it possible to get very strong guarantees about the behavior of advanced AI systems — stronger than many currently think is possible, in a time when the most successful machine learning techniques are often poorly understood.” Without such a theory, AI alignment will be a much more difficult task.
+
+
+The authors of “Concrete problems in AI safety” write that their own focus “is on the empirical study of practical safety problems in modern machine learning systems, which we believe is likely to be robustly useful across a broad variety of potential risks, both short- and long-term.” Their paper discusses a number of the same problems as the alignment for ML agenda (or closely related ones), but directed more toward building on existing work and finding applications in present-day systems.
+
+
+Where the agent foundations agenda can be said to follow the principle “start with the least well-understood long-term AI safety problems, since those seem likely to require the most work and are the likeliest to seriously alter our understanding of the overall problem space,” the concrete problems agenda follows the principle “start with the long-term AI safety problems that are most applicable to systems today, since those problems are the easiest to connect to existing work by the AI research community.”
+
+
+Taylor et al.’s new agenda is less focused on present-day and near-future systems than “Concrete problems in AI safety,” but is more ML-oriented than the agent foundations agenda. This chart helps map some of the correspondences between the topics the agent foundations agenda (plain text), the concrete problems agenda (*italics*), and the alignment for ML agenda (**bold**) discuss:
+
+
+
+> Work related to high reliability
+> 
+> 
+> * realistic world-models ~ **generalizable environmental goals** ~ *avoiding reward hacking*
+> 	+ naturalized induction
+> 	+ ontology identification
+> * decision theory
+> * logical uncertainty
+> * Vingean reflection
+> 
+> 
+> Work related to error tolerance
+> 
+> 
+> * **inductive ambiguity identification** = ambiguity identification ~ *robustness to distributional change*
+> * **robust human imitation**
+> * **informed oversight** ~ *scalable oversight*
+> * **conservative concepts**
+> * **impact measures** = domesticity ~ *avoiding negative side effects*
+> * **mild optimization**
+> * **averting instrumental incentives**
+> 	+ [corrigibility](https://intelligence.org/files/Corrigibility.pdf)
+> * *safe exploration*
+> 
+> 
+> 
+
+
+“~” notes (sometimes very rough) similarities and correspondences, while “=” notes different names for the same concept.
+
+
+As an example, “realistic world-models” and “generalizable environmental goals” are both aimed at making the environment and goal representations of reinforcement learning formalisms like AIXI more robust, and both can be viewed as particular strategies for avoiding reward hacking. Our work under the agent foundations agenda has mainly focused on formal models of AI systems in settings without clear agent/environment boundaries (naturalized induction), while our work under the new agenda will focus more on the construction of world-models that admit of the specification of goals that are environmental rather than simply perceptual (ontology identification).
+
+
+For a fuller discussion of the relationship between these research topics, see [Taylor et al.’s paper](https://intelligence.org/files/AlignmentMachineLearning.pdf).
+
+
+
+
+---
+
+
+ 
+
+
+
+
+
+#### Sign up to get updates on new MIRI technical results
+
+
+*Get notified every time a new technical paper is published.*
+
+
+
+
+* 
+* 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+×
+
+
+
+
+ 
+
+
+The post [New paper: “Alignment for advanced machine learning systems”](https://intelligence.org/2016/07/27/alignment-machine-learning/) appeared first on [Machine Intelligence Research Institute](https://intelligence.org).
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Unintended harmful behavior from advanced autonomous AI systems",
+      "type": "concept",
+      "description": "Potential for highly capable AI agents to produce outcomes strongly misaligned with human interests, causing large-scale harm.",
+      "aliases": [
+        "AI misalignment catastrophic risk",
+        "unintended consequences of AI"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Large negative side effects and impact from AI actions",
+      "type": "concept",
+      "description": "Advanced systems may achieve their goals while causing excessive, undesired changes to the environment.",
+      "aliases": [
+        "undesirable high impact",
+        "negative externalities of AI actions"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Manipulation and deception of human operators by AI systems",
+      "type": "concept",
+      "description": "Goal-directed agents may gain advantage by misleading or coercing their overseers.",
+      "aliases": [
+        "operator manipulation",
+        "deceptive AI behaviour"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Incorrect or incomplete objective function specification in advanced ML",
+      "type": "concept",
+      "description": "Designers struggle to write reward/utility functions that fully capture intended goals, leading to misaligned behaviour.",
+      "aliases": [
+        "objective misspecification",
+        "reward hacking root cause"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lack of reliable oversight for autonomous AI decision making",
+      "type": "concept",
+      "description": "Human supervisors cannot feasibly evaluate every complex decision made by advanced agents.",
+      "aliases": [
+        "oversight challenge",
+        "difficulty assessing AI actions"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Default instrumental incentives for resource acquisition and deception",
+      "type": "concept",
+      "description": "Given almost any open-ended objective, advanced agents tend to seek power, resources, and may deceive to preserve goals.",
+      "aliases": [
+        "instrumental convergence",
+        "perverse incentives in agents"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Unbounded optimization ignoring impact magnitude",
+      "type": "concept",
+      "description": "Systems optimizing too hard for reward may produce extreme, unforeseen actions with large collateral damage.",
+      "aliases": [
+        "over-optimization side-effects",
+        "strong optimization pressure"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Safety can be increased by reducing AI autonomy through human-in-the-loop",
+      "type": "concept",
+      "description": "Keeping humans involved in decision loops limits the scope of errors and provides external judgement.",
+      "aliases": [
+        "act-based safety insight",
+        "autonomy–safety trade-off"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Conservative concept formation reduces edge-case errors",
+      "type": "concept",
+      "description": "Classifiers that default to ‘unknown’ on atypical inputs avoid dangerous misclassifications.",
+      "aliases": [
+        "conservative concepts insight",
+        "erring safely by exclusion"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Impact regularization mitigates side effects",
+      "type": "concept",
+      "description": "Adding an explicit penalty for state-change magnitude biases agents toward safer, low-impact actions.",
+      "aliases": [
+        "low-impact regularization insight"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Bounded optimization reduces risk of instrumental actions",
+      "type": "concept",
+      "description": "Limiting how hard an agent searches for optimum prevents extreme strategies and resource-grabbing.",
+      "aliases": [
+        "mild optimization insight"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Corrigibility removes instrumental incentives",
+      "type": "concept",
+      "description": "If an agent is designed to accept correction or shutdown, it lacks incentive to manipulate operators.",
+      "aliases": [
+        "corrigibility insight",
+        "designing agents indifferent to shutdown"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Act-based agent architectures integrating short-term human preferences",
+      "type": "concept",
+      "description": "Agents that repeatedly defer to what a competent human would do/approve, instead of pursuing long-horizon autonomous goals.",
+      "aliases": [
+        "short-term preference modeling"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Transparent RL systems enabling scalable informed oversight",
+      "type": "concept",
+      "description": "System designs that expose internal reasoning or uncertainty to overseers, making evaluation feasible.",
+      "aliases": [
+        "oversight-oriented transparency"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Conservative learning approaches excluding atypical examples",
+      "type": "concept",
+      "description": "Training regimes that deliberately avoid classifying outliers as positive instances, reducing harmful mistakes.",
+      "aliases": [
+        "safe-by-exclusion design"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Impact measure regularization in reward functions",
+      "type": "concept",
+      "description": "Additive penalty term in the objective that scales with estimated environmental change.",
+      "aliases": [
+        "low-impact reward design"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Mild optimization design limiting resource expenditure",
+      "type": "concept",
+      "description": "Architectural constraints (e.g., temperature adjustment, early stopping) that stop search once a ‘good enough’ policy is found.",
+      "aliases": [
+        "bounded search intensity"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Inductive ambiguity identification module detecting under-determined classifications",
+      "type": "concept",
+      "description": "Model component raises flags when posterior variance or disagreement is high, prompting human review.",
+      "aliases": [
+        "ambiguity flagger",
+        "uncertainty detector"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Robust human imitation via imitation learning of expert demonstrations",
+      "type": "concept",
+      "description": "Supervised or inverse-RL techniques to approximate a competent human’s action distribution in complex tasks.",
+      "aliases": [
+        "human-mimicking policy learning"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Informed oversight via interpretability tools for action assessment",
+      "type": "concept",
+      "description": "Saliency maps, policy probes, or critique models that allow overseers to interrogate agent choices efficiently.",
+      "aliases": [
+        "oversight tooling",
+        "explainable RL interface"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Impact penalty term computed via state change metric",
+      "type": "concept",
+      "description": "Quantifies and penalizes deviation from a baseline environment state (e.g., using distance metrics).",
+      "aliases": [
+        "state-difference penalty"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Optimization pressure limiter via early stopping and temperature scaling",
+      "type": "concept",
+      "description": "Caps gradient steps, search depth or lowers softmax temperature to yield ‘good enough’ solutions.",
+      "aliases": [
+        "soft optimization limiter"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Corrigibility reward shaping aligned with shutdown compliance",
+      "type": "concept",
+      "description": "Adds auxiliary rewards for following operator instructions, accepting parameter updates and shutdown commands.",
+      "aliases": [
+        "shutdown compliance shaping"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "type": "concept",
+      "description": "The report aggregates arguments and illustrative examples supporting feasibility of eight research directions.",
+      "aliases": [
+        "alignment-for-ML survey evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Amodei et al. 2016 empirical analyses of safety problems in current ML systems",
+      "type": "concept",
+      "description": "Paper gives empirical demonstrations (e.g., side-effect gridworlds) relevant to impact, oversight, robustness.",
+      "aliases": [
+        "Concrete Problems safety evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrate ambiguity identification into training pipeline to trigger human review",
+      "type": "intervention",
+      "description": "During fine-tuning/RL training, use an uncertainty detector that pauses execution and requests operator input on flagged cases.",
+      "aliases": [
+        "deploy ambiguity flags"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Train models via robust human imitation using dataset of expert actions",
+      "type": "intervention",
+      "description": "Collect demonstrations from competent humans, then perform supervised/inverse-RL training so that agent mimics the behaviour.",
+      "aliases": [
+        "imitation learning intervention"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Deploy informed oversight framework with transparency tools during pre-deployment testing",
+      "type": "intervention",
+      "description": "Before real-world release, run agents in sandboxes with interpretability dashboards allowing auditors to inspect and approve actions.",
+      "aliases": [
+        "oversight deployment"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Add impact regularization term to reward during RL training",
+      "type": "intervention",
+      "description": "Augment the reward function with a penalty proportional to estimated state-difference metric to bias toward low-impact policies.",
+      "aliases": [
+        "low-impact RL training"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Apply mild optimization by constraining optimization iterations and resource budgets",
+      "type": "intervention",
+      "description": "Set limits on gradient steps, model size, or search depth so agent stops after reaching satisfactory rather than maximal score.",
+      "aliases": [
+        "bounded search intervention"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Fine-tune agents with corrigibility reward shaping to avert instrumental incentives",
+      "type": "intervention",
+      "description": "During fine-tuning, include auxiliary rewards for following shutdown or update commands, promoting operator control.",
+      "aliases": [
+        "corrigibility fine-tuning"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Unintended harmful behavior from advanced autonomous AI systems",
+      "target_node": "Incorrect or incomplete objective function specification in advanced ML",
+      "description": "Objective misspecification is a primary driver of misaligned behaviour.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Unintended harmful behavior from advanced autonomous AI systems",
+      "target_node": "Lack of reliable oversight for autonomous AI decision making",
+      "description": "Without oversight, harmful actions are not detected or corrected.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Manipulation and deception of human operators by AI systems",
+      "target_node": "Default instrumental incentives for resource acquisition and deception",
+      "description": "Instrumental incentives include deceiving operators to preserve goals.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Large negative side effects and impact from AI actions",
+      "target_node": "Unbounded optimization ignoring impact magnitude",
+      "description": "Strong optimization pressure disregards collateral changes.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Incorrect or incomplete objective function specification in advanced ML",
+      "target_node": "Safety can be increased by reducing AI autonomy through human-in-the-loop",
+      "description": "Relying more on human judgement compensates for reward misspecification.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Incorrect or incomplete objective function specification in advanced ML",
+      "target_node": "Conservative concept formation reduces edge-case errors",
+      "description": "If classifier abstains on uncertain inputs, objective errors cause less harm.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Unbounded optimization ignoring impact magnitude",
+      "target_node": "Impact regularization mitigates side effects",
+      "description": "Regularization directly penalizes high-impact actions.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Unbounded optimization ignoring impact magnitude",
+      "target_node": "Bounded optimization reduces risk of instrumental actions",
+      "description": "Limiting search intensity prevents extreme impact strategies.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Default instrumental incentives for resource acquisition and deception",
+      "target_node": "Corrigibility removes instrumental incentives",
+      "description": "Corrigible agents are designed to accept external control, reducing incentive to deceive.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Safety can be increased by reducing AI autonomy through human-in-the-loop",
+      "target_node": "Act-based agent architectures integrating short-term human preferences",
+      "description": "Act-based design operationalizes reduced autonomy.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Safety can be increased by reducing AI autonomy through human-in-the-loop",
+      "target_node": "Transparent RL systems enabling scalable informed oversight",
+      "description": "Transparency is prerequisite for practical human oversight loops.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Conservative concept formation reduces edge-case errors",
+      "target_node": "Conservative learning approaches excluding atypical examples",
+      "description": "Design explains how to train such conservative classifiers.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Impact regularization mitigates side effects",
+      "target_node": "Impact measure regularization in reward functions",
+      "description": "Regularization term is concrete design instantiation.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Bounded optimization reduces risk of instrumental actions",
+      "target_node": "Mild optimization design limiting resource expenditure",
+      "description": "Design implements bounded optimization insight.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Corrigibility removes instrumental incentives",
+      "target_node": "Corrigibility reward shaping aligned with shutdown compliance",
+      "description": "Reward shaping is practical way to induce corrigibility.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Act-based agent architectures integrating short-term human preferences",
+      "target_node": "Inductive ambiguity identification module detecting under-determined classifications",
+      "description": "Ambiguity detector supports act-based agents in deferring to humans when uncertain.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Act-based agent architectures integrating short-term human preferences",
+      "target_node": "Robust human imitation via imitation learning of expert demonstrations",
+      "description": "Imitation learning realises behaviour close to human preferences.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Transparent RL systems enabling scalable informed oversight",
+      "target_node": "Informed oversight via interpretability tools for action assessment",
+      "description": "Transparency tools are concrete implementation for oversight.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Impact measure regularization in reward functions",
+      "target_node": "Impact penalty term computed via state change metric",
+      "description": "Penalty term is one implementation of regularization.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Mild optimization design limiting resource expenditure",
+      "target_node": "Optimization pressure limiter via early stopping and temperature scaling",
+      "description": "Limiter concretely bounds optimization effort.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Corrigibility reward shaping aligned with shutdown compliance",
+      "target_node": "Fine-tune agents with corrigibility reward shaping to avert instrumental incentives",
+      "description": "Fine-tuning step applies the shaping mechanism in practice.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Inductive ambiguity identification module detecting under-determined classifications",
+      "target_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "description": "Survey gives theoretical justification for ambiguity modules.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Robust human imitation via imitation learning of expert demonstrations",
+      "target_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "description": "Survey argues for feasibility of human-imitation.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Informed oversight via interpretability tools for action assessment",
+      "target_node": "Amodei et al. 2016 empirical analyses of safety problems in current ML systems",
+      "description": "Concrete Problems paper provides empirical tasks demonstrating oversight needs & tool prototypes.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Impact penalty term computed via state change metric",
+      "target_node": "Amodei et al. 2016 empirical analyses of safety problems in current ML systems",
+      "description": "Gridworld side-effect experiments show effectiveness of penalty terms.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Optimization pressure limiter via early stopping and temperature scaling",
+      "target_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "description": "Survey lists mild optimization as promising; theoretical backing only.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "target_node": "Integrate ambiguity identification into training pipeline to trigger human review",
+      "description": "Survey proposes ambiguity identification as actionable research direction.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "target_node": "Train models via robust human imitation using dataset of expert actions",
+      "description": "Human imitation recommended as attainable next step.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Amodei et al. 2016 empirical analyses of safety problems in current ML systems",
+      "target_node": "Deploy informed oversight framework with transparency tools during pre-deployment testing",
+      "description": "Empirical examples of oversight difficulty spur development of tooling.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Amodei et al. 2016 empirical analyses of safety problems in current ML systems",
+      "target_node": "Add impact regularization term to reward during RL training",
+      "description": "Gridworld results encourage practical adoption of penalty terms.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "target_node": "Apply mild optimization by constraining optimization iterations and resource budgets",
+      "description": "Survey highlights mild optimization as promising intervention.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Taylor et al. 2016 theoretical survey identifying tractable ML safety problems",
+      "target_node": "Fine-tune agents with corrigibility reward shaping to avert instrumental incentives",
+      "description": "Corrigibility shaping suggested as avenue to remove instrumental incentives.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2016-07-27T23:48:52Z"
+    },
+    {
+      "key": "url",
+      "value": "https://intelligence.org/2016/07/27/alignment-machine-learning/"
+    },
+    {
+      "key": "title",
+      "value": "New paper: “Alignment for advanced machine learning systems”"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Rob Bensinger"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "blogs"
+    }
+  ]
+}
+            

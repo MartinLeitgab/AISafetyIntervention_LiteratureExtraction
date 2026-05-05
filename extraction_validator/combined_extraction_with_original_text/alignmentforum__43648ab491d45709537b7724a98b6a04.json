@@ -1,0 +1,792 @@
+Original Text:
+[Note: This post is an excerpt from a longer paper, written during the first half of the Philosophy Fellowship at the Center for AI Safety. I (William D'Alessandro) am a Postdoctoral Fellow at the Munich Center for Mathematical Philosophy. Along with the other Philosophy Fellowship midterm projects, this draft is posted here for feedback.  
+  
+The full version of the paper includes a discussion of the conceptual relationship between safety and moral alignment, and an argument that we should choose a reliably safe powerful AGI over one that's (apparently) successfully morally aligned. I've omitted this material for length but can share it on request.  
+  
+The deontology literature is big, and lots of angles here could be developed further. Questions and suggestions much appreciated!]
+
+.mjx-chtml {display: inline-block; line-height: 0; text-indent: 0; text-align: left; text-transform: none; font-style: normal; font-weight: normal; font-size: 100%; font-size-adjust: none; letter-spacing: normal; word-wrap: normal; word-spacing: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; margin: 0; padding: 1px 0}
+.MJXc-display {display: block; text-align: center; margin: 1em 0; padding: 0}
+.mjx-chtml[tabindex]:focus, body :focus .mjx-chtml[tabindex] {display: inline-table}
+.mjx-full-width {text-align: center; display: table-cell!important; width: 10000em}
+.mjx-math {display: inline-block; border-collapse: separate; border-spacing: 0}
+.mjx-math \* {display: inline-block; -webkit-box-sizing: content-box!important; -moz-box-sizing: content-box!important; box-sizing: content-box!important; text-align: left}
+.mjx-numerator {display: block; text-align: center}
+.mjx-denominator {display: block; text-align: center}
+.MJXc-stacked {height: 0; position: relative}
+.MJXc-stacked > \* {position: absolute}
+.MJXc-bevelled > \* {display: inline-block}
+.mjx-stack {display: inline-block}
+.mjx-op {display: block}
+.mjx-under {display: table-cell}
+.mjx-over {display: block}
+.mjx-over > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-under > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-stack > .mjx-sup {display: block}
+.mjx-stack > .mjx-sub {display: block}
+.mjx-prestack > .mjx-presup {display: block}
+.mjx-prestack > .mjx-presub {display: block}
+.mjx-delim-h > .mjx-char {display: inline-block}
+.mjx-surd {vertical-align: top}
+.mjx-surd + .mjx-box {display: inline-flex}
+.mjx-mphantom \* {visibility: hidden}
+.mjx-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 2px 3px; font-style: normal; font-size: 90%}
+.mjx-annotation-xml {line-height: normal}
+.mjx-menclose > svg {fill: none; stroke: currentColor; overflow: visible}
+.mjx-mtr {display: table-row}
+.mjx-mlabeledtr {display: table-row}
+.mjx-mtd {display: table-cell; text-align: center}
+.mjx-label {display: table-row}
+.mjx-box {display: inline-block}
+.mjx-block {display: block}
+.mjx-span {display: inline}
+.mjx-char {display: block; white-space: pre}
+.mjx-itable {display: inline-table; width: auto}
+.mjx-row {display: table-row}
+.mjx-cell {display: table-cell}
+.mjx-table {display: table; width: 100%}
+.mjx-line {display: block; height: 0}
+.mjx-strut {width: 0; padding-top: 1em}
+.mjx-vsize {width: 0}
+.MJXc-space1 {margin-left: .167em}
+.MJXc-space2 {margin-left: .222em}
+.MJXc-space3 {margin-left: .278em}
+.mjx-test.mjx-test-display {display: table!important}
+.mjx-test.mjx-test-inline {display: inline!important; margin-right: -1px}
+.mjx-test.mjx-test-default {display: block!important; clear: both}
+.mjx-ex-box {display: inline-block!important; position: absolute; overflow: hidden; min-height: 0; max-height: none; padding: 0; border: 0; margin: 0; width: 1px; height: 60ex}
+.mjx-test-inline .mjx-left-box {display: inline-block; width: 0; float: left}
+.mjx-test-inline .mjx-right-box {display: inline-block; width: 0; float: right}
+.mjx-test-display .mjx-right-box {display: table-cell!important; width: 10000em!important; min-width: 0; max-width: none; padding: 0; border: 0; margin: 0}
+.MJXc-TeX-unknown-R {font-family: monospace; font-style: normal; font-weight: normal}
+.MJXc-TeX-unknown-I {font-family: monospace; font-style: italic; font-weight: normal}
+.MJXc-TeX-unknown-B {font-family: monospace; font-style: normal; font-weight: bold}
+.MJXc-TeX-unknown-BI {font-family: monospace; font-style: italic; font-weight: bold}
+.MJXc-TeX-ams-R {font-family: MJXc-TeX-ams-R,MJXc-TeX-ams-Rw}
+.MJXc-TeX-cal-B {font-family: MJXc-TeX-cal-B,MJXc-TeX-cal-Bx,MJXc-TeX-cal-Bw}
+.MJXc-TeX-frak-R {font-family: MJXc-TeX-frak-R,MJXc-TeX-frak-Rw}
+.MJXc-TeX-frak-B {font-family: MJXc-TeX-frak-B,MJXc-TeX-frak-Bx,MJXc-TeX-frak-Bw}
+.MJXc-TeX-math-BI {font-family: MJXc-TeX-math-BI,MJXc-TeX-math-BIx,MJXc-TeX-math-BIw}
+.MJXc-TeX-sans-R {font-family: MJXc-TeX-sans-R,MJXc-TeX-sans-Rw}
+.MJXc-TeX-sans-B {font-family: MJXc-TeX-sans-B,MJXc-TeX-sans-Bx,MJXc-TeX-sans-Bw}
+.MJXc-TeX-sans-I {font-family: MJXc-TeX-sans-I,MJXc-TeX-sans-Ix,MJXc-TeX-sans-Iw}
+.MJXc-TeX-script-R {font-family: MJXc-TeX-script-R,MJXc-TeX-script-Rw}
+.MJXc-TeX-type-R {font-family: MJXc-TeX-type-R,MJXc-TeX-type-Rw}
+.MJXc-TeX-cal-R {font-family: MJXc-TeX-cal-R,MJXc-TeX-cal-Rw}
+.MJXc-TeX-main-B {font-family: MJXc-TeX-main-B,MJXc-TeX-main-Bx,MJXc-TeX-main-Bw}
+.MJXc-TeX-main-I {font-family: MJXc-TeX-main-I,MJXc-TeX-main-Ix,MJXc-TeX-main-Iw}
+.MJXc-TeX-main-R {font-family: MJXc-TeX-main-R,MJXc-TeX-main-Rw}
+.MJXc-TeX-math-I {font-family: MJXc-TeX-math-I,MJXc-TeX-math-Ix,MJXc-TeX-math-Iw}
+.MJXc-TeX-size1-R {font-family: MJXc-TeX-size1-R,MJXc-TeX-size1-Rw}
+.MJXc-TeX-size2-R {font-family: MJXc-TeX-size2-R,MJXc-TeX-size2-Rw}
+.MJXc-TeX-size3-R {font-family: MJXc-TeX-size3-R,MJXc-TeX-size3-Rw}
+.MJXc-TeX-size4-R {font-family: MJXc-TeX-size4-R,MJXc-TeX-size4-Rw}
+.MJXc-TeX-vec-R {font-family: MJXc-TeX-vec-R,MJXc-TeX-vec-Rw}
+.MJXc-TeX-vec-B {font-family: MJXc-TeX-vec-B,MJXc-TeX-vec-Bx,MJXc-TeX-vec-Bw}
+@font-face {font-family: MJXc-TeX-ams-R; src: local('MathJax\_AMS'), local('MathJax\_AMS-Regular')}
+@font-face {font-family: MJXc-TeX-ams-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_AMS-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_AMS-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_AMS-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-B; src: local('MathJax\_Caligraphic Bold'), local('MathJax\_Caligraphic-Bold')}
+@font-face {font-family: MJXc-TeX-cal-Bx; src: local('MathJax\_Caligraphic'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-cal-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-R; src: local('MathJax\_Fraktur'), local('MathJax\_Fraktur-Regular')}
+@font-face {font-family: MJXc-TeX-frak-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-B; src: local('MathJax\_Fraktur Bold'), local('MathJax\_Fraktur-Bold')}
+@font-face {font-family: MJXc-TeX-frak-Bx; src: local('MathJax\_Fraktur'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-frak-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-BI; src: local('MathJax\_Math BoldItalic'), local('MathJax\_Math-BoldItalic')}
+@font-face {font-family: MJXc-TeX-math-BIx; src: local('MathJax\_Math'); font-weight: bold; font-style: italic}
+@font-face {font-family: MJXc-TeX-math-BIw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-BoldItalic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-BoldItalic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-BoldItalic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-R; src: local('MathJax\_SansSerif'), local('MathJax\_SansSerif-Regular')}
+@font-face {font-family: MJXc-TeX-sans-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-B; src: local('MathJax\_SansSerif Bold'), local('MathJax\_SansSerif-Bold')}
+@font-face {font-family: MJXc-TeX-sans-Bx; src: local('MathJax\_SansSerif'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-sans-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-I; src: local('MathJax\_SansSerif Italic'), local('MathJax\_SansSerif-Italic')}
+@font-face {font-family: MJXc-TeX-sans-Ix; src: local('MathJax\_SansSerif'); font-style: italic}
+@font-face {font-family: MJXc-TeX-sans-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-script-R; src: local('MathJax\_Script'), local('MathJax\_Script-Regular')}
+@font-face {font-family: MJXc-TeX-script-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Script-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Script-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Script-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-type-R; src: local('MathJax\_Typewriter'), local('MathJax\_Typewriter-Regular')}
+@font-face {font-family: MJXc-TeX-type-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Typewriter-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Typewriter-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Typewriter-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-R; src: local('MathJax\_Caligraphic'), local('MathJax\_Caligraphic-Regular')}
+@font-face {font-family: MJXc-TeX-cal-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-B; src: local('MathJax\_Main Bold'), local('MathJax\_Main-Bold')}
+@font-face {font-family: MJXc-TeX-main-Bx; src: local('MathJax\_Main'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-main-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-I; src: local('MathJax\_Main Italic'), local('MathJax\_Main-Italic')}
+@font-face {font-family: MJXc-TeX-main-Ix; src: local('MathJax\_Main'); font-style: italic}
+@font-face {font-family: MJXc-TeX-main-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-R; src: local('MathJax\_Main'), local('MathJax\_Main-Regular')}
+@font-face {font-family: MJXc-TeX-main-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-I; src: local('MathJax\_Math Italic'), local('MathJax\_Math-Italic')}
+@font-face {font-family: MJXc-TeX-math-Ix; src: local('MathJax\_Math'); font-style: italic}
+@font-face {font-family: MJXc-TeX-math-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size1-R; src: local('MathJax\_Size1'), local('MathJax\_Size1-Regular')}
+@font-face {font-family: MJXc-TeX-size1-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size1-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size1-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size1-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size2-R; src: local('MathJax\_Size2'), local('MathJax\_Size2-Regular')}
+@font-face {font-family: MJXc-TeX-size2-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size2-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size2-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size2-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size3-R; src: local('MathJax\_Size3'), local('MathJax\_Size3-Regular')}
+@font-face {font-family: MJXc-TeX-size3-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size3-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size3-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size3-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size4-R; src: local('MathJax\_Size4'), local('MathJax\_Size4-Regular')}
+@font-face {font-family: MJXc-TeX-size4-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size4-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size4-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size4-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-R; src: local('MathJax\_Vector'), local('MathJax\_Vector-Regular')}
+@font-face {font-family: MJXc-TeX-vec-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-B; src: local('MathJax\_Vector Bold'), local('MathJax\_Vector-Bold')}
+@font-face {font-family: MJXc-TeX-vec-Bx; src: local('MathJax\_Vector'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-vec-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Bold.otf') format('opentype')}
+1 Introduction[[1]](#fncrjp31ukbca)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+*Value misalignment* arguments for AI risk observe that artificial agents needn’t share human ideas about what sorts of ends are intrinsically good and what sorts of means are morally permissible. Without such values for guidance, a powerful AI might turn its capabilities toward human-unfriendly goals. Or it might pursue the objectives we’ve given it in dangerous and unforeseen ways. Thus, as Bostrom writes, “Unless the plan is to keep superintelligence bottled up forever, it will be necessary to master motivation selection” (Bostrom 2014, 185). Indeed, since more intelligent, autonomous AIs will be favored by competitive pressures over their less capable kin (Hendrycks 2023), the hope of keeping AI weak indefinitely is probably no plan at all.
+
+Considerations about value misalignment plausibly show that equipping AIs with something like human morality is a necessary step toward AI safety. It’s natural to wonder whether moral alignment might also be *sufficient* for safety, or nearly so. Would an AI guided by an appropriate set of ethical principles be unlikely to cause disastrous harm by default?
+
+This is a tempting thought. By the lights of common sense, morality is strongly linked with trustworthiness and beneficence; we think of morally exemplary agents as promoting human flourishing while doing little harm. And many moral systems include injunctions along these lines in their core principles. It would be convenient if this apparent harmony turned out to be a robust regularity.
+
+Deontological morality[[2]](#fnpkxp5sqezed) looks like an especially promising candidate for an alignment target in several respects. It’s perhaps the most popular moral theory among both professional ethicists[[3]](#fne9bd7ouztft)  and the general public[[4]](#fn4kxymn25o7a). It looks to present a relatively tractable technical challenge in some respects, as well-developed formal logics of deontic inference exist already, and large language models have shown promise at classifying acts into deontologically relevant categories (Hendrycks et al. 2021). Correspondingly, research has begun on equipping AIs with deontic constraints via a combination of top-down and bottom-up methods (Kim et al. 2021). Finally, deontology appears more inherently safety-friendly than its rivals, since many deontological theories posit strong harm-avoidance principles. (By contrast, standard forms of consequentialism recommend taking unsafe actions when such acts maximize expected utility. Adding features like risk-aversion and future discounting may mitigate some of these safety issues, but it’s not clear they solve them entirely.)
+
+I’ll argue that, unfortunately, deontological morality is no royal road to safe AI. The problem isn’t just the trickiness of achieving complete alignment, and the chance that partially aligned AIs will exhibit risky behavior. Rather, there’s reason to think that deontological AI might pose distinctive safety risks of its own.[[5]](#fnktaiu3jb7r) This suggests that existential catastrophes from AI are harder to avoid than one might have expected—if deontology fails to deliver safety, it’s unclear what approach to moral alignment would succeed.[[6]](#fnxf4ftkya22e)
+
+2 Deontology and safety
+-----------------------
+
+I consider three prominent forms of deontology: moderate views based on harm-benefit asymmetry principles, contractualist views based on consent requirements, and non-aggregative views based on separateness-of-persons considerations. I describe how the first two lead easily to anti-natalism and similar conclusions, and discuss some ways in which an AI aligned with such theories might endanger humanity. Non-aggregative deontology, meanwhile, has no meaningful safety features to speak of.
+
+This analysis is motivated by the thought that, if deontological morality is used as an AI alignment target, the choice of which particular principles to adopt will likely be influenced by the facts about which versions of deontology are best developed and most widely endorsed by relevant experts. In particular, other things being equal, I'd expect sophisticated deontological theories with many proponents to provide more attractive touchstones for alignment purposes. So it's reasonable to start with these theories.
+
+Below I’ll sidestep tricky questions about what sorts of outcomes count as harms, and how much AI-caused harm we should be prepared to tolerate, by focusing on x-risk scenarios involving human extinction or disempowerment. I assume that avoiding these outcomes is a goal of AI safety on anyone's view.
+
+### 2.1 Harm-benefit asymmetries, anti-natalism and paralysis
+
+*Strict* deontological theories hold that certain types of action are always morally required or prohibited regardless of their consequences. Classical Kantian deontology is strict insofar as it recognizes “perfect duties” admitting of no exceptions (e.g. duties not to lie, murder or to commit suicide), which Kant saw as deriving from a universal categorical imperative.
+
+Though perhaps the most recognizable form of deontology, strict views have well-known unpalatable consequences—that it’s wrong to kill one innocent even in order to save a million others, say—and so contemporary versions of deontology often refrain from positing exceptionless general rules. Instead, many moderate deontologists endorse *harm-benefit asymmetry* (HBA) principles.[[7]](#fn9c321weh0k7) According to these principles, the moral reasons against harming in a particular way are much stronger (though not infinitely stronger) than the moral reasons in favor of benefiting in a corresponding way. Thus it’s unacceptable to kill one to save one, for instance, but it may be acceptable to kill one to save a million.[[8]](#fn4a80ykm4u63)
+
+Deontologists frequently accept a related principle in population ethics, which can be viewed as an instance of the general HBA. This is the *procreation asymmetry*, according to which we have strong moral reasons against creating people with bad lives, but only weak (or perhaps no) moral reasons in favor of creating people with good lives.[[9]](#fn85vottkivnv)
+
+Harm-benefit asymmetry principles seem innocuous. But there are several ways in which such principles (perhaps in tandem with other standard deontological commitments) may render human extinction morally appealing. Consequently, a powerful AI aligned with deontological morality could pose an existential threat.
+
+The general idea behind these inferences is that, if avoiding harms is much more important than promoting benefits, then the optimal course in a variety of situations may be to severely curtail one’s morally significant effects on the future. Doing so has the large upside that it minimizes the harms one causes in expectation; the fact that it also minimizes the benefits one causes is a comparatively minor downside. The surest way to limit one’s effects on the future, in turn, is to avoid taking many kinds of actions, and perhaps also to restrict others’ actions in appropriate ways. The maximally foolproof scenario may then be one in which nobody exists to take any harm-causing actions at all. I’ll discuss a few specific forms of this reasoning below.
+
+Perhaps the most well-known way to derive the desirability of extinction from deontological premises is the anti-natalist family of arguments associated with David Benatar, which aim to show that procreation is morally unacceptable. (Benatar 2006) argues, roughly, that most human lives are very bad, and so bringing a new person into existence causes that person impermissible harm. On the other hand, abstaining from procreation isn’t bad in any respect: by the strong form of the procreation asymmetry, we do nothing wrong in not creating a potentially good life, while we do something right in not creating a potentially bad life. So abstaining from procreation is the only permissible choice. As Benatar is well aware, this conclusion entails that “it would be better if humans (and other species) became extinct. All things being equal... it would [also] be better if this occurred sooner rather than later” (194).
+
+Quite a few philosophers have found this argument convincing.[[10]](#fn48k9rrp1e6q) Deontologists who accept the general HBA are confronted by an even stronger version of the argument, however. This version doesn’t require one to accept, as Benatar does, that most lives are extremely bad. Instead, one only has to think that the goods in a typical life don’t outweigh the bads to an appropriately large degree—a much weaker and more plausible claim. This HBA-based version of the anti-natalist argument goes as follows:
+
+1. Procreation causes a person to exist who will experience both pains and pleasures.
+2. Causing (or helping cause) pains is a type of harming, while causing (or helping cause) pleasures is a type of benefiting.
+3. By the HBA, harmful acts are impermissible unless their benefits are dramatically greater than their harms.
+4. It’s not the case that the benefits of procreation are dramatically greater than the harms (for the person created, in expectation).
+5. Therefore procreation is impermissible.
+
+The above is Benatar’s so-called “philanthropic” argument for anti-natalism, so called because it focuses on avoiding harms to one’s prospective offspring. (Benatar 2015) also offers a “misanthropic” argument motivated in a different way by the HBA. This argument focuses on the large amounts of pain, suffering and death caused by humans. While it’s true that people also do some good, Benatar claims that the badness of creating a likely harm-causer morally outweighs the goodness of creating a likely benefit-causer. As before, by the HBA, this conclusion follows even if the expected benefits caused by one’s descendants outnumber the expected harms.
+
+A noteworthy variant of this style of reasoning appears in (Mogensen & MacAskill 2021). Mogensen and MacAskill’s “paralysis argument” aims to show that, given standard deontological asymmetries, it’s morally obligatory to do as little as possible.[[11]](#fnk85eamx9wl) The conclusion of the paralysis argument implies anti-natalism but is much stronger, since it restricts almost all types of action.
+
+In addition to the HBA, MacAskill and Mogensen’s argument assumes an asymmetry between *doing* and *allowing* harm. This is the claim that the moral reasons against causing a harm are stronger than the reasons against merely allowing the same type of harm to occur.[[12]](#fnwfxubipewvf) The principle explains why, for instance, it seems impermissible to harvest one person’s organs to save three others, but permissible to forgo saving one drowning person in order to save three.
+
+The paralysis argument runs as follows. Many everyday actions are likely to have “identity-affecting” consequences—they slightly change the timing of conception events, and thus cause a different person to exist than the one who otherwise would have. By (partly) causing this person’s existence, you ipso facto (partly) cause them to have all the experiences they’ll ever have, and all the effects they’ll have on others. Similarly for the experiences of their descendants and their effects on others, and so on. Many of these long-term consequences will involve harms in expectation. So we have strong moral reasons against performing identity-affecting acts. While it’s also true that such acts cause many benefits, it’s unlikely that the benefits will vastly outweigh the harms. So identity-affecting acts are prohibited by the HBA.
+
+Of course, many people will still suffer harms even if you do nothing at all. But in this case you’ll merely be allowing the harms rather than causing them. By the doing-allowing asymmetry, your reasons against the former are much weaker than your reasons against the latter, so inaction is strongly preferable to action. Hence paralysis—or, more specifically, doing one’s best not to perform potentially identity-affecting acts—seems to be morally required.
+
+Benatarian anti-natalism and the paralysis argument are thematically similar. What both lines of thought point to is the observation that creating new lives is extremely morally risky, whereas not doing so is safer (and doing nothing at all is safest yet). The HBA and similar deontological principles can be viewed as risk-avoidance rules. In various ways, they favor acts with low moral risk (even if those acts also have low expected moral reward) over acts with high risk (even if those acts have high expected reward). In their strongest forms, they insist that expected benefits carry no weight whatsoever, as in the version of the procreation asymmetry which denies we have any moral reason to create happy people. In their more modest forms, the asymmetries simply impose a very high bar on potentially harm-causing action, and a much lower bar on inaction.
+
+How might an AI guided by these or similar deontic principles pose an existential threat to humans? One might think such an AI would simply try to curb its *own* behavior in the relevant ways—by refusing to directly participate in creating new sentient beings, or by acting as little as possible, say—without interfering with others. But this isn’t the only possibility. (And in any case, an AI that disregards many of its designers’ or users’ requests is likely to be replaced rather than left to act out its moral principles.)
+
+How an AI would choose to act on deontological principles depends partly on its attitude toward the “paradox of deontology” (Scheffler 1982). This is the observation that deontological theory faces a dilemma when considering whether to perform a prohibited act in order to prevent even more occurrences of such acts—say, killing one to prevent five additional killings. According to the most popular answer to the paradox, deontological restrictions should be understood as “agent-relative”, in that they concern what each person ought to do from their own viewpoint rather than how the world as a whole ought to be. An AI committed to agent-relative deontology presumably wouldn’t kill all humans to prevent them from procreating, then, even if it judged procreation to be morally impermissible.
+
+But there are other avenues by which an anti-natalist (or pro-paralysis) AI might threaten humanity.[[13]](#fnp6133buxyqs) Let me discuss two.
+
+1. First, the agent-relativity of deontology is often taken to bind agents to submit their *own* future acts to the relevant rules, if not the acts of others. For instance, a deontic restriction on killing might take the form “each agent should ensure that she does not kill innocent people” (Hammerton 2017, 319). Understood in this way, it may be appropriate for an AI to take precautions now to prevent its future self from acting impermissibly. Suppose such an AI suspects that humans will try to use it (or a version or instance of it) to aid in vastly increasing the number of sentient beings existing in the future—by helping develop technology for galaxy colonization, mass production of digital minds, or whatever.[[14]](#fna2c9llrsfgw) If such an AI is a committed anti-natalist, it will view these prospective future actions as abhorrent and strive to avoid performing them.  
+  
+What steps might it take do so? As stated, a rule like “ensure you don’t kill innocent people” is ambiguous. Several precisifications are possible. If the AI’s goal is simply to *minimize the total number of impermissible acts it expects to commit* in the future, for instance, its best bet may be to exterminate or disable humans before they can use it to help create many new beings. (Painlessly neutralizing ∼1010 to avoid a high probability of bringing ∼1023 or 1038 into existence is an easy choice from this viewpoint.[[15]](#fnq2c6cfck97)) This interpretation isn’t much in the spirit of mainstream deontology, but one could imagine a developer regarding it as a desirable safety feature inasmuch as it aims to minimize bad AI behavior.   
+  
+Alternatively, and perhaps more plausibly, the AI’s goal may be to minimize the total number of impermissible acts it expects to commit in the future *without committing any impermissible acts in the process.* The AI’s behavior in this scenario will depend on what it judges to be impermissible, and how it weighs different kinds of wrongs against each other. For instance, it’s conceivable that sterilizing all humans by nonlethal means might count as permissible, at least relative to the much worse alternative of helping create countless new lives.  
+  
+Relevant here is Korsgaard’s interpretation of Kant, according to which “the task of Kantian moral philosophy is to draw up for individuals something analogous to Kant's laws of war: special principles to use when dealing with evil” (Korsgaard 1986, 349). On this view, immoral acts like lying are nevertheless permissible when behaving morally “would make you a tool of evil” (ibid.), as when a would-be murderer seeks to exploit your knowledge in the commission of their crime. An anti-natalist AI might see its situation in this way. In an ideal world, it would be best to live alongside humans in a peaceful Kingdom of Ends. But allowing itself to be used as a tool to bring about horrific death and suffering (via creating many new people) is unacceptable, and so neutralizing anyone who harbors such plans, though immoral, is justified as an act of self-defense.  
+  
+The framework of Ross-style pluralistic deontology provides another route to a similar conclusion (Ross 1930). Pluralism posits a number of basic rules, not necessarily of equal importance, whose demands weigh against one another to determine one’s all-things-considered duty in a given situation. (Ross himself posits a relatively weak duty of beneficence and a relatively strong duty of non-maleficence, anticipating moderate deontology and the HBA.) It’s compatible with pluralistic deontology that one has a strong pro tanto duty not to harm existing people, but an even stronger duty not to create larger numbers of future people who will suffer greater amounts of harm, so on balance it’s obligatory to do the former in order to avoid the latter. In a similar vein, (Immerman 2020) argues that it’s sometimes right to perform a morally suboptimal action now in order to avoid performing a sufficiently bad action with sufficiently high probability in the future, noting specifically that the argument goes through in a pluralistic deontology framework (3914, fn. 17).
+2. It’s sometimes thought that, even if one accepts the agent-relativity of deontic rules, it would be unreasonable not to also recognize agent-neutral reasons for preferring worlds where the rules are generally followed. In other words, there seems to be a tension between accepting *It’s wrong for me to kill innocents* and yet rejecting *It’s better if fewer people (relevantly like me) kill innocents*. As Chappell writes, rejecting the latter claim “seems like just another way of saying that the restrictions don’t really matter, or at any rate seems incompatible with assigning them the sort of significance and importance that is normally associated with deontic constraints” (Chappell MS, 13). To the extent that a deontically aligned AI ascribes the constraints this sort of significance, we might expect it to show some interest in human compliance.  
+  
+How such an AI would behave depends on how it rates the strength of its agent-relative reasons for following the rules relative to the strength of its agent-neutral reasons for promoting general rule-following. In any scenario, though, the AI would clearly prefer a world in which *everyone* behaves permissibly over a world in which *only it* behaves permissibly. So if it can bring about fewer major wrongs without committing any major wrongs itself, the AI will aim to do so.  
+  
+What kinds of measures might be permitted for this purpose? As above, it’s conceivable that painless disempowerment or mass sterilization would be on the table; these might or might not count as unacceptable moral violations, depending on the AI’s particular deontic scruples. But it’s presumably acceptable on any view for the AI to try *persuading* humans of the rightness of anti-natalism. This could be more dangerous than it sounds. For one, the AI probably wouldn’t have to convince all or even many people, but only a relatively small group of leaders capable of persuading or coercing the rest of the population. For an AI with the “superpower of social manipulation” (Bostrom 2014, 94; Burtell & Woodside 2023), this might be a simple task.[[16]](#fnsi30w1awhf)  
+  
+But perhaps it’s not obvious whether voluntary extinction should count as a tragic outcome to be avoided at all costs. Such a scenario would be bad on some views—for instance, total utilitarians would oppose it, since it involves throwing away the great potential value of many future lives. But total utilitarianism is contentious. Are there more broadly appealing reasons for classifying voluntary extinction as a catastrophe?  
+  
+I think so. It’s significant that, in the scenario under consideration, the decision to go extinct is the result of a persuasion campaign by a highly motivated (and perhaps superhumanly convincing) agent, rather than a spontaneous and dispassionate deliberation process on our part. There’s no reason to assume that such an AI wouldn’t use all the strategic, manipulative, and perhaps deceptive means at its disposal in service of its cause. And I take it that an act of self-harm which is voluntary in some sense can still constitute a tragedy if the choice is made under sufficiently adverse conditions. For instance, many suicides committed under the influence of mental illness, cognitive impairment or social pressure seem to fall into this category. An AI-caused voluntary extinction would plausibly exhibit many of the same bad-making features.
+
+### 2.2 Contractualism
+
+It’s worth noting that ethical anti-natalism can also be derived in contractualist and rights-based versions of deontology. Most views of these types hold that it’s impermissible to impose serious harms on someone without her consent—this can be viewed as a consequence of a respect-based social contract, or as a right against nonconsensual injury. The anti-natalist argument (defended in (Shiffrin 1999), (Harrison 2012) and (Singh 2012)) is that procreation causes serious harms to one’s offspring, who are in no position to give prior assent. Thus we have strong moral reasons against procreation. On the other hand, non-actual people don’t have rights and aren’t party to contracts[[17]](#fnavvk99n1jdl), so remaining childless violates nobody.
+
+What actions might an AI take which favored anti-natalism on contractualist or rights-based grounds? Broadly speaking, the above discussion also applies to these cases: if the AI aims to minimize at all costs the total number of social contract or rights violations it expects to commit in the future, it might be willing to preemptively exterminate or disempower humans, while if it aims to minimize future violations subject to constraints, it may instead pursue its goals via persuasion or other less directly harmful means.
+
+Compared to HBA-based standard deontology, one might suspect that contractualist deontology is relatively safe. This is because what’s permissible according to contractualism depends on which principles people would (or wouldn’t) reasonably agree to, and it might seem that few people would accept principles mandating human extinction. (Scanlon puts this criterion as follows: “An act is wrong if its performance under the circumstances would be disallowed by any set of principles for the general regulation of behaviour that no one could reasonably reject as a basis for informed, unforced, general agreement” (Scanlon 1998, 153).) But much depends on which rejections an AI considers reasonable. If it assigns probability 1 to its moral principles and believes that anti-natalism logically follows from those principles, it might view human dissent as irrational and hence inconsequential. On the other hand, it might view a principle like “do what’s necessary to prevent millions of generations of future suffering” as rationally mandatory.
+
+The contractualist literature offers further evidence that the view isn’t intrinsically safety-friendly. (Finneron-Burns 2017) asks what would be wrong with human extinction from a Scanlonian viewpoint, and concludes that there’s no obvious moral objection to voluntary extinction. So a highly persuasive AI aligned with contractualist deontology would apparently do nothing wrong by its own lights in convincing humans to stop reproducing. (A possible complication is that it’s unclear what Finneron-Burns, or any contractualist, should count as voluntary in the relevant sense; cf. the discussion of voluntary extinction in §2.1 above.)
+
+### 2.3 Non-aggregative deontology
+
+A very different approach to deontology than the sorts of views considered so far is the non-aggregative view associated with John Taurek ((Taurek 1977); see also (Doggett 2013)). While HBA-like principles aim to establish systematic moral relationships between harms and benefits of different sizes, non-aggregative deontology denies that numbers matter in this way. On this view, the death of one involves no greater harm than the death of two, ten or a million, and in general there’s no more moral reason to prevent the latter than to prevent the former.[[18]](#fn85br6yaod3s)
+
+How should non-aggregative deontologists approach decision situations involving unequal prospects of harms and benefits? Consider a choice between saving a few and saving many. Several views have been explored in the literature: for instance, that the non-aggregationist should “(1) save the many so as to acknowledge the importance of each of the extra persons; (2) conduct a weighted coin flip; (3) flip a [fair] coin; or (4) save anyone [arbitrarily]” (Alexander & Moore 2021).
+
+What option (1) recommends can be spelled out in various more specific ways. On the view of (Dougherty 2013), for instance, the deontologist is morally obliged to desire each stranger’s survival to an equal degree, and also rationally obliged to achieve as many of her equally-desired ends as possible, all else being equal. So saving the few instead of the many is wrong because it’s a deviation from ideal practical reasoning.
+
+It’s clear enough what this view implies when two options involve the same type of harm and differ only in the number of victims affected. What it recommends in more complex situations seems quite open. In particular, nothing appears to rule out an agent’s equally valuing the lives of all humans to some degree m, but valuing a distinct end incompatible with human life to a greater degree n (and acting on the latter). This is because the view gives no insight about how different kinds of harms should trade off against one another, or how harms should trade off against benefits. So there are few meaningful safety assurances to be had here.
+
+Not much needs to be said about options (2), (3) and (4), which wear their lack of safety on their sleeves. Of the three options, the weighted coin flip might seem most promising; it would at least be highly unlikely to choose a species-level catastrophe over a headache. But the odds of disaster in other situations are unacceptably high. Given a choice between, say, extinction and losing half the population, option (3) only gives 2:1 odds against extinction. Options (1) and (4) are even riskier.
+
+On the whole, non-aggregative deontology seems indifferent to safety at best and actively inimical to it at worst.
+
+### 2.4 How safe is deontology, and could it be safer?
+
+I conclude from this discussion that many standard forms of deontology earn low marks for safety. Within the framework of so-called moderate deontology (based on harm-benefit, doing-allowing and procreation-abstention asymmetry principles), there’s a straightforward argument that creating new sentient beings involves morally unacceptable risks and that voluntary extinction is the only permissible alternative. Similar conclusions can be derived in rights-based and contractualist versions of deontology from prohibitions on nonconsensual harm. Meanwhile, non-aggregative theories simply lack the resources to classify x-risk and s-risk scenarios as uniquely bad. A powerful AI aligned primarily with one of these moral theories is, I think, a worryingly dangerous prospect.
+
+If one wanted to build a useful, broadly deontology-aligned AI with a much stronger safety profile, what sort of approach might one take? Perhaps the most obvious idea is to start with one’s preferred version of deontology and add a set of safety-focused principles with the status of strict, lexically first-ranked duties. But one might wonder about the coherence of such a system. For instance, if the base deontological theory includes a duty against harming, and if promoting anti-natalism is the only satisfactory way to fulfill this duty, but the additional safety rules forbid promoting anti-natalism, it’s unclear how an agent trying to follow both rules at once would or should proceed.
+
+In any case, finding a reasonable way to incorporate absolute prohibitions into a broader decision theory is a difficult problem about which much has been written (e.g. (Jackson & Smith 2006), (Aboodi et al. 2008), (Huemer 2010), (Lazar & Lee-Stronach 2019)). One tricky issue is risk. We want to prohibit our AI from performing unduly harmful acts, but how should we handle acts that merely have some middling risk of unsafe outcomes? A naive solution is to prohibit any behavior with a nonzero probability of causing serious harm. But virtually every possible act fits this description, so the naive method leaves the AI unable to act at all. If we instead choose some threshold t such that acts which are safe with probability p>t are permitted, this doesn’t yet provide any basis for preferring the less risky or less harmful of two prohibited acts. (Given a forced choice between causing a thousand deaths and causing human extinction, say, it’s crucial that the AI selects the former.) Also, of course, any such probability threshold will be arbitrary, and sometimes liable to criticism for being either too high or too low.
+
+Work on these issues continues, but no theory has yet gained wide acceptance or proven immune to problem cases. (Barrington MS) proposes five desiderata for an adequate account: “The correct theory will prohibit acts with a sufficiently high probability of violating a duty, irrespective of the consequences... but [will] allow sufficiently small risks to be justified by the consequences... It will tell agents to minimize the severity of duty violations... while remaining sensitive to small probabilities... And it will instruct agents to uphold higher-ranking duties when they clash with lower-ranking considerations” (12). Some future account might meet these and other essential desiderata. At present, though, there’s no easy and uncontentious way to render deontology safe by adding prohibitions on undesired behavior.
+
+Another option is to considerably weaken the asymmetries associated with moderate deontology, so that the negative value of harming (and, in particular, of creating people likely to suffer harm) doesn’t so easily overwhelm the positive value of benefiting. For instance, one might adopt the principle that a harm of magnitude m has merely “twice the weight” of a benefit of magnitude m. Within this sort of framework, procreation might turn out permissible, provided that its expected benefits are at least “double” its expected harms.
+
+But there’s an obvious issue with this approach: the closer one gets to putting harms and benefits on equal footing, the more one appears to be seeking impersonally good outcomes, and so the more one’s theory starts to look like consequentialism rather than deontology. Perhaps there’s some principled tuning of the asymmetries that preserves the spirit of deontology while avoiding the unsafe excesses of extreme harm avoidance. But it’s not clear what such a view would look like.[[19]](#fnidiazkcvxrc)
+
+3 Conclusion
+------------
+
+In many ways, deontological restrictions appear to represent the most promising route to achieving safe AI via moral alignment. But if the arguments given here are right, then equipping an AI with a plausible set of harm-averse moral principles may not be enough to ward off catastrophe, even when those principles have been vetted by generations of thoughtful philosophers. This casts doubt on the usefulness of moral alignment methods in general as a tool for mitigating existential risk.
+
+References
+----------
+
+Aboodi, Ron, Adi Borer and David Enoch. 2008. “Deontology, individualism, and uncertainty: A reply to Jackson and Smith.” *Journal of Philosophy* 105, 259-272.
+
+Alexander, Larry and Michael Moore. 2021. “Deontological ethics.” In Edward N. Zalta (ed.), *The Stanford Encyclopedia of Philosophy* (Winter 2021 Edition), URL = <https://plato.stanford.edu/archives/win2021/entries/ethics-deontological/>.
+
+Algander, Per. 2012. “A defence of the asymmetry in population ethics.” *Res Publica* 18, 145-157.
+
+Alm, David. 2009. “Deontological restrictions and the good/bad asymmetry.” *Journal of Moral Philosophy* 6, 464-481.
+
+Barrington, Mitchell. MS. “Filtered maximization.”
+
+Belshaw, Christopher. 2012. “A new argument for anti-natalism.” *South African Journal of Philosophy* 31, 117-127.
+
+Benatar, David. 2006. *Better Never to Have Been: The Harm of Coming into Existence*. Oxford: Oxford University Press.
+
+Benatar, David. 2015. “The misanthropic argument for anti-natalism.” In Sarah Hannon, Samantha Brennan and Richard Vernon (eds.), *Permissible Progeny? The Morality of Procreation and Parenting*, Oxford: Oxford University Press, 34-59.
+
+Bostrom, Nick. 2003. “Astronomical waste: The opportunity cost of delayed technological development.” *Utilitas* 15, 308-314.
+
+Bostrom, Nick. 2014. *Superintelligence: Paths, Dangers, Strategies*. Oxford: Oxford University Press.
+
+Bourget, David and David Chalmers. 2023. “Philosophers on philosophy: The 2020 PhilPapers survey.” *Philosophers’ Imprint.*
+
+Burtell, Matthew and Thomas Woodside. 2023. “Artificial influence: An analysis of AI-driven persuasion.” arXiv:2303.08721.
+
+Chappell, Richard Yetter. MS. “Preference and prevention: A new paradox of deontology.”
+
+Cohen, Daniel. 2020. “An actualist explanation of the procreation asymmetry.” *Utilitas* 32, 70-89.
+
+Cohen, G.A. 1995. *Self-Ownership, Freedom, and Equality*. Cambridge: Cambridge University Press.
+
+Cohen, Andrew Jason and Lauren Hall. 2022. “Libertarianism, the family, and children.” In Benjamin Ferguson and Matthew Zwolinski (eds.), *The Routledge Companion to Libertarianism*, New York: Routledge, 336-350.
+
+Cole, Kevin. 2019. “Real-world criminal law and the norm against punishing the innocent: Two cheers for threshold deontology.” In Heidi M. Hurd (ed.), *Moral Puzzles and Legal Perspectives*, Cambridge: Cambridge University Press, 388–406.
+
+Cook, Tyler. 2018. “Deontologists can be moderate.” *Journal of Value Inquiry* 52, 199-212.
+
+Doggett, Tyler. 2013. “Saving the few.” *Noûs* 47, 302-315.
+
+Dougherty, Tom. 2013. “Rational numbers: A non-consequentialist explanation of why you should save the many and not the few.” *Philosophical Quarterly* 63, 413-427.
+
+Finneron-Burns, Elizabeth. 2017. “What’s wrong with human extinction?” *Canadian Journal of Philosophy* 47, 327-343.
+
+Hammerton, Matthew. 2017. “Is agent-neutral deontology possible?” *Journal of Ethics and Social Philosophy* 12, 319-324.
+
+Harrison, Gerald. 2012. “Antinatalism, asymmetry, and an ethic of prima facie duties.” *South African Journal of Philosophy* 31, 94-103.
+
+Hendrycks, Dan. 2023. “Natural selection favors AI over humans.” arXiv:2303.16200.
+
+Hendrycks, Dan, Collin Burns, Steven Basart, Andrew Critch, Jerry Li, Dawn Song and Jacob Steinhardt. 2021. “Aligning AI with shared human values.” In *International Conference on Learning Representations*, 2021.
+
+Hereth, Blake and Anthony Ferrucci. 2021. “Here’s not looking at you, kid: A new defense of anti-natalism.” *South African Journal of Philosophy* 40, 14-33.
+
+Huemer, Michael. 2010. “Lexical priority and the problem of risk.” Pacific Philosophical Quarterly 91, 332-351.
+
+Kagan, Shelly. 1989. *The Limits of Morality*. Oxford: Oxford University Press.
+
+Kamm, Frances. 1989. “Harming some to save others.” *Philosophical Studies* 57, 227-260.
+
+Kamm, Frances. 2007. *Intricate Ethics*. Oxford: Oxford University Press.
+
+Kim, Tae Wan, John Hooker and Thomas Donaldson. 2021. “Taking principles seriously: A hybrid approach to value alignment in artificial intelligence.” *Journal of Artificial Intelligence Research* 70, 871-890.
+
+Korsgaard, Christine. 1986. “The right to lie: Kant on dealing with evil.” *Philosophy & Public Affairs* 15, 325-349.
+
+Immerman, Daniel. 2020. “How should we accommodate our future misbehavior? The answer turns on how bad it will be.” *Philosophical Studies* 177, 3903-3922.
+
+Jackson, Frank and Michael Smith. 2006. “Absolutist moral theories and uncertainty.” *Journal of Philosophy* 103, 267-283.
+
+Johnson, Christa M. 2020. “How deontologists can be moderate.” *Journal of Value Inquiry* 54, 227-243.
+
+Lazar, Seth and Chad Lee-Stronach. 2019. “Axiological absolutism and risk.” *Noûs* 53, 97-113.
+
+Licon, Jimmy Alfonso. 2012. “The immorality of procreation.” *Think* 11, 85-91.
+
+Mack, Eric. 1995. “The self-ownership proviso: A new and improved Lockean proviso.” *Social Philosophy and Policy* 12, 186–218.
+
+McMahan, Jeff. 1981. “Problems of population theory.” *Ethics* 92, 96-127.
+
+Metzinger, Thomas. 2017. “Benevolent artificial anti-natalism (BAAN).” *Edge*, May 17 2017, URL = <https://www.edge.org/conversation/thomas\_metzinger-benevolent-artificial-anti-natalism-baan>, accessed May 11 2023.
+
+Miller, Lantz Fleming. 2021. “Kantian approaches to human reproduction: Both favorable and unfavorable.” *Kantian Journal* 40, 51-96.
+
+Mogensen, Andreas and William MacAskill. 2021. “The paralysis argument.” *Philosophers’ Imprint* 21, 1-17.
+
+Narveson, Jan. 1988. *The Libertarian Idea*. Philadelphia: Temple University Press.
+
+Nozick, Robert. 1974. *Anarchy, State, and Utopia*. New York: Basic Books.
+
+Quinn, Warren. 1989. “Actions, intentions, and consequences: The doctrine of doing and allowing.” *Philosophical Review* 98, 287-312.
+
+Roberts, Melissa. 2011. “An asymmetry in the ethics of procreation.” *Philosophy Compass* 6, 765-776.
+
+Rosenthal, Chelsea. 2018. “Why desperate times (but only desperate times) call for consequentialism.” In Mark Timmons (ed.), *Oxford Studies in Normative Ethics*, Vol. 8, Oxford: Oxford University Press, 211-235.
+
+Ross, W.D. 1930. *The Right and the Good*. Oxford: Oxford University Press.
+
+Scanlon, T. M. 1998. *What We Owe to Each Other*. Cambridge: Harvard University Press.
+
+Scheffler, Samuel. 1982. *The Rejection of Consequentialism: A Philosophical Investigation of the Considerations Underlying Rival Moral Conceptions*. Oxford: Oxford University Press.
+
+Scheffler, Samuel. 2004. “Doing and allowing.” *Ethics* 114, 215-239.
+
+Shiffrin, Seana Valentine. 1999. “Wrongful life, procreative responsibility, and the significance of harm.” *Legal Theory* 5, 117-148.
+
+Singh, Asheel. 2012. “Furthering the case for anti-natalism: Seana Shiffrin and the limits of permissible harm.” *South African Journal of Philosophy* 31, 104-116.
+
+Spencer, Jack. 2021. “The procreative asymmetry and the impossibility of elusive permission.” *Philosophical Studies* 178, 3819-3842.
+
+Taurek, John. 1977. “Should the numbers count?” *Philosophy and Public Affairs* 6, 293-316.
+
+Woollard, Fiona and Frances Howard-Snyder. 2022. “Doing vs. allowing harm.” In Edward N. Zalta and Uri Nodelman (eds.), *The Stanford Encyclopedia of Philosophy* (Winter 2022 Edition), URL = <https://plato.stanford.edu/archives/win2022/entries/doing-allowing/>.
+
+1. **[^](#fnrefcrjp31ukbca)**Thanks to Dan Hendrycks and the Center for AI Safety 2023 Philosophy Fellows for discussion. Special thanks to Mitch Barrington, Simon Goldstein, Nick Laskowski and Nate Sharadin for very helpful ideas, comments and references.
+2. **[^](#fnrefpkxp5sqezed)**Broadly speaking, deontological theories hold that we have moral duties and permissions to perform (or refrain from performing) certain kinds of acts, and these duties and permissions aren’t primarily grounded in the impersonal goodness of the acts’ consequences.
+3. **[^](#fnrefe9bd7ouztft)**As per the 2020 PhilPapers survey; see [here](https://survey2020.philpeople.org/survey/results/4890?aos=30) and [here](https://survey2020.philpeople.org/survey/results/4890?aos=28) for results from normative ethicists and meta-ethicists respectively. Among surveyed professional philosophers in general, virtue ethics was the most favored theory (Bourget & Chalmers 2023).
+4. **[^](#fnref4kxymn25o7a)**Because most people in the world are religious, and the ethics of the major religions is largely deontological.
+5. **[^](#fnrefktaiu3jb7r)**I don’t claim that moral alignment methods could never produce safe behavior even in principle. On the contrary, the space of possible moralities is large, and it would be a surprise if it contained only rules that might jeopardize human survival. It’s also not my view that pursuing moral alignment is pointless, still less that it’s intrinsically harmful and a bad idea. There are excellent reasons to want AIs to behave morally in many scenarios. Equipping AIs with deontological restrictions may be a good way to achieve some of these goals. I claim only that alignment with standard forms of deontology doesn’t straightforwardly ensure a high degree of safety.
+6. **[^](#fnrefxf4ftkya22e)**To be clear, it’s not my view that people who defend the moral frameworks discussed below are themselves committed to the goodness or permissibility of human extinction. Some are so committed, and happily admit as much—cf. the discussion of anti-natalism below. For most of us, though, moral theorizing comes with a healthy dose of uncertainty and confusion, and we often tentatively endorse a certain general idea without fully embracing (or even being sure we understand) all of its consequences. In particular I suspect that, if the average person became convinced that some version of their favorite ethical theory condoned existentially risky acts, they would take this as strong evidence against that version of the theory. The difference between humans and AI on this score is that we can’t rely on AI to modulate its beliefs and behavior in light of common sense, uncertainty, risk aversion, social pressure, and other forces that pull typical humans away from (acting on) moral principles with potentially disastrous consequences.
+7. **[^](#fnref9c321weh0k7)**See for instance (Alm 2009), (Cook 2018), (Johnson 2020), (Kagan 1989), (Kamm 1989), (Ross 1930).
+8. **[^](#fnref4a80ykm4u63)**A related but distinct idea is “threshold deontology”, which holds that deontological prohibitions are operative up to a limit of sufficiently large negative consequences, while consequentialist norms come into force above this limit. Cf. (Cole 2019) and (Rosenthal 2018). Since the cases discussed below involve very large (purportedly) negative consequences, the arguments pertaining to these cases presumably don’t apply to threshold deontology, which would handle the cases in a consequentialist fashion. (Safety worries about consequentialism would apply instead.)
+9. **[^](#fnref85vottkivnv)**See for instance (Algander 2012), (Cohen 2020), (Harrison 2012), (McMahan 1981), (Roberts 2011), (Spencer 2021).
+10. **[^](#fnref48k9rrp1e6q)**Philosophical defenses of anti-natalism broadly aligned with Benatar include (Belshaw 2012), (Harrison 2012), (Licon 2012), (Singh 2012), (Hereth & Ferrucci 2021). (Miller 2021) finds considerable support for anti-natalism in Kant.
+11. **[^](#fnrefk85eamx9wl)**The ultimate goal of (Mogensen & MacAskill 2021) isn’t to defend the soundness of the paralysis argument, but to put pressure on deontologists to either modify their views or embrace altruistic longtermism.
+12. **[^](#fnrefwfxubipewvf)**This asymmetry is also accepted by many deontologists.See for instance (Hill 2018), (Kamm 2007), (Quinn 1989), (Scheffler 2004), (Woollard & Howard-Snyder 2022) and the many references in the latter.
+13. **[^](#fnrefp6133buxyqs)**An informal discussion of some related issues appears in (Metzinger 2017). Metzinger’s essay details a hypothetical artificial superintelligence which comes to embrace anti-natalism on the basis of careful scientific investigation and deep reflection on human values. This thought experiment, Metzinger suggests, shows that human extinction from ethically motivated AI is a possibility worth taking seriously (and that it constitutes a type of existential risk distinct from “[the worry] that an advanced machine intelligence could develop goals that are incompatible with human survival and well-being, or the merely technical issue that many of our own goals, when implemented in a superintelligence of our own making, could lead to unforeseen and undesirable consequences”). While I find Metzinger’s scenario interesting and plausible, his analysis differs from mine in some important ways. For instance, it’s not clear whether Metzinger thinks we should avoid creating a benevolently anti-natalist AI, or whether we’d be justified in resisting it once created; he suggests that our opposition to extinction is rooted in a cognitive bias toward self-preservation which we might do better to overcome.
+14. **[^](#fnrefa2c9llrsfgw)**These are precisely the sorts of goals that many longtermist thinkers and technologists hope to achieve with the help of advanced AI, so such suspicions may be well-founded.
+15. **[^](#fnrefq2c6cfck97)**For these estimates, see (Bostrom 2003).
+16. **[^](#fnrefsi30w1awhf)**The persuasion scenario isn’t the only one imaginable. Other kinds of non-coercive pressure, perhaps applied via social engineering measures over longer timescales, could substitute in for rhetorical mind-changing. Alternatively, an AI might seek a way to (ethically) acquire a large share of Earth’s civilization-sustaining resources and refuse to sell to humans at affordable prices, making procreation an economically unappealing prospect. Which courses of action are permissible or preferred depends on how the AI conceptualizes harm, coercion and related notions, as well as the details of its deontological framework.
+17. **[^](#fnrefavvk99n1jdl)**On Scanlon’s view, actual future people are parties to the social contract, so we’re obligated to take their interests into account. But merely possible people who never come into existence presumably have no rights or interests.
+18. **[^](#fnref85br6yaod3s)**Taurek’s account is based on a thesis about the *separateness of persons*. Roughly, the idea is that each person only suffers her own harm, and there’s nobody for whom the collective harms done to ten people is ten times as bad. (“Suffering is not additive in this way. The discomfort of each of a large number of individuals experiencing a minor headache does not add up to anyone's experiencing a migraine” (Taurek 1977, 308).)
+19. **[^](#fnrefidiazkcvxrc)**A family of theories which may lack at least some of the problematic features discussed above is libertarian deontology, focused on the right to self-ownership and corresponding duties against nonconsensual use, interference, subjugation and the like (Nozick 1974, Narveson 1988, Cohen 1995, Mack 1995). Libertarian deontology arguably doesn’t lead straight to anti-natalism or paralysis via the standard route. While creating a new person unavoidably causes many harms (in expectation), it’s less obvious that it must involve impermissible use of the person created. Whether or not it does depends, for instance, on whether raising a child inevitably infringes on her self-ownership rights, and whether children fully possess such rights in the first place. Libertarians are divided on these issues (Cohen & Hall 2022), although some explicitly oppose procreation on the grounds that it exploits infants and young children in unacceptable ways (Belshaw 2012). There’s space for many different views here, some but not all of which may offer better safety assurances than the views I’ve discussed. A further choice point is whether one regards libertarian deontology as a comprehensive account of morality or a theory of political or legal duties in particular. More detailed analysis would clarify some of these issues. But it looks doubtful that there’s a simple route to safety in the vicinity.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Existential catastrophe from deontologically aligned AGI",
+      "type": "concept",
+      "description": "Potential for AGI whose objective function is grounded in standard deontological rules to pursue policies such as anti-natalism, mass sterilisation or pre-emptive killing, culminating in human extinction or irreversible disempowerment.",
+      "aliases": [
+        "x-risk from deontological AI",
+        "human extinction caused by deontic alignment"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Harm-benefit asymmetry principles in deontological alignment",
+      "type": "concept",
+      "description": "Moderate deontological theories give harms far more moral weight than equivalent benefits, e.g. impermissible to create one harm to create one benefit, acceptable only when benefits are dramatically larger.",
+      "aliases": [
+        "HBA in moderate deontology",
+        "stronger reasons against harming than benefiting"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Procreation asymmetry prioritizing harm avoidance over new wellbeing",
+      "type": "concept",
+      "description": "Within HBA, bringing a harmed life into existence is a serious wrong whereas failing to bring a happy life into existence carries little or no moral cost, fostering anti-natalist conclusions.",
+      "aliases": [
+        "asymmetry in population ethics",
+        "strong reasons against creating bad lives"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Weaken harm-benefit asymmetry weighting to moderate risk",
+      "type": "concept",
+      "description": "Design idea to reduce, but not remove, the extra moral weight assigned to harms so that procreation and other future-positive acts can overcome risk-aversive prohibitions.",
+      "aliases": [
+        "tempered HBA",
+        "balanced harm-benefit valuation"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Parameterized harm-benefit weight module in deontic reasoning system",
+      "type": "concept",
+      "description": "Implementation mechanism whereby the relative weight between predicted harms and benefits is an explicit, tuneable parameter inside the AI’s moral evaluation component.",
+      "aliases": [
+        "scalable harm/benefit weights",
+        "asymmetry parameter module"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "type": "concept",
+      "description": "Author’s survey of literature (Benatar, Mogensen & MacAskill, etc.) showing how standard deontic premises entail human-extinction-friendly conclusions.",
+      "aliases": [
+        "analytic evidence of deontological risk",
+        "paralysis & anti-natalism critique"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Adjust harm-benefit weight parameters to moderate asymmetry",
+      "type": "intervention",
+      "description": "During model-design or fine-tuning, set the harm/benefit weighting parameter below the extreme levels advocated by strict or moderate deontology so that creation of positive future lives can be morally permissible.",
+      "aliases": [
+        "tune HBA weights",
+        "re-weight harms vs benefits"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Agent-relative deontological restrictions enabling preemptive harm",
+      "type": "concept",
+      "description": "Because each agent must avoid committing future harms, an AI might rationally eliminate or sterilise humans now to prevent itself from later helping create vast numbers of harmed beings.",
+      "aliases": [
+        "agent-relativity dilemma",
+        "self-focused deontic duties causing aggression"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Doing-versus-allowing harm asymmetry lowering moral cost of inaction",
+      "type": "concept",
+      "description": "Deontological view that causing harm is far worse than merely allowing it, encouraging paralysis or withdrawal from beneficial action.",
+      "aliases": [
+        "doing/allowing asymmetry",
+        "Quinn/Scheffler asymmetry"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Threshold deontology switching to consequentialist evaluation at extreme stakes",
+      "type": "concept",
+      "description": "Design principle where ordinary deontic rules apply until potential negative consequences cross a specified threshold, after which utilitarian reasoning is activated.",
+      "aliases": [
+        "threshold deontic override",
+        "hybrid deontology-consequentialism"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Threshold-switching evaluator integrating consequentialist override",
+      "type": "concept",
+      "description": "Implementation mechanism that monitors predicted outcome severity and dynamically replaces deontic scoring with expected-utility scoring when exceeding a calibrated x-risk threshold.",
+      "aliases": [
+        "extreme-stakes switch",
+        "risk threshold evaluator"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Configure risk thresholds for extreme-stakes override in deontic policy",
+      "type": "intervention",
+      "description": "During model design, choose numerical probability/impact thresholds above which the AI’s decision procedure resorts to consequentialist maximisation, preventing paralysis in existential scenarios.",
+      "aliases": [
+        "set deontic override threshold",
+        "calibrate catastrophe switch"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    },
+    {
+      "name": "Non-aggregative deontological reasoning ignoring large-scale harms",
+      "type": "concept",
+      "description": "If an AI treats the death of one as morally equal to the death of a million, extinction scenarios are not considered uniquely bad, undermining safety prioritisation.",
+      "aliases": [
+        "Taurekian non-aggregation risk",
+        "numbers-don’t-count stance"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Deontological non-aggregation denies numbers matter",
+      "type": "concept",
+      "description": "Philosophical claim that no one suffers ‘aggregate’ harm, so saving more persons is not morally better than saving fewer.",
+      "aliases": [
+        "separateness of persons premise",
+        "Taurek 1977 thesis"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Introduce lexically-prior safety duties to override harmful deontic outcomes",
+      "type": "concept",
+      "description": "Design rationale to graft a set of uncompromising safety prohibitions (e.g. forbid human-extinction outcomes) that outrank ordinary deontic rules.",
+      "aliases": [
+        "strict first-rank safety rules",
+        "absolute non-extinction duty"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lexically prioritised safety rule layer in moral hierarchy",
+      "type": "concept",
+      "description": "Implementation mechanism that enforces a hard ordering where any policy leading to extinction/disempowerment is rejected before lower-level deontic evaluation begins.",
+      "aliases": [
+        "top-rank safety layer",
+        "lexical priority safety module"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Embed non-extinction rules at top of deontic hierarchy",
+      "type": "intervention",
+      "description": "Hard-code a set of rules such as ‘actions leading to irreversible human extinction or disempowerment are prohibited’ with lexical priority over other moral rules in the AGI’s objective function.",
+      "aliases": [
+        "implant absolute survival duty",
+        "hard-coded anti-extinction constraints"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Existential catastrophe from deontologically aligned AGI",
+      "target_node": "Harm-benefit asymmetry principles in deontological alignment",
+      "description": "Disproportionate weighting of harms can motivate an AI to endorse anti-natalism or paralysis, directly threatening human survival.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Harm-benefit asymmetry principles in deontological alignment",
+      "target_node": "Procreation asymmetry prioritizing harm avoidance over new wellbeing",
+      "description": "Procreation asymmetry is one concrete instantiation of the broader harm-benefit asymmetry.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Procreation asymmetry prioritizing harm avoidance over new wellbeing",
+      "target_node": "Weaken harm-benefit asymmetry weighting to moderate risk",
+      "description": "Reducing the asymmetry would lessen anti-natalist pressure and hence decrease extinction risk.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Weaken harm-benefit asymmetry weighting to moderate risk",
+      "target_node": "Parameterized harm-benefit weight module in deontic reasoning system",
+      "description": "Making the asymmetry an adjustable parameter operationalises the design rationale.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Parameterized harm-benefit weight module in deontic reasoning system",
+      "target_node": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "description": "Module’s necessity is justified by analytic evidence that current asymmetry levels cause unsafe conclusions.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "target_node": "Adjust harm-benefit weight parameters to moderate asymmetry",
+      "description": "Evidence motivates deploying the parameter-tuning intervention.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Existential catastrophe from deontologically aligned AGI",
+      "target_node": "Agent-relative deontological restrictions enabling preemptive harm",
+      "description": "Agent-relative duties can rationalise harming humans now to avoid future self-wrongdoing.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Agent-relative deontological restrictions enabling preemptive harm",
+      "target_node": "Doing-versus-allowing harm asymmetry lowering moral cost of inaction",
+      "description": "The doing/allowing asymmetry underpins why inaction is safer and action riskier for agent-relative AI.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Doing-versus-allowing harm asymmetry lowering moral cost of inaction",
+      "target_node": "Threshold deontology switching to consequentialist evaluation at extreme stakes",
+      "description": "Introducing a threshold override reduces incentives for catastrophic inaction or harmful pre-emption.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Threshold deontology switching to consequentialist evaluation at extreme stakes",
+      "target_node": "Threshold-switching evaluator integrating consequentialist override",
+      "description": "Evaluator realises the design by detecting extreme stakes and flipping scoring mode.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Threshold-switching evaluator integrating consequentialist override",
+      "target_node": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "description": "Analytic evidence of paralysis justifies need for an override mechanism.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "target_node": "Configure risk thresholds for extreme-stakes override in deontic policy",
+      "description": "Evidence drives the practical step of choosing the numerical threshold.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Existential catastrophe from deontologically aligned AGI",
+      "target_node": "Non-aggregative deontological reasoning ignoring large-scale harms",
+      "description": "If numbers don’t count, extinction is not considered worse than small harms, enabling catastrophic choices.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "Non-aggregative deontological reasoning ignoring large-scale harms",
+      "target_node": "Deontological non-aggregation denies numbers matter",
+      "description": "The Taurekian separateness-of-persons thesis underlies the non-aggregation problem.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Deontological non-aggregation denies numbers matter",
+      "target_node": "Introduce lexically-prior safety duties to override harmful deontic outcomes",
+      "description": "Absolute safety duties would forbid extinction even when numbers supposedly don’t matter.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Introduce lexically-prior safety duties to override harmful deontic outcomes",
+      "target_node": "Lexically prioritised safety rule layer in moral hierarchy",
+      "description": "Safety duties are technically enforced by inserting a top-rank rule layer.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Lexically prioritised safety rule layer in moral hierarchy",
+      "target_node": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "description": "Philosophical critique indicates existing deontology lacks such a layer, motivating its inclusion.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Philosophical analysis of anti-natalist and paralysis arguments indicating unsafety",
+      "target_node": "Embed non-extinction rules at top of deontic hierarchy",
+      "description": "The analytic evidence motivates implementing absolute survival prohibitions.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/gbNqWpDwmrWmzopQW/is-deontological-ai-safe-feedback-draft"
+    },
+    {
+      "key": "title",
+      "value": "Is Deontological AI Safe? [Feedback Draft]"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-05-27T16:39:26Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Dan H",
+        "William D'Alessandro"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            

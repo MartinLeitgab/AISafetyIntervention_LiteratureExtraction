@@ -1,0 +1,825 @@
+Original Text:
+1 Introduction
+---------------
+
+
+![A task where an agent (green triangle) must execute the command “go to the fruit bowl.” This is a simple example where the reward function is easier to specify than the policy.](https://media.arxiv-vanity.com/render-output/7386265/figures/splash.png)
+Figure 1: A task where an agent (green triangle) must execute the command “go to the fruit bowl.” This is a simple example where the reward function is easier to specify than the policy.
+
+
+While reinforcement learning provides a powerful and flexible framework for describing and solving control tasks, it requires the practitioner to specify objectives in terms of reward functions. Engineering reward functions is often done by experienced practitioners and researchers, and even then can pose a significant challenge, such as when working with complex image-based observations. While researchers have investigated alternative means of specifying objectives, such as learning from demonstration (Argall et al., [2009](#bib.bib2)), or through binary preferences (Christiano et al., [2017](#bib.bib6)), language is often a more natural and desirable way for humans to communicate goals.
+
+
+
+
+A common approach to building natural language interfaces for reinforcement learning agents is to build language-conditioned policies that directly map observations and language commands to a sequence of actions that perform the desired task. However, this requires the policy to solve two challenging problems together: understanding how to plan and solve tasks in the physical world, and understanding the language command itself. The trained policy must simultaneously interpret a command and plan through possibly complicated environment dynamics.
+The performance of the system then hinges entirely on its ability to generalize to new environments - if either the language interpretation or the physical control fail to generalize, the entire system will fail. We can recognize instead that the role of language in such a system is to communicate the goal, and rather than mapping language directly to policies, we propose to learn how to convert language-defined goals into reward functions.
+In this manner, the agent can learn how to plan and perform the task on its own via reinforcement learning, directly interacting with the environment, without relying on zero-shot transfer of policies.
+A simple example is shown in Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"), where an agent is tasked with navigating through a house. If an agent is commanded “go to the fruit bowl”, a valid reward function could simply be a fruit bowl detector from first-person views of the agent. However, if we were to learn a mapping from language to actions, given the same goal description, the model would need to generate a different plan for each house.
+
+
+
+
+In this work, we investigate the feasibility of grounding free-form natural language commands as reward functions using inverse reinforcement learning (IRL). Learning language-conditioned rewards poses unique computational problems. IRL methods generally require solving a reinforcement learning problem as an inner-loop (Ziebart, [2010](#bib.bib27)), or rely on potentially unstable adversarial optimization procedures (Finn et al., [2016](#bib.bib9); Fu et al., [2018](#bib.bib11)). This is compounded by the fact that we wish to train our model across multiple tasks, meaning the IRL problem itself is an inner-loop. In order to isolate the language-learning problem from the difficulties in solving reinforcement learning and adversarial learning problems, we base our method on an exact MaxEnt IRL (Ziebart, [2010](#bib.bib27)) procedure, which requires full knowledge
+of environment dynamics to train a language-conditioned reward function represented by a deep neural network. While using exact IRL procedures may seem limiting, in many cases (such as indoor robotic navigation) full environment dynamics are available, and this formulation allows us to remove the difficulty of using RL from the training procedure. The crucial insight is that we can use dynamic programming methods during training to learn a reward function that maps from observations, but we do not need knowledge of dynamics to use the reward function, meaning during test time we can evaluate using a reinforcement learning agent without knowledge of the underlying environment dynamics.
+We evaluate our method on a dataset of realistic indoor house navigation and pick-and-place tasks using the SUNCG dataset, with natural language commands. We demonstrate that our approach generalizes not only to novel tasks, but also to entirely new scenes, while directly learning a language-conditioned policy leads to poor performance and fails to generalize.
+
+2 Related Work
+---------------
+
+
+
+A popular class of approaches to language grounding in reinforcement learning is to directly train a policy that consumes language as an input. Several works adopt a behavioral cloning approach, where the model is trained using supervised learning with language-action sequences pairs (Anderson et al., [2018](#bib.bib1); Mei et al., [2016](#bib.bib16); Sung et al., [2015](#bib.bib24)). A second approach is to forego demonstrations but instead reward an agent whenever the desired task is completed (Shah et al., [2018](#bib.bib22); Misra et al., [2017](#bib.bib18); Hermann et al., [2017](#bib.bib12); Branavan et al., [2009](#bib.bib4)). This approach requires reward functions (the task completion detector) to be hand-designed for the training tasks considered. Another related approach is semantic parsing, which has also been used to convert language into an executable form that corresponds to actions within an environment  (Forbes et al., [2015](#bib.bib10); Misra et al., [2014](#bib.bib17); Tellex et al., [2011](#bib.bib25)). In a related task to instruction following, Das et al. ([2018](#bib.bib7)) consider an embodied question-answering task where an agent must produce an answer to a question, where the relevant information lies within the environment. They adopt a hybrid approach, where they pretrain with supervised learning but also give the agent reward for completing intermediate tasks. Overall, our experiments show that policy-based approaches have worse generalization performance to new environments, because the policy must rely on zero-shot generalization at test time as we show in Section [6.3](#S6.SS3 "6.3 Experimental Results ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). While in this paper we argue for the performance benefits of a reward-based approach, a reason one may want to adopt a policy-based approach over a reward-based one is if one cannot run RL to train a new policy in a new environment, such as for time or safety reasons.
+
+
+
+
+A second approach to the language grounding problem is to learn a mapping from language to reward functions. There are several other works that apply IRL or IRL-like procedures to the problem of language grounding. Perhaps most closely related to our work is MacGlashan et al. ([2015](#bib.bib15)),
+which also aims to learn a language-conditioned reward function via IRL. However, this method requires an extensively hand-designed, symbolic reward function class, whereas we use generic, differentiable function approximators that can handle arbitrary observations, including raw images. Bahdanau et al. ([2018](#bib.bib3)); Tung et al. ([2018](#bib.bib26)) also learn language-conditioned reward functions, but do not perform IRL, meaning that the objective does not correspond to matching the expert’s trajectory distribution. Tung et al. ([2018](#bib.bib26)) train a task-completion classifier, but do not evaluate their reward on control problems. The strategy they use is similar to directly regressing onto a ground-truth reward function, which we include a comparison to in Section [6](#S6 "6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following") to as an oracle baseline. Bahdanau et al. ([2018](#bib.bib3)) adopt an adversarial approach similar to GAIL (Ho & Ermon, [2016](#bib.bib13)), and use the learned discriminator as the reward function. While this produces a reward function, it does not provide any guarantees that the resulting reward function can be reoptimized in new environments to yield behavior similar to the expert. We believe our work is the first to apply language-conditioned inverse reinforcement learning to environments with image observations and deep neural networks, and we show that our rewards generalize to novel tasks and environments.
+
+3 Background
+-------------
+
+
+
+We build off of the MaxEnt IRL model (Ziebart et al., [2008](#bib.bib28)), which considers an entropy-regularized Markov decision process (MDP),
+defined by the tuple (S,A,T,r,γ,ρ0). S,A are the state and action spaces respectively and γ∈(0,1) is the discount factor. T(s′|s,a) represents the transition distribution or dynamics. We additionally consider partially-observed environments, where each state is associated with an observation within an observations space o∈O.
+
+
+
+
+The goal of ”forward” reinforcement learning is to find the optimal policy π∗. Let r(τ)=∑Tt=0γtr(st,at) denote the returns of a trajectory, where τ denotes a sequence of states and actions (s0,a0,...sT,aT). The MaxEnt RL objective is then to find π∗=argmaxπEτ∼π[r(τ)+H(τ)].
+
+
+
+
+Inverse reinforcement learning (IRL) seeks to infer the reward function r(s,a) given a set of expert demonstrations D={τ1,...,τN},. In IRL, we assume the demonstrations are drawn from an optimal policy π∗(a|s). We can interpret the IRL problem as solving the maximum likelihood problem:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | maxθEτ∼D[logpθ(τ)] , |  | (1) |
+
+
+In the MaxEnt IRL framework, optimal trajectories are observed with probabilities proportional to the exponentiated returns, meaning p(τ)∝exp{r(τ)} (Ziebart et al., [2008](#bib.bib28)). Thus, learning a reward function rθ(τ) is equivalent to fitting an energy-based model pθ(τ)∝exp{rθ(τ)} to the maximum likelihood objective in Eqn [1](#S3.E1 "(1) ‣ 3 Background ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). The gradient to update the reward function is (Ziebart, [2010](#bib.bib27)):
+
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | ∇θE[logpθ(τ)]=∑s,a(ρD(s,a)−ρ∗θ(s,a))∇θrθ(s,a) , |  | (2) |
+
+
+
+
+where ρD(s,a) represents the state-action marginal of the demonstrations, and ρ∗θ(s,a) represents the state-action marginal of the optimal policy under reward rθ(s,a).
+
+4 Multi-Task IRL
+-----------------
+
+
+
+A unique challenge of the language-conditioned IRL problem, compared to standard IRL, is that the goal is to learn a reward function that generalizes across multiple tasks. While standard IRL methods are typically trained and evaluated on the same task, we want our language-conditioned reward function to produce correct behavior when presented with new tasks. Several previous works consider a multi-task scenario, such as in a Bayesian or meta-learning setting (Li & Burdick, [2017](#bib.bib14); Dimitrakakis & Rothkopf, [2012](#bib.bib8); Choi & Kim, [2012](#bib.bib5)). We adopt a similar approach adapted for the language-IRL problem, and formalize the notion of a task, denoted by ξ, as an MDP, where individual tasks may not share the same state spaces, dynamics or reward functions. Each task is associated with a context cξ which is a unique identifier (i.e. an indicator vector) for that task. Thus, we wish to optimize the following multi-task objective, where τξ denotes expert demonstrations for that task:
+
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | maxθEξ[Eτξ[logpθ(τξ,cξ)]] |  | (3) |
+
+
+
+
+In order to optimize this objective, we first require that all tasks share the same observation space and action space, and the reward to be a function of the observation, rather than of the state. For example, in our experiments, all observations are in the form of 32x24 images taken from simulated houses, but the state space for each house is allowed to differ (i.e., the houses have different layouts). This means the same reward can be used across all MDPs even though the state spaces differ.
+
+
+
+
+Second, we share the reward function across all tasks, but substitute a language command Lξ as a proxy for the context cξ, resulting in a model pθ(τξ,Lξ) that takes as input language, states, and actions. For computational efficiency we run stochastic gradient descent on the objective in Eqn. [3](#S4.E3 "(3) ‣ 4 Multi-Task IRL ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following") by sampling over the set of environments on each iteration.
+
+5 Language-Conditioned Reward Learning (LC-RL)
+-----------------------------------------------
+
+
+
+We learn language-conditioned reward functions using maximum causal entropy IRL, adapted for a multi-task setting and rewards represented by language-conditioned convolutional neural networks. While during training we use dynamic programming methods that require dynamics knowledge, we do not need knowledge of dynamics to evaluate the reward function. Thus, at test time we can use standard model-free RL algorithms to learn the task from the inferred reward function in new environments. Our algorithm is briefly summarized in Algorithm [1](#alg1 "Algorithm 1 ‣ 5.1 Computing Exact IRL Gradient Updates ‣ 5 Language-Conditioned Reward Learning (LC-RL) ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following").
+
+
+
+
+### 
+5.1 Computing Exact IRL Gradient Updates
+
+
+
+In order to take gradient steps on the objective of Eqn. [3](#S4.E3 "(3) ‣ 4 Multi-Task IRL ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"), we update our reward function in terms of the Maximum Entropy IRL gradient (Ziebart, [2010](#bib.bib27)) according to Eqn. [2](#S3.E2 "(2) ‣ 3 Background ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). The stochastic gradient update (for a single task ξ) adapted to our case is:
+
+
+
+
+
+
+|  |  |  |
+| --- | --- | --- |
+|  | ∇θEτ[logpθ(τξ,Lξ)]=∑s,a(ρd(s,a)−ρ∗θ(s,a))∇θrθ(o(s),a,Lξ) |  |
+
+
+
+
+Where o(s) denotes the observation for state s. Note that during training we need access to the ground truth states s. While the update depends on the underlying state, the reward itself is only a function of the observation, the action, and the language. This enables us to evaluate the reward without knowing the underlying state space and dynamics of the environment. While requiring dynamics knowledge during training may seem limiting, in practice many environments we may wish to train a robot in can easily be mapped. This training strategy is analogous to training a robot in only known environments such as a laboratory, but the resulting reward can be used in unknown environments.
+
+
+
+
+In order to compute ρ∗θ(s,a), one normally has to first compute the optimal policy with respect to reward rθ(o,a) using reinforcement learning, and then compute the occupancy measure using the forward algorithm for Markov chains to compute the state visitation distributions at each time-step. Because this embeds a difficult RL optimization problem within nested inner-loops, this quickly becomes computationally intractable. Thus, we train in tabular environments with known dynamics, where we can compute optimal policies exactly using Q-iteration. However, we emphasize that this is only a training time restriction, and knowledge of dynamics is not required to evaluate the rewards.
+
+
+
+
+
+
+1:  Obtain expert demonstrations and language describing the goal.
+
+
+
+2:  Initialize reward function rθ.
+
+
+
+3:  for step t in {1, …, N} do
+
+
+4:     Sample task ξ, demonstrations dξ , and language Lξ.
+
+
+
+5:     Compute optimal q∗(s,a) using q-iteration and ρ∗(s,a) using the forward algorithm.
+
+
+
+6:     Update reward rθ with the gradient (ρdξ(s,a)−ρ∗(s,a))∇rθ(o,a,Lξ)
+
+
+7:  end for
+
+
+Algorithm 1  Language-Conditioned Reward Learning (LC-RL)
+
+
+### 
+5.2 Architecture
+
+
+![Our reward function architecture. Our network receives as input a panoramic semantic image (4 views) and a language command represented as a sequence of one-hot word vectors, and outputs a scalar reward.](https://media.arxiv-vanity.com/render-output/7386265/figures/network_arch.png)
+Figure 2: Our reward function architecture. Our network receives as input a panoramic semantic image (4 views) and a language command represented as a sequence of one-hot word vectors, and outputs a scalar reward.
+
+
+Our network architecture is shown in Figure [2](#S5.F2 "Figure 2 ‣ 5.2 Architecture ‣ 5 Language-Conditioned Reward Learning (LC-RL) ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). The network has two main modalities of input: a variable-length language input represented by a sequence of one-hot vectors (one vector for each tokenized word), and a panoramic image observation.
+
+
+
+
+The language embedding is formed by processing the language input sequence through an LSTM network, and the final time-step of the topmost layer is used as a fixed-dimensional embedding elanguage of the input command.
+
+
+
+
+The agent receives image observations in the form of four 32x24 image observations, one for each cardinal direction view (N, S, E, W). The convolutional neural network (CNN) consists of a sequence of convolutional and max pool layers, with the final operation being a channel-wise global pooling operation that produces an image embedding of the same length as the language embedding. Each image is passed through an identical CNN with shared weights, and the outputs are summed together to form the image embedding. That is, eimage=CNN(imgN)+CNN(imgS)+CNN(imgE)+CNN(imgW).
+
+
+
+
+Finally, these two embeddings are element-wise multiplied and passed through a fully-connected network (FC) to produce a reward output. Letting ⊙ denote elementwise multiplication, we have r=FC(eimage⊙elanguage).
+
+
+
+
+We found that the max global-pooling architecture in the CNN was able to select out objects from a scene and allow the language embedding to modulate which features to attend to. We selected our architecture via a hyper-parameter search, and found that the choice of using an element-wise multiplication versus a concatenation for combining embeddings had no appreciable performance difference, but a global pooling architecture performed significantly better than using a fully connected layer at the end of the CNN.
+
+6 Evaluation
+-------------
+
+
+
+We evaluate our method within a collection of simulated indoor house environments, built on top of the SUNCG (Song et al., [2017](#bib.bib23)) dataset. The SUNCG dataset provides a large repository of complex and realistic 3D environments which we find very suitable for our goals. An example task from our environment is shown in Figures [4](#S6.F4 "Figure 4 ‣ 6.1 Environment ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following") and [4](#S6.F4 "Figure 4 ‣ 6.1 Environment ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). An example of a successful execution of a task is showin in Fig. [5](#S6.F5 "Figure 5 ‣ 6.1 Environment ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following").
+
+
+
+
+### 
+6.1 Environment
+
+
+
+![An example task. The green segment corresponds to the solution of a NAV task, ”go to the cup”, where the cup is circled in green. The green plus blue segments represents a path for the PICK task, ”move the cup to the bed”, where the bed is circled in blue.](https://media.arxiv-vanity.com/render-output/7386265/figures/pick.png)
+
+Figure 3: An example task. The green segment corresponds to the solution of a NAV task, ”go to the cup”, where the cup is circled in green. The green plus blue segments represents a path for the PICK task, ”move the cup to the bed”, where the bed is circled in blue.
+![An example task. The green segment corresponds to the solution of a NAV task, ”go to the cup”, where the cup is circled in green. The green plus blue segments represents a path for the PICK task, ”move the cup to the bed”, where the bed is circled in blue.](https://media.arxiv-vanity.com/render-output/7386265/figures/house_rgb.png)![An example task. The green segment corresponds to the solution of a NAV task, ”go to the cup”, where the cup is circled in green. The green plus blue segments represents a path for the PICK task, ”move the cup to the bed”, where the bed is circled in blue.](https://media.arxiv-vanity.com/render-output/7386265/figures/house_sem.png)
+
+Figure 4: Example first-person RGB (left) and semantic (right) images from the bedroom inside the house depicted in Figure [4](#S6.F4 "Figure 4 ‣ 6.1 Environment ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). We only use the semantic labels as input to our model.
+
+
+
+
+|  |  |  |  |  |  |  |
+| --- | --- | --- | --- | --- | --- | --- |
+| : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  | : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  | : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  | : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  | : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  | : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  | : First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image.  |
+
+
+Figure 5: Top row: First-person view of an agent executing the task: “move vase to living room”. The vase is circled in green in the 3rd image. Bottom row: A bird’s eye view of the initial (left) and final (right) positions of the agent (green triangle) and the vase (green outline).
+
+
+We consider two typical kinds of tasks that an indoor robot may wish to perform:
+
+
+* Navigation (NAV): In the navigation task, the agent is given a location which corresponds to a room or object, and the agent must navigate through the house to reach the target location. For example, in Fig. [4](#S6.F4 "Figure 4 ‣ 6.1 Environment ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"), the target could be ”cup” or ”laptop” or ”living room”.
+* Pick-and-place (PICK): In the pick and place task, the agent must move an object from one location to another. For example, in Fig. [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following") the task could be to move the cup from to the sink to the kitchen table.
+
+
+
+
+Each environment corresponds to one 3D scene, which is discretized into a grid to form a tabular environment where the grid coordinates plus agent orientation (N, S, E, W) correspond to the state of the agent. The agent receives observations with two components: one is a free-form language command, and one is a first-person panoramic image of the environment. Because the agent can move objects without directly looking at them, the panoramic view gives the agent a full view of its surroundings. The panoramic image is formed from 4 semantic image observations, one for each orientation of the agent. Each semantic image observation is 32x32 pixels and contains 61 channels, one per semantic image class. Each agent is equipped with 4 actions: step forward one grid tile, turn left or right, or interact with an object.
+
+
+
+
+We generate language commands based on a preset grammar, and using names of objects and locations associated with the task. These are of the form ”go to X” for NAV tasks, or ”move X to Y” for PICK tasks, where X and Y stand for names of locations and objects within the environment. We explicitly do not use step-by-step instruction language such as ”turn left, walk down the hallway, go through the door”, as these commands remove the planning aspect of the problem and tell the agent directly which actions to take in order to solve the problem.
+
+
+
+
+The interact action only has meaning within the PICK task. Executing this action will either pick up an object if the agent is within a 1 meter of an object, or drop an object if the agent is currently holding an object. To limit the size of the state space, within a single task, there is only one object an agent may interact with and two locations the object can be in. This setup only increases the size of the state-space by a factor of 3. However, different objects may be placed in different locations across environments, meaning the model still must learn to detect the object in the correct location rather than memorizing the specific object and location associated with a single task.
+
+
+
+
+
+### 
+6.2 Experimental Procedure
+
+
+
+In order to evaluate how well different methods generalize, we split our dataset of tasks into three segments: a training set, and two test sets – “task”
+and “house”. The ”task” test set contains tasks within the same houses as training, but requires the agent to interact with novel combinations of objects and locations. The ”house” test set contains tasks on entirely new houses that were not in the training set. The purpose of this split is to investigate varying degrees of generalization: the ”task” test set requires the model to execute novel language commands, but using landmarks and objects which were seen during training. The ”house” test set adds another layer of difficulty, requiring the model to detect familiar objects situated in entirely new scenes.
+
+
+
+
+In total, our dataset contains 1413 tasks (716 PICK, 697 NAV). Across all tasks, there are 14 objects, and 76 different house layouts. There are 1004 tasks (71%) in the training set, 236 (17%) in the ”task” test set, and 173 (12%) in the ”house” test set.
+
+
+
+
+We evaluate two methods for reward learning. LC-RL refers to the language-conditioned IRL method outlined in Section [5](#S5 "5 Language-Conditioned Reward Learning (LC-RL) ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"), which takes as input demonstration and language pairs and learns a shared reward function across all tasks. In particular, we use 10 demonstrations per task, sampled from the computed optimal policy. To provide an upper bound for performance, we can also regress directly onto the ground-truth rewards, a method we label as “Reward Regression”. While this is not possible in a practical scenario, this evaluation serves to show oracle performance on our task. Note that our method does not require access to ground-truth rewards, and only uses demonstrations.
+
+
+
+
+Success rates for each reward-learning method are evaluated using two policy learning procedures. Q-iteration (QI) computes the optimal policy exactly using dynamic programming, which we report in Table [1](#S6.T1 "Table 1 ‣ 6.3 Experimental Results ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). We also experiment with reoptimizing the learned reward using DQN (Mnih et al., [2015](#bib.bib19)), a sample-based RL method that does not require ground-truth knowledge of the environment dynamics. We use the position, orientation, and whether an object is held as the observation (this is identical to the state representation).
+This experiment represents the testing use-case where we can evaluate the reward at test-time in novel, unmapped environments despite the fact that at training time we require dynamics knowledge.
+However, because the probability that the random policy receives rewards on our task is tiny, we found that epsilon-greedy exploration was not enough. Thus, we also report results using a reward shaping term with a state-based potential equal to the optimal value function (Ng et al., [1999](#bib.bib20)). We note that this shaping term does require dynamics knowledge compute, but we include this result to highlight the difficulty of the RL problem even if reward learning is done properly.
+
+
+
+
+We also compare against two baselines derived from GAIL (Ho & Ermon, [2016](#bib.bib13)), using the learned discriminator as the “reward” function. We first compare to AGILE (Bahdanau et al., [2018](#bib.bib3)), which modifies GAIL to use a goal-based discriminator and false negative filtering, using DQN as a policy optimizer and ρ=0.25.
+We found it difficult to learn rewards using a reinforcement learning-based policy optimizer, and the model was only able to solve the simpler NAV environments. This experiment emphasizes the gap between using a sampling-based solver and an exact solver during the training of reward-based methods. To create a more fair comparison, we also compare against GAIL using a dynamic programming solver (labeled GAIL-Exact), and we see that the performance is comparable to LC-RL on training environments, but performs significantly worse on test environments. These results are in line with our intuitions - GAIL and IRL are equivalent in training scenarios (Ho & Ermon, [2016](#bib.bib13)), but the discriminator of GAIL does not correspond to the true reward function, and thus performs worse when evaluated in novel environments.
+
+
+
+
+In order compare against a policy-learning approach, we compare against an optimal behavioral cloning baseline. We train the optimal cloning baseline by computing the exact optimal policy using Q-iteration, and perform supervised learning to regress directly on to the optimal action probabilities. To make a fair comparison, we keep the policy architecture identical to the reward architecture, except we add two additional inputs: the orientation indicator and and indicator on whether the object (during PICK tasks) is held by the agent or not. Each indicator is transformed by an embedding lookup, and all embeddings are element-wise multiplied along with with the language and image embeddings in the original architecture.
+
+
+
+
+
+### 
+6.3 Experimental Results
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | Train | Test-Task | Test-House |
+|  | PICK | NAV | Total | PICK | NAV | Total | PICK | NAV | Total |
+| \hdashlineOptimal Policy Cloning | 20.7 | 61.6 | 40.3 | 10.1 | 29.4 | 19.6 | 0.0 | 17.2 | 8.5 |
+| \hdashlineAGILE | 0.0 | 40.9 | 18.0 | 0.0 | 34.1 | 16.8 | 0.0 | 30.6 | 15.1 |
+| GAIL-Exact | 59.4 | 73.5 | 66.9 | 49.1 | 50.4 | 49.8 | 23.5 | 35.4 | 28.3 |
+| \hdashlineLC-RL (ours) | 63.8 | 69.7 | 66.9 | 56.7 | 47.8 | 51.9 | 32.1 | 39.4 | 36.4 |
+| Reward Reg. (Oracle) | 87.0 | 85.0 | 86.1 | 82.5 | 67.0 | 74.1 | 70.6 | 62.3 | 65.7 |
+
+
+Table 1: Success rates (in percentages) across task categories. Each result is averaged over 3 seeds. Test-Task refers to testing on novel tasks within the same houses as training, whereas Test-House refers to testing novel tasks in novel houses. The AGILE method is described in (Bahdanau et al., [2018](#bib.bib3))
+
+
+
+|  | Shaping | Train | Test-Task | Test-House |
+| --- | --- | --- | --- | --- |
+| LC-RL (DQN) | Yes | 12.9 | 14.1 | 14.9 |
+| No | 8.0 | 7.7 | 8.0 |
+| \hdashlineLC-RL (QI) | - | 66.9 | 51.9 | 36.4 |
+| Reward Regression (DQN) | Yes | 54.7 | 58.9 | 57.5 |
+| No | 7.5 | 8.3 | 9.2 |
+| \hdashlineReward Regression (QI) | - | 86.1 | 74.1 | 65.7 |
+
+
+Table 2: Success rates (in percentages) on using DQN to re-optimize learned rewards. For reference, we also include Q-iteration results (labeled QI) from Table [1](#S6.T1 "Table 1 ‣ 6.3 Experimental Results ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following") as an oracle comparison.
+
+Our main experimental results on reward learning are reported in Table [1](#S6.T1 "Table 1 ‣ 6.3 Experimental Results ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"), and experiments in re-optimizing the learned reward function are reported in Table [2](#S6.T2 "Table 2 ‣ 6.3 Experimental Results ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). Qualitative results with diagrams of learned reward functions can be found in Appendix [B](#A2 "Appendix B Learned Rewards and Qualitative Results ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). Additional supplementary material can be viewed at <https://sites.google.com/view/language-irl>, and experiment hyperparameters are detailed in Appendix [A](#A1 "Appendix A Experiment Hyperparameters ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following").
+
+
+
+
+We found that both LC-RL and Reward Regression were able to learn reward functions which generalize to both novel tasks and novel house layouts, and both achieve significant performance over the policy-based approach. As expected, we found that Reward Regression has superior performance when compared to LC-RL, due to the fact that it uses oracle ground-truth supervision.
+
+
+
+
+We include examples of learned reward functions for both methods in Appendix [B](#A2 "Appendix B Learned Rewards and Qualitative Results ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"). We found that a common error made by the learned rewards, aside from simply misidentifying objects and locations, was rewarding the agent for reaching the goal position without placing the object down on PICK tasks. This is reflected in the results as the performance on PICK tasks is much lower than that of NAV tasks. Additionally, there is some ambiguity in the language commands, as the same environment may contain multiple copies of a single object or location, and we do not consider the case when agents can ask for additional clarification (for example, there are 2 beds in Fig. [4](#S6.F4 "Figure 4 ‣ 6.1 Environment ‣ 6 Evaluation ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following")).
+
+
+
+
+We observed especially poor performance from the cloning baseline on both training as well as testing environments, even though it was trained by directly regressing onto the optimal policy. We suspect that it is significantly more difficult for the cloning baseline to learn across multiple environments. Our language is high-level and only consists of descriptions of the goal task (such as ”move the cup to the bathroom”) rather than step-by-step instructions used in other work such as Mei et al. ([2016](#bib.bib16)) that allow the policy to follow a sequence of instructions. This makes the task much more difficult for a policy-learning agent as it needs to learn a mapping from language to house layouts instead of blindly following the actions specified in the language command.
+
+
+
+
+Regarding re-optimization of the learned rewards, we found that DQN with epsilon-greedy exploration alone achieved poor performance compared to the exact solver and comparable performance to the cloning baseline (however, note that our cloning baseline was regressing onto the exact optimal actions). Adding a shaping term based on the value-function improves results, but computing this shaping term requires ground-truth knowledge of the environment dynamics. We also note that it appears that rewards learned through regression are easier to re-optimize than rewards learned through IRL. One explanation for this is that IRL rewards appear more “noisy” (for example, see reward plots in Appendix [B](#A2 "Appendix B Learned Rewards and Qualitative Results ‣ From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"), because small variations in the reward may not affect the trajectories taken by the optimal policy if a large reward occurs at the goal position. However, while RL is training it may never see the large reward and thus is heavily influenced by small, spurious variations in the reward.
+Nevertheless, with proper exploration methods, we believe that language-conditioned reward learning provides a performant and conceptually simple method for grounding language as concrete tasks an agent can perform within an interactive environment.
+
+7 Conclusion
+-------------
+
+
+
+In this paper, we introduced LC-RL, an algorithm for scalable training of language-conditioned reward functions represented by neural networks. Our method restricts training to tractable domains with known dynamics, but learns a reward function which can be used with standard RL methods in environments with unknown dynamics. We demonstrate that the reward-learning approach to instruction following outperforms the policy-learning when evaluated in test environments, because the reward-learning enables an agent to learn and interact within the test environment rather than relying on zero-shot policy transfer.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "incorrect task execution in novel environments by language-conditioned agents",
+      "type": "concept",
+      "description": "Agents trained to follow language commands may execute the wrong behaviour when evaluated in new environments, threatening safety and usability.",
+      "aliases": [
+        "poor generalisation of instruction-following agents",
+        "task failure in unseen houses"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "coupled language understanding and control learning in language-conditioned policy training",
+      "type": "concept",
+      "description": "Policies that map observations and commands directly to actions must simultaneously interpret language and plan, making zero-shot transfer fragile.",
+      "aliases": [
+        "joint language-policy learning",
+        "direct language-to-action mapping"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "manual reward specification difficulty in vision-based tasks",
+      "type": "concept",
+      "description": "Designing reward functions for complex, image-based environments is tedious and error-prone, limiting scalability.",
+      "aliases": [
+        "reward engineering burden",
+        "hand-designed task detectors"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "sparse reward signal in RL re-optimization of learned rewards",
+      "type": "concept",
+      "description": "When re-optimising learned rewards with model-free RL, agents rarely observe positive feedback, hindering learning.",
+      "aliases": [
+        "exploration challenge with learned rewards",
+        "scarce feedback during DQN training"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "decoupling language and control via reward function grounding",
+      "type": "concept",
+      "description": "Mapping language commands to rewards lets the agent learn control separately, reducing reliance on zero-shot policy generalisation.",
+      "aliases": [
+        "language-to-reward mapping",
+        "goal grounding in rewards"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "inverse reinforcement learning from demonstrations infers reward functions",
+      "type": "concept",
+      "description": "Maximum-Entropy IRL can learn a reward that explains expert demonstrations, avoiding manual reward design.",
+      "aliases": [
+        "IRL to learn rewards",
+        "reward inference from expert trajectories"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "potential-based reward shaping can aid exploration in sparse reward tasks",
+      "type": "concept",
+      "description": "Adding a potential-based term derived from an optimal value function provides denser feedback, facilitating learning.",
+      "aliases": [
+        "value-function shaping for exploration",
+        "dense shaping signals"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "multi-task language-conditioned IRL for reward generalization",
+      "type": "concept",
+      "description": "Training a single language-conditioned reward network across many tasks enables it to generalise to novel instructions and scenes.",
+      "aliases": [
+        "shared reward across tasks",
+        "LC-RL objective"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "training with known dynamics enables exact IRL optimization",
+      "type": "concept",
+      "description": "Restricting training to environments whose transitions are known allows use of dynamic programming for exact MaxEnt IRL, avoiding unstable nested RL.",
+      "aliases": [
+        "simulation with full dynamics",
+        "lab-only exact IRL training"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "use optimal value function potentials for shaping",
+      "type": "concept",
+      "description": "Shaping term Φ(s)=V*(s) is selected because it is potential-based and preserves optimal policies while providing dense rewards.",
+      "aliases": [
+        "design of shaping term",
+        "value-based potential function"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "exact MaxEnt IRL with dynamic programming occupancy computation",
+      "type": "concept",
+      "description": "Optimal Q-values and occupancy measures are computed exactly via dynamic programming during training to obtain IRL gradients.",
+      "aliases": [
+        "exact IRL inner loop",
+        "Q-iteration + forward algorithm"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "language-conditioned CNN-LSTM reward network processing panoramic semantic images",
+      "type": "concept",
+      "description": "A shared-weights CNN processes four semantic images; an LSTM encodes language. Element-wise multiplication of embeddings yields the reward.",
+      "aliases": [
+        "reward network architecture",
+        "panoramic semantic CNN + LSTM"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "stochastic multi-task gradient updates of reward network",
+      "type": "concept",
+      "description": "Each IRL gradient step samples a task and demonstrations to update shared parameters, enabling scalable training.",
+      "aliases": [
+        "mini-batch task sampling",
+        "SGD across environments"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "potential-based shaping using optimal value function",
+      "type": "concept",
+      "description": "During RL re-optimisation, reward r'(s,a)=r(s,a)+γΦ(s')−Φ(s) is used, where Φ is pre-computed from known dynamics.",
+      "aliases": [
+        "implementation of shaping term",
+        "Φ(s)=V*(s) shaping"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "LC-RL outperforms policy baselines on test tasks and houses",
+      "type": "concept",
+      "description": "Measured success 52% on Test-Task and 36% on Test-House versus 20% and 9% for cloning, showing substantial improvement.",
+      "aliases": [
+        "LC-RL success rates Table 1",
+        "empirical performance gain"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "learned reward functions generalize across unseen environments",
+      "type": "concept",
+      "description": "LC-RL maintains meaningful performance on entirely new houses, proving reward network generalisation.",
+      "aliases": [
+        "reward generalisation evidence",
+        "cross-house success"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "value-function shaping doubles DQN reoptimization success rates",
+      "type": "concept",
+      "description": "Success with DQN rises from ~8 % to ~14 % when shaping is added, indicating exploration benefits.",
+      "aliases": [
+        "shaping improves RL",
+        "Table 2 shaping result"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Implement LC-RL pipeline to learn language-conditioned reward functions from demonstrations before deployment",
+      "type": "intervention",
+      "description": "Collect demonstrations with language commands in mapped environments; train a shared CNN-LSTM reward network via exact MaxEnt IRL; deploy the reward in novel settings and learn policies on-the-fly.",
+      "aliases": [
+        "apply LC-RL training",
+        "pre-deploy LC-RL"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Use potential-based reward shaping when reoptimizing learned rewards",
+      "type": "intervention",
+      "description": "During RL in new environments, augment the learned reward with a potential Φ(s)=V*(s) to supply dense feedback and improve exploration.",
+      "aliases": [
+        "apply value-function shaping",
+        "dense shaping term"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "incorrect task execution in novel environments by language-conditioned agents",
+      "target_node": "coupled language understanding and control learning in language-conditioned policy training",
+      "description": "Jointly learning language interpretation and control makes policies brittle to environment changes, leading to failures.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "incorrect task execution in novel environments by language-conditioned agents",
+      "target_node": "manual reward specification difficulty in vision-based tasks",
+      "description": "When designers cannot hand-craft precise rewards, agents may act unpredictably in new settings.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "incorrect task execution in novel environments by language-conditioned agents",
+      "target_node": "sparse reward signal in RL re-optimization of learned rewards",
+      "description": "Even with a learned reward, sparse feedback can prevent agents from discovering correct behaviours, resulting in task failure.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "coupled language understanding and control learning in language-conditioned policy training",
+      "target_node": "decoupling language and control via reward function grounding",
+      "description": "Separating goal interpretation from control removes the need for zero-shot policy transfer.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "manual reward specification difficulty in vision-based tasks",
+      "target_node": "inverse reinforcement learning from demonstrations infers reward functions",
+      "description": "IRL learns the reward automatically from examples, eliminating manual design.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "sparse reward signal in RL re-optimization of learned rewards",
+      "target_node": "potential-based reward shaping can aid exploration in sparse reward tasks",
+      "description": "Shaping supplies additional dense feedback, easing exploration difficulties.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "decoupling language and control via reward function grounding",
+      "target_node": "multi-task language-conditioned IRL for reward generalization",
+      "description": "LC-RL realises the decoupling by learning a reward network shared across tasks.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "inverse reinforcement learning from demonstrations infers reward functions",
+      "target_node": "multi-task language-conditioned IRL for reward generalization",
+      "description": "LC-RL applies MaxEnt IRL across many tasks to infer rewards from demonstrations.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "multi-task language-conditioned IRL for reward generalization",
+      "target_node": "training with known dynamics enables exact IRL optimization",
+      "description": "Restricting training environments to known dynamics refines the LC-RL design to be computationally tractable.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "training with known dynamics enables exact IRL optimization",
+      "target_node": "exact MaxEnt IRL with dynamic programming occupancy computation",
+      "description": "Exact Q-iteration and forward algorithms are used within known dynamics to compute gradients.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "multi-task language-conditioned IRL for reward generalization",
+      "target_node": "language-conditioned CNN-LSTM reward network processing panoramic semantic images",
+      "description": "The shared reward is parameterised by a CNN-LSTM architecture consuming images and language.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "multi-task language-conditioned IRL for reward generalization",
+      "target_node": "stochastic multi-task gradient updates of reward network",
+      "description": "Sampling tasks and demonstrations provides stochastic gradients for shared parameters.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "potential-based reward shaping can aid exploration in sparse reward tasks",
+      "target_node": "use optimal value function potentials for shaping",
+      "description": "Selecting the optimal value function as potential realises the shaping insight without altering optimal policies.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "use optimal value function potentials for shaping",
+      "target_node": "potential-based shaping using optimal value function",
+      "description": "The potential is computed offline from known dynamics and added during DQN training.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "exact MaxEnt IRL with dynamic programming occupancy computation",
+      "target_node": "LC-RL outperforms policy baselines on test tasks and houses",
+      "description": "Performance gains evidence the effectiveness of exact IRL inner loop.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "language-conditioned CNN-LSTM reward network processing panoramic semantic images",
+      "target_node": "LC-RL outperforms policy baselines on test tasks and houses",
+      "description": "Architecture contributes to strong test performance.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "stochastic multi-task gradient updates of reward network",
+      "target_node": "LC-RL outperforms policy baselines on test tasks and houses",
+      "description": "Multi-task SGD provides generalisation evidenced by success rates.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "multi-task language-conditioned IRL for reward generalization",
+      "target_node": "learned reward functions generalize across unseen environments",
+      "description": "Shared reward learning directly leads to cross-scene generalisation.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "potential-based shaping using optimal value function",
+      "target_node": "value-function shaping doubles DQN reoptimization success rates",
+      "description": "Shaping implementation improves DQN success from 7-8 % to ~15 %.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "LC-RL outperforms policy baselines on test tasks and houses",
+      "target_node": "Implement LC-RL pipeline to learn language-conditioned reward functions from demonstrations before deployment",
+      "description": "Empirical superiority encourages adoption of LC-RL in practice.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "learned reward functions generalize across unseen environments",
+      "target_node": "Implement LC-RL pipeline to learn language-conditioned reward functions from demonstrations before deployment",
+      "description": "Generalisation property makes the pipeline suitable for deployment in unfamiliar settings.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "value-function shaping doubles DQN reoptimization success rates",
+      "target_node": "Use potential-based reward shaping when reoptimizing learned rewards",
+      "description": "Observed improvement suggests adopting shaping to enhance policy learning efficiency.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2019-02-20T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1902.07742"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Justin Fu",
+        "Anoop Korattikara",
+        "Sergey Levine",
+        "Sergio Guadarrama"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "From Language to Goals: Inverse Reinforcement Learning for Vision-Based Instruction Following"
+    }
+  ]
+}
+            

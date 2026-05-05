@@ -1,0 +1,805 @@
+Original Text:
+1 Introduction and Related Work
+--------------------------------
+
+
+
+This work studies the problem of classification by a collection of networked agents. It is assumed that the network is heterogeneous in that the feature sizes can vary from one agent to another, with some agents observing insufficient attributes to make reliable decisions on their own. As a result, cooperation with neighbours is necessary. However, due to the fact that the feature dimensions are different across the agents, their classifier dimensions will also be different. This means that cooperation cannot rely on combining the classifier parameters as in [[1](#bib.bib1), [2](#bib.bib2), [3](#bib.bib3), [4](#bib.bib4), [5](#bib.bib5)]. We instead focus on smoothing the outputs of the classifiers, which are the predicted labels. By doing so, the dynamics that describes the evolution of the network classifier becomes more challenging than usual because the classifier parameters now appear as part of the regularization term as well. We explain how to address these challenges in the article.
+
+
+
+
+Specifically, we formulate two network classification problems. In one case, we assume the labels vary “smoothly” over the graph. In other words, we assume that the number of jumps from one label to another is small. This scenario is common since, often in practice, agents in close proximity observe more or less related attributes as well as objects belonging to the same class. For this situation, we formulate an optimization problem that enforces global graph-wide smoothing across all agents. In a second case, we assume that all agents regularly observe data from the same class so that the network is synchronized and working as a classification cluster. This situation is also common in practice when sensing networks are tasked with monitoring a common environment. For this problem, we introduce an optimization problem that involves instead a form of local smoothing across neighbourhoods.
+
+
+
+
+Thus, this work introduces two strategies to train a network of heterogeneous agents to perform classification. One strategy promotes global smoothing over neighbourhoods. and a second strategy promotes local smoothing over the graph. In the sequel, we explain how these formulations differ from earlier works in the literature.
+
+
+
+
+For now, it is useful to note that network classifiers can have a multitude of applications, including in weather forecasting [[6](#bib.bib6)], surveillance and object recognition [[7](#bib.bib7)], brain activity detection [[8](#bib.bib8)], and healthcare monitoring.
+
+
+
+
+### 
+1.1 Previous Work
+
+
+
+There exist several good works in the literature on combining classifiers. One notable example is the class of boosting techniques, such as AdaBoost [[9](#bib.bib9)]. However, these techniques are centralized and do not exploit any underlying graph structure. There exist other works that focus on incorporating the graph structure into the learning algorithm. These methods, from within the framework of representation learning [[10](#bib.bib10), [11](#bib.bib11), [12](#bib.bib12), [13](#bib.bib13), [14](#bib.bib14), [15](#bib.bib15)], are more focused on embedding the graph structure into the feature vector. Once this is accomplished, the data is passed into traditional learning methods such as SVMs or neural networks. Some of these methods involve node embedding, which aims at representing the location and neighbourhood of each node in the feature vector; while subgraph embedding represents entire subgraphs as low dimensional feature vectors.
+
+
+
+
+The main issue with these methods is that we must first learn an embedding of the graph to generate feature vectors, before we can learning algorithms on these vectors. In our approach, we avoid the graph embeding step and exploit the graph structure directly by devising different learning algorithms. We formulate distributed optimization problems that enforce regularization on the graph and forces the agents to collaborate as dictated by the topology that binds them. We comment on further distinctions from prior work at the end of the next section after we formulate the network classification problems.
+
+
+
+
+
+### 
+1.2 Contribution
+
+
+
+Consider an undirected graph G that consists of K nodes. Let A∈RK×K denote the graph combination matrix, which is assumed to be doubly stochastic (1TA=1, A1=1T). Each node k has access to a set of N data points consisting of labels γk(n)∈{±1} and feature vectors hk,n∈RMk. The attributes within the feature vectors can be different across the nodes. The size of the feature vectors can also differ across the graph, which motivates using a subscript k in Mk. Also, the labels can vary across the nodes, with some clusters in the network observing data arising from class +1 and other clusters observing data arising from class −1. Since the feature sizes at the agents are different, some agents may not have sufficient information for reliable classification on their own, which motivates the need for cooperation. One issue is to decide on how cooperation should be carried out since the classifiers will have different dimensions and cannot be aggregated directly by the agents. We clarify these questions in the sequel.
+
+
+
+
+
+Let L denote the graph Laplacian matrix defined by L=D−A, where D is a diagonal matrix with elements
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | [D]kk=∑ℓ∈Nkakℓ, |  | (1) |
+
+
+with Nk denoting the neighbourhood of agent k and akℓ≥0 denoting the weight scaling the data moving from agent k to agent ℓ.
+
+
+
+
+Let wk∈RMk denote the classification vector at agent k. Let also ˆγk(n) denote the estimate for the label at agent k and sample n. We start from the following aggregate optimization problem:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | Wo=argminWJ(W)Δ=1NN−1∑n=0K∑k=1Q(γk(n),ˆγk(n))+ηR(wk), |  | (2) |
+
+
+where we have collected all classifiers into W=col{wk}Kk=1, and the loss function Q(⋅) is assumed to be differentiable, ν−strongly convex, and with δ−Lipschitz gradients. The term R(⋅) represents a regularization factor, with η>0. We assume in this article that R(⋅) is differentiable for simplicity of presentation. Non-smooth regularizes can also be used with minimal adjustments to the algorithms by using easier subgradients or incorporating proximal steps.
+
+
+
+
+Although nodes may be observing data belonging to different class labels, we shall assume smooth transitions across the graph. It is natural in applications to assume that such predictions vary slowly across adjacent nodes. Specifically, if we let ˆγk(n)=hTk,nwk denote the prediction for the label at agent k at time n, we shall enforce that these predictions vary smoothly over the graph by modifying ([2](#S1.E2 "(2) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) to the following form:
+
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | W⋆ρ=argminWJs(W)Δ=1NN−1∑n=0K∑k=1[Q(γk(n),ˆγk(n))+ηR(wk)]+12ρˆγTnLˆγn, |  | (3) |
+
+
+where ˆγn=col{ˆγk(n)}Kk=1 and ρ>0 is a regularization factor. This form includes an additional regularization term in terms of the Laplacian matrix and exploits the fact that the Laplacian helps enforce smoothness among connected agents [[16](#bib.bib16), [17](#bib.bib17), [18](#bib.bib18)]. We will also consider a second problem formulation where we can continue with the optimization problem ([2](#S1.E2 "(2) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) but define instead the prediction for ˆγk(n) ([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) by averaging the predictions from the neighbours having the same label as k, where Ck={ℓ∈Nk|γℓ=γk}.
+
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | ˆγk(n)=1|Ck|∑ℓ∈CkaℓkhTℓ,nwℓ |  | (4) |
+
+
+The main difference between formulations ([3](#S1.E3 "(3) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) and ([2](#S1.E2 "(2) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing"))-([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) is that ([3](#S1.E3 "(3) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) imposes smoothness on a global graph-wide scale, while ([2](#S1.E2 "(2) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing"))-([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) imposes smoothness on a local neighbourhood scale.
+
+
+
+
+There are two aspects that set our formulations apart from prior works in the literature. First, the feature vectors have different dimensions across the agents with some agents having insufficient information to operate alone. Different from the works in [[19](#bib.bib19), [20](#bib.bib20)] where the network corresponds to one classifier and supervised learning is performed under a distributed features assumption, in the current work we assume that each agent corresponds to one classifier and that the outputs of the classifiers are smooth over the graph. As a result, the local classifiers also have different dimensions and they cannot be combined together directly to strengthen performance. We are therefore dealing with a heterogeneous network situation. This is one reason why we perform smoothing on labels and not on the parameter space. The second issue is that this formulation leads to a more challenging dynamic equation describing the evolution of the network, which in turn makes the performance analysis more demanding. This is because the unknown classifiers also appear as part of the regularization term.
+
+2 Distributed Classification Algorithms
+----------------------------------------
+
+
+
+Let us consider first the regularized problem ([3](#S1.E3 "(3) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")), which enforces global smoothing across the graph. For this setting, we assume the labels γk vary smoothly over the graph, meaning that the number of jumps that occur from a node with label +1 to a node with label −1 is small. One example to this effect is illustrated in Fig. [1](#S2.F1 "Figure 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing"), where the network on the left has multiple jumps, while the network on the right has fewer jumps. Note that the value of the regularization term γTLγ is smaller in the second case. Examining the graph on the right, we see that some agents observe one label (say, the red agents), while another group of agents observes the second label (say, the blue agents). In this work, we shall assume that these clusters continue to act as a group continually, i.e., agents in them observe the same labels continually. For example, assume the graph is classifying “cars” and “airplanes.” It is assumed that the red cluster, as a group, observes either cars or airplanes together, and similarly for the blue cluster. This situation maintains smoothness. Situations where class observations vary arbitrarily across all agents lead to non-smooth scenarios and are less frequent; we do not cover this scenario here. It is more natural that local clusters observe data arising from the same label, which is in line with the assumption of smoothness.
+
+
+
+
+
+
+|  |  |
+| --- | --- |
+| 
+ | 
+ |
+
+
+Figure 1: Two graphs with different smoothness levels. 
+
+
+Writing down a distributed stochastic gradient algorithm for minimizing ([3](#S1.E3 "(3) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) leads to the listing of Algorithm [1](#alg1 "Algorithm 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing"). In this implementation, a random index n is selected at each iteration and the gradient vector of the cost function is evaluated in an incremental manner, by first computing a stochastic-gradient approximation for the loss term, which is denoted by gk,n. This gradient is further updated by adding the correction that arises from differentiating the regularizer and smoothing terms in the cost ([3](#S1.E3 "(3) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")). This results in g′k,n, which is then used to update wk,i−1 to wk,i. Observe that coordination among the agents occurs during the evaluation of the second gradient correction. Once the network is trained, then during testing each agent estimates its label by averaging the label information from neighbours using ([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")). This is necessary because even after training, some agents will still be unable to classify on their own because they do not have sufficient features.
+
+
+
+
+
+  given N data pairs {γk(n),hk,n}N−1n=0 for every k=1,2,⋯,K. initialize wk,−1 for every k=1,2,⋯,K. 
+
+
+  for each iteration i=1,2,⋯ do
+
+      
+
+
+     for each agent k=1,2,⋯,K do
+
+        n = random index of data to be used at iteration i ˆγk(n)=hTk,nwk,i−1 gk,n=∇Q(γk(n),ˆγk(n))+η∇R(wk,i−1) 
+wk,i=wk,i−1−μg′k,n
+
+     end for
+
+  end for
+
+
+Algorithm 1  (Network classifier with graph smoothing)
+
+
+We can repeat the same derivation for problem ([2](#S1.E2 "(2) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing"))-([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")), leading to Algorithm [2](#alg2 "Algorithm 2 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing"). In this implementation, each agent estimates its label by using the local averaging structure ([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")). The vector gk,n refers to a stochastic approximation for the loss term, and is used to update wk,i−1 to wk,i. Again, once the classifiers are trained, and during testing, the agents employ ([4](#S1.E4 "(4) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) to estimate their labels. This second implementation is more suitable for scenarios where the entire network acts as a cluster with all agents observing features from the same class. We will illustrate these effects in the simulation section.
+
+
+
+
+
+  given N data pairs {γk(n),hk,n}N−1n=0 for every k=1,2,⋯,K. initialize wk,−1 for every k=1,2,⋯,K. 
+
+
+  for each iteration i=1,2,⋯ do
+
+      
+
+
+     for each agent k=1,2,⋯,K do
+
+        n = random index of data to be used at iteration i ˆγk(n)=1|Ck|∑ℓ∈CkaℓkhTℓ,nwℓ,i−1 gk,n=∇Q(γk(n),ˆγk(n))+η∇R(wk,i−1) wk,i=wk,i−1−μgk,n
+
+     end for
+
+  end for
+
+
+Algorithm 2  (Network classifier with local smoothing)
+
+3 Network Evolution
+--------------------
+
+
+
+We now examine the evolution of the network and show that the algorithms are able to converge to a small neighbourhood around their optimal solutions. Due to space limitations, we focus on the first algorithm since the analysis for the second one is similar.
+
+
+
+
+We collect the estimates from across the network into the column vector Wi=col{wk,i}Kk=1, and define Hi= blckdiag{hT1,n, hT2,n,⋯,hTK,n}, where n is a function of i. Then, the recursion for Algorithm [1](#alg1 "Algorithm 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing") can be written as:
+
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | Wi=(I−μρHiLHTi)Wi−1−μˆ∇%
+\tinyWTJ(Wi−1), |  | (5) |
+
+
+where
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | ˆ∇\tinyWTJ(Wi−1)=col{∇Q(γk(n),ˆγk(n))+η∇R(wk,i−1)}Kk=1. |  | (6) |
+
+
+The stochastic gradient noise process is given by
+
+
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | si(W)=ˆ∇\tinyWTJs(W)−∇\tinyWTJs(W)=ˆ∇\tinyWTJ(W)+ρHiLHTiW−∇\tinyWTJ(W)−ρ1NN−1∑m=0HmLHTmW. |  | (7) |
+
+
+It is customary in the literature on distributed optimization to assume that the gradient noise satisfies the conditions [[2](#bib.bib2)]:
+
+
+
+
+|  |
+| --- |
+|  |
+|  | E[si(Wi−1)|Wi−1] | =0 |  | (8a) |
+|  | E[∥si(Wi−1)∥2|Wi−1] | ≤β2s∥˜Wi−1∥2+σ2s, |  | (8b) |
+
+
+where ˜Wi=W⋆ρ−Wi,
+for some positive constants β2s,σ2s. These conditions are automatically satisfied for important cases of interest.
+
+
+
+
+
+
+###### 
+Theorem 1.
+
+
+
+Consider the stochastic recursion ([5](#S3.E5 "(5) ‣ 3 Network Evolution ‣ Network Classifiers with Output Smoothing")). For step size values satisfying μ<2νδ2+β2s (i.e., for μ small enough),
+it holds that E∥˜Wi∥2 converges exponentially fast according to the recursion:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | E∥˜Wi∥2≤λE∥˜Wi−1∥2+μ2σ2s, |  | (9) |
+
+
+where λ=1−2νμ+(δ2+β2s)∈[0,1). It follows from ([9](#X.E9 "(9) ‣ Theorem 1. ‣ 3 Network Evolution ‣ Network Classifiers with Output Smoothing")) that, for sufficiently small step sizes:
+
+
+
+
+|  |  |  |  |  |
+| --- | --- | --- | --- | --- |
+|  | limsupn→∞E∥˜Wi∥2 | ≤O(λi)+O(μ) |  | (10) |
+|  | limsupn→∞EJs(Wi)−Js(W⋆ρ) | ≤O(λi)+O(μ) |  | (11) |
+
+
+with the convergence of EJs(Wi) towards the O(μ)− neighbourhood around Js(W⋆ρ) occurring at the exponential rate λi as well.
+∎
+
+
+
+
+
+Sketch of proof.
+Using the already established result for a single agent under uniform sampling found in [[2](#bib.bib2), p. 345], what we need to show is that the aggregate algorithm ([5](#S3.E5 "(5) ‣ 3 Network Evolution ‣ Network Classifiers with Output Smoothing")) satisfies the same conditions in that result.
+First, by writing
+
+
+
+
+|  |  |  |  |  |
+| --- | --- | --- | --- | --- |
+|  | ¯¯¯¯B | =1NN−1∑m=0Bm=1NN−1∑m=0HmLHTm |  | (12) |
+|  | pi | =col{1NN−1∑m=0∇Q(wk,i−1,γk(m))}Kk=1 |  | (13) |
+|  | q⋆ | =col{∇Q(w⋆ρ,k)}Kk=1 |  | (14) |
+
+
+we get the error recursion:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  | ˜Wi=(I−μρ¯¯¯¯B)˜Wi−1+μpi−1+μsi(Wi−1)+μρ¯¯¯¯BW⋆ρ. |  | (16) |
+
+
+The conditions on the gradient noise hold since it can be verified that
+
+
+
+
+|  |  |  |  |  |
+| --- | --- | --- | --- | --- |
+|  | E[si(Wi−1)|Wi−1] | =0 |  | (17) |
+|  | E[∥si(Wi−1)∥2|Wi−1] | ≤β2s∥˜Wi−1∥2+σ2s, |  | (18) |
+
+
+where β2s=8δ2+4ρ2E∥Bi−¯¯¯¯B∥2F and σ2s=4E∥q⋆−ρBiW⋆ρ∥2.
+∎
+
+4 Experimental Results
+-----------------------
+
+
+
+For the first experiment, we simulate the following scenario. Consider a network of sensors observing the same phenomenon, such as tracking an object that could be either a car or a plane. Since the sensors are focusing on different characteristics, then their feature vectors are of different sizes arising from the same label. The individual agents are not able to classify on their own if they have insufficient features.
+
+
+
+
+Thus, consider an undirected graph consisting of K=50 agents. The graph is generated by randomly placing the nodes in a coordinate system, and then taking the neighbourhood of radius 0.3 for each node. The combination matrix A is generated using the Metropolis rule. The resulting network is shown in Fig. [2](#S4.F2 "Figure 2 ‣ 4 Experimental Results ‣ Network Classifiers with Output Smoothing").
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7816159/Figures/TheNet.png)
+Figure 2: Network structure with uniform labels used in the simulations.
+
+
+We assume the feature vectors have sizes up to M=5 attributes. Each agent receives N=200 samples of data {γk(n), hk,n}199n=0 with hk,n∈RMk and γk(n)∈{±1}. The data is generated as follow: For each agent k, the size of the feature vector Mk is generated randomly from a discrete uniform distribution on {1,2,3,4,5}. Second, each attribute m∈{1,2,3,4,5} is a Gaussian random variable with mean μm and variance σ2m. Then, the N feature vectors of each agent are generated from joint Gaussian distributions of the features. As for the labels, they are generated randomly by a fair coin toss; it is assumed that for each sample n=0,1,⋯,N−1, all agents have the same label.
+
+
+
+
+We consider the logistic risk as our cost function with ℓ2-norm regularization; thus, equation ([2](#S1.E2 "(2) ‣ 1.2 Contribution ‣ 1 Introduction and Related Work ‣ Network Classifiers with Output Smoothing")) becomes [[21](#bib.bib21), [22](#bib.bib22)]:
+
+
+
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+|  |  |  | (19) |
+
+
+
+
+The two algorithms are run by first splitting the data into a training set consisting of 70% of the data and a testing set consisting of 30% of the data. A step size of μ=5×10−3 is used, with η=0.1. We perform 5 passes over the data. The average testing error across the nodes (Fig. [3](#S4.F3 "Figure 3 ‣ 4 Experimental Results ‣ Network Classifiers with Output Smoothing")) is plotted. Algorithm [1](#alg1 "Algorithm 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing") is run both with and without (ρ=0). From Fig. [2(a)](#S4.F2.sf1 "(a) ‣ Figure 3 ‣ 4 Experimental Results ‣ Network Classifiers with Output Smoothing"), we see that the non-cooperative algorithm (ρ=0) performs the worst. When collaboration is enforced, the network classifier performs significantly better. Comparing Algorithms [1](#alg1 "Algorithm 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing") and [2](#alg2 "Algorithm 2 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing"), we see that the former converges faster.
+
+
+
+
+
+
+|  |  |
+| --- | --- |
+| 
+(a) Uniform labels across the
+network.
+ | 
+(b) Non-uniform labels across 
+the network.
+ |
+
+
+Figure 3:  Average testing errors on simulated data.
+
+
+Next, we consider a scenario where one part of the network is observing data from one class while another part is observing data from another class, as shown in Fig. [4](#S4.F4 "Figure 4 ‣ 4 Experimental Results ‣ Network Classifiers with Output Smoothing"). We observe similar results as in the previous case, except that now the cooperative algorithms do not reach zero testing errors, but they still outperform the non-cooperative algorithm.
+
+
+
+![](https://media.arxiv-vanity.com/render-output/7816159/x4.png)
+Figure 4: Network structure with non-uniform labels used in the simulations.
+
+
+Finally, we consider a real weather dataset consisting of a collection of daily recordings over 13 years, taken from K=139 sensors located in different weather stations across the United States [[23](#bib.bib23)]. A 6-nearest neighbour distance graph was created to represent the network of sensors. Each sensor has a set of N=3288 samples consisting of features indicating weather there is rain or not, and a feature vector of size M=5. In this experiment, we only run Algorithm [1](#alg1 "Algorithm 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing") and compare it to the non-cooperative case, since this data does not fall under the assumptions made for the second algorithm (neighbouring agents may observe different labels over time). We set the step size to μ=3×10−4, and the regularizer parameters η=1×10−5 and ρ=0.3. The non-cooperative solution achieved an average testing error of 0.2001, while Algorithm [1](#alg1 "Algorithm 1 ‣ 2 Distributed Classification Algorithms ‣ Network Classifiers with Output Smoothing") achieved 0.1851. In Fig. [5](#S4.F5 "Figure 5 ‣ 4 Experimental Results ‣ Network Classifiers with Output Smoothing"), for the 1st of July, 2013, we represent the true labeled graph on the left and the predicted one on the right. Specifically, for this day, the testing error achieved was 0.1079.
+
+
+
+
+
+
+|  |  |
+| --- | --- |
+| 
+(a) True labels.
+ | 
+(b) Predicted labels.
+ |
+
+
+Figure 5: Weather labels for the 1st of July, 2013: blue corresponding to a rainy day and purple to a non-rainy day.
+
+5 Concluding Remarks
+---------------------
+
+
+
+In this work, we proposed two algorithms that solve multi-agent classification problems while enforcing collaboration and two forms of smoothing: global over the graph and local over the neighbourhoods. We provided convergence results for one of the algorithms, while indicating that the same approach applies to the other one. We noticed that collaboration through smoothing improves performance. Future work involves examining different optimization formulations that allow for other forms of smoothing coupled with automatic clustering of agents into classes.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Inaccurate classification by heterogeneous distributed agents",
+      "type": "concept",
+      "description": "The overall risk that individual agents with different feature sets misclassify inputs, reducing system reliability.",
+      "aliases": [
+        "misclassification in heterogeneous sensor networks",
+        "low accuracy in multi-agent classifiers"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Insufficient per-agent feature dimensions in heterogeneous networks",
+      "type": "concept",
+      "description": "Each agent sees only a subset of relevant features, making stand-alone classification unreliable.",
+      "aliases": [
+        "limited local attributes",
+        "incomplete information per node"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Classifier parameter dimension mismatch across agents",
+      "type": "concept",
+      "description": "Because feature vectors differ in length, the learned classifier weights have incompatible dimensions, preventing direct parameter averaging.",
+      "aliases": [
+        "heterogeneous classifier sizes",
+        "unequal model dimensions"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+      "type": "concept",
+      "description": "Key assumption that neighbouring agents typically observe the same class, so predicted labels should change slowly along edges.",
+      "aliases": [
+        "label smoothness assumption",
+        "slowly varying labels over graph"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Collaborative output smoothing to enforce graph-wide smoothness",
+      "type": "concept",
+      "description": "Design idea: instead of combining parameters, agents regularise or average their predicted labels so they vary smoothly over the network.",
+      "aliases": [
+        "cooperative prediction smoothing",
+        "graph-regularised output sharing"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Local neighbourhood label averaging for synchronized classification clusters",
+      "type": "concept",
+      "description": "Alternate design that averages only neighbours sharing the same true label, suitable when the whole network observes one class at a time.",
+      "aliases": [
+        "cluster-level smoothing",
+        "label averaging within same-class neighbours"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Global graph Laplacian regularization in distributed optimization",
+      "type": "concept",
+      "description": "Implementation adds a Laplacian penalty on predicted labels to the loss, inducing global smoothness during stochastic-gradient updates (Algorithm 1).",
+      "aliases": [
+        "Laplacian smoothing term",
+        "graph-wide regulariser ρ γ^T L γ"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Neighbour label averaging in stochastic gradient updates",
+      "type": "concept",
+      "description": "Implementation where each agent replaces its predicted label with the average of neighbours that share the same class before gradient update (Algorithm 2).",
+      "aliases": [
+        "Ck-based averaging",
+        "local smoothing update rule"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Neighbour label averaging during inference for heterogeneous agents",
+      "type": "concept",
+      "description": "During testing/deployment, agents average neighbours’ predictions (Eq. 4) to obtain final labels when local features are insufficient.",
+      "aliases": [
+        "testing-time prediction averaging",
+        "deployment neighbour consensus"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing",
+      "type": "concept",
+      "description": "Simulations on 50-node synthetic network and 139-sensor weather data show lower test error versus non-cooperative baseline.",
+      "aliases": [
+        "global smoothing empirical results",
+        "Algorithm 1 validation"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+      "type": "concept",
+      "description": "Synthetic experiments (uniform-label scenario) show Algorithm 2 outperforms non-cooperative training.",
+      "aliases": [
+        "local smoothing empirical results",
+        "Algorithm 2 validation"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+      "type": "intervention",
+      "description": "During model training (fine-tuning phase), add Laplacian penalty ρ γ^T L γ and perform the stochastic-gradient updates of Algorithm 1.",
+      "aliases": [
+        "Algorithm 1 training",
+        "graph-wide smoothing training"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Train distributed classifiers with neighbour label averaging algorithm",
+      "type": "intervention",
+      "description": "During model training, replace each agent’s prediction with the average over same-label neighbours (Eq. 4) before gradient update, as in Algorithm 2.",
+      "aliases": [
+        "Algorithm 2 training",
+        "local smoothing training"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Aggregate neighbour predictions during deployment to improve classification reliability",
+      "type": "intervention",
+      "description": "At inference/deployment, each agent replaces its own prediction with the average of its neighbours’ predictions to compensate for limited features.",
+      "aliases": [
+        "testing-time label averaging",
+        "deployment-phase neighbour consensus"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Inaccurate classification by heterogeneous distributed agents",
+      "target_node": "Insufficient per-agent feature dimensions in heterogeneous networks",
+      "description": "Limited local features make single-agent decisions unreliable, directly causing overall misclassification risk.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Inaccurate classification by heterogeneous distributed agents",
+      "target_node": "Classifier parameter dimension mismatch across agents",
+      "description": "Different feature sizes yield incompatible classifier parameters, hampering cooperation and increasing error.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Insufficient per-agent feature dimensions in heterogeneous networks",
+      "target_node": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+      "description": "Assuming label smoothness offers a pathway to overcome limited features through cooperation.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Classifier parameter dimension mismatch across agents",
+      "target_node": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+      "description": "Focusing on output smoothness circumvents the need to fuse heterogeneous parameters.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+      "target_node": "Collaborative output smoothing to enforce graph-wide smoothness",
+      "description": "Theoretical assumption enables design choice of smoothing outputs across agents.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+      "target_node": "Local neighbourhood label averaging for synchronized classification clusters",
+      "description": "When labels are uniform network-wide, averaging within neighbourhoods is justified by smoothness.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Collaborative output smoothing to enforce graph-wide smoothness",
+      "target_node": "Global graph Laplacian regularization in distributed optimization",
+      "description": "Implements global smoothing by adding Laplacian regulariser to training objective.",
+      "edge_confidence": 5,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Local neighbourhood label averaging for synchronized classification clusters",
+      "target_node": "Neighbour label averaging in stochastic gradient updates",
+      "description": "Implements local smoothing via averaging rule Ck in Algorithm 2.",
+      "edge_confidence": 5,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Local neighbourhood label averaging for synchronized classification clusters",
+      "target_node": "Neighbour label averaging during inference for heterogeneous agents",
+      "description": "Design also prescribes applying the same averaging at test time.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Global graph Laplacian regularization in distributed optimization",
+      "target_node": "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing",
+      "description": "Empirical results confirm error reduction when using global Laplacian regulariser.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Neighbour label averaging in stochastic gradient updates",
+      "target_node": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+      "description": "Simulations verify performance gain of local averaging approach.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Neighbour label averaging during inference for heterogeneous agents",
+      "target_node": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+      "description": "Testing-time averaging contributes to the observed improvement in simulations.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Synthetic and weather dataset experiments demonstrate improved accuracy with global Laplacian smoothing",
+      "target_node": "Train distributed classifiers with global Laplacian regularization and collaborative stochastic gradient algorithm",
+      "description": "Positive empirical evidence motivates adopting the global Laplacian training procedure.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+      "target_node": "Train distributed classifiers with neighbour label averaging algorithm",
+      "description": "Simulation results motivate employing local-averaging training.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Neighbour label averaging during inference for heterogeneous agents",
+      "target_node": "Aggregate neighbour predictions during deployment to improve classification reliability",
+      "description": "Deployment-phase action applies the inference-time averaging mechanism.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Aggregate neighbour predictions during deployment to improve classification reliability",
+      "target_node": "Simulation experiments demonstrate improved accuracy with local neighbour averaging",
+      "description": "Same simulations also include deployment-phase averaging, validating the intervention.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Collaborative output smoothing to enforce graph-wide smoothness",
+      "target_node": "Local neighbourhood label averaging for synchronized classification clusters",
+      "description": "Local averaging is a refinement of the general collaborative smoothing concept.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Global graph Laplacian regularization in distributed optimization",
+      "target_node": "Neighbour label averaging in stochastic gradient updates",
+      "description": "Local averaging refines the global smoothing idea for uniform-label scenarios.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "required_by",
+      "source_node": "Collaborative output smoothing to enforce graph-wide smoothness",
+      "target_node": "Neighbour label averaging during inference for heterogeneous agents",
+      "description": "Testing-time averaging is necessary to maintain smoothness after training.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "preceded_by",
+      "source_node": "Neighbour label averaging in stochastic gradient updates",
+      "target_node": "Neighbour label averaging during inference for heterogeneous agents",
+      "description": "Training-time averaging precedes and aligns with deployment-time averaging.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Smooth label variation across graph neighbourhoods in heterogeneous networks",
+      "target_node": "Neighbour label averaging during inference for heterogeneous agents",
+      "description": "Smoothness assumption justifies averaging predictions at deployment.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Inaccurate classification by heterogeneous distributed agents",
+      "target_node": "Collaborative output smoothing to enforce graph-wide smoothness",
+      "description": "Design rationale directly targets and mitigates the inaccuracy risk.",
+      "edge_confidence": 3,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "source",
+      "value": "arxiv"
+    },
+    {
+      "key": "date_published",
+      "value": "2019-10-30T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://arxiv.org/abs/1911.04870"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Elsa Rizk",
+        "Roula Nassif",
+        "Ali H. Sayed"
+      ]
+    },
+    {
+      "key": "title",
+      "value": "Network Classifiers With Output Smoothing"
+    }
+  ]
+}
+            

@@ -1,0 +1,787 @@
+Original Text:
+The Structure of Goal Systems Predicts Human Performance
+David D. Bourgin1a(ddbourgin@berkeley.edu)
+Falk Lieder1a(falk.lieder@berkeley.edu)
+Daniel Reichman1a(daniel.reichman@gmail.com)
+Nimrod Talmon1b(nimrodtalmon77@gmail.com)
+Thomas L. Grifﬁthsa(tom grifﬁths@berkeley.edu)
+aDepartment of Psychology
+University of California Berkeley
+Berkeley, CA 94720 USA
+bDepartment of Computer Science and Applied Mathematics
+Weizmann Institute of Science
+Rehovot, Israel
+1These authors contributed equally.
+Abstract
+Most psychological theories attribute people’s failure to
+achieve their goals exclusively to insufﬁcient motivation or
+lack of skill. Here, we offer a complementary explanation that
+emphasizes the inherent complexity of the computational prob-
+lems that arise from the structure of people’s goal systems.
+Concretely, we hypothesize that people’s capacity to achieve
+their goals can be predicted from combinatorial parameters of
+the structure of the network connecting their goals to the means
+available to pursue them. To test this hypothesis, we expressed
+the relationship between goals and means as a bipartite graph
+where edges between means and goals indicate which means
+can be used to achieve which goals. This allowed us to map
+two computational challenges that arise in goal achievement
+onto two classic NP-hard problems: Set Cover and Maximum
+Coverage. The connection between goal pursuit and NP-hard
+problems led us to predict that people should perform bet-
+ter with goal systems that are tree-like. Three behavioral ex-
+periments conﬁrmed this prediction. Our results imply that
+network parameters that are instrumental to algorithm design
+could also be useful for understanding when and why people
+struggle in their goal pursuits.
+Keywords: decision-making; goals; rational analysis; graph
+theory; computational complexity
+Introduction
+The ability to set and achieve high-level goals, such as creat-
+ing a CogSci paper, is a critical feature of human intelligence
+and a key challenge for artiﬁcial intelligence systems (Newell
+& Simon, 1972). Critically, everyday problem solving re-
+quires people to juggle multiple goals in parallel (Atkinson &
+Birch, 1970; Miller, Galanter, & Pribram, 1960). Concretely,
+when people are given ten minutes to list their current pursuits
+they will report about 15 goals on average and each of those
+goals typically entails multiple subgoals at several levels of
+abstraction (Little & Gee, 2007).
+It is generally agreed that there are many situations in
+which people fail to act on their goals (Baumeister, Heather-
+ton, & Tice, 1994). The predominant explanations of such
+failures are lack of motivation, lack of planning (Gollwitzer,
+1999), failure to delay gratiﬁcation (Mischel, Shoda, & Ro-
+driguez, 1989), or the depletion of the capacity for self-
+control (Muraven & Slessareva, 2003). Here, we explore an
+alternative explanation for people’s failure to achieve theirgoals: the inherent complexity of the underlying computa-
+tional problem.
+The relationship between means and goals can be for-
+malized in a bipartite graph whose vertices are divided into
+a set of means M=fm1;;mkgand a set of goals G=
+fg1;;glg. In this graph, a mean mis connected to a goal g
+if and only if selecting mwill achieve the goal g. Such net-
+works are called goal systems in the psychological literature
+(Kruglanski et al., 2002). For instance, the vertices at the top
+of the goal system illustrated in Figure 1 might correspond to
+your goals to become a proliﬁc scientist ( g1), be a wonder-
+ful partner ( g2), become a great parent ( g3), get physically ﬁt
+(g4), and enjoy life to the fullest ( g5).
+Finding the best conﬁguration of means for achieving a set
+of goals can involve considerable computational challenges.
+It has been suggested that ﬁndings from theoretical computer
+science can shed light on how people cope with hard com-
+putational problems (Van Rooij, 2008). For example, Van
+Rooij (2008) advocated applying the theory of ﬁxed param-
+eter tractability to study how people cope with hard compu-
+tational problems. Yet, while previous research on problem
+solving has investigated which strategies people use to solve
+NP-hard problems (MacGregor & Ormerod, 1996; MacGre-
+gor, Ormerod, & Chronicle, 2000), this literature has focused
+on the Traveling Salesman problem and other problems that
+are structurally distinct from those that arise in goal pursuit.1
+Here, we will ﬁll this gap by analyzing goal achievement
+through the lens of computational complexity theory.
+In theoretical computer science, it is well known that the
+performance of many combinatorial optimization algorithms
+critically depends on certain graph-theoretic properties of the
+networks they are applied to (Kleinberg & Tardos, 2006). For
+instance, a well-documented phenomenon in algorithm de-
+sign, artiﬁcial intelligence, and operational research is that
+NP-hard optimization problems often become easier on trees
+and tree-like graphs. Indeed, when restricted to trees, many
+1One exception is the work of Carruthers, Masson, and Stege
+(2012) which found that the planarity of graphs has no effect on
+human performance in the Vertex Cover problem.
+Figure 1: Example of goal system: means appear at the bot-
+tom marked by m1:::m4. Goals appear on top marked by
+g1:::g5. A goal can be attained if at least one mean con-
+nected to it is chosen. The set fm1;m3gis a minimal set of
+means covering all goals
+NP-hard problems can be solved by efﬁcient polynomial-time
+algorithms, such as divide-and-conquer methods and greedy
+algorithms. Here, we show that human performance on two
+goal management tasks is also well predicted by graph the-
+oretic measures of the tree-likeness of the underlying goal
+system. Our results offer a fresh computational perspective
+on why people fail to achieve their goals. Our experimental
+results align well with theoretical knowledge from computer
+science and highlight that ﬁndings from computational com-
+plexity are relevant to cognitive psychology.
+The plan for the paper is as follows. We start by formal-
+izing two common challenges of goal achievement in terms
+of two classic NP-hard problems: Set Cover and Maximum
+Coverage. Next we derive our theoretical prediction by argu-
+ing that people’s performance on these problems should in-
+crease with graph theoretic metrics of how tree-like the goal
+system is. We then test this prediction in three behavioral ex-
+periments and conclude with a summary of our ﬁndings and
+directions for future work.
+Formal analysis and predictions
+Here we formalize, as well-deﬁned NP-hard problems, two
+computational challenges that arise in means selection prob-
+lems where one seeks to choose a set of means that are instru-
+mental to the ends one is trying to achieve.
+The ﬁrst problem we consider is trying to achieve as many
+goals as possible with a ﬁxed budget that limits the number of
+activities that one can perform. We formalize this challenge
+in terms of the Maximum Coverage problem (MC). In it, we
+are given a bipartite graph H= (C;D;F)where C;Dare the
+sides of the bipartition, and Fis the set of edges connecting
+vertices in Cto vertices in D. We are also given a nonnegative
+integer kjCj. We seek to ﬁnd a set C0C, of cardinality
+at most k, maximizing the number of vertices in Dcovered
+by vertices in C0(a vertex b2Dis covered by a vertex a2C
+if(a;b)2F). As a goal system, the set Ccorresponds to
+means, the set Dcorresponds to goals, and Frepresents to
+interconnections between goal and means. Observe that we
+assume that once a goal is covered by a single mean then it
+will be achieved. This assumption is made in order to sim-
+plify the experimental task, allowing for a simple and cleandescription.
+The second problem that we study is trying to achieve a
+given set of goals as efﬁciently as possible by selecting the
+minimal number of means that will accomplish all goals. We
+formalize this challenge in terms of the Set Cover problem
+(SC). In the Set Cover problem, we are given a bipartite graph
+G= (A;B;E), where A;Bare the sides of the bipartition and
+Eis the set of edges connecting vertices in Ato vertices in B.
+As a goal system, the set Acorresponds to means, the set B
+corresponds to goals, and the set Ecorresponds to intercon-
+nections between goals and means. In the SC problem, our
+goal is to cover all vertices in Bby a set A0Aof minimal
+cardinality. Both MC and SC are NP-hard not only to solve
+exactly but also to approximate (Feige, 1998).
+These two computational problems (MC and SC) capture
+essential aspects of means selection problems that have been
+studied in the psychological literature.
+For example, it is generally agreed that people try to se-
+lect means in order to maximize the number of attained goals
+(Kruglanski et al., 2002; Zhang, Fishbach, & Kruglanski,
+2007). Furthermore, representing goals as graphs and assum-
+ing interconnectedness between goals appear either explicitly
+or implicitly in several papers (Kruglanski et al., 2002; Tha-
+gard & Millgram, 1995).
+We shall use the following two performance measures in
+quantifying how well people do in MC and SC. Our ﬁrst mea-
+sure simply quantiﬁes the ability to ﬁnd the optimal solution.
+This is a binary measure that equals 1 if the person ﬁnds the
+optimal solution and 0 otherwise. Given an algorithm Afor
+MC or SC, the second measure, referred to as the solution
+quality , ranges between 0 (worst) and 1 (best). For the MC
+task, the solution quality is the number of goals achieved by A
+divided by maximum number of goals that could be achieved
+with kmeans. For the SC task, the solution quality is the
+minimum number of means that achieves all goals divided by
+the number of means selected by A. Solution quality (which
+is also referred to as the approximation ratio ofA) is widely
+used in quantifying the quality of approximation algorithms
+for NP-hard problems (Vazirani, 2013).
+The hardness of MC and SC gives a ﬁrst indication for
+why people might ﬁnd it difﬁcult to juggle multiple goals
+at the same time. Yet, not every instance of these problems
+is equally difﬁcult. Next, we introduce graph-theoretic mea-
+sures that might be useful for distinguishing harder instances
+from easier ones.
+Features and predictions
+A tree is a connected graph without cycles. Many NP-hard
+problems on graphs with small treewidth (Robertson & Sey-
+mour, 1986, see below), allow exact or approximate algo-
+rithms which are signiﬁcantly better than what is known to
+be achievable on worst-case instances.
+The idea that tree-like graphs might be easier for people
+to deal with guided our search for features that quantify how
+similar a given network is to a tree. Four such features are
+presented below.
+Treewidth . Treewidth (tw) is a combinatorial parameter
+that is associated with a graph.2Low treewidth implies
+that the nodes and edges of the network can be arranged in
+a way that resembles a tree (e.g., Kloks, 1994; Robertson
+& Seymour, 1986). For a precise deﬁnition of treewidth
+see Kloks (1994).
+Combinatorial expansion . Given a graph G= (V;E)and a
+nonempty subset SV, let¶(S)be the set of edges cross-
+ing the cut (S;VnS)and let N(S)be the set of all vertices in
+VnShaving a neighbor in S. The vertex-expansion of Gis
+deﬁned as min SV;0<jSjjVj=2jN(S)j
+jSj. The edge-expansion of
+Gis min SV;0<jSjjVj=2j¶(S)j
+jSj. Trees of bounded degree have
+expansion O(1=jVj), hence large expansion suggests that
+the graph is dissimilar to a tree. We computed both vertex
+and edge expansion by solving an integer linear programs
+(ILPs) using IBM’s CPLEX.
+Spectral expansion . The adjacency matrices of the graphs
+we consider are symmetric, hence have nreal eigenvalues
+l1l2:::ln. The classical (discrete) Cheeger’s in-
+equality (e.g., Alon and Milman, 1985) implies that the
+larger d l2is, the larger the edge expansion of the graph.3
+MC and SC instances with low treewidth ware known
+to have exact algorithms that run in time O(2wn)(Alber &
+Niedermeier, 2002), hence instances with low treewidth are
+likely to be easier to deal with algorithmically. Current al-
+gorithms that compute tree-decompositions are quite com-
+plicated, therefore it seems unlikely that people would use
+them to solve SC and MC problems. Nevertheless, treewidth
+might affect the performance of people’s heuristics: the sim-
+ilarity between low treewidth graphs and trees might make
+the kinds of algorithms that people might use, such as greedy
+and divide-and-conquer methods, much more effective. Con-
+versely, as worst-case instances of MC and SC are hard
+even to approximate, and as hard instances often have large
+treewidth and expansion (Clementi & Trevisan, 1999), it is
+likely that it will be hard not only to solve exactly, but also to
+ﬁnd approximate solutions for instances of large treewidth.
+Similar reasoning applies to our expansion measures. We
+therefore hypothesize that treewidth, vertex-expansion, edge-
+expansion, and the spectral gap of Gare negatively correlated
+with the quality of people’s solution to SC and MC problems
+and frequency with which they ﬁnd an optimal solution.
+Additional predictors
+A feedback vertex set (FVS) is a subset of vertices whose
+removal from a given graph results in a forest. The size
+of a minimal feedback vertex set is an alternative measure
+to the similarity of a graph to a tree. Hence we used this
+2Here we will only consider undirected graphs.
+3We included the spectral gap as it admits an efﬁcient polynomial
+algorithm as opposed to the other three predictors which are NP-
+hard. As such, it may prove as a practical predictor of performance.feature as well. We calculated FVS using the implementa-
+tion based on (Iwata, 2016; Wahlstr ¨om, 2014) available at
+https://github.com/wata-orz/fvs.
+Previous empirical hardness models have found additional
+features of graphs to be useful: the diameter, average eccen-
+tricity, and average path length (Leyton-Brown, Nudelman, &
+Shoham, 2009). We thus included these features. The diam-
+eter of a graph is the longest distance between two vertices
+in the graph (where the distance, dist(u;v), is the number of
+edges in a shortest path connecting uandv; all graphs con-
+sidered are connected). The eccentricity e(v)of a vertex vin
+an undirected graph G= (V;E)is the maximal distance of a
+vertex in Vnvfrom v. The average eccentricity (AvgEcc) is
+1
+nåv2Ve(v)(nis the number of vertices). The average path
+length (AvgPath) is2
+n(n 1)ådist(u;v)where summation is
+taken over all pairs of distinct vertices.
+Behavioral experiments
+To test how our predictors relate to human performance in
+MC and SC, we conducted three crowdsourced behavioral
+experiments. We used a between-subjects design where each
+participant was assigned randomly to one of twenty graphs
+with treewidths varying from 4 to 13. In the ﬁrst experiment,
+participants were asked to solve the SC problem, and in the
+second experiment participants were asked to solve the MC
+problem. In each case, the problem was graphically repre-
+sented as a bipartite graph with 48 vertices. The 24 vertices
+at the bottom represent the available means (activities A-Z)
+and 24 vertices at the top represent the goals. Each edge from
+a means vertex to a goal vertex implies that completing that
+activity is sufﬁcient to achieve the goal. In the SC task, par-
+ticipants were asked to select a minimal number of activities
+to achieve all of the goals. In the MC task, participants were
+asked to choose ﬁve activities that achieve as many goals as
+possible. The third and ﬁnal experiment asked participants to
+solve a SC problem where goals are given semantic content
+and real values, and a different visual display is used to elimi-
+nate possible visualization effects. In each experiment we re-
+stricted our analyses to goal systems in which every goal and
+mean vertex had exactly 4 neighbors (i.e., each graph was
+4-regular). This restriction meant that each graph required
+the same amount of memory to enable processing, ensuring
+that any difference between conditions cannot be explained
+by working memory limitations.
+Experiment 1: Human performance on Set Cover
+Methods We recruited 655 participants on Amazon Me-
+chanical Turk. Participants were paid $1 :25 and could earn
+a performance-dependent bonus of up to $2. Each participant
+was randomly assigned to one of 20 conditions that differed
+only in the graph structure of the SC problem participants
+were asked to solve. After consenting to participate, partici-
+pants read a cover story about a person trying to choose which
+set of activities (e.g., volunteer to improve the company’s
+website and work out at the gym) they should perform in or-
+der to achieve all their goals (e.g., earn more money, improve
+Figure 2: Interface and instructions for Experiment 1.
+relationship with boss, get ﬁt, etc.) with as few activities as
+possible because their time is limited. The story highlighted
+that some activities achieve multiple goals at the same time.
+Next, participants completed a simple practice trial involving
+only two means and two goals. Once they had solved this task
+successfully, participants proceeded to the Set-Cover prob-
+lem they had been assigned to. When participants moused
+over an activity, this interface highlighted the goals it would
+achieve and the corresponding edges of the graph in green.
+Goals that had already been achieved and activities that had
+already been selected were highlighted by checkmarks, and
+the number of selected activities was shown at the bottom of
+the screen. Participants were asked to help a person achieve
+their 24 goals with as few activities as possible, and they were
+motivated by the prospect of earning a ﬁnancial bonus of $2
+for achieving all goals as efﬁciently as possible. After submit-
+ting their solution, participants completed an exit question-
+naire asking them for basic demographic information (age,
+gender, and primary language), and four 9-point Likert scales
+(anchors: “not at all”, “somewhat”, and “extremely”) measur-
+ing the perceived difﬁculty of the task, motivation to achieve
+all goals, motivation to ﬁnd the optimal solution, and their
+motivation to ﬁnish the task as quickly as possible. We ex-
+cluded 30 participants (4 :6%)because their responses did not
+achieve all goals suggesting that they did not follow the in-
+structions.
+Results We found that treewidth alone explained 44 :90%
+of the variance in the frequency with which people found the
+optimal solution across the 20 graphs ( F(1;18) =14:20;p=
+0:0012): as we increased the treewidth of the graph the per-
+centage of participants who discovered the optimal solution
+decreased signiﬁcantly ( r= 0:59;p=0:0058) from more
+than 90% on the graph with treewidth 5 to only about 30%
+on the graph with treewidth 14. We found that the aver-age solution quality was negatively correlated with treewidth
+(r= 0:44;p=0:0525) suggesting that our participants
+achieved fewer goals for goal systems with higher treewidth.
+Treewidth explained 17 :59% of the variance in the median re-
+sponse time across problems ( F(1;18) =3:86;p=0:0650):
+the median amount of time people took to solve the problems
+tended to increase with treewidth ( r=0:3426) but this effect
+was not statistically signiﬁcant ( p=0:1393), and when we re-
+stricted this analysis to correct solutions the correlation was
+r=0:3825 ( p=0:1297). Perceived difﬁculty also tended to
+increase with treewidth ( r=0:37) but this correlation was
+not statistically signiﬁcant ( p=0:1062). Our participants
+were highly motivated to ﬁnd the optimal solution (average
+rating 7 :910:06 out of 9). Thus it appears unlikely that
+their motivation was a bottleneck to their performance. Fur-
+thermore, motivation appeared to be unaffected by treewidth
+(r= 0:23;p=0:34). Thus the observed differences in per-
+formance appear to result from the inherent difﬁculties of the
+means selection problems posed by different goal systems.
+Of the additional predictors evaluated, we found that graph
+diameter, average shortest path, and average graph eccentric-
+ity all were signiﬁcantly positively correlated with the fre-
+quency of optimal solutions identiﬁed by our participants
+(graph diameter: r=0:5691 ;p=0:0088, avg. shortest path:
+r=0:6516 ;p=0:0019, avg. eccentricty: r=0:6265 ;p=
+0:0031). In addition, the spectral expansion (measured as
+d l2) and the size of the graph vertex and edge expansions
+showed signiﬁcant negative correlations with the frequency
+of optimal solutions (vertex expansion: r= 0:5836 ;p=
+0:0069, edge expansion: r= 0:4552 ;p=0:0437, spectral
+expansion: r= 0:6280 ;p=0:0030). We also found that
+the average shortest path, average graph eccentricity, spectral
+expansion, and the size of the graph vertex expansions were
+signiﬁcantly correlated with the average participant solution
+qualities (avg. shortest path: r=0:4505 ;p=0:0462, avg. ec-
+centricity: r=0:4316 ;p=0:0574, spectral expansion: r=
+ 0:4496 ;p=0:0467, vertex expansion: r= 0:4636 ;p=
+0:0395). Finally, only the cardinality of the graph edge ex-
+pansions exhibited a signiﬁcant correlation with the median
+response times on the SC task ( r=0:4538 ;p=0:0445).
+Experiment 2: Human performance on Maximum
+Coverage
+Methods Experiment 2 was identical to Experiment 1 ex-
+cept for the task: participants were now instructed to achieve
+as many goals as possible subject to the constraint that the
+person’s limited time does not permit them to complete more
+than ﬁve activities. The 20 graphs and ﬁnancial incentives
+were the same as in Experiment 1. The interface of Exper-
+iment 1 was modiﬁed to prevent participants from selecting
+more than ﬁve activities at a time. When a participant at-
+tempted to add a sixth activity they were told they would ﬁrst
+have to remove one or more of the activities they had already
+selected. The cover story and survey were modiﬁed slightly
+to match the change in the task. We recruited 545 participants
+on Amazon Mechanical Turk. Participants were paid $1 :25
+and could earn a bonus of up to $2. The consent form speci-
+ﬁed that participants must not have participated in the previ-
+ous version of this experiment. We excluded 23 participants
+(4:2%) because they had selected fewer than ﬁve means.
+Results The frequency with which people found the op-
+timal solution decreased signiﬁcantly with treewidth ( r=
+ 0:4828 ;p=0:0311). We found that treewidth alone
+explained 20 :41% of the variance in the frequency with
+which people found the optimal solution across the 20
+graphs ( F(1;18) = 4:62;p=0:0455). We found that
+treewidth explained 25 :25% of the variance in solution qual-
+ity (F(1;18) =6:08;p=0:0240) which signiﬁcantly deterio-
+rated as treewidth increased ( r= 0:4972 ;p=0:0257). The
+median amount of time people took to solve the problems did
+not increase signiﬁcantly with treewidth ( r=0:25;p=0:28)
+and treewidth explained only 0 :6% of our participants’ me-
+dian response times ( F(1;18) =0:10;p=0:76). When we
+restricted the analysis to the time taken by optimal solu-
+tions, the relationship was still not statistically signiﬁcant
+(r=0:2994 ;p=0:1998; F(1;18) =0:10;p=0:76). Fi-
+nally, treewidth explained only 8 :8% of the variance in the
+perceived problem difﬁculty across the 20 graphs ( F(1;18) =
+1:74;p=0:20), and the correlation between treewidth and
+perceived difﬁculty was not statistically signiﬁcant ( r=
+0:26;p=0:26). Our participants were highly motivated to
+ﬁnd the optimal solution (average rating 8 :110:06 out of
+9). Thus it appears unlikely that their motivation was a bottle-
+neck to their performance. Furthermore, motivation appeared
+to be unaffected by treewidth ( r= 0:03;p=0:91). Thus the
+observed differences in performance appear to result from the
+inherent difﬁculties of the means selection problems posed by
+different goal systems.
+In addition, we found that both the size of the graph
+edge expansion and the graph spectral expansion (measured
+again as d l2) were signiﬁcantly negatively correlated with
+the frequency of optimal solutions (edge expansion: r=
+ 0:4802 ;p=0:0321, spectral expansion: r= 0:4782 ;p=
+0:0330), while the average shortest path and average graph
+eccentricity showed a signiﬁcant positive relationship (avg
+shortest path: r=0:4912 ;p=0:0279, avg. eccentricity:
+r=0:4391 ;p=0:0528). In contrast, only the size of the
+graph vertex and edge expansions showed a signiﬁcant cor-
+relation with the average solution quality (vertex expansion:
+r= 0:4431 ;p=0:0504, edge expansion: r= 0:4832 ;p=
+0:0309), suggesting that in general graph treewidth and com-
+binatorial expansions may be more robust predictors of hu-
+man performance on the MC problem. None of the metrics
+surveyed were signiﬁcantly correlated with median partici-
+pant response times.
+Experiment 3: A more realistic Set-Cover task
+While Experiments 1 and 2 capture some of the computa-
+tional challenges of goal achievement, the tasks were rela-
+tively abstract. Experiment 3 addresses this limitation by as-signing semantic labels to the 24 goals. These labels were
+common new-years resolutions such as “get in shape” and
+“earn more money”. Similar semantic goals were used in pre-
+vious research in goal-system theory (Zhang et al., 2007). We
+also used a different interface to avoid possible visualization
+effects that arise from graph drawings in the ﬁrst two experi-
+ments.
+Methods We recruited 600 participants on Amazon Me-
+chanical Turk. Participants were paid $0 :38 for about 5min
+of work plus a performance-dependent bonus of $0 :50 if they
+found an optimal solution. Each participant was randomly
+assigned to one of the twenty graph structures used in Exper-
+iments 1 and 2. For each graph, the order in which the means
+were listed and the order in which the goals were listed was
+randomized between participants. The participants’ task was
+to achieve all goals with as few means as possible. The graph-
+ical interface of the task was changed to reduce visual clutter.
+Instead of drawing edges between mean and goals, the goals
+achieved by each mean were listed next to it (see Figure 3).
+The cover story was similar to the one used in Experiment
+1 but the training trial used the new task interface shown in
+Figure 3. The consent form required that participants had
+not participated in any of our previous goal management ex-
+periments. All participants were included in the subsequent
+analyses.
+Results On a scale from 1 to 9 participants rated their mo-
+tivation to ﬁnd a solution that achieves all goals with the
+minimal number of means as 7 :38, their motivation to ﬁn-
+ish the task as quickly as possible and move on as 4 :35, and
+the difﬁculty of the task as 5 :67. We found that treewidth,
+the magnitude of the graph spectral expansion, cardinalities
+of the graph edge and vertex expansions, average eccentric-
+ity, average shortest path, and graph diameter were all sig-
+niﬁcantly correlated with the frequency with which human
+participants identiﬁed the optimal solution (treewidth: r=
+ 0:756;p=0:0001; avg. eccentricity: r=0:583;p=0:007;
+avg. shortest path: r=0:651;p=0:002; graph diameter: r=
+0:525;p=0:017; spectral expansion: r: 0:708;p=0:0005;
+edge expansion: r= 0:7;p=0:0006; vertex expansion:
+r= 0:7303 ;p=0:0003). Similarly, treewidth, the mag-
+nitude of the graph spectral expansion, cardinalities of the
+graph edge and vertex expansions, average eccentricity, and
+average shortest path were all signiﬁcantly correlated with
+the average solution quality of human responses (treewidth:
+r= 0:60;p=0:005; avg. eccentricity: r=0:4872 ;p=
+0:0293; avg. shortest path: r=0:5243 ;p=0:0176; spectral
+expansion: r= 0:5308 ;p=0:0160; edge expansion: r=
+ 0:5670 ;p=0:0091; vertex expansion: r= 0:6047 ;p=
+0:0047). None of the features were signiﬁcantly correlated
+with median participant response times.
+Figure 3: Graphical Interface of Experiment 3.
+Conclusions
+We demonstrated that people’s performance in Maximum
+Coverage and Set Cover can be reliably predicted from graph
+theoretic measures for the tree-likeness of the goal system,
+such as treewidth and expansion. Our data support the con-
+clusion that tree-like goal systems are easier for people to
+handle. More generally, our results imply that parameters
+that are used in theoretical computer science to differentiate
+between hard and easy instances can be leveraged to predict
+human performance in NP-hard tasks.
+One limitation of our experiments is that their complete,
+explicit representation of goals, means, and the connections
+between them is a simplifying idealization. In real life, people
+are often unaware of some of their goals and means, as well
+as some of the connections between goals and means. For
+example, maintaining goal systems of moderate size in work-
+ing memory when solving means selection problems is likely
+to be nontrivial. Hence real-life representations of goals are
+likely to make means selection problems as those discussed
+here even more challenging to solve. Although such memory
+problems are not directly related to how treelike the goal sys-
+tem is, they are nevertheless consistent with our hypothesis
+that the cognitive difﬁculty of means selection is an impor-
+tant limiting factor for people’s ability to achieve their goals.
+In conclusion, our results suggest that even highly moti-
+vated people will likely fall short of achieving all their goals
+when they have to consider many goals and means in paral-
+lel. Our analyses provide a novel approach to predicting how
+likely people are to succeed in these settings, with implica-
+tions for the design of goal systems that make it easier for
+people to meet their objectives.
+References
+Alber, J., & Niedermeier, R. (2002). Improved tree decomposition
+based algorithms for domination-like problems. In Latin ameri-
+can symposium on theoretical informatics (pp. 613–627).
+Atkinson, J. W., & Birch, D. (1970). The dynamics of action . Ox-
+ford: John Wiley.Baumeister, R. F., Heatherton, T. F., & Tice, D. M. (1994). Losing
+control: How and why people fail at self-regulation. San Diego:
+Academic Press.
+Carruthers, S., Masson, M. E., & Stege, U. (2012). Human perfor-
+mance on hard non-euclidean graph problems: vertex cover. The
+Journal of Problem Solving ,5(1), 5.
+Clementi, A. E., & Trevisan, L. (1999). Improved non-
+approximability results for minimum vertex cover with density
+constraints. Theoretical Computer Science ,225(1), 113–128.
+Feige, U. (1998). A threshold of ln n for approximating set cover.
+Journal of the ACM ,45(4), 634–652.
+Gollwitzer, P. M. (1999). Implementation intentions: strong effects
+of simple plans. American Psychologist ,54(7), 493–503.
+Iwata, Y . (2016). Linear-time kernelization for feedback vertex set.
+arXiv preprint arXiv:1608.01463 .
+Kleinberg, J., & Tardos, ´E. (2006). Algorithm design . Pearson
+Education India.
+Kloks, T. (1994). Treewidth: computations and approximations
+(V ol. 842). Springer Science & Business Media.
+Kruglanski, A. W., Shah, J. Y ., Fishbach, A., Friedman, R., Chun,
+W. Y ., & Sleeth-Keppler, D. (2002). A theory of goal systems.
+Advances in Experimental Social Psychology ,34, 331–378.
+Leyton-Brown, K., Nudelman, E., & Shoham, Y . (2009). Empirical
+hardness models: Methodology and a case study on combinatorial
+auctions. Journal of the ACM ,56(4), 22.
+Little, B. R., & Gee, T. (2007). The methodology of personal
+projects analysis: Four modules and a funnel. In B. R. Little,
+K. Salmela-Aro, & S. D. Philipps (Eds.), Personal project pur-
+suit: Goals, action, and human ﬂourishing. New York: Psychol-
+ogy Press.
+MacGregor, J. N., & Ormerod, T. (1996). Human performance
+on the traveling salesman problem. Perception & Psychophysics ,
+58(4), 527–539.
+MacGregor, J. N., Ormerod, T. C., & Chronicle, E. (2000). A
+model of human performance on the traveling salesperson prob-
+lem. Memory & Cognition ,28(7), 1183–1190.
+Miller, G. A., Galanter, E., & Pribram, K. H. (1960). Plans and the
+structure of behavior . New York: Adams Bannister Cox.
+Mischel, W., Shoda, Y ., & Rodriguez, M. L. (1989). Delay of grati-
+ﬁcation in children. Science ,244(4907), 933–938.
+Muraven, M., & Slessareva, E. (2003). Mechanisms of self-control
+failure: Motivation and limited resources. Personality and Social
+Psychology Bulletin ,29(7), 894–906.
+Newell, A., & Simon, H. A. (1972). Human problem solving . En-
+glewood Cliffs: Prentice-Hall.
+Robertson, N., & Seymour, P. D. (1986). Graph minors. ii. algorith-
+mic aspects of tree-width. Journal of algorithms ,7(3), 309–322.
+Thagard, P., & Millgram, E. (1995). Inference to the best plan: A
+coherence theory of decision. In A. Ram & D. B. Leake (Eds.),
+Goal driven learning (pp. 439–454). MIT Press.
+Van Rooij, I. (2008). The tractable cognition thesis. Cognitive
+Science ,32(6), 939–984.
+Vazirani, V. V . (2013). Approximation algorithms . Springer Science
+& Business Media.
+Wahlstr ¨om, M. (2014). Half-integrality, LP-branching and FPT
+algorithms. In Proceedings of the twenty-ﬁfth annual acm-siam
+symposium on discrete algorithms (pp. 1762–1781).
+Zhang, Y ., Fishbach, A., & Kruglanski, A. W. (2007). The dilution
+model: how additional goals undermine the perceived instrumen-
+tality of a shared path. Journal of Personality and Social Psychol-
+ogy,92(3), 389–401.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Ineffective goal achievement in agents due to complex goal structures",
+      "type": "concept",
+      "description": "Agents (human or artificial) frequently fail to realise intended goals when the network linking their available actions (means) to desired outcomes (goals) is computationally hard to navigate.",
+      "aliases": [
+        "goal pursuit failure from complex goal networks",
+        "failure to achieve multiple goals"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "NP-hard means selection complexity in goal systems",
+      "type": "concept",
+      "description": "Choosing a minimal set of means to achieve all goals (Set Cover) or picking a bounded set of means that maximises goals achieved (Maximum Coverage) maps directly onto NP-hard optimisation problems.",
+      "aliases": [
+        "means selection NP-hardness",
+        "Set Cover & Maximum Coverage hardness in goal systems"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Treewidth-driven computational difficulty in goal systems",
+      "type": "concept",
+      "description": "Graph-theoretic parameters, especially tree-width and expansion, theoretically determine how hard Set Cover and Maximum Coverage instances are; low tree-width graphs admit efficient algorithms.",
+      "aliases": [
+        "treewidth affects difficulty",
+        "tree-like structures facilitate algorithms"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Design goal hierarchies with bounded treewidth to reduce complexity",
+      "type": "concept",
+      "description": "If goal systems are intentionally structured to be tree-like (low tree-width), agents can solve means-selection problems more easily, improving goal achievement.",
+      "aliases": [
+        "bounded treewidth goal hierarchy design",
+        "tree-like goal system design"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Constraint-based construction of low-treewidth goal bipartite graphs",
+      "type": "concept",
+      "description": "Implementation approach in which the generator or planner enforces constraints (e.g., feedback-vertex removal, bounded branching) so that the resulting means–goals bipartite graph has limited tree-width.",
+      "aliases": [
+        "low-treewidth goal graph construction",
+        "graph constraint generation"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Behavioral experiments show higher success on low-treewidth goal systems",
+      "type": "concept",
+      "description": "Across three Mechanical-Turk experiments (n≈1800), tree-width alone explained up to 75 % of variance in finding optimal solutions; lower tree-width graphs led to better solution quality and higher success rates.",
+      "aliases": [
+        "behavioral experiment low treewidth performance",
+        "human studies SC/MC tasks"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Engineer agent goal representations with low treewidth at design phase",
+      "type": "intervention",
+      "description": "During model design, formalise an agent’s goal–means mapping as a bipartite graph and apply tree-decomposition or other constraints so the resulting structure has bounded tree-width, lowering planning complexity and risk of goal failure.",
+      "aliases": [
+        "design tree-like goal networks for AI agents",
+        "low-treewidth goal modeling"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Apply treewidth-based pruning during planning and means selection in training",
+      "type": "intervention",
+      "description": "During fine-tuning or reinforcement learning, compute local tree-width of evolving goal sub-graphs and prune or restructure high-tree-width regions, keeping planning problems tractable.",
+      "aliases": [
+        "treewidth-based pruning in planning",
+        "goal pruning via tree decomposition"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 1,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Ineffective goal achievement in agents due to complex goal structures",
+      "target_node": "NP-hard means selection complexity in goal systems",
+      "description": "Failure to achieve goals is explained by the computational intractability of the underlying means-selection problems.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "specified_by",
+      "source_node": "NP-hard means selection complexity in goal systems",
+      "target_node": "Treewidth-driven computational difficulty in goal systems",
+      "description": "Tree-width and related parameters more precisely characterise which NP-hard instances are difficult.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Treewidth-driven computational difficulty in goal systems",
+      "target_node": "Design goal hierarchies with bounded treewidth to reduce complexity",
+      "description": "If difficulty scales with tree-width, then limiting tree-width mitigates the complexity.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Design goal hierarchies with bounded treewidth to reduce complexity",
+      "target_node": "Constraint-based construction of low-treewidth goal bipartite graphs",
+      "description": "Concrete method: enforce graph-construction constraints or apply tree-decomposition algorithms to realise bounded tree-width designs.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Constraint-based construction of low-treewidth goal bipartite graphs",
+      "target_node": "Behavioral experiments show higher success on low-treewidth goal systems",
+      "description": "Human experiments demonstrate that goal systems with low tree-width lead to better performance, supporting the mechanism.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Behavioral experiments show higher success on low-treewidth goal systems",
+      "target_node": "Engineer agent goal representations with low treewidth at design phase",
+      "description": "Empirical success motivates adopting low-tree-width representations when designing AI agent goal systems.",
+      "edge_confidence": 2,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "Behavioral experiments show higher success on low-treewidth goal systems",
+      "target_node": "Apply treewidth-based pruning during planning and means selection in training",
+      "description": "Findings encourage dynamic pruning of high-tree-width regions during training and planning.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://cocosci.princeton.edu/papers/cogsciReichman.pdf"
+    },
+    {
+      "key": "title",
+      "value": "The Structure of Goal Systems Predicts Human Performance."
+    },
+    {
+      "key": "date_published",
+      "value": "2017-08-10T00:00:00Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "David Bourgin",
+        "Falk Lieder",
+        "Daniel Reichman",
+        "Nimrod Talmon",
+        "Tom Griffiths"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "special_docs"
+    }
+  ]
+}
+            

@@ -1,0 +1,402 @@
+Original Text:
+In recent years, significant performance gains in autoregressive language modeling have been achieved by increasing the number of parameters in Transformer models. This has led to a tremendous increase in training energy cost and resulted in a generation of dense “Large Language Models” (LLMs) with 100+ billion parameters. Simultaneously, large datasets containing trillions of words have been collected to facilitate the training of these LLMs.
+
+We explore an alternate path for improving language models: we augment transformers with retrieval over a database of text passages including web pages, books, news and code. We call our method RETRO, for “Retrieval Enhanced TRansfOrmers”.
+
+![](https://assets-global.website-files.com/621e749a546b7592125f38ed/6233547661f4d80dd32aafbb_LLM_figure_5_and_1.jpg)Figure 1: A high-level overview of Retrieval Enhanced TransfOrmers (RETRO).In traditional transformer language models, the benefits of model size and data size are linked: as long as the dataset is large enough, language modeling performance is limited by the size of the model. However, with RETRO the model is not limited to the data seen during training– it has access to the entire training dataset through the retrieval mechanism. This results in significant performance gains compared to a standard Transformer with the same number of parameters. We show that language modeling improves continuously as we increase the size of the retrieval database, at least up to 2 trillion tokens – 175 full lifetimes of continuous reading.
+
+![](https://assets-global.website-files.com/621e749a546b7592125f38ed/623354cb7ba0efb9ef468ebc_improving.jpg)Figure 2: Increasing the size of the retrieval dataset results in large gains in model performance.For each text passage (approximately a paragraph of a document), a nearest-neighbor search is performed which returns similar sequences found in the training database, and their continuation. These sequences help predict the continuation of the input text. The RETRO architecture interleaves regular self-attention at a document level and cross-attention with retrieved neighbors at a finer passage level. This results in both more accurate and more factual continuations.  Furthermore, RETRO increases the interpretability of model predictions, and provides a route for direct interventions through the retrieval database to improve the safety of text continuation. In our experiments on the Pile, a standard language modeling benchmark, a 7.5 billion parameter RETRO model outperforms the 175 billion parameter Jurassic-1 on 10 out of 16 datasets and outperforms the 280B Gopher on 9 out of 16 datasets.
+
+Below, we show two samples from our 7B baseline model and from our 7.5B RETRO model model that highlight how RETRO’s samples are more factual and stay more on topic than the baseline sample.
+
+![](https://assets-global.website-files.com/621e749a546b7592125f38ed/6233553fd5cc337484139079_creative2.jpg)Figure 3: The baseline only generates 2 correct digits. With RETRO, the correct digits are generated after being retrieved by the database.![](https://assets-global.website-files.com/621e749a546b7592125f38ed/62335571d5cc33e8cd13a110_creative3.jpg)Figure 4: The RETRO model stays more on-topic than the baseline sample.Type image caption here (optional)
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Factual hallucinations in language model outputs",
+      "type": "concept",
+      "description": "Language models frequently generate statements that are not supported by real-world facts, leading to misinformation and unsafe outcomes.",
+      "aliases": [
+        "hallucinated facts in LLMs",
+        "incorrect continuations from language models"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Excessive training energy consumption in large dense transformers",
+      "type": "concept",
+      "description": "Growing model size to hundreds of billions of parameters drives substantial energy use and CO₂ emissions.",
+      "aliases": [
+        "high compute cost of scaling parameters",
+        "environmental cost of 100B+ parameter LLMs"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Low interpretability of transformer predictions",
+      "type": "concept",
+      "description": "Standard dense Transformers offer little transparency into why particular tokens are produced, hindering safety auditing.",
+      "aliases": [
+        "opaque LLM reasoning",
+        "lack of provenance in outputs"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Limited context window and parametric memorization in dense transformers",
+      "type": "concept",
+      "description": "Dense models must store most knowledge in weights and can only attend to a limited sequence, fostering hallucinations.",
+      "aliases": [
+        "finite attention context",
+        "over-reliance on internal parameters"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Parameter-proportional compute and memory demands in dense transformers",
+      "type": "concept",
+      "description": "Model accuracy traditionally improves only by adding parameters, directly driving energy use.",
+      "aliases": [
+        "quadratic scaling cost",
+        "compute tied to parameter count"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Opaque latent reasoning without provenance in dense transformers",
+      "type": "concept",
+      "description": "Predictions arise from distributed internal states, offering no explicit references users can inspect.",
+      "aliases": [
+        "hidden activations not human-readable"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "External retrieval provides accurate contextual knowledge beyond model parameters",
+      "type": "concept",
+      "description": "Fetching nearest-neighbour passages can supply verifiable information the model did not store internally.",
+      "aliases": [
+        "database look-up supplies facts",
+        "retrieval augments context"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Retrieval-based performance scaling decouples accuracy from parameter count",
+      "type": "concept",
+      "description": "By leveraging a growing retrieval corpus, models can improve without proportional parameter growth, reducing compute.",
+      "aliases": [
+        "performance grows with database size not parameters"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Retrieved citations enhance transparency of generated tokens",
+      "type": "concept",
+      "description": "Displaying retrieved passages alongside generated text makes model reasoning more interpretable.",
+      "aliases": [
+        "retrieval gives provenance",
+        "evidence-linked outputs"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Integrate nearest-neighbor retrieval with transformer language modeling",
+      "type": "concept",
+      "description": "Architectural design where a Transformer alternates regular self-attention with cross-attention to retrieved neighbours.",
+      "aliases": [
+        "retrieval-augmented LM design",
+        "combining search and attention"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Nearest-neighbor search over chunked text passage database in RETRO",
+      "type": "concept",
+      "description": "Each input chunk queries a large database to retrieve similar sequences and their continuations.",
+      "aliases": [
+        "ANN retrieval over passages",
+        "search index for RETRO"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Cross-attention fusion of retrieved neighbors with self-attention in RETRO",
+      "type": "concept",
+      "description": "Model layers combine information from internal context and retrieved passages to predict next tokens.",
+      "aliases": [
+        "interleaved cross-attention",
+        "fusion of retrieval and context"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "7.5B RETRO surpasses 175B dense models on Pile benchmark accuracy",
+      "type": "concept",
+      "description": "Empirical result: 7.5 B RETRO beats 175 B Jurassic-1 on 10/16 datasets and 280 B Gopher on 9/16.",
+      "aliases": [
+        "RETRO accuracy evidence",
+        "benchmark wins over Jurassic-1"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "RETRO achieves competitive performance with >20× fewer parameters reducing compute",
+      "type": "concept",
+      "description": "Shows that smaller RETRO models match or beat much larger ones, implying lower training energy.",
+      "aliases": [
+        "compute efficiency evidence",
+        "energy saving validation"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "RETRO outputs show on-topic continuations with accurate digits and explicit sources",
+      "type": "concept",
+      "description": "Qualitative samples (Figures 3–4) display factual accuracy and topic adherence when retrieval is used.",
+      "aliases": [
+        "qualitative interpretability evidence",
+        "sample quality evidence"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Design and train language models with RETRO retrieval architecture",
+      "type": "intervention",
+      "description": "During model design and pre-training, incorporate nearest-neighbour retrieval and cross-attention as in RETRO to improve factuality and efficiency.",
+      "aliases": [
+        "implement RETRO",
+        "use retrieval-enhanced transformers"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 1,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Curate and update retrieval database to remove unsafe or incorrect content post-deployment",
+      "type": "intervention",
+      "description": "After deployment, continuously audit and edit the retrieval corpus to eliminate harmful content or inject corrections, directly steering model outputs.",
+      "aliases": [
+        "edit RETRO database for safety",
+        "database curation intervention"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Factual hallucinations in language model outputs",
+      "target_node": "Limited context window and parametric memorization in dense transformers",
+      "description": "Hallucinations arise because models cannot reference information outside training weights or limited context.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Excessive training energy consumption in large dense transformers",
+      "target_node": "Parameter-proportional compute and memory demands in dense transformers",
+      "description": "Energy usage scales with parameter count in dense models.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Low interpretability of transformer predictions",
+      "target_node": "Opaque latent reasoning without provenance in dense transformers",
+      "description": "Lack of explicit citations leads to opaque outputs.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Limited context window and parametric memorization in dense transformers",
+      "target_node": "External retrieval provides accurate contextual knowledge beyond model parameters",
+      "description": "Fetching passages supplies missing context, reducing hallucinations.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Parameter-proportional compute and memory demands in dense transformers",
+      "target_node": "Retrieval-based performance scaling decouples accuracy from parameter count",
+      "description": "Shifts accuracy driver from parameters to database size.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "mitigated_by",
+      "source_node": "Opaque latent reasoning without provenance in dense transformers",
+      "target_node": "Retrieved citations enhance transparency of generated tokens",
+      "description": "Citations make reasoning traceable.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "External retrieval provides accurate contextual knowledge beyond model parameters",
+      "target_node": "Integrate nearest-neighbor retrieval with transformer language modeling",
+      "description": "Design integrates retrieval into model to realize insight.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Retrieval-based performance scaling decouples accuracy from parameter count",
+      "target_node": "Integrate nearest-neighbor retrieval with transformer language modeling",
+      "description": "Same design implements parameter-efficient scaling.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Retrieved citations enhance transparency of generated tokens",
+      "target_node": "Integrate nearest-neighbor retrieval with transformer language modeling",
+      "description": "Integration provides surface for showing citations.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrate nearest-neighbor retrieval with transformer language modeling",
+      "target_node": "Nearest-neighbor search over chunked text passage database in RETRO",
+      "description": "Search mechanism operationalizes retrieval component.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Integrate nearest-neighbor retrieval with transformer language modeling",
+      "target_node": "Cross-attention fusion of retrieved neighbors with self-attention in RETRO",
+      "description": "Cross-attention layer incorporates retrieved information.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Cross-attention fusion of retrieved neighbors with self-attention in RETRO",
+      "target_node": "7.5B RETRO surpasses 175B dense models on Pile benchmark accuracy",
+      "description": "Accuracy gains confirm effectiveness of fusion mechanism.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Nearest-neighbor search over chunked text passage database in RETRO",
+      "target_node": "RETRO achieves competitive performance with >20× fewer parameters reducing compute",
+      "description": "Efficiency evidence demonstrates benefit of search mechanism.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Cross-attention fusion of retrieved neighbors with self-attention in RETRO",
+      "target_node": "RETRO outputs show on-topic continuations with accurate digits and explicit sources",
+      "description": "Qualitative samples show improved factuality and interpretability.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "7.5B RETRO surpasses 175B dense models on Pile benchmark accuracy",
+      "target_node": "Design and train language models with RETRO retrieval architecture",
+      "description": "Superior accuracy motivates adopting RETRO.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "RETRO achieves competitive performance with >20× fewer parameters reducing compute",
+      "target_node": "Design and train language models with RETRO retrieval architecture",
+      "description": "Compute savings encourage implementation.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "RETRO outputs show on-topic continuations with accurate digits and explicit sources",
+      "target_node": "Curate and update retrieval database to remove unsafe or incorrect content post-deployment",
+      "description": "Demonstrates that manipulating retrieval data influences output, suggesting safety curation.",
+      "edge_confidence": 2,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "date_published",
+      "value": "2021-12-08T00:00:00Z"
+    },
+    {
+      "key": "url",
+      "value": "https://www.deepmind.com/blog/improving-language-models-by-retrieving-from-trillions-of-tokens"
+    },
+    {
+      "key": "title",
+      "value": "Improving language models by retrieving from trillions of tokens"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Sebastian Borgeaud",
+        "Arthur Mensch",
+        "Jordan Hoffmann",
+        "Laurent Sifre"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "blogs"
+    }
+  ]
+}
+            

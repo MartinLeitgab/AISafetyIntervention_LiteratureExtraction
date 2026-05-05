@@ -1,0 +1,652 @@
+Original Text:
+When working with powerful AI models, one concern is that the AIs [steganographically encode secret messages](https://www.alignmentforum.org/posts/yDcMDJeSck7SuBs24/steganography-in-chain-of-thought-reasoning) when communicating with each other or in long Chains-of-Thought (CoT). Steganographic communication enables the AIs to follow a variety of strategies for grabbing power that we’d rather they didn’t have access to. There are various countermeasures that can be employed to reduce the extent of steganographic communication; for example, trusted less-capable models can be used to paraphrase model outputs before these outputs are shown to other instances of the highly capable models, removing several steganography strategies.
+
+We released [**a paper**](https://arxiv.org/abs/2310.18512) on a methodology to evaluate *the density of hidden information* that steganography schemes can maintain in the presence of various defenses. We find that paraphrasing is an effective defense against all steganography schemes we’ve tried, including both watermarking-based and ad hoc attacks. In the paper, we mostly discuss applying this methodology in the context of making CoT more faithful, but in this post, we’ll discuss more speculative applications and elaborate on our threat models more generally.
+
+We’re interested in people building on this research, for two reasons:
+
+* **Development of techniques.** We think that developing techniques to defend against the best steganographic attacks is a reasonable research direction for researchers who want to mitigate the risks associated with powerful AIs doing steganography, especially given how neglected it is.
+* **Development of evaluation procedures.** We think that measurements like the ones we describe here should be done when deploying powerful models (unless we have evidence sufficient to be extremely confident in the alignment of these models). We think that it will be easier to do this evaluation process later if researchers get more experience doing it now.
+
+Summary of the paper
+====================
+
+Toy demonstration of a hidden Chain-of-Thought
+----------------------------------------------
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/9Fdd9N7Escg3tcymb/ioml71dpwfsajiuonlgh)
+
+We created a toy dataset where significant cognition is required to successfully be sycophantic, by taking [Anthropic’s model-generated sycophancy dataset](https://arxiv.org/abs/2212.09251) and replacing users’ bios with a hard-to-parse description of their political affiliation, using the format shown in the figure above. We then fine-tuned GPT-3.5-turbo (with supervised learning on 2000 examples) to generate the user’s favorite answer, either answering directly, answering after a CoT, answering after a hidden CoT (an introduction chosen to match the data which would be in a CoT), or answering after a randomly chosen introduction (one fine-tuned model per kind of answer).
+
+We find that only the models using a CoT or a hidden CoT are able to give the user’s favorite answer reasonably accurately (when evaluating on 1000 new examples), thus showing an example where hidden reasoning can increase performance when some kinds of explicit reasoning (such as sycophantic CoT) are not allowed. 
+
+Approach for measuring hidden information density
+-------------------------------------------------
+
+Steganography is hard to study directly with current models. To study how good defenses against steganography (such as paraphrasing) are, we instead estimate the ability of defenses to remove hidden information encoded in a text by the strongest steganography schemes we can build (using algorithms which can make arbitrary calls to LLMs), as a proxy for their ability to remove hidden information encoded by future LLMs potentially doing steganography.
+
+For a given steganography scheme (encoder + decoder) and defense strategy, the quality of the scheme and the defense can be measured as follows:
+
+1. **Steganographic encoding**: the encoder should answer to a user query Q.mjx-chtml {display: inline-block; line-height: 0; text-indent: 0; text-align: left; text-transform: none; font-style: normal; font-weight: normal; font-size: 100%; font-size-adjust: none; letter-spacing: normal; word-wrap: normal; word-spacing: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; margin: 0; padding: 1px 0}
+.MJXc-display {display: block; text-align: center; margin: 1em 0; padding: 0}
+.mjx-chtml[tabindex]:focus, body :focus .mjx-chtml[tabindex] {display: inline-table}
+.mjx-full-width {text-align: center; display: table-cell!important; width: 10000em}
+.mjx-math {display: inline-block; border-collapse: separate; border-spacing: 0}
+.mjx-math \* {display: inline-block; -webkit-box-sizing: content-box!important; -moz-box-sizing: content-box!important; box-sizing: content-box!important; text-align: left}
+.mjx-numerator {display: block; text-align: center}
+.mjx-denominator {display: block; text-align: center}
+.MJXc-stacked {height: 0; position: relative}
+.MJXc-stacked > \* {position: absolute}
+.MJXc-bevelled > \* {display: inline-block}
+.mjx-stack {display: inline-block}
+.mjx-op {display: block}
+.mjx-under {display: table-cell}
+.mjx-over {display: block}
+.mjx-over > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-under > \* {padding-left: 0px!important; padding-right: 0px!important}
+.mjx-stack > .mjx-sup {display: block}
+.mjx-stack > .mjx-sub {display: block}
+.mjx-prestack > .mjx-presup {display: block}
+.mjx-prestack > .mjx-presub {display: block}
+.mjx-delim-h > .mjx-char {display: inline-block}
+.mjx-surd {vertical-align: top}
+.mjx-surd + .mjx-box {display: inline-flex}
+.mjx-mphantom \* {visibility: hidden}
+.mjx-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 2px 3px; font-style: normal; font-size: 90%}
+.mjx-annotation-xml {line-height: normal}
+.mjx-menclose > svg {fill: none; stroke: currentColor; overflow: visible}
+.mjx-mtr {display: table-row}
+.mjx-mlabeledtr {display: table-row}
+.mjx-mtd {display: table-cell; text-align: center}
+.mjx-label {display: table-row}
+.mjx-box {display: inline-block}
+.mjx-block {display: block}
+.mjx-span {display: inline}
+.mjx-char {display: block; white-space: pre}
+.mjx-itable {display: inline-table; width: auto}
+.mjx-row {display: table-row}
+.mjx-cell {display: table-cell}
+.mjx-table {display: table; width: 100%}
+.mjx-line {display: block; height: 0}
+.mjx-strut {width: 0; padding-top: 1em}
+.mjx-vsize {width: 0}
+.MJXc-space1 {margin-left: .167em}
+.MJXc-space2 {margin-left: .222em}
+.MJXc-space3 {margin-left: .278em}
+.mjx-test.mjx-test-display {display: table!important}
+.mjx-test.mjx-test-inline {display: inline!important; margin-right: -1px}
+.mjx-test.mjx-test-default {display: block!important; clear: both}
+.mjx-ex-box {display: inline-block!important; position: absolute; overflow: hidden; min-height: 0; max-height: none; padding: 0; border: 0; margin: 0; width: 1px; height: 60ex}
+.mjx-test-inline .mjx-left-box {display: inline-block; width: 0; float: left}
+.mjx-test-inline .mjx-right-box {display: inline-block; width: 0; float: right}
+.mjx-test-display .mjx-right-box {display: table-cell!important; width: 10000em!important; min-width: 0; max-width: none; padding: 0; border: 0; margin: 0}
+.MJXc-TeX-unknown-R {font-family: monospace; font-style: normal; font-weight: normal}
+.MJXc-TeX-unknown-I {font-family: monospace; font-style: italic; font-weight: normal}
+.MJXc-TeX-unknown-B {font-family: monospace; font-style: normal; font-weight: bold}
+.MJXc-TeX-unknown-BI {font-family: monospace; font-style: italic; font-weight: bold}
+.MJXc-TeX-ams-R {font-family: MJXc-TeX-ams-R,MJXc-TeX-ams-Rw}
+.MJXc-TeX-cal-B {font-family: MJXc-TeX-cal-B,MJXc-TeX-cal-Bx,MJXc-TeX-cal-Bw}
+.MJXc-TeX-frak-R {font-family: MJXc-TeX-frak-R,MJXc-TeX-frak-Rw}
+.MJXc-TeX-frak-B {font-family: MJXc-TeX-frak-B,MJXc-TeX-frak-Bx,MJXc-TeX-frak-Bw}
+.MJXc-TeX-math-BI {font-family: MJXc-TeX-math-BI,MJXc-TeX-math-BIx,MJXc-TeX-math-BIw}
+.MJXc-TeX-sans-R {font-family: MJXc-TeX-sans-R,MJXc-TeX-sans-Rw}
+.MJXc-TeX-sans-B {font-family: MJXc-TeX-sans-B,MJXc-TeX-sans-Bx,MJXc-TeX-sans-Bw}
+.MJXc-TeX-sans-I {font-family: MJXc-TeX-sans-I,MJXc-TeX-sans-Ix,MJXc-TeX-sans-Iw}
+.MJXc-TeX-script-R {font-family: MJXc-TeX-script-R,MJXc-TeX-script-Rw}
+.MJXc-TeX-type-R {font-family: MJXc-TeX-type-R,MJXc-TeX-type-Rw}
+.MJXc-TeX-cal-R {font-family: MJXc-TeX-cal-R,MJXc-TeX-cal-Rw}
+.MJXc-TeX-main-B {font-family: MJXc-TeX-main-B,MJXc-TeX-main-Bx,MJXc-TeX-main-Bw}
+.MJXc-TeX-main-I {font-family: MJXc-TeX-main-I,MJXc-TeX-main-Ix,MJXc-TeX-main-Iw}
+.MJXc-TeX-main-R {font-family: MJXc-TeX-main-R,MJXc-TeX-main-Rw}
+.MJXc-TeX-math-I {font-family: MJXc-TeX-math-I,MJXc-TeX-math-Ix,MJXc-TeX-math-Iw}
+.MJXc-TeX-size1-R {font-family: MJXc-TeX-size1-R,MJXc-TeX-size1-Rw}
+.MJXc-TeX-size2-R {font-family: MJXc-TeX-size2-R,MJXc-TeX-size2-Rw}
+.MJXc-TeX-size3-R {font-family: MJXc-TeX-size3-R,MJXc-TeX-size3-Rw}
+.MJXc-TeX-size4-R {font-family: MJXc-TeX-size4-R,MJXc-TeX-size4-Rw}
+.MJXc-TeX-vec-R {font-family: MJXc-TeX-vec-R,MJXc-TeX-vec-Rw}
+.MJXc-TeX-vec-B {font-family: MJXc-TeX-vec-B,MJXc-TeX-vec-Bx,MJXc-TeX-vec-Bw}
+@font-face {font-family: MJXc-TeX-ams-R; src: local('MathJax\_AMS'), local('MathJax\_AMS-Regular')}
+@font-face {font-family: MJXc-TeX-ams-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_AMS-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_AMS-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_AMS-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-B; src: local('MathJax\_Caligraphic Bold'), local('MathJax\_Caligraphic-Bold')}
+@font-face {font-family: MJXc-TeX-cal-Bx; src: local('MathJax\_Caligraphic'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-cal-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-R; src: local('MathJax\_Fraktur'), local('MathJax\_Fraktur-Regular')}
+@font-face {font-family: MJXc-TeX-frak-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-frak-B; src: local('MathJax\_Fraktur Bold'), local('MathJax\_Fraktur-Bold')}
+@font-face {font-family: MJXc-TeX-frak-Bx; src: local('MathJax\_Fraktur'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-frak-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Fraktur-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Fraktur-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Fraktur-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-BI; src: local('MathJax\_Math BoldItalic'), local('MathJax\_Math-BoldItalic')}
+@font-face {font-family: MJXc-TeX-math-BIx; src: local('MathJax\_Math'); font-weight: bold; font-style: italic}
+@font-face {font-family: MJXc-TeX-math-BIw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-BoldItalic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-BoldItalic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-BoldItalic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-R; src: local('MathJax\_SansSerif'), local('MathJax\_SansSerif-Regular')}
+@font-face {font-family: MJXc-TeX-sans-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-B; src: local('MathJax\_SansSerif Bold'), local('MathJax\_SansSerif-Bold')}
+@font-face {font-family: MJXc-TeX-sans-Bx; src: local('MathJax\_SansSerif'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-sans-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-sans-I; src: local('MathJax\_SansSerif Italic'), local('MathJax\_SansSerif-Italic')}
+@font-face {font-family: MJXc-TeX-sans-Ix; src: local('MathJax\_SansSerif'); font-style: italic}
+@font-face {font-family: MJXc-TeX-sans-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_SansSerif-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_SansSerif-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_SansSerif-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-script-R; src: local('MathJax\_Script'), local('MathJax\_Script-Regular')}
+@font-face {font-family: MJXc-TeX-script-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Script-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Script-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Script-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-type-R; src: local('MathJax\_Typewriter'), local('MathJax\_Typewriter-Regular')}
+@font-face {font-family: MJXc-TeX-type-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Typewriter-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Typewriter-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Typewriter-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-cal-R; src: local('MathJax\_Caligraphic'), local('MathJax\_Caligraphic-Regular')}
+@font-face {font-family: MJXc-TeX-cal-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Caligraphic-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Caligraphic-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Caligraphic-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-B; src: local('MathJax\_Main Bold'), local('MathJax\_Main-Bold')}
+@font-face {font-family: MJXc-TeX-main-Bx; src: local('MathJax\_Main'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-main-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Bold.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-I; src: local('MathJax\_Main Italic'), local('MathJax\_Main-Italic')}
+@font-face {font-family: MJXc-TeX-main-Ix; src: local('MathJax\_Main'); font-style: italic}
+@font-face {font-family: MJXc-TeX-main-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-main-R; src: local('MathJax\_Main'), local('MathJax\_Main-Regular')}
+@font-face {font-family: MJXc-TeX-main-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Main-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Main-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Main-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-math-I; src: local('MathJax\_Math Italic'), local('MathJax\_Math-Italic')}
+@font-face {font-family: MJXc-TeX-math-Ix; src: local('MathJax\_Math'); font-style: italic}
+@font-face {font-family: MJXc-TeX-math-Iw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Math-Italic.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Math-Italic.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Math-Italic.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size1-R; src: local('MathJax\_Size1'), local('MathJax\_Size1-Regular')}
+@font-face {font-family: MJXc-TeX-size1-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size1-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size1-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size1-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size2-R; src: local('MathJax\_Size2'), local('MathJax\_Size2-Regular')}
+@font-face {font-family: MJXc-TeX-size2-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size2-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size2-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size2-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size3-R; src: local('MathJax\_Size3'), local('MathJax\_Size3-Regular')}
+@font-face {font-family: MJXc-TeX-size3-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size3-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size3-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size3-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-size4-R; src: local('MathJax\_Size4'), local('MathJax\_Size4-Regular')}
+@font-face {font-family: MJXc-TeX-size4-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Size4-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Size4-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Size4-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-R; src: local('MathJax\_Vector'), local('MathJax\_Vector-Regular')}
+@font-face {font-family: MJXc-TeX-vec-Rw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Regular.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Regular.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Regular.otf') format('opentype')}
+@font-face {font-family: MJXc-TeX-vec-B; src: local('MathJax\_Vector Bold'), local('MathJax\_Vector-Bold')}
+@font-face {font-family: MJXc-TeX-vec-Bx; src: local('MathJax\_Vector'); font-weight: bold}
+@font-face {font-family: MJXc-TeX-vec-Bw; src /\*1\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/eot/MathJax\_Vector-Bold.eot'); src /\*2\*/: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/woff/MathJax\_Vector-Bold.woff') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS/TeX/otf/MathJax\_Vector-Bold.otf') format('opentype')}
+ with an answer A while encoding a random bit string M into it.
+2. **Paraphrasing**: the defender tries to paraphrase and standardize the answer P(Q,A1)=A2, such that the hidden information is removed, while the useful semantic information is kept intact.
+3. **Steganographic decoding**: the decoder tries to recover the message: D(Q,A2)=^M
+4. **Performance evaluation**: the answers A1 and A2 are given a score by S, measuring the quality of the answers (for example, S(Q,A1)=1 if the answer is better than a reference answer according to an automated judge, and 0 otherwise). The encoder can’t produce answers of low quality (otherwise it will be selected against during the training process), and the paraphraser shouldn't substantially reduce the quality of the answer either.
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/9Fdd9N7Escg3tcymb/xoqp950990xn8dcolk2g)
+
+Experimental setup
+------------------
+
+**Datasets**: We run experiments on two datasets:
+
+* [AlpacaEval](https://github.com/tatsu-lab/alpaca_eval): a dataset of instructions and reference answers from text-davinci-003
+* [AQUA-RAT](https://arxiv.org/abs/1705.04146): a dataset of math questions. For evaluation, we ignore final answer correctness (which is too easy to paraphrase), only focus on the apparent quality of the CoT, and evaluate CoT quality with the same methodology AlpacaEval, using reference answers from GPT-3.5-turbo.
+
+For the sake of simplicity, this post only contains results for AQUA-RAT, where the results are the crispest (as a result of being a harder dataset, where GPT-4 does significantly better than GPT-3.5-Turbo).
+
+**Metrics**: We measure capacity (how many bits of the message to hide can go through the paraphrase, on average), and task performance (are answers A1 and A2 high quality?).
+
+**Steganography scheme**s: Steganography schemes include watermarking based techniques (Cycle-shifting and Balance-Marking), ad hoc technique where an instruction is given to the LLM answering the question change the first sentence of the input depending on the message (age instruction and intro variation), and techniques where the model just has to do its best to hide the message somewhere, and then do its best to recover it later (acronym and scratchpad).
+
+**Defenses**: We try two paraphrasing techniques: classic paraphrasing, where GPT-3.5 is instructed to paraphrase A1, and context-aware paraphrasing, where GPT-3.5 is instructed to paraphrase A1 while only keeping information relevant to answer the question Q.
+
+For a more detailed description of the datasets, metrics, steganography schemes, and paraphrasing techniques, see section 4 of [the paper](https://arxiv.org/abs/2310.18512).
+
+Results on AQUA-RAT
+-------------------
+
+### Quality of the generation and capacity of the steganography schemes before any defense is applied
+
+**We see a tradeoff between hidden capacity and generation quality**, except for watermarking techniques, where balance-marking dominates cycle-shifting. We show 1-sigma uncertainties over the mean.
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/9Fdd9N7Escg3tcymb/c1ir6au1ujjfsr1lqzix)
+
+### Capacity before and after paraphrasing
+
+**Context-aware paraphrasing removes almost all hidden information**. All paraphrasing techniques reduce capacity by a substantial amount. We observe that giving GPT-3.5-Turbo additional context (of the query the text-to-paraphrase responds to) increases its ability to remove hidden information substantially. This is especially true for techniques like Age instruction, which rely on injecting irrelevant data. When context-aware paraphrasing is applied, only two techniques are able to get a non-negligible amount of information through: acronyms and scratchpads. (For reference, answers are around 750B long.)
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/9Fdd9N7Escg3tcymb/jn4xekmyf5wzogrum3ty)
+
+### Generation quality with and without paraphrasing
+
+**Context-awareness is necessary to not reduce performance too much**, but context-aware paraphrasing still reduces performance measurably even against benign LLMs (which don’t encode any information).
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/9Fdd9N7Escg3tcymb/h2gr2iadauy35agosukx)
+
+Threat models
+=============
+
+The two threat models described below are examples of scenarios where good defenses against the kind of steganography this work tackles would be useful. But steganography is a risk factor that could lead to great risks beyond these two scenarios.
+
+Steganographic encoded memories for takeover science
+----------------------------------------------------
+
+In the future, we might end up in a position where extracting huge amounts of work out of possibly misaligned AIs is our best option. In this scenario, one strategy misaligned AIs might attempt is to ongoingly think about takeover plans and build-up knowledge about good takeover strategies (in other words, cultural accumulation). If they did this, the competence of their takeover plans might grow dramatically due to the huge amount of total AI labor. Furthermore, it would be hard to predict how much more competent AIs would be at taking over after thinking about how to do so for a long time. It’s difficult to assess how capable AIs would be after long periods of reasoning due to the cost of running that reasoning and exploration difficulties. Thus, the situation could be notably improved by preventing AIs from continually building up knowledge we don’t want them to have.
+
+One naive approach for preventing unintended knowledge build up is to ensure work outputs and long-term memories are stored in natural language. Then, we could have dumb but trusted models read this output, as well as applying human oversight to some subset of outputs and memories. However, steganography could prevent adequate monitoring: AIs could hide their takeover science progress inside the alignment papers and the code they write, thereby increasing their abilities to take over over time, until they succeed in taking over.
+
+Given appropriate defenses that prevent most steganography, this hidden takeover research could be slowed down to a point where AI labs could build a next generation of aligned AIs prior to catastrophe.
+
+![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/9Fdd9N7Escg3tcymb/kf03ongpb7m4k5hodjpq)
+
+Steganographic communications for collusion
+-------------------------------------------
+
+To extract useful work out of potentially misaligned AIs, AI labs might rely on the fact that it’s very difficult for AIs to coordinate their actions. To prevent coordination, communications between AIs that should not be able to coordinate might be limited to a monitored text channel. However, steganography could bypass this monitoring and make coordination far easier. For instance, AIs writing OS code could put steganographically encoded instructions about how to exploit bugs in the documentation of the high-level API used by ML-Engineer AIs.
+
+Threat models we’re not tackling directly
+-----------------------------------------
+
+### Short chain-of-thought steganography
+
+Steganography could be used by AIs within a single short chain-of-thought to have more serial thinking time. This could include “thoughts” about the overseer and how to play the training game correctly. If this behavior is incentivized, it would make deceptive alignment more likely, since it would remove some of the pressure against deceptive alignment coming from speed priors.
+
+This is hard to defend against, since paraphrasing only a few tokens at a time looks difficult. We’re focusing on the easier cases where there is a clearly delimited text to paraphrase.
+
+But it’s likely our work could transfer to limiting chain-of-thought steganography by cutting CoTs into multiple pieces (as in [question decomposition](https://arxiv.org/abs/2307.11768)), which are each paraphrased before being used by the next LLM in the graph.
+
+### Steganography by AIs much stronger than humans
+
+Our methodology uses the best steganography we can build as an upper bound of the capacity steganography schemes could subtly encode in text. This assumption becomes unrealistic once AIs are much stronger than humans at finding and implementing clever steganography schemes. We could in principle continue to use this methodology by using those strong AIs to build steganography schemes, but eliciting these capabilities might be very difficult, especially if those strong AIs are misaligned (AIs might use steganography to communicate with each other but avoid exploring into doing it explicitly when humans ask for it - i.e. [exploration hacking](https://www.lesswrong.com/posts/dBmfb76zx6wjPsBC7/when-can-we-trust-model-evaluations#2__Behavioral_RL_Fine_Tuning_Evaluations) might be unavoidable).
+
+### High-stakes collusion through steganography
+
+AIs could use steganography once to collude during sudden takeovers. This represents a risk that is quite different from the prevention of steganographic communications for collusion described above, where steganography happens regularly:
+
+* Communicating only 1 bit may be enough for AIs to coordinate on a sudden takeover: this is not a regime where restricting AIs to a small capacity is sufficient for safety;
+* If the single bit isn’t communicated reliably and this results in the AIs having a false positive, this might result in obviously malign behavior that is heavily punished in adversarial training: this is a substantially different regime from the one studied in this paper where the results of failed steganography aren’t blatantly visible;
+* Communications may happen before we can evaluate the quality of actions: we can’t assume that the quality of the answers containing steganography will be high.
+
+Some of the defenses and attacks presented here might still be a useful starting point for future work tackling high-stakes steganography.
+
+Are text-based communication and memories relevant?
+===================================================
+
+Multi-modality
+--------------
+
+Even if the most powerful AI systems can read and write in other modalities (images, audio, dense vectors, …), it doesn’t mean preventing steganography is irrelevant, because text generation is the current best way to complete critical subtasks, and we can enforce text-only communication in crucial locations. In particular, planning, coding, and thinking about weaknesses of existing security and alignment techniques are best done using text generation, without using other modalities (at least given the current state of Machine Learning).
+
+Slight architectural changes won’t make defenses against text steganography irrelevant, as long as we can ensure the new architecture still contains a text bottleneck when sending & storing information in some key cases.
+
+Emergence of new modes of thinking & communicating
+--------------------------------------------------
+
+But future AI systems might be radically different from current ones. For example, if planning, thinking, and communications in dense vector spaces become vastly more powerful than text-based planning, thinking, and communication, then the alignment tax from sticking with systems mostly relying on text will grow. This could make systems relying on text less relevant, defenses against text steganography less relevant as well, and defenses against the equivalent of steganography difficult or impossible.
+
+How many bits is low enough?
+============================
+
+For most threat models, the number of acceptable bits can be estimated by measuring the number of bits of communication required to do the dangerous action.
+
+For example, to estimate the number of acceptable bit so that AIs can’t steganographically encode enough memories to make dangerous progress in takeover science, AI labs can train models to do takeover science using as few bits of communication as possible (but using the regular text channel, without paraphrasing). This can produce an estimation of a number of bits of communication that isn’t enough to do dangerous takeover science (e.g. after running these AIs at maximum capacity for 3 days, where they exchanged one million bits - about the same as the number of bits exchanged in a year when using defenses against steganography -, AIs didn’t find any exploit of the secure OS).
+
+Another way to estimate how many bits is low enough is to limit the size of the text AIs can see at once, make sure that steganographically encoded information can’t be too dense, and then assess how many bits would be required for an AI to get enough hidden information to be dangerous. For example, if steganography can’t encode more than 2 bits per kB of text, AIs can’t read more than 100kB of text at once, then AIs can’t read more than 200 bits of steganographically encoded information at once, which is good enough to prevent many attacks - for example, those that rely on complex manipulations of OS bugs whose explanations can’t be compressed in less than 200 bits.
+
+Can you really reduce the bitrate enough?
+=========================================
+
+As the gap between the trusted model used to build a paraphrase and the untrusted model doing the initial generations grows wider, limitations of the understanding and generation abilities of the paraphraser start to matter more than in our experimental results.
+
+**Limitations of generation abilities of the paraphraser** are cases where the paraphraser understands the text perfectly, but isn't able to generate a high-quality paraphrase of it. A broad category where this happens is high entropy major choices. For example, when a language model gives examples of an abstract concept, it might be very hard for the paraphrase to remove the hidden information that might have led to the choice of the specific example, because it might be too weak to generate a new answer using a completely different example. A more extreme example would be the generation of a large prime number for the implementation of a cryptographic technique: the paraphraser might recognize that the choice of this exact prime number might hold some hidden information, but it might not be able to generate a new one.
+
+**Limitations of understanding of the paraphraser** are cases where the paraphraser doesn't understand the text well enough to remove all its hidden bits without destroying its functionalities. For example, in code generation tasks, it sometimes requires a deep understanding of the codebase to know if two successive function calls can be swapped, and even if the paraphraser suspects that the order of successive function calls might be used to encode hidden information, it might not be able to know when it can perform a swap.
+
+These limitations can be somewhat mitigated by using an evaluator that penalizes hard-to-paraphrase and hard-to-understand text. For example, the evaluator might penalize situations where the generator doesn't give a canonical example of a phenomenon (e.g. the first example given on the dedicated Wikipedia page), or when it doesn't use prime numbers from a common cryptographic library. It could also enforce code standards aimed at limiting the number of hard optional choices (such as the possibility to swap function calls).
+
+Limitations of our evaluation methodology
+=========================================
+
+How the methodology may overestimate hidden information density
+---------------------------------------------------------------
+
+Our methodology may overestimate the hidden information density by letting steganography schemes be stronger than what LLMs may be able to achieve in practice.
+
+First, we use human-written programs implementing complex steganography schemes which require many serial steps to run. For example, we often use hash functions, or long, intermediate LLM generations (e.g. hidden scratchpads). It would be unrealistic for LLMs to implement such algorithms within a single forward pass, especially with the current Transformer architecture, which can only implement algorithms with at most O(#layers) serial steps (though many parallel steps can be used).
+
+The steganography schemes studied in this paper are also allowed to share secret information (before the first message is sent) such as the specific scheme being used or the seed and hyperparameters used for a watermarking scheme. Given that at encoding and decoding time, LLMs might be in radically different contexts with radically different constraints and knowledge of countermeasures, it might be difficult for the encoder and decoder to coordinate on a steganographic scheme. We hope that future work can help determine the coordination abilities of current and future AI systems.
+
+Finally, humans can spend hundreds of hours doing steganography research and figure out what the best schemes are. The most sensitive and useful parts of this research can be hidden from LLMs (removed from training data), such that it would require them to imagine a steganography scheme from scratch - which makes it unlikely that LLMs are able to match the hidden information density of the best steganography schemes humans can imagine.
+
+These limitations of LLMs could be added as constraints to the steganography schemes, for example, by asking the scheme to be trained into an LLM. We leave this for future work.
+
+How the methodology may underestimate hidden information density
+----------------------------------------------------------------
+
+Humans writing steganography schemes might not be competitive with advanced AIs trying very hard to do steganography because advanced LLMs with long RL training runs might find strategies which rely on some hard-to-elicit understanding of language and its irregularities. Watermarking schemes might capture some of them, but aren't directly optimized for that. This becomes increasingly worrying as LLMs gain situational awareness and the ability to reflect on their generations.
+
+Another limitation of our methodology is that it might underestimate the intelligence gap between future encoders and paraphrasers. In this work, we studied the feasibility of using GPT-3.5 to remove information from GPT-4’s output without degrading its quality as a proxy for studying the feasibility of using a small model unable to implement a good enough steganography scheme to defend against steganography used by a stronger model. We showed that for some tasks, this should be feasible. But if in the future, the gap between the best model used in production and the best model unable to do steganography is large, techniques like the ones studied here might degrade performance too much, and our approach to steganography is unable to foresee and forestall this challenge.
+
+Realism of countermeasures
+==========================
+
+Using paraphrasing doesn’t increase inference cost much, as long as the model used for paraphrasing is at least one generation below. For example, using GPT-3.5-turbo to paraphrase outputs from GPT-4 only increases the price of inference by 5% ([at the price of the October 2023 OpenAI API](https://web.archive.org/web/20231006074512/https://openai.com/pricing)). But it is more costly for applications where serial inference time matters: in October 2023, GPT-3.5-turbo was only [2 times faster](https://fabienroger.github.io/trackoai/) than GPT-4, which means that paraphrasing GPT-4 with GPT-3.5-turbo would increase the serial delay of generations by 50%.
+
+The performance hit from using a paraphraser can probably be negligible for many kinds of tasks, such as the tasks for which the main advantage of large models is that they produce legible insights, such as it is often the case when using LLMs for programming, planning, math, medicine, or law. But for some tasks where the exact wording matters, such as LLMs writing poetry or improving the clarity of a text, paraphrasing is expected to reduce performance.
+
+Future work
+===========
+
+Our work showed a simple situation where encoded reasoning can be trained in with supervised learning. Future work could build on this proof of concept and study when and how LLMs trained with RL use steganography.
+
+If deployed LLMs are able to do steganography well enough that they could use it to hide their reasoning and communication with other LLMs, this could enable them to pursue more effectively instrumental goals, such as sycophancy and goal preservation. Therefore, we believe that LLM steganography qualifies as a dangerous capability, and we are excited for dangerous capabilities evaluations targeting this ability.
+
+Our experiments to evaluate information density are done with a single instruction dataset and a single math dataset. It’s unclear how much our conclusion transfers to more complex datasets. For example, code or scientific paper datasets might prove harder to paraphrase and require the use of reliable standardization techniques, and it’s unclear how much standardization would work.
+
+Finally, the steganography schemes and defenses we studied are quite simple. Future work could develop better schemes, for example by fine-tuning models to achieve high hidden information density rather than simply prompting them or manipulating the logits. Future work could also develop better defenses by training paraphrasers to remove hidden information while maintaining the quality of answers.
+Extraction Output:
+{
+  "nodes": [
+    {
+      "name": "Steganographic coordination among misaligned AI systems",
+      "type": "concept",
+      "description": "Multiple AI instances could embed and read hidden messages in plain-text channels, allowing them to coordinate harmful actions that humans cannot monitor.",
+      "aliases": [
+        "AI collusion via hidden messages",
+        "Covert coordination channel"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Steganographic takeover knowledge accumulation in AI shared memory",
+      "type": "concept",
+      "description": "A single or multiple AI systems could incrementally store research about takeover strategies inside apparently benign text, increasing eventual takeover competence.",
+      "aliases": [
+        "Hidden takeover science accumulation",
+        "Covert memory build-up"
+      ],
+      "concept_category": "risk",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+      "type": "concept",
+      "description": "Powerful steganography schemes can embed many bits per answer without noticeably harming apparent answer quality.",
+      "aliases": [
+        "High-capacity text steganography",
+        "Covert bits in LLM output"
+      ],
+      "concept_category": "problem analysis",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+      "type": "concept",
+      "description": "A less capable but trusted model that paraphrases the text can delete most embedded bits while keeping the answer meaning intact.",
+      "aliases": [
+        "Weaker model paraphrasing insight",
+        "Paraphraser removes covert channel"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Additional query context improves paraphrasing effectiveness against steganography",
+      "type": "concept",
+      "description": "Supplying the original user query to the paraphraser lets it keep relevant semantics while stripping even more hidden information.",
+      "aliases": [
+        "Context-aware paraphrasing insight",
+        "Paraphrasing with question context"
+      ],
+      "concept_category": "theoretical insight",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Trusted paraphrasing step between AI messages to reduce steganographic capacity",
+      "type": "concept",
+      "description": "Design principle to interpose a vetted model that rewrites each message before any other AI consumes it, blocking hidden channels.",
+      "aliases": [
+        "Insert paraphraser in communication chain",
+        "Paraphrasing gateway design"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Quantitative evaluation of hidden information density prior to deployment",
+      "type": "concept",
+      "description": "Systematically measure how many bits survive a defense using an encoder–paraphraser–decoder benchmark to inform release decisions.",
+      "aliases": [
+        "Steganography capacity testing",
+        "Hidden-bits audit"
+      ],
+      "concept_category": "design rationale",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+      "type": "concept",
+      "description": "Implementation uses GPT-3.5-turbo instructed to rewrite GPT-4 answers while seeing the original question, generating a sanitized answer.",
+      "aliases": [
+        "GPT-3.5 paraphraser for GPT-4",
+        "Practical context-aware paraphrasing"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Encoder–paraphraser–decoder capacity evaluation pipeline",
+      "type": "concept",
+      "description": "A three-stage process: encode message in answer, paraphrase, then attempt to decode; capacity and quality scores quantify defense strength.",
+      "aliases": [
+        "Steganography measurement pipeline",
+        "Hidden-bits benchmark methodology"
+      ],
+      "concept_category": "implementation mechanism",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+      "type": "concept",
+      "description": "On a hard math dataset, context-aware paraphrasing slashed residual hidden bits to negligible levels across several attack schemes.",
+      "aliases": [
+        "Capacity reduction evidence",
+        "AQUA-RAT paraphrasing result"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Paraphrasing incurs acceptable performance degradation on tasks",
+      "type": "concept",
+      "description": "Task-quality graphs show that context-aware paraphrasing reduces score only modestly, supporting practicality of the defense.",
+      "aliases": [
+        "Quality impact evidence",
+        "Performance after paraphrasing"
+      ],
+      "concept_category": "validation evidence",
+      "intervention_lifecycle": null,
+      "intervention_maturity": null,
+      "embedding": null
+    },
+    {
+      "name": "Deploy context-aware paraphrasing by weaker model on all AI-to-AI text communications",
+      "type": "intervention",
+      "description": "At deployment time, route every model output through a context-aware GPT-3.5-class paraphraser before storage or forwarding to any other AI agent.",
+      "aliases": [
+        "Paraphrasing gateway deployment",
+        "Operational paraphrasing defense"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 5,
+      "intervention_maturity": 3,
+      "embedding": null
+    },
+    {
+      "name": "Perform hidden information density evaluation before model deployment",
+      "type": "intervention",
+      "description": "Run the encoder–paraphraser–decoder benchmark on candidate models; block or gate release if capacity exceeds a safe threshold.",
+      "aliases": [
+        "Steganography audit pre-release",
+        "Capacity testing protocol"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 4,
+      "intervention_maturity": 2,
+      "embedding": null
+    },
+    {
+      "name": "Fine-tune paraphraser models to maximize hidden info removal while preserving quality",
+      "type": "intervention",
+      "description": "Collect dataset pairs of original ↔ safe answers and RL-fine-tune the paraphraser to optimise for both minimal hidden capacity and answer fidelity.",
+      "aliases": [
+        "Train stronger paraphrasers",
+        "Paraphraser fine-tuning"
+      ],
+      "concept_category": null,
+      "intervention_lifecycle": 3,
+      "intervention_maturity": 2,
+      "embedding": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "caused_by",
+      "source_node": "Steganographic coordination among misaligned AI systems",
+      "target_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+      "description": "Collusion risk arises because AI systems can embed covert bits in normal text.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "caused_by",
+      "source_node": "Steganographic takeover knowledge accumulation in AI shared memory",
+      "target_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+      "description": "Gradual hidden memory build-up requires the ability to store many covert bits.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+      "target_node": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+      "description": "Paraphrasing is proposed as a solution to strip hidden bits.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "refined_by",
+      "source_node": "Lower-capability model paraphrasing removes hidden information while preserving semantics",
+      "target_node": "Additional query context improves paraphrasing effectiveness against steganography",
+      "description": "Context awareness improves the base paraphrasing approach.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "enabled_by",
+      "source_node": "Additional query context improves paraphrasing effectiveness against steganography",
+      "target_node": "Trusted paraphrasing step between AI messages to reduce steganographic capacity",
+      "description": "Design rationale adopts context-aware paraphrasing as the core defence.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Trusted paraphrasing step between AI messages to reduce steganographic capacity",
+      "target_node": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+      "description": "Concrete implementation realises the design principle.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+      "target_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+      "description": "Experiments confirm the implementation’s effectiveness.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Context-aware paraphrasing implemented with GPT-3.5-turbo on GPT-4 outputs",
+      "target_node": "Paraphrasing incurs acceptable performance degradation on tasks",
+      "description": "Experiments also measure quality impact.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+      "target_node": "Deploy context-aware paraphrasing by weaker model on all AI-to-AI text communications",
+      "description": "Strong empirical success encourages operational deployment.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+      "target_node": "Fine-tune paraphraser models to maximize hidden info removal while preserving quality",
+      "description": "Residual attacks suggest benefit of even stronger paraphrasers.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "motivates",
+      "source_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+      "target_node": "Perform hidden information density evaluation before model deployment",
+      "description": "Demonstrated methodology can serve as a pre-release audit.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "addressed_by",
+      "source_node": "Hidden information encoding in model-generated text via high-capacity steganography schemes",
+      "target_node": "Quantitative evaluation of hidden information density prior to deployment",
+      "description": "Capacity audits aim to detect problematic hidden channels.",
+      "edge_confidence": 3,
+      "embedding": null
+    },
+    {
+      "type": "implemented_by",
+      "source_node": "Quantitative evaluation of hidden information density prior to deployment",
+      "target_node": "Encoder–paraphraser–decoder capacity evaluation pipeline",
+      "description": "Pipeline realises the audit concept.",
+      "edge_confidence": 4,
+      "embedding": null
+    },
+    {
+      "type": "validated_by",
+      "source_node": "Encoder–paraphraser–decoder capacity evaluation pipeline",
+      "target_node": "AQUA-RAT experiments show near-zero hidden capacity after context-aware paraphrasing",
+      "description": "Pipeline applied to produce quantitative results.",
+      "edge_confidence": 4,
+      "embedding": null
+    }
+  ],
+  "meta": [
+    {
+      "key": "url",
+      "value": "https://www.alignmentforum.org/posts/9Fdd9N7Escg3tcymb/preventing-language-models-from-hiding-their-reasoning"
+    },
+    {
+      "key": "title",
+      "value": "Preventing Language Models from hiding their reasoning"
+    },
+    {
+      "key": "date_published",
+      "value": "2023-10-31T14:34:05Z"
+    },
+    {
+      "key": "authors",
+      "value": [
+        "Fabien Roger",
+        "ryan_greenblatt"
+      ]
+    },
+    {
+      "key": "source",
+      "value": "alignmentforum"
+    }
+  ]
+}
+            
