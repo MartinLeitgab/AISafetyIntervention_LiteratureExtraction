@@ -884,3 +884,600 @@ The top-16 triplets all involve G12 (Scaling AI Safety Research Capacity) or G14
 - `step4_cluster_tables/frozenset_groups_consim1.csv` — 20 group summaries
 - `step4_cluster_tables/frozenset_group_memberships_consim1.csv` — 1,603 frozenset→group assignments
 - `step5_naming/frozenset_group_names_llm.csv` — 20 LLM group names with quality metrics
+
+---
+
+## Part 19: Rev8 — Critical Methodological Findings, Hybrid Path Enumeration, and Pareto-Frontier Cluster Validation (2026-04-30)
+
+Rev8 introduces five critical methodological findings (CF-1 through CF-5), shifts the path-enumeration primitive from BFS-shortest to hop-wise DFS, defines a hybrid strategy across the four similarity thresholds, and adds Pareto-frontier validation as the primary rigor signal for both body-cluster recluster (L1) and frozenset grouping (L2). These together replace the rev7 cluster taxonomy as the paper's reviewer-defensible mechanism family extraction.
+
+### 19.0 — Paper intent and methodological contribution (added 2026-05-08)
+
+The overarching aim of the paper is to demonstrate that this algorithm produces a **structural knowledge representation / fabric** of a large literature corpus that downstream LLMs can consume to bridge the **knowledge-cutoff / pretraining-data gap for AI-for-Science work**.
+
+Existing publication databases expose only abstracts, titles, and citation metadata — they reflect *what was studied* but not *how the studies relate to one another* or *how they collectively compose a research mechanism*. They cannot answer questions like "what mechanism families address risk X?" or "which design rationale + implementation mechanism + validation evidence chains exist for intervention Y?" without an LLM re-deriving the relational structure paper by paper, in-context, every time.
+
+The contribution of this work is the construction of a **deep technical, relational, and functional representation of how risks are intended to be addressed by research in the AI safety domain**, as a graph artifact:
+- **Deep technical**: nodes carry concept names + descriptions + role-labels (concept_category, intervention_lifecycle, intervention_maturity) extracted from the paper bodies, not the metadata.
+- **Relational**: directed EDGE relationships (with confidence ratings) link risks → problem analyses → theoretical insights → design rationales → implementation mechanisms → validation evidence → interventions, plus SIMILARITY edges (cosine ≥ 0.80 on 1024-d BAAI/bge-large-en-v1.5 embeddings) cross-link near-duplicate concepts across papers.
+- **Functional**: risk → intervention paths (the EDGE-only canonical VPN of 19,073 nodes / 8,954 hop-wise paths) capture *the mechanism by which a risk is addressed* — not just that the two appear in the same paper. Hop-wise DFS preserves multiple alternative chains per paper-pair so that downstream analysis can decompose "this paper addresses risk X" into "this paper proposes mechanism (problem_analysis Z, theoretical_insight T, design_rationale D, implementation_mechanism I, validation_evidence V, intervention E) addressing X."
+
+The clustering pipeline (HDBSCAN-2D per-subtype + LLM thematic on residual + doublet `(R_cluster, NR_anchor)` mechanism families) is the projection from the raw graph into a finite, reviewer-defensible mechanism vocabulary. Once published, downstream LLMs can use the cluster vocabulary as a structured query interface — they ask "what are the mechanism families addressing reward hacking?" and receive a discrete list of NR_anchors with cited path evidence, rather than having to re-read every paper that mentions reward hacking.
+
+This intent guides the rest of §19's design choices: the EDGE-only canonical VPN preserves only causally-justified relationships (CF-2); the hop-wise DFS preserves alternative-mechanism diversity (CF-2); HDBSCAN-2D per-subtype with a 0.75 raw-cosine centroid floor (§19.9) produces geometrically defensible clusters; LLM thematic naming on residuals (§19.9.6 Task A) covers the long tail with reviewer-readable mechanism labels; the doublet primitive (§19.9.6 Task D) yields the final mechanism-family vocabulary the downstream LLM consumes.
+
+### 19.1 — Critical methodological findings (CF-1 → CF-5)
+
+**CF-1 — Unconstrained-mode silent-drop bug.** At sim=0.9, 99.34% of unconstrained-mode paths had ≥1 risk node in middle and 13.57% had ≥1 intervention in middle. The frozenset construction in `phase2_step4_pathbuildB_remaining.py:134` and 5 sibling files used `frozenset(... if n in node_to_stc)` which silently drops middle non-body nodes, producing a ~85x path-count inflation at sim=0.9. **Fix:** custom-mode BFS in `final_pathway_analysis_modes.py` pre-empts at first intervention and skips risk neighbors during expansion (commit 821e985). The legacy `paths_unconstrained_sim*.jsonl` files are deprecated; rev8 analysis uses only custom-mode paths.
+
+**CF-2 — BFS-shortest is the wrong primitive; switched to hop-wise DFS.** BFS-shortest emits one shortest path per (R, I) pair, missing (a) alternative body chains within a single paper, and (b) multiple cross-paper SIM bridges between papers (only one survives the visited set). Rev8 introduces `phase2_step4_F2v4_hopwise_falkordb.py` which performs hop-wise DFS enumeration directly against the live FalkorDB. Each step extends the current path stub by one EDGE or SIM hop (with consim1 alternation), and each SIM hop crosses into another paper. The canonical rev8 path file is `paths_hopwise_v4_sim0.9.jsonl` (3.55M paths over 17,699 unique R-I pairs).
+
+**CF-3 — Body-cluster over-fragmentation at k=40.** The legacy `phase2_clustering.py` hardcodes k=40 for ALL node types at config 0.9/unconstrained. Near-duplicate concepts split across cluster IDs (e.g., `pr:7`, `pr:19`, `pr:37` all about reward mis-specification; six "Opaque internal representations" clusters appear in a single path). Frozenset signatures fragment along phantom cluster-ID boundaries, and path-length distributions show monotonic 1.4-1.5× growth past L=12 (combinatorial zigzag through near-duplicate clusters). **Fix:** Task #7 body recluster on path-participating nodes only, with k-scan + Pareto-frontier validation (§19.4).
+
+**CF-4 — Replicated silent-drop sites + 3 standalone Cat-A bugs.** The same `frozenset(... if n in node_to_stc)` pattern appears in 6 additional files beyond the original (`phase2_step4b_paths_and_plots.py:451,471`; `phase2_step4_trackA.py:330,360`; `phase2_step4_pathbuildB_connectivity.py:355-358`; `phase2_step4_cluster_naming.py:378`; `phase2_step5_examples_edgeonly_fix.py:373`). All become harmless once paths consumed are custom-mode (no non-body middle nodes). Three additional standalone Cat-A fixes were committed (commit 0ab9ccb) covering monotonic-mode silent skip, subcluster split detection cap, and unknown-category default labelling.
+
+**CF-5 — FalkorDB silent 10k RESULTSET_SIZE truncation.** FalkorDB's default `RESULTSET_SIZE=10000` silently caps every Cypher result at 10k rows with no error or warning. F2v4 v1 returned 10,000 risk nodes when the true count was 19,178; the discrepancy was caught only because custom-BFS reported a different number. An audit identified three HIGH-severity sites that returned >10k rows (`cluster_utils.py:_build_mapping`, `all_shortest_pair_extraction_phase1.py:get_all_interventions`, `phase2_step4_F2v4_hopwise_falkordb.py:query_node_ids`) and two MEDIUM-severity batch-size-boundary sites (`graph_diagnostics.py:component_analysis`, `threshold_scan_degree_analysis.py:get_node_degrees_by_edge_type_batched`). Defense-in-depth fix: every FalkorDB-querying script now sets `GRAPH.CONFIG SET RESULTSET_SIZE 10000000` at startup AND batches large-population queries by id-range. Affected upstream artifacts (custom-BFS path files at sim=0.85 and sim=0.8) are being re-extracted post-fix to remove CF-5 contamination from the BFS coverage proxy.
+
+### 19.2 — Hybrid path enumeration strategy across four thresholds
+
+Hop-wise DFS at low sim thresholds is computationally intractable: the F2v4 sim=0.85 run hit 7.5M+ paths from a single risk node before crashing, and sim=0.8 (1.5M+ SIM edges) is worse. Path-length cap reductions (max=12 for sim=0.85; max=8 for sim=0.8) bound runtime but truncate evidence. The rev8 strategy is therefore hybrid:
+
+| Threshold | Method | Rationale | Source file |
+|-----------|--------|-----------|-------------|
+| EDGE-only | DFS hop-wise (max=30) | Tractable; complete enumeration | `paths_hopwise_v4_edge_only.jsonl` (3,222 R-I pairs) |
+| sim=0.95 | DFS hop-wise (max=30) | 9.1k SIM edges; tractable | `paths_hopwise_v4_sim0.95.jsonl` (3,237 R-I pairs) |
+| sim=0.9 | DFS hop-wise (max=30) | 144k SIM edges; **canonical for rev8** | `paths_hopwise_v4_sim0.9.jsonl` (17,699 R-I pairs) |
+| sim=0.85 | DFS hop-wise (max=12) | 596k SIM edges; aggressive cap to bound combinatorial explosion | `paths_hopwise_v4_sim0.85.jsonl` (in progress) |
+| sim=0.8 | BFS-shortest (re-extracted post-CF-5) | 1.57M SIM edges; DFS intractable, BFS used as coverage proxy | `paths_custom_sim0.8.jsonl` (re-extraction pending) |
+
+**Paper rationale:** rev8's primary mechanism-family extraction uses sim=0.9 hop-wise DFS, the highest threshold where SIM-bridge volume is large enough for cross-paper mechanism aggregation but DFS remains tractable. Lower thresholds (sim=0.85, sim=0.8) serve as sensitivity analysis demonstrating that mechanism families remain stable as the bridge threshold relaxes — but the path-length cap difference is documented honestly. This avoids over-claiming exhaustive enumeration at sim=0.8/0.85 while preserving the cross-threshold stability narrative.
+
+### 19.3 — Hop-wise DFS constraint set (canonical)
+
+`phase2_step4_F2v4_hopwise_falkordb.py` enforces:
+- **Edge filters:** EDGE confidence >= 3, SIM cosine sim >= threshold (= euclidean score < sqrt(2(1-thresh)))
+- **Endpoint filter:** intervention_maturity >= 3 on the terminal intervention node
+- **Path constraints:** simple paths, consim1 alternation (max consecutive SIM hops <= 1), single-risk (no risk node in middle), single-intervention (terminate at first intervention), first-hop EDGE-or-SIM to body subtype, min length 3, max length per threshold (above)
+- **Last-resort safeguards:** max 50M paths per run (tracked via `hit_global_cap` in summary)
+- **CF-5 fix:** `GRAPH.CONFIG SET RESULTSET_SIZE 10000000` at script start; risk/body/intervention id queries batched by id-range
+
+This is a strict superset of the constraints used in custom-mode BFS, plus the DFS extension that captures all valid mechanism evidence rather than one shortest path per pair.
+
+### 19.3a — Quality-based threshold selection rationale (early; results to follow)
+
+The hybrid path-enumeration strategy in §19.2 chooses sim=0.9 as the rev8 canonical threshold. That choice is correct on **feasibility** grounds (hop-wise DFS is intractable below sim=0.9), but feasibility alone is not a quality argument. The paper's threshold-appropriateness claim therefore needs an independent **quality** measurement that can be evaluated at every threshold and that flags the threshold below which the data degrades — independent of computational tractability.
+
+We considered three candidate quality signals at each threshold:
+
+**(a) Link quality — concept-category concordance for SIM edges.** For each SIM edge, check whether source and target share `concept_category`. At higher thresholds we'd expect concordance to approach 100%; degradation at lower thresholds would suggest semantic drift. **We dropped this as a primary signal** because the underlying extraction prompt assigns `concept_category` to a node based on the role it plays in its own paper's argumentation chain — the same conceptual content can legitimately appear as `problem_analysis` in one paper and as `theoretical_insight` in another, depending on where in the chain it appears. Discordant SIM edges are therefore not necessarily noise. Concordance might surface a weak signal at extreme thresholds but is not a reliable rigor argument.
+
+**(b) Path quality — within-path body coherence.** Mean pairwise cosine sim between body nodes inside a path. Higher = path traverses one mechanism cleanly; lower = path zigzags. **We dropped this as a primary signal** because the five body subtypes (problem_analysis, theoretical_insight, design_rationale, implementation_mechanism, validation_evidence) carry distinct epistemic content by design. A coherent reasoning chain crossing all five subtypes will have legitimately different embeddings at each stage. Within-path coherence therefore conflates "path is single-mechanism" (signal we want) with "path crosses subtypes" (structural feature, not noise). Possibly a weak signal at the extremes but not strong enough to anchor threshold choice.
+
+**(c) Body cluster Pareto across thresholds — primary signal (chosen).** For each threshold, restrict the body-cluster recluster input to the path-participating body nodes (VPN_paperpair) at that threshold, run the k-scan + Pareto frontier check (intra-cluster cosine sim ≥ 0.70 AND inter-cluster centroid cosine sim ≤ 0.30 per subtype). The threshold's cluster Pareto pass/fail pattern is a direct measurement of whether the path-participating body concepts at that threshold form genuinely homogeneous and well-separated clusters, or whether the lower threshold has admitted enough semantically-noisy bridges that body clusters lose coherence.
+
+**Expected pattern (to be confirmed):**
+- High thresholds (sim=0.9, sim=0.95, EDGE-only): all 5 body subtypes pass Pareto; clusters are clean.
+- Medium thresholds (sim=0.85): some subtypes may fail Pareto as moderately-similar bridges introduce cluster heterogeneity.
+- Low thresholds (sim=0.8): more subtypes fail Pareto; the looser SIM bridges admit semantically-divergent body concepts that cannot be cleanly separated.
+
+If the expected pattern holds, the chosen threshold is the **lowest threshold at which all five body subtypes pass the Pareto frontier**. Below that threshold, body clusters are inadequate by an independent quality criterion (not by feasibility). Above that threshold, clusters are clean but R-I coverage drops. The chosen threshold is the optimal balance point — clusters defensible, coverage maximized.
+
+If the expected pattern fails (e.g., even sim=0.95 fails Pareto), that is itself a paper finding: the AI safety mechanism space at this embedding resolution does not admit clean k-cluster decomposition at any threshold, motivating a different L2 abstraction.
+
+**Computational note:** the body cluster Pareto sweep uses full Agglomerative clustering with no sub-sampling at any threshold. Lower thresholds (sim=0.85, sim=0.8) have substantially larger VPN_paperpair populations and may incur multi-hour wall times per subtype. This is consistent with the hybrid enumeration story (§19.2) — at low thresholds the path enumeration is already approximated by lower max-length DFS or by BFS-shortest as coverage proxy, so any computational difficulty in the recluster step is consistent with already-acknowledged feasibility constraints. Wall times are recorded per threshold and reported as supplementary information.
+
+**Sweep implementation:** `graph_analysis/phase2_step4_F3_sweep_thresholds.sh` runs F3 on each of the 5 thresholds in cheapest-first order (EDGE-only → sim=0.95 → sim=0.9 → sim=0.85 → sim=0.8). Per-threshold output suffix: `body_kscan_metrics_<suffix>.csv`, `body_kscan_chosen_k_<suffix>.csv`, `body_kscan_pareto_plot_<subtype>_<suffix>.png`, `cluster_memberships_rev8_<suffix>.pkl`. Cross-threshold comparison consolidated into a single quality-vs-threshold table (TBD post-sweep).
+
+**Status:** rationale documented; sweep pending execution. Results table will replace this paragraph.
+
+### 19.3b — Methodological pivot: raw-cosine Pareto → BERTopic-style metrics (added 2026-05-01 after smoke-test)
+
+The first execution of the cross-threshold body-cluster Pareto sweep at edge_only revealed a systematic failure that the original §19.3a/19.4 framework cannot resolve: **the absolute thresholds (intra ≥ 0.70, inter ≤ 0.30) are unattainable in raw cosine space for any algorithm.** This is documented here so the methodological revision is traceable.
+
+**Empirical pattern (edge_only smoke-test, 2026-05-01, 4 algorithms × 9-or-5 params × 7 node-types = 210 cluster computations):**
+
+| Algorithm | typical intra | typical inter | size pattern |
+|-----------|--------------|--------------|--------------|
+| Agglomerative + cosine + average | 0.41–0.51 | 0.66–0.84 | one giant cluster (1/2/2400+) — chaining failure |
+| Agglomerative + cosine + complete | 0.37–0.44 | 0.95 | balanced sizes but centroids cluster together |
+| Agglomerative + euclidean + ward | 0.46–0.50 | 0.90–0.92 | most balanced sizes |
+| HDBSCAN (mcs ∈ {5,10,20,50,100}) | 0.63–0.75 | 0.59–0.70 | 82-97% noise; dense cores only |
+
+The chosen-best across all algorithms × params for each node-type also failed:
+
+| Subtype | Best algo | intra | inter | noise |
+|---------|-----------|-------|-------|-------|
+| problem_analysis | hdbscan mcs=20 | 0.68 | 0.64 | 97% |
+| theoretical_insight | hdbscan mcs=20 | 0.63 | 0.68 | 96% |
+| design_rationale | hdbscan mcs=20 | 0.67 | 0.68 | 96% |
+| implementation_mechanism | hdbscan mcs=20 | 0.68 | 0.59 | 96% |
+| validation_evidence | hdbscan mcs=20 | 0.66 | 0.70 | 97% |
+| risk | hdbscan mcs=20 | 0.74 | 0.65 | 82% |
+| intervention | hdbscan mcs=10 | 0.75 | 0.65 | 92% |
+
+(Full 210-row data: `step4_cluster_tables/body_kscan_metrics_edge_only.csv`. CSV preserved as the multi-algorithm baseline appendix.)
+
+**Why the absolute Pareto thresholds fail in raw cosine space:** general-purpose sentence-transformer embeddings (BAAI/bge-large-en-v1.5) trained on broad web data place ALL same-domain texts at cosine sim 0.5–0.95 vs each other. The "background" inter-centroid sim in a single-topic corpus (AI safety) is therefore ~0.6–0.95 regardless of what real cluster structure exists. Asking for inter ≤ 0.30 requires cross-domain-level separation that doesn't exist within a single technical domain. This is a known property of general-purpose sentence embeddings and the reason topic-modeling literature (BERTopic, Top2Vec, CTM) does not use raw embedding-space distances as the quality signal.
+
+**Pivot decision:** abandon raw-cosine Pareto (0.70/0.30) as the primary rigor signal; adopt the BERTopic-style framework, which is the field-standard for single-domain text clustering and has a well-cited reviewer pedigree.
+
+**New methodology (BERTopic-style, applied per body subtype):**
+
+1. **Dimensionality reduction first.** Apply UMAP(n_components=15, n_neighbors=15, min_dist=0.0, metric='cosine') on each subtype's VPN_paperpair embeddings. UMAP amplifies whatever local structure exists in the high-dimensional embedding before clustering. This is the BERTopic standard.
+
+2. **Cluster in UMAP space.** HDBSCAN (min_cluster_size scan over [5, 10, 20, 50, 100]) on UMAP-projected coordinates. HDBSCAN auto-detects density-based cluster cores; "noise" points are explicitly labeled and not forced into clusters.
+
+3. **Primary quality metrics (computed in UMAP space):**
+   - **Silhouette score** — target > 0.25 (acceptable cluster structure), > 0.40 (good)
+   - **Coverage** = 1 − noise_rate — target > 50% (acceptable), > 80% (good); high noise rates indicate the data has limited dense structure
+   - **Random-baseline z-score**: shuffle cluster labels, compute mean intra and inter; observed clustering must be ≥ 2σ better than random on both intra and inter
+
+4. **Data-driven cluster characterization (NO LLM-naming load-bearing for body clusters):**
+   - **3 closest + 3 farthest concepts per cluster** by cosine distance to cluster centroid in raw embedding space. The 3-closest are the most-prototypical members; the 3-farthest are the most-peripheral. This data-driven characterization replaces LLM-naming for body cluster validation and for any subsequent analysis step (frozenset construction, mechanism family assignment, R→Group→I triplets) that consumes body-cluster identity. LLM-naming may still be applied **qualitatively** at the L2 mechanism-family level (Step 5 frozenset groups), but never load-bearing inside the body-cluster pipeline. The reason: LLM-naming introduces extraction-time uncertainty that is hard to bound for reviewers; data-driven 3-closest/3-farthest is reproducible and audit-friendly.
+
+5. **2D visualization for reviewer inspection:** UMAP(n_components=2, same params as 15D) with cluster boundaries colored. Reviewers can visually confirm cluster separation in projection.
+
+6. **Cross-threshold quality comparison:** for each (threshold, subtype, algorithm-param), report (silhouette, coverage, noise_rate, n_clusters_realized, random-z_intra, random-z_inter). The chosen threshold for the paper is the lowest threshold at which all 5 body subtypes achieve silhouette > 0.25 AND coverage > 50% AND random-z > 2 on both intra and inter. If no threshold achieves this, that itself is a paper finding.
+
+**What survives from §19.3a:** the cross-threshold sweep methodology, the per-subtype quality criterion, and the "lowest acceptable threshold" decision rule. Only the absolute Pareto thresholds and LLM-naming have been replaced.
+
+**LLM-naming policy (clarification):** §18.5 (rev7 LLM cluster naming) and the Step 5 frozenset group naming remain in place as **descriptive labels** for paper presentation. They are **not** used for any quantitative downstream analysis — frozenset construction uses cluster-ID identifiers, R→Group→I triplets use cluster-ID identifiers, all path-level analyses use cluster-ID identifiers. LLM names are display-only.
+
+**Status:** F3v2 (BERTopic-style) implementation pending; smoke-test on edge_only first, then full sweep.
+
+### 19.3c — Canonical method: UMAP + HDBSCAN + iterative-residual + 0.77-cutoff + strict-per-iter ≥5 + 100%-strict path retention (locked 2026-05-02)
+
+**Canonical pipeline per node-type (5 body subtypes + risk + intervention):**
+
+1. **VPN_paperpair input** — body / risk / intervention nodes appearing in any qualifying F2v4 / custom-BFS path (after maturity≥3 and consim1 filters).
+2. **Dimensionality reduction** — UMAP(n_components=15, n_neighbors=15, min_dist=0.0, metric=cosine, random_state=42).
+3. **Iter 1 clustering** — HDBSCAN(min_cluster_size=5, metric=euclidean on UMAP-15D). Variable-k natural-density clusters; HDBSCAN labels low-density points as noise (-1).
+4. **Centroid-similarity cutoff (per cluster, per iteration)** — compute centroid in raw embedding space. Members with cosine sim < **0.77** to centroid revert to noise. Recompute refined centroid on survivors (single-pass).
+5. **Strict size filter (per iteration)** — drop any cluster whose post-cutoff surviving member count is <5; their members revert to noise. Every retained cluster has ≥5 members all at sim ≥0.77 to centroid by construction.
+6. **Iterative residual reclustering** — take noise set (HDBSCAN-noise + cutoff-rejected + size<5-rejected) → UMAP(15D) + HDBSCAN(mcs=5) + 0.77 cutoff + size≥5 filter on residual. New strict clusters get global IDs.
+7. **Termination** — converge when an iteration produces 0 new strict clusters (residual unchanged → next iter would be deterministic identical). Also caps at 50 iters as safety. **At convergence, no more clusters of ≥5 members at sim ≥0.77 to centroid exist in the residual** — proves complete enumeration of literature-replicated concept groups.
+8. **Cutoff robustness sweep** — single-pass at chosen mcs across cutoffs [0.70, 0.72, 0.74, 0.76, 0.77, 0.78, 0.80, 0.82]; ARI vs 0.77 demonstrates cluster identity is stable across small cutoff perturbations.
+9. **Data-driven characterization** — per cluster, store 3 closest + 3 farthest members by raw-embedding cosine to centroid. NO LLM-naming load-bearing (per §19.3a).
+10. **2D UMAP visualization** — fixed seed; per-subtype PNG with cluster overlay.
+
+**HDBSCAN-residual outperforms Agglomerative-K=40-residual:** edge_only test showed 4.51% vs 1.69% body-strict path retention. Forced-K partitioning of low-density residual produces "average of mixed concepts" centroids that mostly fail 0.77; HDBSCAN adapts to where dense pockets actually exist.
+
+**Path retention rule (locked):** **100% strict — risk endpoint, every body node, AND intervention endpoint must each be assigned to a non-noise cluster in their respective subtype.** Paths failing any component are excluded from frozenset / mechanism family / R→Group→I triplet analysis.
+
+**Why 100% strict is defensible (paper rationale):** the 100%-strict subset selects paths where every component has ≥4 corpus-wide semantic counterparts that themselves form a tight density cluster passing 0.77. By construction, every retained path is a reasoning chain whose every step is **replicated across the literature**. The excluded paths involve at least one component that's an author-idiosyncratic concept or a literature singleton. The trade-off (low path retention) is honest framing: rev8 mechanism families summarize the **literature-frequent** AI safety reasoning chains, distinct from one-off paper-specific formulations.
+
+**Per-subtype iteration outcomes (edge_only, strict per-iter, locked 2026-05-02):**
+
+| Subtype | iters | k_final | smallest_cluster | cov_final | stop reason |
+|---------|-------|---------|------------------|-----------|-------------|
+| problem_analysis | 16 | 164 | 5 | 45.8% | converged |
+| theoretical_insight | 13 | 111 | 5 | 31.1% | converged |
+| design_rationale | 16 | 115 | 5 | 34.0% | converged |
+| implementation_mechanism | 5 | 82 | 5 | 19.6% | converged |
+| validation_evidence | 11 | 119 | 5 | 29.9% | converged |
+| risk | 16 | 167 | 5 | 76.1% | converged |
+| intervention | 10 | 137 | 5 | 41.7% | converged |
+| **total** | — | **895** | — | — | all converged |
+
+All subtypes converged via `no_strict_clusters_added` — no max-iter cap hit, smallest cluster = 5 (criterion enforced). At convergence, no more clusters of ≥5 members at sim ≥0.77 exist in the residual.
+
+**100% strict + R+I strict path retention (edge_only, locked 2026-05-02):**
+
+| Scenario | Paths | Unique R-I pairs | Risk clusters | Intervention clusters |
+|----------|-------|------------------|---------------|------------------------|
+| **100% strict ALL (R+body+I)** | **186** | **152** | **57** | **50** |
+| ≤1 unmapped body | 492 | 368 | 99 | 93 |
+| R+I strict, body N/A | 3,115 | 1,174 | 157 | 137 |
+| Risk endpoint only | 6,950 | 2,452 | 167 | 137 |
+| Intervention endpoint only | 3,429 | 1,330 | 157 | 137 |
+| Total qualifying (pre-cutoff) | 8,954 | 3,222 | — | — |
+
+Retention rate at 100% strict: 186/8,954 = **2.08%**. 152 unique R-I pairs spanning 57 risk × 50 intervention cluster combinations of the 167 risk / 137 intervention totals (risk cluster coverage 34%, intervention 36%).
+
+**Why strict per-iter ≥5 was adopted over end-only filter:** end-only filter (drop <5-member clusters only after all iterations) retained tiny mid-iter clusters that helped residual evolution; produced more total clusters (1,196 vs 895) but those extras included clusters whose mid-iter survival was an artifact of slightly-different residual UMAP projections rather than robust signal. Strict per-iter ≥5 enforces criterion at every step → every retained cluster meets criterion at every iteration → convergence proves no more such clusters exist in data → cleaner methodological story for reviewers.
+
+**Cutoff robustness (edge_only):** ARI vs 0.77 typically > 0.85 for adjacent cutoffs in body subtypes; cluster identity stable. Coverage drops monotonically as cutoff tightens. 0.77 is the empirical sweet spot from representatives review; below 0.77 membership feels weak.
+
+**Canonical artifacts (edge_only, locked 2026-05-02):**
+- `phase1_rawpathsfiles/vpn_strict_RIbody_edge_only.jsonl` — 186 paths, all 100% strict
+- `step1_load_and_parse.../cluster_memberships_rev8_edge_only.pkl` — 895 cluster records
+- `step4_cluster_tables/body_kscan_metrics_edge_only.csv` — Pareto per (subtype, mcs)
+- `step4_cluster_tables/body_kscan_chosen_k_edge_only.csv` — chosen mcs per subtype
+- `step4_cluster_tables/body_kscan_iter_records_edge_only.csv` — per-iteration cluster contributions
+- `step4_cluster_tables/body_kscan_cutoff_sweep_edge_only.csv` — robustness at cutoffs 0.70–0.82
+- `step4_cluster_tables/body_kscan_cutoff_ari_edge_only.csv` — ARI matrix vs 0.77
+- `step4_cluster_tables/body_kscan_representatives_edge_only.csv` — 3 closest + 3 farthest per cluster
+- `step4_cluster_tables/body_kscan_pareto_plot_<subtype>_edge_only.png` — 2D UMAP scatter
+- `step4_cluster_tables/vpn_coverage_sensitivity_edge_only.csv` — strictness/retention table
+
+**Implementation:** `graph_analysis/phase2_step4_F3_body_recluster.py` with default flags `--centroid-sim-cutoff=0.77 --final-min-cluster-size=5 --iter-max=50 --iter-coverage-target=0.999 --resid-method=hdbscan --resid-mcs=5 --hdbscan-mcs=5,10,20,50,100 --umap-n-components=15 --umap-n-neighbors=15 --umap-min-dist=0.0`. Sensitivity: `phase2_step4_F3a_vpn_coverage_sensitivity.py` emits `vpn_strict_RIbody_<suffix>.jsonl` and `vpn_coverage_sensitivity_<suffix>.csv`.
+
+### 19.3d — Cross-threshold sweep + canonical = sim=0.9 (locked 2026-05-02)
+
+The canonical method (§19.3c) was applied to all 5 SIM-edge thresholds. **All thresholds use the SAME clustering pipeline** — UMAP-15D → HDBSCAN(mcs scan) → 0.77 cutoff in raw embedding space → per-iter ≥5 strict filter → iterate-to-convergence on residual. The only per-threshold difference is the input VPN_paperpair = distinct nodes appearing in the threshold's path file.
+
+**Comparison at 100% strict (R + every body + I clustered):**
+
+| Threshold | Path file | Path-enum mode | 100%-strict paths | R-I node pairs | Risk × Interv clusters | % of R-I universe |
+|---|---|---|---|---|---|---|
+| edge_only (baseline) | `paths_hopwise_v4_edge_only.jsonl` | DFS hopwise | 186 | 152 | 57 × 50 | — |
+| sim0.95 | `paths_hopwise_v4_sim0.95.jsonl` | DFS hopwise | 193 | 153 | 56 × 45 | — |
+| **sim0.9 (canonical)** | **`paths_hopwise_v4_sim0.9.jsonl`** | **DFS hopwise** | **799,031** | **5,244** | **86 × 55** | **29.6% of 17,699** |
+| sim0.85 | `paths_hopwise_v4_sim0.85.jsonl` | DFS hopwise | 5,887,398 | 225,132 | 216 × 102 | — |
+| sim0.8 | `paths_custom_sim0.8.jsonl` | BFS-shortest (custom) | 44,989 | 44,989 | 187 × 133 | — |
+
+Cluster quality (silhouette UMAP-15D, z_intra, z_inter) all pass thresholds at every threshold — silhouette range 0.62–0.83 across subtypes; z_intra typically 40–140; z_inter 2–45. All clusters Pareto-pass the 0.77 / size≥5 criteria.
+
+**Sim=0.8 caveat — NOT apples-to-apples with the other 4 thresholds:** the custom-mode BFS in `graph_analysis/final_pathway_analysis_modes.py:160-268` does NOT enforce consim=1 during traversal AND does not write `edge_types` to its JSONL (verified empty `edge_types` field across first 10k paths of `paths_custom_sim0.8.jsonl`). The `phase2_step4_F1_consim1_custom_rebuild.py` post-filter (which would impose consim=1) is hardcoded to `paths_custom_sim0.9.jsonl` (script line 49) — no equivalent post-filter has been applied for sim=0.8. So the sim=0.8 input to the F3 sweep almost certainly contains paths with 2+ consecutive SIM edges, contrary to the consim=1 invariant verified for edge_only / sim0.95 / sim0.9 / sim0.85.
+
+**Why sim=0.8 is excluded from canonical selection:** even if a consim=1-filtered `paths_custom_sim0.8.jsonl` were rebuilt, sim=0.85 already shows R-I pair explosion to 225,132 — far beyond a tractable paper artifact. Going to sim=0.8 (an even denser SIM-edge graph) would only inflate further. The R-I pair count under canonical method goes 152 → 153 → 5,244 → 225,132 across edge_only / sim0.95 / sim0.9 / sim0.85 — a clear inflection between sim0.9 and sim0.85. There is no realistic regime where sim=0.8 would be the canonical choice over a denser-than-necessary sim=0.85 baseline. The sim=0.8 row is reported in the comparison table for completeness but not used downstream.
+
+**Why sim=0.9 is the canonical choice for the workshop paper:**
+
+1. **R-I coverage scale appropriate to paper artifact:** 5,244 R-I node pairs span 86 × 55 = 4,730 max risk-cluster × intervention-cluster combinations (~1.1 R-I node pair per cluster combination on average). Reviewable as a paper artifact in a way that 225k pairs (sim0.85) is not.
+2. **Substantive expansion over edge_only:** 34× more R-I node pairs and 1.5× more risk clusters than the LLM-EDGE-only baseline; sim0.95 only adds 1 pair over baseline (153 vs 152) — i.e., the SIMILARITY-augmented value-add doesn't materialize until sim=0.9.
+3. **% of universe captured:** 29.6% of all 17,699 R-I node pairs that have ANY path in the sim0.9 graph are captured by 100%-strict clustering. Relaxing body-coverage to "no constraint" recovers 76% (13,506 pairs); the residual 24% are lost because R or I doesn't cluster.
+4. **Methodological consistency:** uses the same DFS hopwise enumeration + consim=1 filter + canonical clustering as the edge_only baseline, so the threshold-progression story (152 → 153 → 5,244 with monotone R-I cluster grid expansion) is internally consistent.
+5. **Convergence behavior:** all 7 subtypes converged via `no_strict_clusters_added` at canonical 0.77 cutoff; chosen mcs from scan {5, 10, 20, 50, 100} ∈ {5, 10} per subtype (5 most common). Cluster quality metrics within typical ranges (silhouette 0.66–0.78, z_intra 27–123).
+
+**Sim=0.95 falls below useful threshold:** SIM-edge density is 9,127 edges (0.6% of total) which produces only 8,976 paths in the path file vs 3.55M at sim0.9. Body-cluster recluster on the resulting sparse VPN_paperpair yields a cluster grid (56 × 45) that catches only 153 R-I node pairs — barely larger than edge_only's 152. The SIMILARITY-augmentation value-add is not realized at sim=0.95.
+
+**Canonical artifacts (sim0.9, locked 2026-05-02):**
+- `phase1_rawpathsfiles/vpn_strict_RIbody_sim0.9.jsonl` — 100% strict path set
+- `step1_load_and_parse.../cluster_memberships_rev8_sim0.9.pkl`
+- `step4_cluster_tables/body_kscan_metrics_sim0.9.csv`, `body_kscan_chosen_k_sim0.9.csv`, `body_kscan_iter_records_sim0.9.csv`
+- `step4_cluster_tables/body_kscan_cutoff_sweep_sim0.9.csv`, `body_kscan_cutoff_ari_sim0.9.csv` (iter-1 cutoff sensitivity)
+- `step4_cluster_tables/body_kscan_representatives_sim0.9.csv` — 3 closest + 3 farthest per cluster, columns `sim_initial_centroid` (≥0.77 by construction) + `sim_refined_centroid`
+- `step4_cluster_tables/body_kscan_pareto_plot_<subtype>_sim0.9.png` (×7)
+- `step4_cluster_tables/vpn_coverage_sensitivity_sim0.9.csv`
+
+**Full-pipeline neighbor-cutoff sweep at sim=0.9 (locked 2026-05-02):** runs canonical method end-to-end at cutoffs 0.73 / 0.75 / 0.77 / 0.79 / 0.81. Tests whether the FINAL iterative cluster identity (not just iter-1 membership) is stable around 0.77 ± 0.04. Wall time ~6.5h total across 4 non-canonical cutoffs.
+
+**Cluster count behavior (n_clusters at chosen-mcs per subtype):**
+
+| Subtype | 0.73 | 0.75 | **0.77 (canon)** | 0.79 | 0.81 |
+|---|---|---|---|---|---|
+| design_rationale | 224 | 181 | **138** | 101 | 65 |
+| implementation_mechanism | 225 | 179 | **120** | 83 | 52 |
+| intervention | 187 | 166 | **115** | 100 | 64 |
+| problem_analysis | 272 | 234 | **188** | 141 | 118 |
+| risk | 168 | 157 | **173** | 149 | 139 |
+| theoretical_insight | 173 | 186 | **128** | 105 | 64 |
+| validation_evidence | 240 | 198 | **148** | 98 | 49 |
+
+Cluster count drops monotonically as cutoff tightens (more restrictive 0.81 yields half as many clusters as looser 0.73). risk subtype is anomalous — count peaks at 0.77 — likely because the higher-density risk cluster space transitions through a sweet spot at 0.77 where additional clusters split out cleanly.
+
+**ARI vs reference 0.77 (cluster identity stability — full pipeline, on intersection of clustered nodes):**
+
+| Subtype | 0.73 | 0.75 | **0.77** | 0.79 | 0.81 |
+|---|---|---|---|---|---|
+| design_rationale | 0.8467 | 0.9022 | **1.0** | 0.9375 | 0.9386 |
+| implementation_mechanism | 0.9000 | 0.9321 | **1.0** | 0.9700 | 0.9475 |
+| intervention | 0.8652 | 0.9314 | **1.0** | 0.9215 | 0.8589 |
+| problem_analysis | 0.9136 | 0.9525 | **1.0** | 0.9582 | 0.9347 |
+| risk | 0.9056 | 0.9345 | **1.0** | 0.9407 | 0.9095 |
+| theoretical_insight | 0.8097 | 0.8801 | **1.0** | 0.8920 | 0.8903 |
+| validation_evidence | 0.8395 | 0.8947 | **1.0** | 0.9215 | 0.9518 |
+
+**Reviewer-defensibility outcome:** ARI is in the **0.81–0.97 range** across all cutoff perturbations of ±0.04 around 0.77. Theoretical_insight is loosest (ARI=0.81 at cutoff=0.73), still well above 0.5 (random) and well above 0.7 (typically called "stable"). The chosen 0.77 cutoff is **not arbitrary** — cluster identity is preserved across the neighborhood. Cluster fineness (count) varies, but cluster taxonomy is robust.
+
+**Implication:** the canonical 0.77 cutoff is the central anchor of a stability plateau; small perturbations (±0.02–0.04) preserve cluster identity above 0.85 ARI for 6 of 7 subtypes, above 0.81 for theoretical_insight. This satisfies the standard reviewer ask of "show your hyperparameter is not arbitrarily chosen".
+
+**Output artifacts (locked 2026-05-02):**
+- `step1_load_and_parse.../cluster_memberships_rev8_sim0.9_cutoff{0.73,0.75,0.77,0.79,0.81}.pkl` — 5 PKLs at 5 cutoffs
+- `step4_cluster_tables/full_cutoff_compare_sim0.9.csv` — n_clusters + ARI table reproducing the above
+
+### 19.3e — Co-occurrence rebuild + DFS path-multiplicity decomposition (locked 2026-05-02)
+
+**Pipeline stage:** `graph_analysis/phase2_step4_F1_rev8_rebuild.py` reads strict path file + `cluster_memberships_rev8_sim0.9.pkl`, applies the 100%-strict filter inline, and produces three output artifacts:
+- `step4_cluster_tables/optionB_cooccurrence_families_hopwise_sim0.9.csv` — row-per-frozenset (mechanism signature)
+- `step4_connectivity/ri_triplets_hopwise_sim0.9.csv` — row-per-(risk-cluster, frozenset, intervention-cluster)
+- `step4_paths/representative_pathways_hopwise_sim0.9.jsonl` — strict path set
+
+**Headline numbers (sim=0.9 hopwise, locked 2026-05-02):**
+
+| Metric | Value |
+|---|---|
+| Total paths in input | 3,548,825 |
+| 100%-strict (R + every body + I clustered) | 799,031 (22.52%) |
+| Dropped — endpoints not clustered | 860,459 |
+| Dropped — body not fully clustered | 1,889,335 |
+| Unique frozensets (any n) | 8,766 |
+| Frozensets with n_paths≥5 | 4,478 |
+| R-I triplet rows | 12,415 |
+
+**DFS path-multiplicity inflates n_paths but is NOT load-bearing literature signal.** Concrete decomposition of the top-5 frozensets (n_sources=1–3 each, 8–9 cluster signature) revealed two independent inflators that should be separated for L2 weighting:
+
+1. **R-I pair multiplicity (legitimate graph-theoretic signal):** the same frozenset signature can bridge many distinct (risk node, intervention node) pairs, giving real evidence that the signature is a **literature-replicated mechanism**.
+
+2. **DFS body-permutation multiplicity (combinatorial noise):** within a single (R, I) pair, hopwise DFS enumerates many ordered body sequences satisfying monotonic-relaxed + consim=1, all sharing the same frozenset (since frozenset is unordered).
+
+**Worked example — family 4 (n_paths=17,979, n_sources=1, 8-cluster signature):**
+
+| Decomposition component | Count |
+|---|---|
+| Distinct intervention nodes at path end | **1** (single intervention from one alignmentforum post; that paper has only 17 nodes total) |
+| Distinct risk nodes at path start | **136** (across many papers, reached via consim=1 SIM bridges) |
+| Distinct body nodes in matched paths | **162** (across many papers) |
+| Distinct R-I node pairs | **136** (= 136 risks × 1 intervention) |
+| Average paths per R-I pair | **132.2** |
+| → 17,979 = 136 R-I pairs × ~132 DFS body permutations per pair ||
+
+**Implication: `n_sources` (current implementation) under-counts replication signal.** The CSV's `n_sources` column = `len(set(node_attrs[path[-1]].url for matched paths))` — i.e., **distinct intervention-paper URLs only**. A signature with `n_sources=1` and `n_paths=17,979` may still span 136 different risk nodes from many different papers; the current metric doesn't surface that.
+
+**Better weighting metrics for L2 mechanism-family construction:**
+
+| Metric | What it captures | Reviewer-defensibility |
+|---|---|---|
+| `n_paths` (current) | Raw DFS path count — inflated by R-I × body-permutation product | Low — DFS combinatorial noise dominates |
+| `n_distinct_RI_pairs` | Graph-theoretic count of (risk-node, intervention-node) connections via this signature | **High — independent of DFS enumeration multiplicity** |
+| `n_intervention_sources` (current `n_sources`) | Intervention-paper-URL diversity at path end | Medium — captures only one endpoint |
+| `n_risk_sources` | Risk-paper-URL diversity at path start | Medium — captures other endpoint |
+| `n_total_paper_sources` | Distinct paper URLs across ANY node in any matched path | **Highest — full literature-replication signal** |
+
+**Recommendation for downstream L2 grouping (F4b Pareto on Jaccard):**
+1. Compute `n_distinct_RI_pairs` and `n_total_paper_sources` per frozenset before Pareto.
+2. Filter L2 input to frozensets with `n_total_paper_sources ≥ 3` (multi-paper replication threshold) to remove single-paper combinatorial DFS expansions.
+3. Weight Jaccard distance computation by `n_distinct_RI_pairs` (graph-theoretic signal) rather than `n_paths` (combinatorial noise).
+
+**Why this matters for the workshop paper:** the headline narrative is "frozenset X is a literature-replicated mechanism family bridging risks Y to interventions Z." If the supporting evidence is "n_paths=17,979" but those collapse to 136 R-I pairs × DFS-permutation-noise, the reviewer-defensible count is 136 (or some lower paper-deduplicated number), not 17,979. Reporting raw `n_paths` without n_distinct_RI_pairs / n_total_paper_sources side-by-side would be misleading.
+
+### 19.4 — Pareto-frontier validation for body cluster recluster (Task #7)
+
+The rev7 cluster taxonomy (k=40 hardcoded) is over-fragmented (CF-3) and not reviewer-defensible. Rev8 introduces `phase2_step4_F3_body_recluster.py` which:
+
+1. **Restricts input to path-participating nodes (VPN_paperpair).** Body nodes that never appear in a custom-consim1-qualifying F2v4 path are excluded from clustering input — clusters describe the actual mechanism population, not arbitrary unconnected concepts.
+2. **K-scans per subtype** for k in [10, 15, 20, 25, 30, 35, 40, 50, 60] with `AgglomerativeClustering(metric='cosine', linkage='average')` on unit-normalized embeddings.
+3. **Computes Pareto metrics per (subtype, k):**
+   - **Intra-tightness:** mean within-cluster cosine similarity (higher = more homogeneous; sampled to 500 nodes per cluster for tractability)
+   - **Inter-looseness:** max between-centroid cosine similarity (lower = more separated)
+4. **Selects k via Pareto frontier:** smallest k where `intra_mean >= 0.70` AND `inter_max <= 0.30`. If no k satisfies both, the clustering at this resolution is reported as inadequate and the best-gap point is selected as fallback (status flagged `fail`).
+
+The thresholds (0.70 intra, 0.30 inter) are chosen because the embedding model (`BAAI/bge-large-en-v1.5`, 1024-dim) places semantically related AI safety concepts in the 0.5-0.9 cosine sim band, and a 0.40 gap (0.70 - 0.30) ensures clusters are visually separable in projection plots. **If Pareto frontier cannot be satisfied, that itself is a paper finding** — the body concept space at this similarity resolution is too entangled for clean k-cluster decomposition, motivating a different L2 abstraction (e.g., topic-model-based grouping).
+
+Outputs:
+- `step4_cluster_tables/body_kscan_metrics.csv` — all (subtype, k) metrics
+- `step4_cluster_tables/body_kscan_chosen_k.csv` — chosen k + status (pass/fail) per subtype
+- `step4_cluster_tables/body_kscan_pareto_plot_<subtype>.png` — visual Pareto frontier
+- `step1_load_and_parse.../cluster_memberships_rev8.pkl` — new memberships at chosen-k
+
+### 19.5 — Pareto-frontier validation for L2 frozenset grouping (Task #7b)
+
+The same Pareto framework applies at L2 (mechanism-family grouping over frozensets of body cluster IDs). `phase2_step4_F4b_pareto_frozenset.py`:
+
+1. Reads cooccurrence-families CSV (output of F1 / E3-equivalent on the post-recluster path set)
+2. Builds binary vocabulary vector per frozenset; computes Jaccard distance matrix
+3. K-scan via `fcluster` on average-linkage Jaccard linkage for k in [3, 5, 8, 10, 12, 15, 18, 20, 25, 30]
+4. **Per-k Pareto metrics:**
+   - **Intra-tightness:** mean within-group Jaccard sim across all groups (higher = more homogeneous)
+   - **Inter-looseness:** max between-group binary-centroid Jaccard sim across cluster pairs (lower = more separated)
+5. **Selects k:** smallest k where `intra_mean >= 0.50` AND `inter_max <= 0.20`. Jaccard is harsher than cosine, hence lower thresholds.
+
+If the Pareto frontier cannot be satisfied at the L2 layer, that is a finding: **frozenset diversity at L2 is too high to support a clean mechanism-family decomposition.** This would imply the AI safety mechanism space is too heterogeneous for clean cluster narratives at this granularity, and the paper would report that as a primary result rather than forcing an inadequate taxonomy.
+
+Outputs:
+- `step4_cluster_tables/frozenset_kscan_metrics_<suffix>.csv`
+- `step4_cluster_tables/frozenset_kscan_chosen_k_<suffix>.csv`
+- `step4_cluster_tables/frozenset_kscan_pareto_<suffix>.png`
+- `step4_cluster_tables/frozenset_groups_pareto_<suffix>.csv`
+- `step4_cluster_tables/frozenset_group_memberships_pareto_<suffix>.csv`
+
+### 19.6 — Why Pareto frontier validation is the rigor signal for the paper
+
+Both the rev7 fixed-k clustering and the silhouette-only k-selection in earlier revisions answer only one half of the cluster-quality question (intra-cluster homogeneity). Reviewers reasonably ask whether the clusters are also genuinely separated from each other (inter-cluster looseness). The Pareto frontier puts both constraints on equal footing: a clustering is acceptable only when it simultaneously achieves intra-tightness above a chosen threshold AND inter-looseness below a chosen threshold. If no k achieves both, the data does not support a clean k-cluster decomposition at this resolution — and the paper reports that as a methodological finding rather than presenting an inadequate taxonomy as if it were validated.
+
+The Pareto frontier framework therefore replaces silhouette score and ARI as the primary cluster-quality signal in the rev8 paper. Silhouette and ARI remain in the metrics CSV for reference, but the chosen-k decision is driven by the Pareto thresholds (cosine: 0.70/0.30 for body; Jaccard: 0.50/0.20 for L2).
+
+### 19.7 — Files added in rev8
+
+| File | Role |
+|------|------|
+| `graph_analysis/phase2_step4_F2v4_hopwise_falkordb.py` | Canonical hop-wise DFS path enumeration on live FalkorDB |
+| `graph_analysis/phase2_step4_F1_consim1_custom_rebuild.py` | Consim1 + maturity rebuild on F2v4 path set |
+| `graph_analysis/phase2_step4_F3_body_recluster.py` | Body recluster on VPN_paperpair with k-scan + Pareto validation (Task #7) |
+| `graph_analysis/phase2_step4_F4b_pareto_frozenset.py` | L2 frozenset Pareto validation (Task #7b) |
+| `graph_analysis/phase2_results/rev8_active_state.md` | Comprehensive in-flight state (CF-1→CF-5, B-fix audit, task list) |
+
+---
+
+### 19.8 — Prior canonical (SUPERSEDED 2026-05-07 by §19.9): EDGE-only global cutoff scan with 3-level family decomposition
+
+**Status as of 2026-05-07: SUPERSEDED. See `graph_analysis/phase2_results/Step4_Findings_Report.md` §19.9 for the current canonical paper analysis path. This subsection is preserved for traceability of the methodological evolution; do not cite for paper claims.**
+
+The §19.8 setup (UMAP-15D HDBSCAN substrate, raw-cosine cutoff, GLOBAL body clustering ignoring subtype) hit a body-coverage ceiling of 25% at cutoff 0.80 and yielded only 83 strict-filter paths (0.93% retention from 8,954 EDGE-only paths). §19.9 below switches the substrate to UMAP-2D HDBSCAN, lowers cutoff to 0.75 with mcs=3, and partitions the body pool by LLM-extraction subtype (pa/ti/dr/im/va) — recovering 88% total VPN coverage and preserving the subtype label for downstream doublet construction.
+
+#### Setup
+- **Path source:** `graph_analysis/phase1_rawpathsfiles/paths_hopwise_v4_edge_only.jsonl` — 8,954 EDGE-only paths from F2v4 hopwise DFS.
+- **Filters baked into path build (F2v4):** EDGE conf ≥ 3, single-risk per path (start node only; risk neighbors excluded during expansion at lines 317-318), single-intervention per path (preempts at first intervention encountered, line 299), simple paths, min length 3, max length 50, first-hop EDGE-or-SIM to body subtype (EDGE-only here).
+- **Strict-filter VPN:** path nodes from above ∩ {intervention endpoint maturity ≥ 3} → 19,073 unique nodes (2,464 risks, 13,902 body, 2,707 interventions).
+- **Clustering:** GLOBAL HDBSCAN on UMAP-15D for body nodes (no subtype filter — risk and intervention each clustered intra-group). Iterative-residual-recluster with mcs=5, strict per-iter ≥5, run-until-convergence. Cutoff applied as raw 1536-D centroid cosine sim filter (every member must be ≥ cutoff to centroid).
+- **Strict path filter:** retain paths where R + every body + I are all in non-noise clusters at the chosen cutoff.
+
+#### Cutoff scan results
+
+| cutoff | risk K (cov%) | body K (cov%) | intervention K (cov%) | strict EDGE-only paths |
+|---|---|---|---|---|
+| **0.80** | 145 (59.7%) | **503 (25.0%)** | 78 (22.8%) | **83** |
+| 0.85 | 90 (34.9%) | 111 (5.6%) | 21 (6.9%) | 1 |
+| 0.90 | 32 (13.5%) | 9 (0.4%) | 5 (1.4%) | 0 |
+| 0.95 | 9 (3.9%) | 0 (0.0%) | 0 (0.0%) | 0 |
+
+**Cutoff 0.80 is the only viable level for downstream family analysis.** Tighter cutoffs collapse body coverage too aggressively (P(all 5 body nodes clustered) decays as p_node^5).
+
+#### 3-level family decomposition at cutoff 0.80
+
+Three frozenset-based abstractions per path:
+
+| Level | Frozenset element | What is captured |
+|---|---|---|
+| **strict_tuple** | `(global_cluster_id, role_label)` | Both content cluster AND LLM role label. Two paths share frozenset iff identical at content+role. |
+| **semantic_only** | `global_cluster_id` alone | Drops role. Cross-subtype-mislabel collapses (LLM assigning different subtypes to same concept across papers). |
+| **role_pattern** | sorted `(role_label, count_in_path)` tuple | Drops content. Captures only chain skeleton (how many body nodes per subtype). |
+
+**Family identification:** Hamming-edit-distance connected components (NOT Jaccard clustering — Jaccard is uninformative here, mean ~0.97). Two frozensets connect if symmetric-difference distance d ≤ 2 (one cluster swap or ≤ two add/removes). d ≤ 2 is cumulative — includes d ≤ 1 and d = 0 pairs.
+
+| Level | # unique frozensets | # multi-path frozensets | # Hamming families d ≤ 2 | # multi-frozenset families | Jaccard mean |
+|---|---|---|---|---|---|
+| strict_tuple | 70 | 8 | 50 | 12 | 0.974 |
+| semantic_only | 67 | 9 | 46 | 11 | 0.964 |
+| role_pattern | 11 | 6 | 1 | 1 | n/a |
+
+#### Key findings
+
+1. **Role-pattern collapse:** All 11 chain-skeleton variants pull into one Hamming family at d ≤ 2. The dominant skeleton is `pa=1, ti=1, dr=1, im=1, va=1` (one body cluster from each of 5 subtypes per path), covering 51 of 83 paths and all 51 R-I cluster pairs that pattern reaches. Variants are minor (occasional 2 of one subtype + 0 of another). Practical implication: **the LLM extraction is consistent in producing one body node per subtype per logical chain** — the chain skeleton is structurally invariant across the AI safety corpus.
+
+2. **Cross-role merging is real but bounded:** semantic_only collapses 4 strict_tuple families (50 → 46). The largest semantic_only family (#0) absorbs 8 frozensets across 10 paths and 5 R-I pairs — versus the largest strict_tuple family which has only 4 frozensets / 4 paths / 2 R-I pairs.
+
+3. **The "experience replay" demonstration of cross-role mislabeling:** strict_tuple family 4 has signature `pa:167 & ti:168 & dr:168 & im:168 & va:166`, meaning the SAME global cluster 168 (centroid representative: "Experience replay buffer with uniform random sampling of past transitions") is reached through three different role labels (theoretical_insight, design_rationale, implementation_mechanism). Three paper-extractions where the LLM picked a different subtype for the same concept.
+
+4. **Top mechanism families decoded** (file: `phase2_results/step4_finalanalysis/step4_cluster_tables/global_cutoff_top_families_global_cutoff0.80_DECODED.csv`):
+   - **Adversarial training** (semantic fam 0): 8 frozensets, 10 paths, 5 R-I pairs. Clusters span "Adversarial vulnerability" (141), "PGD adversarial training procedure" (147), "robust accuracy on CIFAR10 PGD" (172), "Adversarial training improves robustness" (174), "Robust optimization via worst-case perturbation" (253).
+   - **RLHF / InstructGPT** (semantic fam 1): 4 frozensets, 12 paths, 2 R-I pairs.
+   - **Toxicity/safety classifier filter** (semantic fam 2): 4 frozensets, 4 paths.
+   - **Experience replay (DQN/Atari)** (strict fam 4): 3 frozensets, 6 paths, 3 R-I pairs.
+   - **Compute-optimal scaling laws / Chinchilla** (semantic fam 4): R-cluster 137 = "High inference latency and memory requirements in large language model deployment"; I-cluster 3 = "Plan LLM pre-training runs using Chinchilla compute-optimal scaling".
+
+#### Limitations + open issues
+
+- Path retention is sparse: 83 of 8,954 EDGE-only paths survive (0.93%). Driven by 25% body coverage at cutoff 0.80.
+- Average 1.6 paths per R-I cluster pair (83 paths / 51 pairs); most R-I pairs hit by only 1 path.
+- Jaccard frozenset distance ≈ 0.97 at all levels: Hamming-edit-distance connected components is the only viable family primitive on this data.
+- **Substrate mismatch**: HDBSCAN runs on UMAP-15D but the centroid cutoff is in raw 1536-D cosine. Open question whether harmonizing (cutoff in UMAP-2D distance) would improve coverage.
+- **Intervention coverage is the weakest link** (22.8% at 0.80 vs 59.7% for risks). Interventions are paper-specific innovations; cross-paper near-duplicate density is lower.
+
+#### Output artifact list
+
+| File | Content |
+|---|---|
+| `phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/cluster_memberships_rev8_global_cutoff{0.80,0.85,0.90,0.95}.pkl` | Cluster memberships per cutoff |
+| `phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/role_of_rev8_global_cutoff{X}.pkl` | Per-node LLM role label preserved alongside global cluster ID |
+| `phase2_results/step4_finalanalysis/step4_cluster_tables/global_cutoff_summary_global_cutoff{X}.csv` | Per-level family metrics |
+| `phase2_results/step4_finalanalysis/step4_cluster_tables/global_cutoff_top_families_global_cutoff0.80.csv` | Top families per level (raw) |
+| `phase2_results/step4_finalanalysis/step4_cluster_tables/global_cutoff_top_families_global_cutoff0.80_DECODED.csv` | Top families with centroid representative names |
+| `phase2_results/step4_finalanalysis/step4_cluster_tables/cluster_representatives_global_cutoff0.80.csv` | Closest-to-centroid representative for every cluster |
+
+---
+
+### 19.9 — CANONICAL PAPER ANALYSIS (current): per-subtype HDBSCAN-2D at cutoff=0.75, mcs=3 on the 19,073-node EDGE-only VPN (locked 2026-05-07)
+
+**This is the analysis path the paper uses for node clustering. §19.8 is superseded.** The pipeline below completes Phase 1 (basic node clustering); §19.9.4 enumerates the four downstream tasks that turn node clusters into the final mechanism-family deliverable.
+
+#### 19.9.1 — Canonical Phase 1 setup
+
+- **Path source:** `graph_analysis/phase1_rawpathsfiles/paths_hopwise_v4_edge_only.jsonl` — 8,954 EDGE-only paths from F2v4 hopwise DFS. Filters baked in at F2v4 build: EDGE conf ≥ 3, single-risk per path (start node only; risk neighbors excluded during expansion), single-intervention per path (preempts at first intervention encountered), simple paths, min length 3, max length 50, EDGE-only first hop.
+- **Strict-filter VPN:** path nodes ∩ {intervention endpoint maturity ≥ 3} → **19,073 unique nodes** (2,464 risks; 13,902 body across 5 subtypes; 2,707 interventions).
+- **Clustering substrate:** UMAP-2D (n_components=2, n_neighbors=15, min_dist=0.0, metric=cosine, random_state=42) → HDBSCAN(min_cluster_size=3, metric=euclidean) on the UMAP-2D coordinates. **Substrate fix vs §19.8** (which ran HDBSCAN on UMAP-15D with raw-cosine cutoff = mismatched substrate).
+- **Centroid filter:** every member must be ≥ 0.75 raw cosine sim to its cluster's initial centroid (centroid computed as unit-normalized mean of pre-cutoff members; see `phase2_step4_F3_body_recluster.py:290-331` `apply_centroid_cutoff`). Members below 0.75 → noise.
+- **Per-iteration strict filter:** clusters with < 3 surviving members after centroid cutoff → noise.
+- **Iterative-residual-recluster:** noise from each iteration becomes input to the next. Loop until coverage_target=0.95 reached OR no new clusters added (convergence) OR max_iter=50.
+- **Pool partitioning (NEW vs §19.8):** **per-subtype** — 7 separate HDBSCAN clusterings, one per LLM-assigned role. Risk + 5 body subtypes + intervention. Each pool clusters only against itself; no cross-subtype mixing.
+- **Method:** HDBSCAN-only. Louvain on SIM≥0.75 k-NN was tested in earlier sweeps (§19.9.2 below) and rejected — Louvain coverage was strictly weaker than HDBSCAN-2D and the union added <1pp at every cutoff tested.
+
+Script: `graph_analysis/phase2_step4_phase1_paper_clustering.py` invoked with `--cutoff 0.75 --mcs 3 --strict-min 3 --max-iter 50 --methods A --tag _c75m3_subtype --pool-mode per_subtype`. Body subtype names use the canonical logical-chain order pa → ti → dr → im → va (per project `CLAUDE.md` rule on never showing concept subtypes out of logical-chain order).
+
+#### 19.9.2 — Phase 1 coverage results
+
+Per-pool, in canonical logical-chain order (risk → pa → ti → dr → im → va → intervention):
+
+| Pool | N nodes | Coverage | # clusters | Mean cluster size | Median cluster size | Iterations | Wall (s) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| risk | 2,464 | **94.68%** | 339 | 6.9 | 5 | 11 | 36.7 |
+| problem_analysis | 2,863 | **93.43%** | 584 | 4.6 | 4 | 38 | 90.3 |
+| theoretical_insight | 2,544 | **86.48%** | 542 | 4.1 | 3 | 28 | 90.1 |
+| design_rationale | 2,548 | **89.52%** | 516 | 4.4 | 4 | 22 | 66.4 |
+| implementation_mechanism | 3,086 | **83.02%** | 665 | 3.9 | 3 | 50* | 235.6 |
+| validation_evidence | 2,861 | **84.80%** | 576 | 4.2 | 3 | 23 | 93.6 |
+| intervention | 2,707 | **87.55%** | 513 | 4.6 | 4 | 24 | 65.3 |
+| **TOTAL** | **19,073** | **88.33%** | **3,735** | — | — | — | — |
+
+\*implementation_mechanism hit max_iter=50 with cum_cov still climbing slowly — bumped from 83.0% to potentially 85-86% if max_iter raised, but the marginal gain past iter 30 was <0.5% per iter, so 50 is an acceptable convergence floor.
+
+#### 19.9.3 — How the canonical config was selected (sweep summary)
+
+Coverage scan across cutoff × mcs × pool-mode × method on the same 19k VPN:
+
+| Cutoff | mcs | Pool mode | Method | Risk cov | NR cov | Total cov |
+|---:|---:|---|---|---:|---:|---:|
+| 0.80 | 5 | pooled | HDBSCAN-2D ∪ Louvain | 60.02% | 24.44% | 29.04% |
+| 0.80 | 5 | pooled | HDBSCAN-2D only | 59.25% | 23.78% | 28.36% |
+| 0.75 | 3 | pooled | HDBSCAN-2D only | 94.68% | 72.71% | 75.55% |
+| **0.75** | **3** | **per_subtype** | **HDBSCAN-2D only** | **94.68%** | **86.6% (avg body+interv)** | **88.33%** |
+| 0.70 | 3 | pooled | HDBSCAN-2D ∪ Louvain | 96.88% | 95.74% | 95.88% |
+
+Selection rationale:
+- **0.75 over 0.70:** stricter semantic floor while still recovering ≥85% on every subtype pool. 0.70 is the algorithmic ceiling but 0.75 keeps reviewer-defensibility against "your clusters are too loose." 0.77 was considered but the cutoff-coverage curve is steeply non-linear in this region (NR pooled drops 73% → 24% as cutoff goes 0.75 → 0.80), so 0.77 was projected to lose ~10pp on body subtypes for a marginal gain in stricter sim — net negative.
+- **mcs=3 over mcs=5:** mcs=5 collapses NR coverage to 24% even at cutoff=0.80; mcs=3 admits 3-member clusters which are a meaningful unit of "≥3 papers extracting the same concept."
+- **per-subtype over pooled NR:** +12.5pp coverage at the same cutoff/mcs (75.55% → 88.33%). Subtype-resolved clustering preserves the LLM-extraction signal as a usable feature instead of throwing it away into a 16,609-node combined manifold.
+- **HDBSCAN-2D only, dropping Louvain:** at cutoff=0.80, Louvain (SIM≥0.80 k-NN graph + 0.80 centroid filter) reached only 6.92% on NR vs HDBSCAN-2D's 23.78%. At 0.70, Louvain reached 47.96% vs HDBSCAN-2D's 95.01% — Louvain's coverage was always strictly weaker, and the union over both methods added < 1pp vs HDBSCAN-2D alone at every tested cutoff. Louvain is dropped from the canonical pipeline.
+
+#### 19.9.4 — Why the per-subtype split is the right primary axis
+
+1. **Preserves LLM-extraction signal as a feature.** Each VPN node has its `concept_category` ∈ {pa, ti, dr, im, va} from extraction-time o3 calls. Per-subtype clustering treats this as a structural feature rather than collapsing it into a pooled manifold and re-discovering it via post-hoc analysis.
+2. **Better embedding-density match per pool.** The combined 16,609-node NR manifold has 6 distinct subtype semantics overlapping in 1536-D embedding space — local density is diluted, HDBSCAN finds fewer dense pockets. Subtype pools are 2,544-3,086 nodes each, much sharper density signal per cluster.
+3. **Direct doublet-primitive support.** The downstream mechanism-family construction operates on doublets (R_group, NR_anchor) with body chain metadata as narrative. Per-subtype labels give every NR node a (subtype, cluster_id) pair that can be used directly in mechanism-family identification — no extra LLM/algorithmic step needed to recover the subtype information.
+4. **Reviewer-defensibility.** The subtype labels are LLM-derived but they are the SAME LLM that extracted the nodes; using them as a clustering scaffold is "consistency-of-extraction" rather than "additional LLM dependency."
+
+#### 19.9.5 — Output artifacts (Phase 1 complete as of 2026-05-07)
+
+In `graph_analysis/phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/`:
+
+| File | Content |
+|---|---|
+| `cluster_memberships_rev8_paper_methodA_c75m3_subtype.pkl` | **CANONICAL** — 3,735 cluster records keyed by `("rev8_paper", "umap2d_hdbscan_iter", pool, "hdbscan", str(cid))` → list of node IDs. `pool` ∈ {risk, problem_analysis, theoretical_insight, design_rationale, implementation_mechanism, validation_evidence, intervention}. |
+| `role_of_rev8_paper.pkl` | Dict[node_id → role label] for VPN nodes — used by downstream doublet construction. |
+| `phase1_coverage_summary_c75m3_subtype.csv` | Per-pool coverage summary (the §19.9.2 table). |
+| `phase1_iter_records_c75m3_subtype.pkl` | Per-iteration trajectory (debug). |
+| `cluster_memberships_rev8_paper_methodA_c75m3.pkl` | Pooled-NR sensitivity check (kept for comparison reporting). |
+| `cluster_memberships_rev8_paper_methodA{,_c70m3,_c75m3,_c75m3_subtype}.pkl`, `cluster_memberships_rev8_paper_methodB{,_c70m3}.pkl` | Sweep variants. |
+| `phase1_union_intersect_report{,_c70m3}.csv` | A∪B union/intersect/ARI for cutoff=0.80 baseline and cutoff=0.70 retry. |
+
+#### 19.9.6 — Next-step tasks (Phase 2-4) — task list to execute on the canonical Phase 1 output
+
+These four tasks turn the per-subtype node clusters of §19.9.1-19.9.5 into the paper's mechanism-family deliverable. Tasks must execute in order; each downstream task consumes upstream artifacts.
+
+**Task A (Phase 2): LLM thematic naming of remaining nodes outside clusters.**
+- Input: 19,073 - 16,847 = **2,226 noise residual nodes** (11.67% of VPN) from `cluster_memberships_rev8_paper_methodA_c75m3_subtype.pkl`. Per-pool residual: risk 131, pa 188, ti 344, dr 267, im 524, va 435, interv 337.
+- Goal: assign every residual node to a thematic group with a human-readable name. Groups must be reviewer-defensible (named, with member representatives).
+- Method: Claude Code CLI shim (`0_domain_finder/knowledge_pipeline/src/claude_cli_shim.py`) — Max plan only, NOT Anthropic API key. Strip ANTHROPIC_API_KEY from child env. Windows: `cmd.exe /c claude -p` for .CMD shim invocation.
+- Two-pass batched approach: batch size 150-300 names per call; pass 1 first batch produces seed taxonomy of 15-25 thematic groups; pass 2 subsequent batches use seed taxonomy as fixed buckets with new buckets only for clearly-misfit nodes; cross-batch consolidation merges groups with > 50% Jaccard on members; naming pass sends 10 group-naming requests per shim call to amortize ~25-30k overhead per call.
+- **Pool boundary for LLM (correction 2026-05-08): risk vs non-risk only.** Risk residuals (131) clustered as one pool; non-risk residuals (2,095 = pa+ti+dr+im+va+intervention) clustered as one pool. Subtype label is preserved on each node as a per-record attribute (used by Phase 4 doublet narrative + def-overlap match) but is NOT a clustering boundary for the LLM. Rationale: per-subtype splits would over-fragment small residuals where thematically identical nodes happen to carry different subtype labels.
+- **HITL checkpoint after seed (correction 2026-05-08): after the first seed call per pool (risk-pool seed call + NR-pool seed call), STOP and return the seed taxonomies for human review.** Pass-2 assignment + naming + def-overlap only proceeds after the seed taxonomies are approved (or revised). Protects against burning ~300-400k tokens on a misshapen seed.
+- Definitional overlap check: encode HDBSCAN cluster centroid representative names + LLM group name+description+representatives as embeddings; flag pairwise sim ≥ 0.70 as definitionally overlapping with an existing HDBSCAN cluster (then the LLM group is recorded as a "fuzzy boundary extension" of that cluster, not a new theme).
+- Output: `cluster_memberships_rev8_paper_methodC_c75m3_subtype.pkl` (LLM thematic groups, same key schema as Method A); `phase2_llm_residual_naming.csv` with per-group name/description/representative names.
+
+**Task B (Phase 2 → 3 transition): Path selection.**
+- Input: all 8,954 EDGE-only paths + cluster memberships from Tasks A inputs (Method A) and Task A output (Method C).
+- Goal: select the canonical path set for downstream mechanism-family analysis. A path is **fully clustered** if every node on the path has a non-noise cluster ID (from Method A or Method C). Partially-clustered paths are reported but excluded from family analysis.
+- Decision: include both fully-A-clustered paths AND fully-(A∪C)-clustered paths as separate retained sets. Compare retention rates. Primary set = fully-(A∪C)-clustered (uses Phase 2 LLM contribution).
+- Output: `phase2_step4_F2v4_paths_c75m3_subtype_fullyclustered.jsonl` (subset of `paths_hopwise_v4_edge_only.jsonl` where every node is clustered). Report retention count + per-pool retention breakdown.
+
+**Task C (Phase 3): Coverage calculation.**
+- Input: cluster memberships (Methods A + C), path retention counts.
+- Goal: report **path-level coverage** (% of EDGE-only paths fully clustered) and **node-level coverage** (% of VPN nodes assigned to a non-noise cluster) per method and union (A ∪ C).
+- Path-level coverage decays multiplicatively with path length: a 5-node path with per-node coverage 0.88 has expected fully-clustered probability 0.88^5 = 0.527 — so path-level coverage will be substantially below 88%.
+- Output: `phase3_coverage_report.csv` with columns: method, n_nodes_total, n_nodes_clustered, node_coverage, n_paths_total, n_paths_fully_clustered, path_coverage. Plus per-subtype-pool breakdown.
+- Sanity baseline check: per CLAUDE.md cross-check rule, expected path coverage ≈ ∏(per-node coverage)^path_length. If observed differs by >5x from this expectation, investigate dependency structure (paths share nodes; clustered/noise outcomes are not independent).
+
+**Task D (Phase 4): Risk and non-risk family identification from node-level clusters.**
+- Input: fully-clustered EDGE-only paths from Task B; cluster memberships from Task A + C.
+- Doublet primitive (per `0_domain_finder/martins-impact-strategy-evolving.md` is unrelated; see `memory/plan_rev8_paper_canonical_pipeline.md` "Pivot to doublet primitive"): `(R_cluster_id, NR_anchor)` per path, where R_cluster_id is the risk-pool cluster of the path's start node and NR_anchor is constructed from the path's body+intervention nodes.
+- Risk family = group of doublets sharing R_cluster_id (cross-paper reach: how many distinct NR_anchors does this risk reach via mechanism chains?).
+- Non-risk family = group of NR_anchors sharing the same set of (subtype, cluster_id) pairs across body chain + intervention. Two natural primitives to evaluate:
+  - **D1 — exact-match family**: NR_anchors with identical body-subtype-cluster signature `{(pa, cid_pa), (ti, cid_ti), (dr, cid_dr), (im, cid_im), (va, cid_va), (interv, cid_interv)}`. Counts as same family.
+  - **D2 — Hamming-ball family** (per `memory/feedback_paper_analysis_preferences.md`): NR_anchors at symmetric-difference distance d ≤ K from a designated center anchor. K starting at 2; ball-around-center semantics, NOT transitive closure. Frozensets can be in multiple families. Sweep K ∈ {1, 2, 3} for sensitivity.
+- Algorithm choice: D1 (exact) is the strict primary; D2 (ball-around-center, K=2) is the sensitivity check. Both report (n_families, family_size_distribution, top-N families with cluster representative names).
+- Output: `phase4_mechanism_families.csv` (one row per family) + `phase4_family_members.csv` (one row per (family, member_path)). Plus a top-10 family decoded table with centroid representative names.
+
+#### 19.9.7 — Where the canonical pipeline diverges from §19.8 — concrete diff
+
+| Aspect | §19.8 (superseded) | §19.9 (current) |
+|---|---|---|
+| Substrate | UMAP-15D HDBSCAN | UMAP-2D HDBSCAN |
+| Cutoff | 0.80 | 0.75 |
+| mcs | 5 | 3 |
+| Pool mode | global body (no subtype) + intra-risk + intra-intervention | per-subtype (7-way: risk + 5 body + intervention) |
+| Body coverage | 25.0% | 86.6% (mean across 5 body subtypes) |
+| Total VPN coverage | ~30% | 88.33% |
+| Strict path retention | 83 of 8,954 | TBD (Task B) — projected ~3,000-5,000 paths |
+| Family primitive | strict_tuple, semantic_only, role_pattern frozenset (3 levels, Hamming d≤2 connected components) | doublet (R_cluster, NR_anchor) — D1 exact + D2 Hamming-ball-around-center K∈{1,2,3} |
+| LLM dependency at clustering time | none | Phase 2 LLM thematic on residual ~12% of nodes via Claude Code CLI shim (Max plan), with definitional-overlap check vs HDBSCAN clusters |
