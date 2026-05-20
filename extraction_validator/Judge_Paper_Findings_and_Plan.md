@@ -100,15 +100,40 @@ The 95 `_evaluation.json` files in `extend_try_with_extration_and_judge_and_orig
 
 ## 3. Workshop item 3 — Error taxonomy + judge recovery on failed extractions
 
-### Status: **BLOCKED on Mike** as of 2026-05-19
+### Status: **UNBLOCKED 2026-05-20** — Mike supplied `judge_recovery_bundle/` on Drive
 
-Martin messaged Mike on 2026-05-19 asking for the ~60 recovered records + analysis notes. **Until Mike responds, Sai should not start any new judge run on the failed-extraction set** — a re-run may be unnecessary if Mike still has the artifacts on his local disk. Item 3 Sai-side work is on hold pending that response.
+Mike shared the complete recovery dataset as `judge_recovery_bundle/` (Drive). Inventory:
 
-Once Mike replies:
-- **If Mike has the data:** Sai uploads it to the Drive sub-folder under `1u5r4OTasGRhcHRAoXFPMl6E_dr4abIrZ/judge_workshop_item_3_error_recovery/`, then proceeds to taxonomy + judge-of-judge tasks (no re-run needed).
-- **If Mike does not have it:** Sai re-runs the judge on Gleb's ~400 processable errors (~$4, ~3 hr wall-clock) after bug fixes land.
+| Path inside `judge_recovery_bundle/` | Files | What it is |
+|---|---|---|
+| `data/extraction_error_recoverable_info/` | 441 per-paper dirs | The ~400 processable failed extractions (input set after `find_judge_able_sources.py` filter) |
+| `data/recovered_errors/` | 443 files (441 attempts + `summary.json` + `errors.json`) | Full judge attempt log including the ~376 non-recoveries |
+| `data/recovered_errors_graph/` | **65 files** | "~60 recovered" set — judge runs that produced a valid `final_graph`. Empirical recovery rate **65/441 = 14.7%**. |
+| `data/recovered_errors/summary.json` | — | total_tokens=4.06M, prompt=2.14M, completion=1.93M, 13 technical errors out of 441 |
+| `data/recovered_errors/errors.json` | — | 13 technical-failure cases (503 server errors, Pydantic schema-validation errors) — error-taxonomy seeds |
+| `code/` | 9 files | Mike's pre-PR-#146 `judge.py` (SHA `5389d5a5...` = same as `origin/rubric_2_and_3:judge.py`) + same prompts/scripts already restored on this branch — no new code |
 
-Mike ran the recovery in Oct–Nov 2025; output is missing from public artifacts.
+**Source-type distributions** (informative for paper table):
+- **Inputs (441):** arbital 124, eaforum 101, lesswrong 75, blogs 69, alignmentforum 47, aisafety.info 10, special_docs 9, agentmodels 4, arxiv 2
+- **Recovered (65):** alignmentforum 16, eaforum 15, arxiv 14, blogs 11, lesswrong 6, arbital 2, agisf 1 — note: 65-set uses `ard_file_source` field naming, not failure-bucket prefix. Sai must reconcile naming when building the per-source-type recovery rate table.
+
+### Critical caveat — bug contamination of recovered graphs
+
+Mike's `judge.py` for the 65 recoveries is the **pre-PR-#146 version with all 6 bugs B1–B6 present**. Impact:
+
+- **Recovery rate 65/441 = 14.7% is empirically valid** — bugs don't affect "did a graph get produced".
+- **Recovered graph *content* is partially bug-contaminated:**
+  - **Bug 5** (trailing `break` in `add_nodes` loop) — only the first add-node was applied per record; remaining add-nodes silently dropped. Several of the 65 `final_graph`s are missing nodes the judge proposed.
+  - **Bug 6** (`merges` ignored) — judge-proposed merges never executed in any of the 65 `final_graph`s.
+- **For the paper:** recovery-rate claim is solid. Recovery-quality claim (validated by 3-grader judge-of-judge on n=30 sample) reports on Mike's as-produced bug-contaminated graphs — which is what the team actually has. Sai's bug fixes (Phase B) are needed only for a future re-run, not for closing out Items 2+3.
+
+### Bonus datasets Mike has but did NOT include in `judge_recovery_bundle/`
+
+Per the bundle's README, these exist on Mike's local disk but are excluded from the bundle. **None are critical for Workshop minimum acceptance** — every Item 2/3 deliverable in the Workshop spec is satisfiable from `judge_recovery_bundle/` alone. Document the omission in the Item 3 Overleaf paragraph as deferred-future-work:
+
+1. `extraction_error_recoverable_info_graph_error/` (179 MB, 91 dirs) — analogous judge-able set from `graph_error` failure stage. Per-failure-stage recovery rate is not in the Workshop spec.
+2. `recovered_errors_graph_new_prompt{,2..7,9,A..E}/` (~92 files each, ~12 prompt-iteration variants) — judge-prompt sensitivity experiments. Single-prompt recovery rate is what the spec asks for.
+3. `processed_ard/extraction_error/` (1,667 unfiltered failures) — full failure denominator. The `find_judge_able_sources.py` filter (441/1,667 = 26% judge-able) already covers the spec's "filter to error-flagged docs" requirement.
 
 **Provenance of the 400/60 numbers.** From Discord export `inputs/discord_messages_judge.txt` line 334:
 
@@ -124,18 +149,13 @@ Mike ran the recovery in Oct–Nov 2025; output is missing from public artifacts
 
 **Correct.** Gleb's Drive folder `1RPbETx21K...eZ4x` holds the **input** to recovery (the original extraction errors). The **output** (~60 recovered records + per-record fail/recover trace + error categorization) is **only on Mike's local disk** — not in any branch, not in any PR, not in Mike's Final-archive. The Discord log says "Mike will work to document error analysis on Overleaf" — that documentation has not appeared in the Overleaf draft yet (only the placeholder line 211 "Error taxonomy from judge data (n=50 instances), Mike").
 
-### Required asks from Mike
+### Asks from Mike — RESOLVED 2026-05-20
 
-Mike is off the project. Martin asks Mike for:
-
-1. The ~400 input "processable" errors set (filenames + their original-extraction error bodies).
-2. The ~60 recovered records (judge output: per-record judge-fixed graph + before/after).
-3. The ~340 non-recovered processable errors (the recovery attempt's failures — needed for error taxonomy denominator).
-4. Any analysis notes Mike made on error categorization.
-
-If Mike cannot find / re-share these:
-- Gleb's Drive folder has the raw error set — Sai can re-derive #1 by running `find_judge_able_sources.py` (in `_rubric23/extraction_validator/`, takes processed_dir + ard_dir → outputs `potential_judge_able_sources.json` and copies the eligible source folders).
-- Sai then re-runs the judge on those ~400 to reproduce the ~60 recovered. Cost ≈ $3.75 (see §5).
+All asks satisfied by `judge_recovery_bundle/`:
+1. ✓ Input "processable" errors set → `data/extraction_error_recoverable_info/` (441 dirs)
+2. ✓ Recovered records (per-record judge-fixed graph) → `data/recovered_errors_graph/` (65 files)
+3. ✓ Non-recovered processable errors → `data/recovered_errors/` minus `data/recovered_errors_graph/` (~376 records)
+4. ✗ Mike did not include separate analysis notes — only the raw recovery output and `summary.json`. Error categorization is Sai's hand-classification task per Workshop Item 3 spec.
 
 ### Building the error taxonomy (n=50 instances per Gleb's Overleaf §211)
 
@@ -147,17 +167,16 @@ The taxonomy categorizes WHY each error occurred. Categories observable from the
 
 n=50 means hand-categorizing 50 of the ~400 processable errors. This is a Sai task; no LLM tokens required (manual review).
 
-### What's left for item 3 — BLOCKED until Mike responds
+### What's left for item 3 — UNBLOCKED (Mike data on Drive)
 
-| Task | Effort | Owner | Blocked? |
-|---|---|---|---|
-| Ask Mike for the ~60 recovered + analysis notes | external | Martin (done 2026-05-19) | — |
-| Pull Gleb's Drive zip + identify the ~400 processable errors | ~1 hr | Sai | blocked until Mike reply (may not need to recompute) |
-| If Mike's data unavailable, re-run judge on 400 processable | ~$4 (Sonnet 4.5 batch), ~3 hr wall-clock | Sai | conditional on Mike reply |
-| Hand-categorize 50 errors into taxonomy buckets | ~3 hr | Sai | blocked (needs the recovered + failed data) |
-| Run 3-grader judge-of-judge on n=30 random recovered (same prompts as item 2) | ~$5–10 (3-vendor pool) | Sai | blocked (needs the recovered records) |
-| Compute recovery rate κ across graders, error-bucket distribution | local Python | Sai | blocked |
-| Write Overleaf paragraph for item 3 (taxonomy + recovery rate + κ + recommendations) | drafting | Sai | blocked |
+| Task | Effort | Owner |
+|---|---|---|
+| ~~Pull Gleb's Drive zip + identify ~400 processable errors~~ | — | NOT NEEDED — Mike's `data/extraction_error_recoverable_info/` already filtered |
+| ~~Re-run judge on 400 processable~~ | — | NOT NEEDED — Mike's `data/recovered_errors/` is the complete attempt log |
+| Hand-categorize 50 errors into taxonomy buckets (use `data/recovered_errors/errors.json` + spot-check non-recovered records in `data/recovered_errors/`) | ~3 hr | Sai |
+| Run 3-grader judge-of-judge on n=30 random `data/recovered_errors_graph/` records (same prompts as item 2) | ~$5–10 (3-vendor pool) | Sai |
+| Compute κ on recovery-quality verdicts; build per-source-type recovery rate table | local Python | Sai |
+| Draft Overleaf paragraph for item 3 (taxonomy + recovery rate + κ + recommendations + bonus-data-deferred note) | drafting | Sai |
 
 ---
 
@@ -196,12 +215,11 @@ These are real bugs in current `extraction_validator/judge.py` HEAD that affect 
 | Task | N | Tokens in/out per call | Model | List price | Batch subtotal (-50%) |
 |---|---|---|---|---|---|
 | Backfill 5 missing GPT-5.1 (retry GPT-5.1 in smaller batches — substitution forbidden, see locked decision) | 5 | 16.5k / 1.3k | GPT-5.1 | ~$1.25 / ~$10 | **~$0.10** |
-| Judge on 100 failed (if Mike's data unavailable) | 100 | 10k / 3k | Sonnet 4.5 | $3 / $15 | **~$3.75** |
-| 3-grader judge-of-judge on n=30 random recovered records | 30 × 3 | 16.5k / 1.3k each | Opus 4.5 + Gemini 3 Pro + GPT-5.1 | varies | **~$5–10** batch |
-| **Total — Mike supplies data** | | | | | **~$10** |
-| **Total — Mike's data unavailable (judge re-run included)** | | | | | **~$14** |
+| ~~Judge on 100 failed~~ | — | — | — | — | NOT NEEDED — Mike's `judge_recovery_bundle/` includes the full attempt log |
+| 3-grader judge-of-judge on n=30 random recovered records (`judge_recovery_bundle/data/recovered_errors_graph/`) | 30 × 3 | 16.5k / 1.3k each | Opus 4.5 + Gemini 3 Pro + GPT-5.1 | varies | **~$5–10** batch |
+| **Total — Items 2+3 close-out (Mike's data on Drive)** | | | | | **~$10** |
 
-**Recommendation:** budget **$10–14** total. Wall-clock with batch API ~1 day. All 4 models locked to Mike's Item 2 baseline (Judge = Sonnet 4.5; Meta-graders = Opus 4.5 + Gemini 3 Pro + GPT-5.1) per §8 #1.
+**Recommendation:** budget **$5–10** total (down from earlier $10–14 — Mike's `judge_recovery_bundle/` eliminated the conditional 100-failed-judge re-run). Wall-clock with batch API ~1 day. All 4 models locked to Mike's Item 2 baseline (Judge = Sonnet 4.5; Meta-graders = Opus 4.5 + Gemini 3 Pro + GPT-5.1) per §8 #1.
 
 ### Re-run decision matrix
 
@@ -211,8 +229,8 @@ These are real bugs in current `extraction_validator/judge.py` HEAD that affect 
 | 100 good extractions — Opus 4.5 grader | **No re-run.** | Mike already did this with full summary_results.json. |
 | 100 good extractions — Gemini 3 Pro grader | **No re-run.** | Mike already did this. |
 | 100 good extractions — GPT-5.1 grader | **Backfill 5 missing only (retry GPT-5.1; no model substitution).** | 95 of 100 done. |
-| ~400 failed extractions — judge run | **Re-run if Mike's data unavailable.** | Output exists only on Mike's local disk per Discord line 334. |
-| ~60 recovered + ~40 still-failed — judge-of-judge | **NEW run required.** | Never done; needed for item 3 close-out. |
+| ~400 failed extractions — judge run | **No re-run.** Use `judge_recovery_bundle/data/recovered_errors/`. | Mike supplied 441 attempts on Drive 2026-05-20. |
+| 65 recovered — judge-of-judge (n=30 sample) | **NEW run required.** | Never done; needed for item 3 close-out. |
 
 ---
 
@@ -221,39 +239,36 @@ These are real bugs in current `extraction_validator/judge.py` HEAD that affect 
 ### Phase A — Setup (do first)
 1. **Set up env.** Clone repo, check out `judge_handoff_workshop_items_2_3` branch, install via `uv sync`. API keys: OpenAI + Anthropic per `STATUS.md` §"API Keys"; Gemini 3 Pro key (Google AI Studio) already sent by Martin on 2026-05-19.
 2. **Read** `STATUS.md`, this doc end-to-end, issue #147 thread.
-3. **Download Mike's archive from Drive** (Workshop folder `1u5r4OTasGRhcHRAoXFPMl6E_dr4abIrZ`) into a local gitignored folder.
+3. **Download two Drive folders** into a local gitignored area:
+   - `Final-archive-from-Mike/` (Item 2 data — 100 good extractions + 3 meta-grader runs)
+   - `judge_recovery_bundle/` (Item 3 data — 441 inputs + 65 recovered + summary/errors JSONs)
 
-### Phase B — Bug fixes (must precede any new judge run, per locked decision in §8 #3)
-4. **Fix all 6 bugs B1–B6** in `judge.py` on a new branch `judge_bugfixes_pre_workshop_3`. Each bug fix needs an integration test under `extraction_validator/tests/` that exercises the fix. Bug 5 is catastrophic (silently drops all add-nodes after the first) — has highest paper-impact. Open PR against `main`.
+### Phase B — Bug fixes (must precede any FUTURE judge run; not blocking Items 2/3 close-out per §3 caveat)
+4. **Fix all 6 bugs B1–B6** in `judge.py` on a new branch `judge_bugfixes_pre_workshop_3`. Each bug fix needs an integration test under `extraction_validator/tests/` that exercises the fix. Bug 5 is catastrophic (silently drops all add-nodes after the first). Open PR against `main`. **Note:** these fixes do NOT need to land before the Item 2/3 paper analysis — Mike's existing data is what the paper reports on. Bug fixes are for future runs only.
 
-### Phase C — Item 2 close-out (data exists; analysis remaining; NOT blocked)
-5. **Backfill the 5 missing GPT-5.1 meta-grader evals** on the 100 good extractions. Per issue #147 §1: GPT-5.1 was refusing the 100-paper task as of 2026-01-08 ("model lazy"). **Substitution to another model is forbidden** per locked decision §8 #1 — that would introduce a model-version-drift confound inside the GPT-5.1 column. Retry GPT-5.1 with smaller per-batch sizes (e.g., 5 papers per batch instead of 100). If GPT-5.1 still refuses after 3 retry attempts: document the 5 as unrecoverable, drop them from κ computation, and footnote n=95 for the GPT-5.1 column in the paper. Update `summary_results.json` to reflect final state.
-6. **Inspect Gemini 3 Pro high-variance signal.** Gemini posts Pre 62.69±22.58 → Post 95.77±**1.80** with Δ=+33.08. The σ collapse + ceiling-band post-score looks like grader bias (ceiling/over-grading) rather than uniform excellence. Random-sample 10 of the 100 Gemini eval JSONs, manually compare the cited "strengths/weaknesses" against the actual judge output. Decide: paper-usable as one of three independent meta-graders, or document as outlier and exclude from cross-grader average? Save findings to `extraction_validator/gemini_grader_variance_inspection.md`. This is a paper-quality gate; without it the cross-vendor κ is suspect.
-7. **Compute Fleiss' κ + pairwise agreement** on the 4-bucket verdict (excellent / good / mixed / poor) across the 3 meta-graders × 100 papers. Python only, no LLM. Append table to `results.md`. **Headline calibration finding for item 2.**
-8. **Parse `validation_report.{schema_check, referential_check, coverage}`** lists from `extend_try_1/` (PR #145) or Mike's archive bundles. Produce `extraction_validator/error_rate_breakdown.csv` (hallucinated/missing nodes/edges, wrong edge types).
-9. **Produce `extraction_validator/by_source_type.csv`** (mean pre/post + error rates per source: arxiv / lesswrong / alignmentforum / eaforum / aisafety.info / blogs / special_docs / youtube). Use Opus's `by_source_type` table from `summary_results.json` as starting structure.
+### Phase C — Item 2 close-out (NOT blocked; data in `Final-archive-from-Mike/`)
+5. **Backfill the 5 missing GPT-5.1 meta-grader evals** on the 100 good extractions. Per issue #147 §1: GPT-5.1 was refusing the 100-paper task as of 2026-01-08 ("model lazy"). **Substitution to another model is forbidden** per locked decision §8 #1. Retry GPT-5.1 with smaller per-batch sizes (e.g., 5 papers per batch). If GPT-5.1 still refuses after 3 retry attempts: document the 5 as unrecoverable, drop from κ computation, footnote n=95 for the GPT-5.1 column. Update `summary_results.json`.
+6. **Inspect Gemini 3 Pro high-variance signal.** Gemini posts Pre 62.69±22.58 → Post 95.77±**1.80** with Δ=+33.08. σ collapse + ceiling-band post-score looks like grader bias. Random-sample 10 of the 100 Gemini eval JSONs, manually compare cited strengths/weaknesses against actual judge output. Decide: paper-usable, or document as outlier and exclude from cross-grader average. Save findings to `extraction_validator/gemini_grader_variance_inspection.md`. **Paper-quality gate** — cross-vendor κ is suspect without it.
+7. **Compute Fleiss' κ + pairwise agreement** on the 4-bucket verdict (excellent / good / mixed / poor) across the 3 meta-graders × 100 papers. Python only. Append table to `results.md`. **Headline calibration finding for item 2.**
+8. **Parse `validation_report.{schema_check, referential_check, coverage}`** lists from `Final-archive-from-Mike/extend_try_with_extration_and_judge_and_original_text/` bundles. Produce `extraction_validator/error_rate_breakdown.csv` (hallucinated/missing nodes/edges, wrong edge types).
+9. **Produce `extraction_validator/by_source_type.csv`** (mean pre/post + error rates per source). Use Opus's `by_source_type` table from `summary_results.json` as starting structure.
 10. **Draft the Item 2 Overleaf paragraph** (§1 L141 placeholder). Include κ, pairwise agreement table, error-rate breakdown, source-heterogeneity table, Gemini-variance caveat. Martin edits.
 
-### Phase D — Item 3 close-out (BLOCKED on Mike as of 2026-05-19)
-
-**Do not start Phase D until Martin confirms Mike's reply.** If Mike has the data, skip step 12 (re-run). If Mike does not, run step 12 after Phase B bugs are merged.
-
-11. **Get the ~60 recovered records** from Mike (via Martin). Upload to Drive sub-folder `judge_workshop_item_3_error_recovery/recovered/`. Mirror the ~340 attempted-but-failed records to `not_recoverable/`.
-12. **CONDITIONAL — only if Mike's data unavailable.** Pull Gleb's Drive folder `1RPbETx21KMyEATtVOBt8LOClVd56eZ4x` zip. Run `find_judge_able_sources.py` to identify the ~400 processable subset. Re-run judge on those ~400 using Sonnet 4.5 Anthropic batch (~$4, ~3 hr wall-clock). Compare to Mike's ~15% (60/400) recovery rate as sanity check.
-13. **Persist recovery summary** as `extraction_validator/error_recovery_summary.csv` with columns `(source_type, paper_id, error_class, judge_attempt_status, recovered_node_count, recovered_edge_count, error_text_excerpt)`.
-14. **Sample 50 error instances** stratified by source type. Hand-categorize into 6 buckets per Workshop spec: hallucinated nodes / hallucinated edges / missing nodes / missing edges / wrong edge type / granularity mismatch. Save as `extraction_validator/error_taxonomy_50.csv`.
-15. **Compute distribution % across categories × source types.** Save as `extraction_validator/error_taxonomy_distribution.csv`.
-16. **Pick 5–10 illustrative examples** with text quotes + commentary. Save as `extraction_validator/error_taxonomy_examples.md`.
-17. **Run 3-grader judge-of-judge on n=30 random recovered records** (Opus 4.5 + Gemini 3 Pro + GPT-5.1 per locked decision §8 #1). Same prompts as item 2 (`prompts/judge_and_extraction_evaluation_prompt.md`). ~$5–10 batch. Validates recovery *quality*, not just rate.
-18. **Compute κ on recovery quality verdicts** (same calc as step 7, smaller n). Save to `extraction_validator/recovery_quality_kappa.csv`.
-19. **Draft the Item 3 Overleaf paragraph** (§1 L211 + L297 placeholders). Include taxonomy table, recovery rate by error category, κ on recovery quality, improvement recommendations. Martin edits.
+### Phase D — Item 3 close-out (UNBLOCKED 2026-05-20; data in `judge_recovery_bundle/`)
+11. **Persist recovery summary** as `extraction_validator/error_recovery_summary.csv` with columns `(source_type, paper_id, error_class, judge_attempt_status, recovered_node_count, recovered_edge_count, error_text_excerpt)`. Built directly from `judge_recovery_bundle/data/recovered_errors/` (status="recovered" if paper_id appears in `data/recovered_errors_graph/`, else "failed"). Reconcile the source-type naming convention difference between input dirs and recovered files (see §3 source-type distributions note).
+12. **Sample 50 error instances** stratified by source type from the ~376 non-recovered records in `judge_recovery_bundle/data/recovered_errors/`. Hand-categorize into 6 buckets per Workshop spec: hallucinated nodes / hallucinated edges / missing nodes / missing edges / wrong edge type / granularity mismatch. Save as `extraction_validator/error_taxonomy_50.csv`. Seed buckets from the 13 cases already characterized in `data/recovered_errors/errors.json` (503 errors, schema validation errors).
+13. **Compute distribution % across categories × source types.** Save as `extraction_validator/error_taxonomy_distribution.csv`.
+14. **Pick 5–10 illustrative examples** with text quotes + commentary. Save as `extraction_validator/error_taxonomy_examples.md`.
+15. **Run 3-grader judge-of-judge on n=30 random `data/recovered_errors_graph/` records** (Opus 4.5 + Gemini 3 Pro + GPT-5.1 per locked decision §8 #1). Same prompts as item 2 (`prompts/judge_and_extraction_evaluation_prompt.md`). ~$5–10 batch. Validates recovery *quality* on Mike's as-produced (bug-contaminated per §3) graphs — which is what the paper reports.
+16. **Compute κ on recovery quality verdicts** (same calc as step 7, smaller n). Save to `extraction_validator/recovery_quality_kappa.csv`.
+17. **Draft the Item 3 Overleaf paragraph** (§1 L211 + L297 placeholders). Include taxonomy table, recovery rate by error category (65/441 = 14.7% overall), κ on recovery quality, improvement recommendations, and a "deferred future work" note covering the 3 bonus datasets Mike has but didn't bundle (per §3). Martin edits.
 
 ### Phase E — Closeout
-20. **Update this doc** (`Judge_Paper_Findings_and_Plan.md`) with all delivered numbers (κ, error-bucket distribution, recovery rate per category).
-21. **Commit all CSVs + Markdown + analysis scripts** to `judge_handoff_workshop_items_2_3`. Mike's archive stays on Drive (pointed to from `STATUS.md`); only pointers + derived analysis go into git.
-22. **Open PR** consolidating everything. Link issue #147 + issue #125 (error analysis).
-23. **Decision on PR #145** (anthropic_judge_test): keep open as data lineage, or merge data-only commit. Recommend keeping PR open and noting it as historical lineage in PR description.
-24. **Close issue #147** once Items 2 + 3 paragraphs are in Overleaf and data is on Drive.
+18. **Update this doc** (`Judge_Paper_Findings_and_Plan.md`) with all delivered numbers (κ, error-bucket distribution, recovery rate per category).
+19. **Commit all CSVs + Markdown + analysis scripts** to `judge_handoff_workshop_items_2_3`. Drive folders stay on Drive; only pointers + derived analysis go into git.
+20. **Open PR** consolidating everything. Link issue #147 + issue #125 (error analysis).
+21. **Decision on PR #145** (anthropic_judge_test): keep open as data lineage. Note as historical lineage in PR description.
+22. **Close issue #147** once Items 2 + 3 paragraphs are in Overleaf and data is on Drive.
 
 ---
 
@@ -282,7 +297,7 @@ When writing the paper section on the judge:
 2. **Gemini API: Martin provided the API key to Sai on 2026-05-19** via private channel.
 2. **Gemini API: Martin provided the API key to Sai on 2026-05-19** via private channel.
 3. **Bug fixes: Sai fixes all 6 bugs (B1–B6) before any new judge run.** Each fix gets an integration test under `extraction_validator/tests/`. Land bug-fix PR against `main` before running on failed extractions.
-4. **Mike data access: Martin asked Mike directly on 2026-05-19** (off-GitHub). Item 3 work is blocked pending Mike's reply — Sai should not start the failed-extraction work until Mike responds.
+4. **Mike data access: RESOLVED 2026-05-20.** Mike supplied `judge_recovery_bundle/` on Drive — 441 inputs + 65 recovered + full attempt log. Phase D is UNBLOCKED. No re-run on failed extractions needed.
 5. **Paper-section ownership: Sai drafts both Item 2 and Item 3 paragraphs in Overleaf; Martin edits.** Sai uses the headline-finding framing in §7 of this doc.
 
 ---
