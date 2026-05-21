@@ -891,7 +891,30 @@ The top-16 triplets all involve G12 (Scaling AI Safety Research Capacity) or G14
 
 Rev8 introduces five critical methodological findings (CF-1 through CF-5), shifts the path-enumeration primitive from BFS-shortest to hop-wise DFS, defines a hybrid strategy across the four similarity thresholds, and adds Pareto-frontier validation as the primary rigor signal for both body-cluster recluster (L1) and frozenset grouping (L2). These together replace the rev7 cluster taxonomy as the paper's reviewer-defensible mechanism family extraction.
 
-### 19.0 — Paper intent and methodological contribution (added 2026-05-08)
+### 19.0 — 🔴 PAPER CENTERPIECE — what this work actually claims (added 2026-05-08, strengthened 2026-05-09)
+
+**This is the centerpiece of the paper. Every methodological choice in §19.1–§19.11 should be traceable back to this claim. When writing, the abstract, intro, and conclusion should all foreground the framing in this section.**
+
+**What this work is NOT:**
+- This is **not** another directory or catalog of AI safety research. The literature already has many such directories — the Alignment Research Dataset (ARD), Stampy/Aisafety.info, AI Safety Atlas, Anthropic/MIRI/CHAI bibliographies, etc. — and they suffer from being (a) static snapshots that go stale, (b) keyed off paper-level metadata (title, abstract, author, citation graph) rather than the *mechanism-level claims* of each paper, (c) unable to support cross-paper reasoning beyond keyword search.
+- The substrate corpus we use (ARD vintage circa 2024–2025) is **deliberately not the headline contribution**. The corpus will go out of date; any "AI safety paper directory" built on it is obsolete by publication. **The contribution is the framework, not the directory.**
+
+**What this work IS — three-sentence claim:**
+
+> This work introduces a framework for **lossless reduction of safety-intervention papers to the specific mechanism by which each intervention is proposed to reduce a specific risk**, projected into a finite reviewer-defensible mechanism-class vocabulary. Once a paper is reduced to a `(risk_class, body-mechanism-chain, intervention-mechanism-class)` signature, **two downstream capabilities become possible at scale that no directory can support**: (1) cross-paper mechanism-level evaluation — *which mechanism families address which risks, with what frequency, with what stage of validation evidence, across the entire corpus*; and (2) graph-based reasoning to **propose new intervention candidates** — *if mechanism M is densely populated for risk R but absent for risk R′, M-via-new-intervention-I′ for R′ is a candidate worth investigating*.
+
+**The three deliverables that demonstrate this claim** (each must appear in the paper):
+1. **Faithfulness of mechanism reduction** — measured via **LLM-as-judge** on a sample of N≈30-50 papers: a separate judge model (distinct from the extraction LLM) compares the pipeline-extracted mechanism class against the source paper text and emits an agreement label. Reported as agreement rate + judge-of-judge calibration (Mike's prior framework, see §3.1 Methods in Overleaf paper.tex). Sai is implementing this deliverable. *Without this, the reduction is not lossless and the rest collapses.* **NOTE (decision 2026-05-15):** the original plan involved manual hand-validation by domain experts; replaced with LLM-as-judge to save time and align with the existing Mike-framework judge stack. The latter scales better and is what the paper will report.
+2. **Large-scale mechanism evaluation** — the named mechanism-class catalog with cross-paper distribution, risk coverage, and validation-stage breakdowns over the full 19,073-node EDGE-only VPN. *This is the "scale" deliverable.*
+3. **Novel-intervention candidate generation** — N=3–5 example transferable mechanisms surfaced from the doublet `(R_class, NR_anchor)` graph that the corpus does NOT contain but that the framework predicts as plausible. *This is the "graph-based reasoning extension" deliverable; speculative but illustrative — the existence of the candidate generator is the contribution.*
+
+**Why the EDGE-only hop-wise VPN substrate, not the full graph:** the centerpiece claim is "lossless reduction to the specific mechanism." That requires causally-justified relationships only — SIM edges are similarity, not causation; multi-risk paths confound the mechanism attribution. The 88.33%-coverage 19,073-node EDGE-only VPN (§19.9) is the high-quality substrate; further robustness sweeps (which would dilute the strict-quality signal) are deliberately deprioritized in favor of completing the three deliverables above before publication.
+
+**Reasoning-LLM-as-central methodological stance (added 2026-05-09):** the framework treats reasoning LLMs as the *central* analytical primitive at every level — extraction, clustering, mechanism naming, and (eventually) candidate-generation. Algorithmic tools (HDBSCAN on embedding similarity, embedding-cosine sim, etc.) are positioned as **validation checks against the LLM-central output, with their known limitations explicit**, not as the substrate the LLM decorates. This mirrors the existing single-data-source pattern: per-paper extraction is LLM-central (o3) and validated by LLM-as-judge (a separate model). Mechanism clustering follows the same pattern — LLM-central naming and grouping over the 19,073 VPN nodes (§19.12), validated by HDBSCAN-on-embeddings as a sanity check on whether the LLM's mechanism boundaries agree with embedding-density structure. When they agree, the LLM result is reinforced; when they diverge, the divergence is reported as a finding ("LLM identifies cross-cluster semantic groupings HDBSCAN cannot find" or vice versa) — not as a failure requiring more algorithmic work. This stance is what distinguishes the framework from prior abstract-embedding field maps and is the reason the paper's contribution scales with future LLM capability rather than with future clustering-algorithm refinement.
+
+---
+
+### 19.0a — Original framing (preserved for context, superseded by 19.0 above)
 
 The overarching aim of the paper is to demonstrate that this algorithm produces a **structural knowledge representation / fabric** of a large literature corpus that downstream LLMs can consume to bridge the **knowledge-cutoff / pretraining-data gap for AI-for-Science work**.
 
@@ -1481,3 +1504,1197 @@ These four tasks turn the per-subtype node clusters of §19.9.1-19.9.5 into the 
 | Strict path retention | 83 of 8,954 | TBD (Task B) — projected ~3,000-5,000 paths |
 | Family primitive | strict_tuple, semantic_only, role_pattern frozenset (3 levels, Hamming d≤2 connected components) | doublet (R_cluster, NR_anchor) — D1 exact + D2 Hamming-ball-around-center K∈{1,2,3} |
 | LLM dependency at clustering time | none | Phase 2 LLM thematic on residual ~12% of nodes via Claude Code CLI shim (Max plan), with definitional-overlap check vs HDBSCAN clusters |
+
+### 19.10 — Phase 2 Task A Pass-2 results + HDBSCAN ↔ LLM-group granularity gap (added 2026-05-09)
+
+This section documents Pass-2 NR-residual assignment results and surfaces a methodological asymmetry between the two cluster sources (HDBSCAN clusters vs LLM-named seed groups) that must be resolved before they are jointly fed into Phase 4 doublet construction.
+
+#### 19.10.1 — Pass-2 NR-residual assignment: status and counts
+
+**Pipeline:** `graph_analysis/phase2_step4_phase2_pass2_assignment.py` — assigns each of the 2,095 NR residual nodes (post-Phase-1 noise from non-risk pools) to one of:
+- `(subtype, cluster_id)` — rescue into an existing HDBSCAN cluster (per `cluster_memberships_rev8_paper_methodA_c75m3_subtype.pkl`)
+- one of the 33 v3 mechanism-class seed groups in `phase2_seed_taxonomy_nr_v3_recovered.json`
+- `residual` — last-resort, no fit
+
+**Batch outcomes (27 batches, ~80 nodes/batch sequential, Claude Code CLI shim, 60-min timeout, no-truncation safeguards on every batch):**
+
+| Status | Batches | Nodes |
+|---|---:|---:|
+| OK (start-marker + sentinel validated) | 26 (00–23, 25, 26) | 2,015 |
+| Failed all 3 retries (Claude AUP content-filter block, prompt 41,061 chars / ~10,265 tokens) | 1 (batch 24) | 80 |
+| **Total** | **27** | **2,095** |
+
+Batch 24 contains 80 nodes; the AUP block is reproducible across all 3 retries with identical error text. **Per the 2026-05-09 instruction, batch 24 is deferred and not retried in this pass** — these 80 nodes are recorded as unprocessed (~3.8% of NR residual). A retry strategy via prompt reframing or per-node split is left as a tracked open task.
+
+**Assignment breakdown of the 2,015 successfully processed nodes** (`phase2_pass2_decisions_all.json`):
+
+| Decision | Count | % of 2,015 |
+|---|---:|---:|
+| seed group (one of 33 v3 mechanism classes) | 1,149 | 57.0% |
+| HDBSCAN cluster rescue | 587 | 29.1% |
+| residual (no fit) | 279 | 13.8% |
+
+- HDBSCAN rescue distribution: 587 rescues spread across **445 distinct HDBSCAN clusters** (long tail; max receiver = 6 nodes, top-10 each got 3–6). Confirms Pass-2 is dispersing-rescuing into many clusters, not piling onto a few attractors.
+- Seed-group distribution: all 33 groups received ≥1 node. Top 10 absorbed 664/1,149 (58%); largest = "Benchmark-design mechanism: controlled conditions, noise ceilings, and standardized frameworks" (90 nodes); smallest = "RL training mechanism: priority and learning-progress sampling from replay buffers" (4 nodes).
+
+**Net unprocessed/unassigned across full NR pool after Pass-2:** 80 (batch 24, blocked) + 279 (true residual) = **359 / 2,095 = 17.1%** still unclustered. NR-pool coverage including Pass-2 = 1,736 / 2,095 = 82.9% (1,149 seed + 587 HDBSCAN rescue).
+
+#### 19.10.2 — The granularity gap: HDBSCAN clusters and LLM seed groups are NOT the same type of input
+
+The next pipeline stage (Phase 4 doublet construction, Task D in §19.9.6) consumes (R_cluster, NR_anchor) pairs where the NR_anchor is a frozenset of `(subtype, cluster_id)` over the path's body+intervention nodes. For this to be a coherent primitive, every cluster_id used in the frozenset must come from a **comparable granularity scale**. Pass-2 produces two cluster sources whose granularity differs by ~8×:
+
+| Source | # clusters in NR scope | Total members | Mean size | Median | Max | Naming |
+|---|---:|---:|---:|---:|---:|---|
+| HDBSCAN (Phase 1, `methodA_c75m3_subtype.pkl`, NR pools = 5 body + intervention) | **3,396** | 14,514 | 4.3 | 3 | 28 | none — anonymous IDs only; representative names aggregated at report time |
+| LLM v3 seed groups (Phase 2, `methodC_c75m3_v3.pkl`) | **33** | 1,149 | 34.8 | 24 | 90 | full human-readable mechanism-class name + description |
+
+If both are fed into the doublet primitive without reconciliation:
+1. **Category error in NR_anchor.** The 33 LLM-group IDs occupy the same ID space as the 3,396 HDBSCAN cluster IDs but represent a fundamentally coarser unit. A frozenset that mixes one LLM-group-ID with four HDBSCAN-cluster-IDs is not a fixed-resolution signature.
+2. **Discriminative-power loss.** Each LLM group spans ~8 HDBSCAN-equivalent dense pockets; treating it as one ID collapses 8 distinct mechanisms into one anchor. Doublet families that should split will collide.
+3. **Reviewer asymmetry.** A reviewer asks: "How do you justify that membership in HDBSCAN cluster `implementation_mechanism_320` (4 members) and membership in 'Benchmark-design mechanism' (90 members) are interchangeable atoms in the same family signature?" The answer "they aren't" is the honest one — and the pipeline must reflect that.
+
+#### 19.10.3 — Reviewer-consistent unification: dual-resolution scheme
+
+To present a defensible, internally consistent family-finding output to reviewers, the canonical pipeline runs Phase 4 at **two parallel resolutions** and reports both. The fine-grain track is the rigor signal; the coarse-grain track is the headline mechanism-family story.
+
+**Track 1 (FINE, "rigor signal"): pure Phase 1 HDBSCAN — Pass-2 contributes nothing here (correction 2026-05-09).**
+- Every NR node carries either `(subtype, hdbscan_cluster_id)` from Phase 1 OR is residual.
+- The 1,149 Pass-2 LLM-seed-assigned nodes are by construction the nodes HDBSCAN couldn't place at cutoff=0.75. Re-running embedding-nearest-cluster at the same 0.75 cutoff is mathematically the same operation HDBSCAN already rejected — they remain residual. Pass-2's contribution to Track 1 is therefore zero; that is the honest framing.
+- Two sub-options for handling Track-1 residuals in doublet construction:
+  - **Track 1-strict (cleanest):** any path containing a Track-1 residual node is EXCLUDED from family construction. Path-level coverage takes a hit (any path passing through a residual node drops). This is the unsupervised algorithmic baseline.
+  - **Track 1-relaxed:** assign each residual node to its nearest HDBSCAN cluster centroid in its subtype pool **without a similarity cutoff**, with a `low-sim` flag on the rescued ID. All nodes get an HDBSCAN ID; noise injected; paths retained. Less defensible.
+- Doublet construction: `(R_hdbscan_cid, frozenset({(subtype, hdbscan_cid)} per body+interv node))`.
+- Family primitive: D1 exact-match + D2 Hamming-ball-around-center K∈{1,2,3}.
+- Pros: uniform fine granularity; reviewer can audit any cluster by reading its representatives. Cons: anonymous IDs unreadable without a representative-name layer; strict variant loses many paths to residual.
+
+**Track 2 (COARSE, "headline story"): LLM-named mechanism classes everywhere.**
+- Run an additional LLM-naming pass over the **3,396 HDBSCAN NR clusters** using each cluster's representative names + size as input, producing ~30–40 LLM-named NR mechanism classes. Output target = same granularity scale as the 33 v3 seed groups (mean size 24–35, median 20–30).
+- Reconcile against the existing 33 v3 seed groups via embedding similarity ≥ 0.70 between (LLM-named-HDBSCAN-class) and (v3 seed group) names+descriptions+representatives. Merge collisions; new HDBSCAN-derived classes that don't collide become additional members of the unified mechanism-class catalog.
+- Same exercise on the 339 risk HDBSCAN clusters → ~15–25 LLM-named risk mechanism classes (paired with v2 risk seed taxonomy already on disk).
+- Final unified catalog: ~30–50 NR mechanism classes + ~15–25 risk mechanism classes, every one with a human-readable name, description, and 3 representative member names.
+- Doublet construction: `(R_class_name, frozenset({(subtype, class_name)} per body+interv node))`.
+- Family primitive: D1 + D2 as above, but the IDs now carry semantic names so reviewer can read the family signature directly ("Risk: Reward-spec gaming → {Interpretability, Benchmark-design, Formal-methods, Adoption-traction validation}").
+- Pros: reviewer-readable, headline-grade narrative. Cons: depends on a second LLM pass (additional cost; reviewer may flag "more LLM stack-up").
+
+**Why both, not just Track 2 (revised 2026-05-09):**
+- Track 1 and Track 2 are NOT nested resolutions of the same product — they are different products built from different node sets and different granularities. The earlier ARI-based "preservation" argument (in the prior draft of this section) was over-claiming and is withdrawn.
+- The honest rigor signal is weaker but still useful: **for nodes both tracks DO cluster, is the Track-2 partition a coherent refinement/coarsening of the Track-1 partition where they overlap?** Concretely: pick the subset of NR nodes with both a Track-1 HDBSCAN cluster AND a Track-2 LLM-class. For each Track-2 class, compute the distribution over Track-1 HDBSCAN clusters. If a typical Track-2 class decomposes into 5–15 Track-1 clusters cleanly (high purity per Track-2 class → small set of Track-1 clusters), that supports "Track 2 is a coarsening that respects the algorithmic structure." If a typical Track-2 class scatters across 50+ Track-1 clusters with no concentration, Track 2 is doing something independent.
+- Track 1 alone is unreadable to reviewers (anonymous cluster IDs). Track 2 alone is unfalsifiable. Both together = "incremental progress with both products visible," which is the right framing — not a unified claim.
+
+#### 19.10.4 — Concrete next steps to execute Track 1 + Track 2
+
+1. **Build Track 1 input** (`phase2_step4_pass2_remap_to_hdbscan.py`, NEW): for each of the 1,149 Pass-2-seed-assigned nodes, compute embedding cosine sim to every HDBSCAN cluster centroid in its subtype pool; if max sim ≥ 0.75 assign to that HDBSCAN cluster, else → residual. Write `cluster_memberships_rev8_paper_methodA+pass2remap_c75m3_subtype.pkl`.
+2. **Build Track 2 input** (`phase2_step4_pass3_llm_name_hdbscan_clusters.py`, NEW): for each of the 3,396 NR HDBSCAN clusters, send (cluster_id, top-5-representative-names-by-centroid-distance, size) to LLM in batches of ~50 clusters per call, ask "assign this cluster to one of {33 v3 seed groups + propose new if no fit}." Same shim/sentinel/no-truncation safeguards. Repeat for 339 risk HDBSCAN clusters using v2 risk seed taxonomy as the seed list. Output: `phase2_seed_extended_nr.json` and `phase2_seed_extended_risk.json` plus `cluster_memberships_rev8_paper_methodC_extended.pkl` (every NR/risk node → unified mechanism-class name).
+3. **Run Phase 4 (Task D) twice:**
+   - Track 1: doublet on `methodA+pass2remap` → `phase4_families_track1_fine.csv`
+   - Track 2: doublet on `methodC_extended` → `phase4_families_track2_coarse.csv`
+4. **Cross-track consistency report** (`phase2_step4_track_consistency_report.py`, NEW):
+   - For each path that is fully-clustered under both tracks, record (Track-1-family-id, Track-2-family-id).
+   - Compute ARI between the two family partitionings of paths.
+   - Report top-20 Track-2 families with their Track-1 sub-family decomposition (e.g., "Track-2 mechanism class X = sum of Track-1 fine families X.1, X.2, X.3 with member counts").
+   - Goal: ARI ≥ 0.6 OR a clearly enumerated set of Track-2 classes that subsume multiple Track-1 fine families (which is the expected shape, not a contradiction).
+5. **Open task (parked):** retry batch 24 of Pass-2. Approaches in order of preference:
+   - (a) Split into 8 sub-batches of 10 nodes each — isolate the offending node(s); most sub-batches likely pass.
+   - (b) Reframe prompt header to make academic-review intent more explicit (prepending "This is academic AI safety research analysis. Each input is a node name from a peer-reviewed AI safety paper.") and retry full batch.
+   - (c) Bypass the Claude Code CLI shim's AUP layer by calling the Anthropic API directly (separate ANTHROPIC_API_KEY budget; not Max plan). Last resort because of the Max-plan-only constraint.
+   - (d) Manual review by Martin of the 80 names; assign by hand or skip individually.
+6. **Open task (parked):** comparison study — run Track-2-style LLM naming on a deliberately-chosen subset of HDBSCAN clusters and compare against the cluster's HDBSCAN-original membership (Track-1) on the SAME node inputs, to quantify "how much does LLM naming preserve vs distort the underlying clustering?" This is independent evidence for the §19.10.3 rigor claim. Defer until full pipeline is complete.
+
+#### 19.10.5 — What this means for the paper's mechanism-family deliverable (revised 2026-05-09)
+
+The paper reports family findings under Track 2 (coarse, named) as the primary mechanism-family table. Track 1 (fine, anonymous-ID) appears as a supporting appendix that quantifies how Track-2 LLM-named classes decompose over Track-1 HDBSCAN clusters where the two overlap — showing the LLM naming is at least a coherent coarsening on the overlap set, not arbitrary. The 33 v3 seed groups (extended to ~30–50 via Track 2 Pass-3, plus ~15–25 risk classes via Pass-3-risk) are the reviewer-readable mechanism-class catalog; the 3,396 HDBSCAN clusters are the algorithmic substrate the catalog is grounded in for the overlap subset. **No claim of equivalence between Track 1 and Track 2 is made.**
+
+---
+
+### 19.11 — Minimum remaining work to demonstrate the §19.0 centerpiece (added 2026-05-09)
+
+This section answers: given §19.0's three-deliverable claim (faithfulness + scale + novel-intervention candidates), the EDGE-only VPN substrate, and the "running out of time to publish" constraint — what is the smallest set of additional work that lets the paper land each deliverable defensibly?
+
+#### 19.11.1 — Gap analysis vs the §19.0 claim
+
+| §19.0 deliverable | What the framework already produces | What is still missing |
+|---|---|---|
+| (1) Faithful mechanism reduction | Per-paper extraction → graph nodes; per-node HDBSCAN cluster + Pass-2 LLM-class | An **LLM-as-judge faithfulness rate**: for N≈30-50 papers, a separate judge model compares the pipeline-extracted mechanism class against the source paper text and emits an agreement label (uses Mike's judge framework from §3.1 Overleaf paper.tex). Without this, "lossless" is a claim with no measurement. **Decision 2026-05-15:** replaced original hand-validation plan with LLM-as-judge to save time and reuse Mike's existing judge stack; Sai is implementing. |
+| (2) Large-scale mechanism evaluation | 19,073 VPN nodes, 8,954 EDGE-only paths, 33+ LLM seed classes, 3,396 HDBSCAN clusters | **A named mechanism-class catalog with cross-paper distribution + risk coverage + validation-stage breakdown** — i.e., the Track-2 LLM-named full catalog (Pass-3) and the Phase-4 doublet families computed against it. The 33 v3 seed groups alone are insufficient (only cover the 17.1% residual). |
+| (3) Novel-intervention candidate generation | Doublet `(R_class, NR_anchor)` primitive defined; not yet computed | **A computed doublet graph + a "transferable mechanism" surfacing rule** + N=3–5 manually narrated examples. Concretely: identify (mechanism M, risk R′) pairs where M is densely populated for risks ≠ R′ but absent for R′, present as candidate "M-via-I_new for R′." |
+
+#### 19.11.2 — Minimum remaining work, ranked by paper-impact-per-effort
+
+**WORK ITEM 1 (REQUIRED, REVISED 2026-05-09): Full-VPN LLM clustering — see §19.12.**
+- Replaces the prior "Pass-3 over HDBSCAN clusters" framing with a direct LLM-central clustering of all 19,073 VPN nodes (subtype as metadata, NR + risk pools, seed taxonomy = v3 NR + v2 risk).
+- Estimated cost: ~11.8M Max-plan tokens, ~10–15h wall (see §19.12.6 detailed breakdown).
+- Output: `cluster_memberships_rev8_paper_methodC_full_vpn.pkl` (mechanism-class assignment for every VPN node) + extended seed taxonomies + per-batch atomic saves + HDBSCAN validation report.
+- **Status:** smoke-test (5 batches × 1 NR subtype each, ~250k tokens) runs first; user reviews before approving full chain.
+
+**WORK ITEM 2 (REQUIRED): Phase 4 doublet families on Track 2.**
+- After WORK ITEM 1, run `phase2_step4_F4_doublet_families.py` (TO BE WRITTEN, ~1 day) on the named Track-2 catalog.
+- Compute D1 (exact-match) + D2 (Hamming-ball K∈{1,2,3}) families. Output: `phase4_families_track2_coarse.csv` + `phase4_family_members.csv`.
+- Cost: pure CPU, no LLM. Wall time hours.
+
+**WORK ITEM 3 (REQUIRED): LLM-as-judge validation of mechanism-class faithfulness on N≈30-50 papers — deliverable (1).**
+- Sample papers stratified across the 30-50 mechanism classes (1-2 per class). For each, an LLM judge (distinct from the extraction LLM, per Mike's judge framework in §3.1 of the Overleaf paper.tex) reads the paper's intervention section + the pipeline-extracted mechanism class and emits agreement|disagreement|partial with reasoning. Aggregate to faithfulness rate + judge-of-judge calibration (Mike's existing framework). **Owner:** Sai. **Replaces:** original hand-validation plan (decision 2026-05-15) — saves time, reuses existing judge stack, scales to larger N without expert bottleneck.
+- Report match rate (% papers where pipeline class = expert class) + "near-miss" rate (pipeline class is a sibling in the doublet hierarchy or a coarser/finer version of the expert class).
+- Defensible target: ≥70% exact match + ≥85% near-miss.
+- Cost: human time, ~6–10 h of expert reading. **Zero LLM tokens.** This is the single highest paper-impact-per-token item.
+
+**WORK ITEM 4 (REQUIRED): Cross-paper mechanism-class distribution table — deliverable (2).**
+- From Phase-4 output, compute: per mechanism class, (# papers that contain ≥1 node in this class, # risks reached via this class, intervention_maturity distribution of intervention-pool members in this class, EDGE-confidence distribution).
+- One table; mechanical script; no LLM. Wall time minutes.
+- **This IS the "large-scale mechanism evaluation" deliverable** — the table is the deliverable.
+
+**WORK ITEM 5 (REQUIRED): Novel-intervention candidate surfacing — deliverable (3).**
+- Algorithm: for each (mechanism class M, risk class R) pair, compute the doublet density (count of paths with R_class = R AND any body/intervention node in M-class). Identify M with high density across ≥3 different risks but density = 0 for some risk R′. Surface (M, R′) as a candidate. Sort by "M-mass across other risks" descending.
+- Pick top 5; for each, the paper narrates: "Mechanism M typically addresses risks R₁, R₂, R₃ via interventions I₁, I₂, I₃. The framework predicts M may transfer to R′ via a novel intervention I_new combining the body-mechanism chain elements characteristic of M. To our knowledge no paper in the corpus proposes M-via-anything for R′."
+- Pure CPU, no LLM. Verification of "no paper proposes this" is a Cypher query against FalkorDB filtered by R′-papers. Wall time hours including narration.
+
+**WORK ITEM 6 (OPTIONAL, defer if time-constrained): Track 1 + cross-track decomposition table.**
+- Already covered in §19.10. Run the strict Track 1 doublet for the appendix-only "rigor signal." Skip if Track 2 + faithfulness validation lands deliverable (1) on its own.
+
+**WORK ITEM 7 (OPTIONAL): Batch 24 retry.**
+- 80 nodes (~3.8% of NR residual) deferred. If time allows, retry via per-batch split (8 sub-batches of 10) — approach (a) from §19.10.4 step 5.
+
+#### 19.11.3 — Sequencing under "running out of time to publish"
+
+Critical path order (each blocks the next):
+1. WORK ITEM 1 (Pass-3, ~6–10h LLM wall, awaiting approval) →
+2. WORK ITEM 2 (doublet family compute, ~hours) →
+3. WORK ITEM 4 (catalog table, minutes) || WORK ITEM 5 (candidate surfacing, hours) →
+4. WORK ITEM 3 (hand-validation, runs IN PARALLEL with 1+2 — requires only the existing Pass-2 outputs to begin sampling and can update once Pass-3 lands).
+
+Total wall time on critical path: 1-2 days of compute + LLM-as-judge run for D1 (Sai, in parallel) + 4-6 h of Martin's catalog audit (xlsx between Sonnet batches) = **~3-5 working days** to land all three deliverables, assuming the truncated Pass B (~2000 paths, NOT full 8,954) is the empirical scope per §19.13.4. Full-corpus Pass B is future work.
+
+WORK ITEM 6 + 7 are appendix-grade and can ship after the main figure work is done, or be cut entirely if the paper deadline forces it.
+
+#### 19.11.4 — What the paper does NOT need to add
+
+- No additional substrate-quality robustness sweeps. The EDGE-only VPN at sim=0.9 / strict-filter / 88.33% Phase-1 coverage is the canonical substrate; further sensitivity studies dilute the strict-quality signal and consume the time budget without changing any §19.0 deliverable.
+- No alternative clustering algorithm comparisons beyond what §19.9.3 already records (HDBSCAN-2D vs Louvain decision documented; that's enough).
+- No expansion to additional thresholds (sim=0.85, sim=0.95). Already shown in §19.3 / §19.9 that sim=0.9 is the canonical choice; appendix can mention sensitivity briefly.
+
+The intent stated in §19.0 — "lossless reduction of papers to mechanism-of-intervention, enabling large-scale evaluation and novel-intervention reasoning" — is achievable with the WORK ITEMS 1–5 above and nothing else. Subsequent work strengthens but is not required for the centerpiece claim.
+
+---
+
+### 19.12 — Full-VPN LLM clustering with subtype-as-metadata (LOCKED 2026-05-09)
+
+**Decision:** drop the staged "Pass-3 over HDBSCAN clusters" framing. Instead run a single full-VPN LLM clustering pass on **all 19,073 EDGE-only VPN nodes** (the same node set HDBSCAN ran on, with the same quality cuts: EDGE conf ≥ 3, intervention maturity ≥ 3, single-risk-per-path, single-intervention-per-path, hop-wise DFS first-hop EDGE-or-SIM). HDBSCAN clustering becomes the validation check, not the upstream substrate.
+
+This implements the §19.0 LLM-central methodological stance directly at the clustering layer.
+
+#### 19.12.1 — Inputs and pool design
+
+- **Input set:** all 19,073 strict-filter VPN nodes = 2,464 risks + 16,609 NR (5 body subtypes + intervention)
+- **Subtype handling:** every node carries its `concept_category` ∈ {risk, problem_analysis, theoretical_insight, design_rationale, implementation_mechanism, validation_evidence, intervention} as **metadata in the LLM prompt, not as a clustering boundary**. Same node text + a `subtype: <name>` field. The LLM is instructed that:
+  - The same conceptual content can serve different functions (e.g., "human oversight" can appear as a `design_rationale` in one paper and an `implementation_mechanism` in another); subtype DIFFERENTIATES these as distinct mechanism instantiations even when the node names are similar.
+  - The LLM should still group across subtypes when the underlying mechanism IS the same (e.g., an interpretability mechanism appearing as `theoretical_insight` and `implementation_mechanism` in different papers can share one mechanism class).
+- **Pool partitioning for the LLM:** **2 pools** — risk vs non-risk — same as Pass-2. NOT per-subtype. Subtype is metadata only.
+- **Seed taxonomy:** start from the existing v3 NR taxonomy (33 mechanism classes from `phase2_seed_taxonomy_nr_v3_recovered.json`) + v2 risk taxonomy (24 classes from `phase2_seed_taxonomy_risk_v2.json`). LLM may propose new classes if a clear non-fit appears, but is instructed to default to the seed catalog and only add new classes when the new theme would absorb ≥ 5 nodes.
+
+#### 19.12.2 — Granularity guidance (the prompt-level constraint)
+
+The Pass-2-residual processing produced over-granular splits at times (e.g., separate "RL exploration" / "RL training" / "RL imitation" classes that collectively could be one "RL training mechanism" class). For the full-VPN run the LLM is given explicit granularity instructions in the system prompt:
+
+> *"Your goal is to identify mechanism families that group single mechanism instantiations by their fundamental commonalities and differences. The target catalog has ~30–50 NR mechanism classes and ~15–25 risk mechanism classes. Avoid over-granular splits: if two proposed classes share the same 'how' (the underlying mechanism by which an effect is achieved) and differ only in 'where' (subtype) or 'specifics of one example,' merge them into one class. Conversely, do not over-coarsen: two classes that share surface vocabulary but differ in the actual causal mechanism should remain separate. Default to the seed catalog; propose new classes only when the new theme is clearly absent from the seed and would absorb ≥ 5 nodes."*
+
+#### 19.12.3 — Continuous-write requirement (data-loss protection)
+
+- Each batch's decisions are written to `phase2_full_vpn_batches/batch_NNN.json` **before the next batch's API call begins**. No in-memory accumulation across batches.
+- Atomic write pattern: write to `batch_NNN.json.tmp`, then rename to `batch_NNN.json`. A power loss or session-limit kill mid-write produces no partial files.
+- Resume logic on script restart: scan the batches directory for completed `batch_NNN.json` files; skip any batch whose output already exists; pick up at the first missing batch index. Idempotent.
+- This protects against (a) Max-plan session limit hit mid-run, (b) AUP block on a single batch (other batches' outputs preserved), (c) container/network/disk failures.
+
+#### 19.12.4 — AUP-resilience (per Pass-2 batch-24 lesson)
+
+- On AUP block: retry once with same batch. If still blocked, automatically split the batch into 8 sub-batches of 10 nodes each and retry sub-batches individually. Per-sub-batch save same as full batch. Most sub-batches typically pass; the offending node(s) get isolated.
+- Sub-batches that still fail AUP after individual retry are logged to `phase2_full_vpn_aup_failures.json` for manual review; their parent batch is marked partial-success and the script continues.
+
+#### 19.12.5 — Validation against HDBSCAN (the §19.0 LLM-central stance in action)
+
+After the full LLM clustering completes:
+- For each LLM mechanism class, compute the distribution over Phase-1 HDBSCAN cluster IDs of its members (cross-subtype HDBSCAN cluster IDs since LLM is cross-subtype).
+- Concentration metric: per LLM class, fraction of mass on top-3 HDBSCAN clusters; per LLM class, # of HDBSCAN clusters with ≥ 1 member.
+- Aggregate report: median concentration across all LLM classes; histogram of LLM-class-vs-HDBSCAN-cluster-spread.
+- **Outcomes (both publishable):**
+  - **High concentration** (median > 60% on top-3 HDBSCAN): "LLM clustering is a coherent coarsening of HDBSCAN embedding-density structure — both methods agree on the underlying mechanism boundaries, the LLM adds the readable label."
+  - **Low concentration** (median < 30% on top-3 HDBSCAN): "LLM clustering identifies cross-cluster semantic groupings that HDBSCAN's embedding-density-only criterion cannot find — the LLM stage is doing real work, not just naming what HDBSCAN already discovered."
+- This is the validation check that justifies the LLM-central stance. It does NOT require HDBSCAN to "succeed" or "fail" — both outcomes are interpretable findings.
+
+#### 19.12.6 — Cost estimate (per CLAUDE.md > 10k token rule)
+
+- **Activity:** Full-VPN LLM clustering — assign each of 19,073 nodes to a mechanism class via Claude Code CLI shim batches.
+- **Per-batch:** ~80 nodes/batch (matches Pass-2 size for AUP-resilience and timely per-batch saves).
+- **Per-batch prompt composition:** v3 + v2 seed taxonomy context (~12k input tokens, **cacheable** within 5-min windows) + 80 nodes × ~250 chars (name + 1-line desc + subtype) = ~5k input tokens batch-specific.
+- **Per-batch output:** 80 decisions × ~150 tokens = ~12k tokens.
+- **Per-batch shim overhead:** ~30k (Claude Code agent system prompt baked into every CLI invocation per ADR 010).
+- **Per-batch total:** cold first call ~57k; warm-cache subsequent calls ~47k.
+- **N batches:** 19,073 / 80 = **239 batches**.
+- **Total estimate:** 1 × 57k + 238 × 47k = ~11.24M Max plan, +5% retry budget = **~11.8M Max plan**.
+- **Wall time:** ~10–15h sequential at ~3-5 min/batch (extrapolated from Pass-2 timing).
+- **Hidden-N drains checked:** shim overhead 239 × 30k = ~7.17M (~60% of total — irreducible per ADR 010); AUP block rate ~1/27 (Pass-2 base rate) → expected 9 batches needing sub-split retry, +~300k tokens; cache hit rate assumed ~90% — sensitivity is on this assumption.
+- **Confidence:** medium-high. Pass-2 is direct precedent at 9.1× smaller scale (~1.16M actual for 27 batches = ~43k/batch); 239 × 43k = ~10.3M, consistent with my 11.8M including retries.
+
+#### 19.12.7 — Smoke-test before full run (LOCKED 2026-05-09)
+
+Before launching the full 239-batch chain, run **5 smoke-test batches** (one per non-risk subtype: pa, ti, dr, im, va — 80 stratified-random nodes each). User reviews per-subtype outputs for: (a) granularity matches the §19.12.2 guidance (not over-granular), (b) subtype-as-metadata correctly differentiates same-thought-different-function mechanisms, (c) seed taxonomy coverage adequate or needs extension. Smoke-test cost: ~250k tokens, ~30min wall. Tweak system prompt + seed taxonomy if needed. Full run only kicks off after explicit user approval.
+
+#### 19.12.8 — Outputs
+
+- `phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/cluster_memberships_rev8_paper_methodC_full_vpn.pkl` — final mechanism-class assignments, key schema `("rev8_paper", "llm_full_vpn", pool, "llm", class_name) → list of node IDs`
+- `phase2_full_vpn_batches/batch_NNN.json` (idempotent per-batch atomic saves, 239 files at completion)
+- `phase2_seed_taxonomy_nr_v4_full_vpn.json` + `phase2_seed_taxonomy_risk_v3_full_vpn.json` — final mechanism class catalogs (v3 NR + v2 risk extended with any new classes proposed during full run)
+- `phase2_full_vpn_validation_vs_hdbscan.csv` — §19.12.5 concentration metrics per LLM class
+- `phase2_full_vpn_aup_failures.json` — any sub-batches that AUP-blocked even after split (manual review)
+
+#### 19.12.9 — What §19.10 (Track 1 / Track 2) becomes under §19.12
+
+§19.10's dual-resolution Track 1 / Track 2 framing is **superseded by §19.12** for the headline result. The full-VPN LLM clustering of §19.12 IS the canonical mechanism-class catalog. HDBSCAN's role is reduced to the validation check in §19.12.5 (concentration analysis on the overlap set, which is now the FULL VPN since both methods cluster the same 19,073 nodes). Pass-2 residual outputs are reabsorbed into the full-VPN run by re-classifying all nodes consistently. The 33 v3 seed groups remain as the starting catalog the LLM extends.
+
+### 19.13 — Doublet pivot + hybrid Sonnet/Opus pipeline (added 2026-05-15)
+
+Replaces the per-subtype Pass B that was originally planned in §19.9.6 Task D. The doublet (RG × MG) primitive is the **path-level** vocabulary that feeds the paper's three deliverables (faithfulness, scale catalog, novel-candidate generation).
+
+#### 19.13.1 — Doublet pivot rationale
+
+Instead of per-subtype Pass B (clustering body subtypes pa/ti/dr/im/va separately, then composing into doublets after), we use **path-level LLM grouping** over the 8,954 hopwise EDGE-only VPN paths. Each path is grouped TWICE in one call:
+- **RISK GROUP (RG):** based on the risk-node mechanism (the "what failure mode")
+- **MECHANISM GROUP (MG):** body + intervention as one mechanism unit (the "what proposed fix")
+
+Reasoning: the body subtypes are a continuum from risk-leaning (pa, ti) to intervention-leaning (im, va, dr), not five orthogonal pools. Per-subtype clustering fragments single mechanisms across body roles; grouping the body+intervention as one mechanism unit preserves intervention coherence. The downstream analyses both want RG × MG co-occurrence (which mechanisms address which risks, and vice versa) — the path-level doublet is the direct primitive for both.
+
+#### 19.13.2 — Pipeline architecture (LOCKED 2026-05-15)
+
+```
+Seed (Opus, ONE call):  200 paths → combined catalog + per-path assignments
+                        Output:  ~30-40 RG, ~100-130 MG groups, 200 (RG, MG) doublets
+Pass B (Sonnet, batches of 75 paths, NO new-group proposals, fixed catalog):
+                        For each batch: prompt = catalog (names + descriptions, no member-path repetition)
+                                                  + 75 paths
+                                        output = 75 (path_id, RG, MG) assignments
+Every 10 Sonnet batches (~750 paths) → 1 Opus REVIEW pass:
+                        - REVIEW_A (group-level health, ~150k tokens):
+                            Opus sees catalog + per-group assignment counts + Sonnet's
+                            flagged-uncertain rows. Decides: merge/split/rename groups.
+                        - REVIEW_B (per-flagged-group deep dive, 0-5 calls x ~100k each):
+                            Opus sees one group's name + desc + up to 50 of its member
+                            paths. Splits, renames, or merges based on member content.
+                        - REVIEW_C (low-confidence/unclassified paths, 1-2 calls x ~150k):
+                            Opus sees catalog DESCRIPTIONS ONLY (no member paths) plus
+                            the flagged paths. Assigns to existing OR proposes new
+                            groups (constrained by min-group-size to avoid singletons).
+                        Apply catalog delta (renames, merges, new groups, splits).
+                        Reassign any paths affected by merges/renames.
+Repeat until all 8,954 paths assigned.
+```
+
+Three structural rules in the Opus review architecture (responding to "Opus cannot see 1000+ paths in one call — context overflow"):
+1. **Group-level decisions (REVIEW_A) see no per-path content.** Only catalog text + per-group counts + flagged rows. Fits comfortably in 200k context.
+2. **Per-group deep dive (REVIEW_B) sees one group at a time** with a sampled subset (<=50 paths) of that group's members. Single call per problematic group.
+3. **Unclassified-paths triage (REVIEW_C) sees descriptions only** for all existing groups (no member paths from existing groups, since those are already-assigned and not subject to change in this pass). Plus the flagged paths.
+
+This bounds each Opus review call to <=200k input tokens, well within context, and lets the review work proceed without ever needing to see the full assignment matrix at once.
+
+#### 19.13.3 — Sonnet-4-6 calibration (measured 2026-05-15)
+
+Validated against the same 30 paths and the same 20-RG + 27-MG catalog that Opus produced in the 30-path smoke earlier that day. Sonnet given assignments-only task (read-only catalog, `allow_new=False`, `allow_coherence=False`).
+
+| Metric | Result |
+|---|---|
+| Exact (RG + MG) doublet match | **29/30 = 96.7%** |
+| MG-only match | **30/30 = 100.0%** |
+| RG-only match | **29/30 = 96.7%** |
+| Complete disagreements (both differ) | **0/30 = 0.0%** |
+| Sonnet wall-clock per 30-path call | **60 sec** (45s prefill + 15s text emission) |
+| Sonnet tokens per 30-path call | **~47k** (16k input + ~750 output + ~30k shim preamble) |
+| Sonnet session-budget impact (Max 5x) | **+3pp** (per UI report 15% to 18%) — ~0.41x Opus weight per token; ~1pp = 16k Sonnet tokens vs 6.5k Opus tokens |
+
+The single divergence (`path_00433`): Opus -> RG001 "Catastrophic misalignment of advanced AI"; Sonnet -> RG003 (adjacent risk family). Both agreed on MG004. Within reasonable inter-model variance for adjacent risk-group framings.
+
+**Paper claim this calibration supports:** the bulk path-routing step (Pass B) does not require an extended-thinking reasoning model. Sonnet 4.6 routes paths to an existing high-quality catalog (Opus-built seed) at 96.7% exact-doublet agreement with Opus. This is methodologically defensible: **cheap model for bulk routing, expensive model for catalog generation and periodic catalog refactoring.** This pattern generalizes beyond this paper — it is a useful methodology contribution in its own right (cite as: hybrid expensive-reasoning + cheap-routing pipeline for large-scale LLM-mediated classification, with empirical congruence-test validation before commitment).
+
+#### 19.13.4 — Total Pass B estimate with Sonnet calibration
+
+| Phase | Per call | Calls | Wall-clock | Raw tokens | Max-plan-equivalent |
+|---|---:|---:|---:|---:|---:|
+| Sonnet 75-path batch | ~140k tokens (~110k input + 5k output + 30k shim) | 8954 / 75 = **120** | ~2 min each | ~17M | ~7M (Sonnet x 0.41) |
+| Opus REVIEW_A | ~150k | 12 (every 10 Sonnet batches) | ~10 min each | ~1.8M | ~1.8M |
+| Opus REVIEW_B | ~100k | ~36 (avg 3 per review) | ~8 min each | ~3.6M | ~3.6M |
+| Opus REVIEW_C | ~150k | 12-24 (1-2 per review) | ~10 min each | ~2.7M | ~2.7M |
+| **TOTAL** | | | **~6-9h LLM compute** | **~25M raw** | **~15M Max-plan equiv** |
+
+Sessions at 650k cap: **~23 sessions Max-plan-equivalent**.
+At 5h session reset and ~6 batches fit per session: **~4-6 days intermittent processing**.
+
+This is **~40% cheaper** than the all-Opus alternative (~26M Max-plan-equivalent, ~40 sessions, ~8-10 days), with congruence to Opus output at 96.7% exact-doublet agreement.
+
+#### 19.13.5 — Failure-mode review the paper will need
+
+The Sonnet 30-path test was small. Before publishing the methodology, must validate at scale:
+- Re-test Sonnet vs Opus on a larger (>=200-path) sample at end of Pass B — measure per-batch agreement drift over the course of the run as the catalog grows. Agreement could degrade if catalog fragmentation makes routing decisions ambiguous.
+- Quantify the per-pool (RG vs MG) variance: is Sonnet stronger on mechanism-routing than risk-routing? (The 30/30 MG match vs 29/30 RG match weakly suggests this.)
+- Audit the Opus REVIEW_B / REVIEW_C decisions — these are where new groups get added; misjudgments compound across batches. A separate human review of the catalog delta from each Opus review pass is warranted before committing to the next 10 Sonnet batches.
+
+#### 19.13.6 — Streaming-to-disc as the transport contract for any large-output call
+
+Locked architectural rule (added 2026-05-15 after a failed 200-path seed lost ~400k tokens to a Windows CMD-shim `subprocess.run(timeout=)` orphan-claude bug): any LLM call estimated to produce > 10k output tokens MUST use `claude -p --output-format stream-json --include-partial-messages` via `subprocess.Popen` with line-iterated stdout. Each text-delta event is written to a partial file (`partial.txt`) with explicit `flush()` after every event. Even on mid-stream process death, the partial file on disc preserves all emitted text up to that point and is hand-recoverable.
+
+This applies uniformly to the Opus seed-gen, all three Opus review variants (REVIEW_A/B/C), and any future large-output call. Sonnet Pass B per-batch calls are smaller (~5k output) but use the same streaming wrapper for consistency and live progress visibility (`tail -f phase2_doublet_seed_partial.txt`).
+
+The implementation lives in `phase2_step4_phase2_doublet_llm_grouping.py:streaming_claude_call` and `streaming_call_with_validation`. The lower-level shim path (`call_with_validation`) is preserved for small-output calls but flagged as unsafe for any large-output use.
+
+#### 19.13.7 — Pass B first long-run + REVIEW_A/B/C implementation (added 2026-05-16)
+
+**Pass B Sonnet first long-run results (2026-05-15 → 2026-05-16, wall-clock 02:46).**
+Following the 3-batch shakedown that exposed a Sonnet JSON-restart bug
+(Sonnet emits a complete JSON, then restarts the JSON from scratch mid-stream;
+the sentinel still passes but `json.loads` fails on the duplicated prefix),
+the script gained two fixes before the long run:
+
+1. **JSON-restart recovery via `rfind('{"assignments":[')`** — locates the
+   last legitimate start-of-JSON marker and parses from there. Drops `n` chars
+   of stale prefix, logs the drop, recovers the assignments. Tested in
+   production (3/19 batches triggered recovery; all 3 recovered cleanly).
+2. **Failed-partial preservation** — copies the stream-partial to a per-batch
+   `partial.batch_NNNN_failed.txt` before the next batch overwrites
+   `partial.txt`. One earlier batch (batch_0001) was lost prior to this fix;
+   no batch lost since.
+
+| Batch range (2026-05-15 long run) | Wall-clock | Resolved | UNASSIGNED | Recoveries |
+|---|---:|---:|---:|---:|
+| batch_0004 – batch_0019 (16 batches) | 2h 46m | ~730 | ~470 | 3 (rfind, all clean) |
+
+**Total Pass B coverage so far:** 1,080 resolved + 545 UNASSIGNED = **1,625 of
+8,954 paths (18.1%)**. Catalog remains FROZEN at 34 RG + 119 MG throughout
+(read-only Pass B). 7,329 paths remain for subsequent Sonnet sessions. Per-batch
+mean: 45.6 resolved (sd ~6), 37% UNASSIGNED (range 27–51%, batch-to-batch
+variance, no monotonic trend).
+
+**REVIEW_A/B/C implementation (task #29 completed 2026-05-16).** The
+`--mode opus_review` orchestrator is in place:
+
+- `make_review_a_prompt`, `make_review_b_prompt`, `make_review_c_prompt` build
+  the three prompt schemas matching §19.13.2's architecture.
+- Catalog mutations are persisted via `phase2_doublet_group_remap.json`
+  (transitively resolved on read) and `phase2_doublet_path_remap.json` —
+  individual Sonnet batch files remain immutable; the merged jsonl is rebuilt
+  on demand with remaps applied. The active catalog is backed up before each
+  review pass to `phase2_doublet_active_catalog.pre_review_{a,b,c}_NNN.json`.
+- All three review LLM calls use the same streaming-to-disc transport as
+  Sonnet Pass B + Opus seed-gen (per §19.13.6), with `rfind`-based JSON-restart
+  recovery identical to the Sonnet Pass B path.
+- `--review-pass {a,b,c,all}` flag allows partial runs when session budget is
+  tight. Only `--review-pass all` resets `batches_since_review` to 0.
+
+Class B smoke test (`unit_test_opus_review.py`) exercises every prompt maker,
+apply helper, and remap persistence pathway end-to-end against a synthetic
+catalog + assignments + UNASSIGNED dataset. Six test sections all pass with
+**zero LLM tokens**.
+
+#### 19.13.8 — First live Opus REVIEW_A/B/C run (2026-05-16, review_idx=001)
+
+Ran against the 1,625-path post-Pass-B dataset (1,080 resolved + 545
+UNASSIGNED). Wall-clock 40 min (vs 2 hr estimate — REVIEW_B was much faster
+than projected; only 8 of 13 flagged groups capped to 8 actual deep-dives).
+
+| Pass | Calls | Outcome |
+|---|---:|---|
+| REVIEW_A | 1 | 31 RG keeps, 0 RG renames, 0 RG merges, 3 RG deep_dives; 113 MG keeps, 0 MG renames, 1 MG merge, 5 MG deep_dives |
+| REVIEW_B | 8 deep-dives (3 RG + 5 MG) | All clean; **+4 RG, +1 MG via splits** |
+| REVIEW_C | 6 batches (100/100/100/100/100/45 paths) | 5/6 succeeded → 445 paths resolved + new groups proposed; 1/6 (batch_0101) timed out at `claude -p exit 1` after 71s on a 60k-token prompt, 100 paths preserved for next cycle |
+
+**Catalog after one REVIEW cycle: 34→41 RG (+7), 119→130 MG (+11).**
+
+REVIEW_A's `audit_summary` flagged the failure mode the routing LLM exhibited:
+*"the routing LLM seems to over-concentrate on the most generic / first-listed
+group when paths are borderline, producing the long-tail-plus-fat-head
+distribution observed on both axes"* — explains why RG001 (n=175) and MG001
+(n=133) were the largest deep-dive candidates, and why the seed catalog +
+catch-all groups absorbed paths Opus later split into more-specific
+mechanism families.
+
+#### 19.13.9 — Post-review Sonnet Pass B (2026-05-16, batches 0020-0026)
+
+Ran 10 batches against the expanded 41 RG + 130 MG catalog; 7 succeeded, 3
+failed when the session-budget hit Anthropic's rate limit (clean exit-1 on
+attempts; failed partials preserved). UNASSIGNED rate dropped from **37%
+(pre-review) to 28% (post-review)** — the wider catalog absorbs paths the
+narrower one couldn't, exactly as predicted.
+
+| Pre vs Post REVIEW (Sonnet Pass B per-batch means) | Pre | Post |
+|---|---:|---:|
+| Resolved per batch | 45.6 | 53.7 |
+| UNASSIGNED rate | 37% | 28% |
+| JSON-restart recovery rate | 19% (3/16) | 29% (2/7) |
+| Recovery success | 100% | 100% |
+
+The recovery-rate uptick post-review may be sampling noise (n=7) but is worth
+watching across the next cycle — if the longer post-review prompts (180k chars
+vs 178k pre) push Sonnet's restart bug harder, may need to shorten the catalog
+prompt encoding.
+
+**Overall coverage as of end of 2026-05-16 session: 2,520 of 8,954 paths
+decided (28.1%).** 200 seed + 1,875 Sonnet (25 saved batches × 75) + 445
+REVIEW_C. To-be-reprocessed in next cycle: 400 paths (batch_0001 + batches
+0027-0029 + review_c_101). Active catalog (41 RG + 130 MG) is canonical for
+next Sonnet batches.
+
+#### 19.13.10 — Recovery run + prompt-context refinement (added 2026-05-17)
+
+**Recovery run (2026-05-16 18:43 → 21:30).** Chained `--review-pass c` (with
+new dedup filter that skips already-REVIEW_C-resolved unassigned rows) +
+12 Sonnet Pass B batches against the post-review catalog. Recovered all
+375 paths from prior code/quota failures (batch_0001 + 0027/0028/0029 +
+review_c_101), processed 525 new paths, hit Sonnet rate limit cleanly at
+end-of-session with 0 unrecoverable failures. Coverage reached **3,050 of
+8,954 paths (34.1%)** with catalog at **42 RG + 138 MG**.
+
+Sonnet Pass B UNASSIGNED-rate trajectory across the run:
+- Pre-REVIEW (batches 0000-0019): 37% mean
+- Post-REVIEW idx=1 (batches 0020-0026): 28% mean
+- Post-REVIEW idx=2 / post-recovery (batches 0027-0038): **20% mean**
+
+This validates the catalog under-coverage hypothesis for the UNASSIGNED rate
+(§19.13.5): each REVIEW cycle expands the catalog AND reduces routing
+UNASSIGNED rate by ~10pp. The competing hypothesis — that Sonnet was
+over-using the escape hatch — is **disproven**: an over-cautious model
+would not become less-cautious as the catalog grows.
+
+**Per-batch JSON traceability — PAPER AUDIT REQUIREMENT (2026-05-17).** Every
+Sonnet Pass B batch and every Opus REVIEW call writes a per-batch JSON file
+that captures the full LLM output, recovery action (if any), and resolved
+assignments. These files live at:
+
+- `phase2_doublet_passb_batches/batch_NNNN.json` — Sonnet Pass B (75 paths/batch)
+- `phase2_doublet_opus_reviews/review_{a,b,c}_NNN[_GID].json` — Opus REVIEW
+- `phase2_doublet_passb_partial.batch_NNNN_failed.txt` — preserved raw stream
+  for any batch whose JSON parse or stream failed (with meta JSON alongside).
+
+These are the canonical lineage for any reported assignment, mechanism-group
+proposal, or REVIEW decision. `phase2_doublet_assignments.jsonl` is a
+DERIVED artifact rebuilt from these via `rebuild_merged_assignments_jsonl()`
+on every batch save. **None of these per-batch files may be deleted or
+auto-rebuilt** — they are the workshop-paper-audit substrate.
+
+**Prompt-context refinement (between REVIEW idx=2 and idx=3, 2026-05-17).**
+The original REVIEW_A/B/C prompts did not include the corpus identity (ARD)
+or the downstream paper-deliverable structure (catalog table, many-to-few
+analysis, gap analysis). Added a `PAPER_DELIVERABLE_CONTEXT` block to all
+three prompt makers in `phase2_step4_phase2_doublet_llm_grouping.py` so
+cycles 3+ Opus has explicit guidance on group-naming, granularity, and
+"forbidden singleton" semantics. The change is a forward-only methodological
+refinement (no past assignments are perturbed; cycles 1+2 decisions are
+already baked into the active catalog). Paper Methods will document the
+single mid-pipeline prompt revision and the rationale; if any reviewer
+asks for sensitivity analysis, the cycle-1+2 vs cycle-3+ catalogs can be
+compared directly via the per-pass xlsx snapshots already on disc.
+
+### 19.14 — Pipeline restart 2026-05-17 (canonical methodology for paper)
+
+After the prompt-context sensitivity studies (§19.13.11), an audit of the
+first-run catalog identified residual issues that compound (RG002 meta-
+catch-all absorbing gradient-hacking and capability-gap paths; RG006 vision-
+only by seed bias; singleton MGs violating the stated MIN_GROUP_SIZE rule
+not code-enforced; mid-pipeline prompt revisions creating an "ad hoc patch"
+narrative for the Methods section). The pipeline was restarted under a
+refined methodology that becomes the canonical narrative for the paper.
+
+**Final pipeline (canonical for paper Methods)**:
+
+1. **Path dedup** (`phase1_dedup_paths.py`): within-paper containment cut at
+   ≥70%. 8,954 raw paths → **2,772 distinct mechanism-paths** (69%
+   reduction). Justification: a path that shares ≥70% of node IDs with
+   another path from the same paper is a near-redundant extraction
+   variant; keeping both inflates downstream group sizes without adding
+   mechanism diversity.
+2. **Pilot architecture discovery** (`pilot_100_path_axis_discovery.py`):
+   single Opus 4.7 call on 100 paths (sampled 1-per-paper). Opus proposes
+   3-9 orthogonal navigation axes, builds initial harm_class and
+   mechanism_class taxonomies, assigns all 100 paths to all dimensions,
+   and emits an architecture critique. **Output of the 100-path pilot:
+   6 axes (lifecycle_stage, modality, methodology, severity,
+   emergence_stage, harm_target) + 33 harm_classes + 45 mechanism_classes**.
+3. **Opus routing** (`phase2_step5_opus_routing.py --mode opus_routing`):
+   75-path batches over the 2,672 remaining deduped paths. Each batch
+   routes paths to existing classes, proposes new classes when needed
+   (MIN_GROUP_SIZE=3 code-enforced — new classes with <3 batch members
+   are dropped and paths force-fit to closest existing class, flagged for
+   consolidation), tags 6 axes per path, emits per-assignment confidence,
+   flags catalog-improvement candidates (merge/rename/split/axis-ext).
+4. **Consolidation** (`--mode consolidation`): every 10 routing batches,
+   ONE Opus call adjudicates accumulated catalog-improvement flags.
+   Applies merges (via class_remap), renames in-place, axis extensions
+   to controlled vocab, schedules deep-dive splits for next routing
+   batch's attention.
+5. **Final audit** (`--mode final_audit`): end-of-run single Opus call
+   walks the full catalog, decides remaining singletons (force-merge or
+   keep-niche), tightens class definitions, finalizes axes vocabulary,
+   identifies transferability examples and gap candidates for the paper's
+   three deliverables.
+
+**Faceted classification** (per-path tags, NOT per-class — preserves
+intra-class diversity):
+- 2 curated open-vocabulary axes: `harm_class`, `mechanism_class` (with
+  growing taxonomies + definitions, evolve via routing/consolidation)
+- 3 intervention-side enum axes (per path): `lifecycle_stage`, `modality`,
+  `methodology`
+- 3 risk-side enum axes (per path): `severity`, `emergence_stage`,
+  `harm_target` (the `harm_target=capability-gap-only` value cleanly
+  flags ML-engineering papers as non-human-risk peers)
+
+Default paper figure: `harm_class × mechanism_class` matrix (the doublet).
+Appendix slices: any axis combination at analysis time.
+
+**First-run state archived** to
+`phase2_results/archive/2026_05_15_first_run/step1_load_and_parse_umapwithoutlocalsatellites/`
+(32 files: prior 42 RG + 138 MG catalog, all Sonnet Pass B batches,
+all Opus REVIEW outputs, all intermediate xlsx). Retained for
+sensitivity-analysis appendix only; not part of the paper's reported
+catalog or analysis.
+
+**Catalog-evolution audit** during the restarted run is captured by
+per-batch JSON files at `phase2_routing_batches/batch_NNNN.json`,
+per-consolidation outputs at `phase2_routing_consolidations/`, and
+the final audit at `phase2_routing_final_audit.json`. Same audit-trail
+guarantees as documented in §19.13.10 for the first run.
+
+**Two pilot outputs preserved** at `phase2_pilot_50paths_axis_discovery.json`
+and `phase2_pilot_100paths_axis_discovery.json` for the Methods appendix:
+shows architecture stability across pilot sample sizes (same 6 axes,
+vocabularies extend organically rather than restructure).
+
+#### 19.13.11 — Prompt-context sensitivity studies (added 2026-05-17)
+
+To pre-empt reviewer concerns about the mid-pipeline prompt revision in
+§19.13.10, ran two A/B studies on the SAME catalog and input state with
+vs without `PAPER_DELIVERABLE_CONTEXT`:
+
+**Study A — Opus REVIEW_A sensitivity** (`study_a_review_a_context_sensitivity.py`,
+2 Opus calls on current 42 RG + 138 MG catalog).
+
+With-context decisions are a strict **superset** of no-context decisions:
+| Axis | no-context flagged | with-context flagged | additional |
+|---|---|---|---:|
+| RG deep_dive | {RG001} | {RG001, RG002, RG038} | +2 |
+| MG deep_dive | {MG001, MG086, MG123} | {MG001, MG010, MG086, MG100, MG116, MG119, MG120, MG123} | +5 |
+
+No renames, no decision reversals. The refined prompt is strictly more
+thorough — flags every group the old prompt flagged AND additional groups.
+**Defensible mid-pipeline refinement: prior decisions remain valid; cycles
+3+ benefit from broader audit scope.**
+
+**Study B — Sonnet routing sensitivity** (`study_b_sonnet_context_sensitivity.py`,
+1 Sonnet call on 30 smoke paths vs §19.13.3 baseline).
+
+| Comparison | both_match / 30 | rg_match | mg_match |
+|---|---:|---:|---:|
+| Baseline no-context Sonnet vs Opus | 29 | 29 | 30 |
+| New with-context Sonnet vs Opus    | 29 | 29 | 30 |
+| **with-context vs no-context Sonnet (self)** | **30** | **30** | **30** |
+
+Sonnet routing is **identical** with vs without context. The same single
+Opus-vs-Sonnet disagreement (path_00433) persists in both. Context adds
+no behavioral signal at the routing layer.
+
+**Decision: keep PAPER_DELIVERABLE_CONTEXT in REVIEW_A/B/C prompts (cycles
+3+); do NOT add to Sonnet Pass B prompts** (saves ~5k tokens × 120 batches
+= ~600k tokens = ~+10pp session across full Pass B for zero benefit).
+
+#### 19.13.12 — Gleb's eigenvector / race-framing findings: sensitivity analysis (Class B, 2026-05-17)
+
+Ran two un-merged-graph experiments to test the robustness of Gleb's
+"race dynamics dominates top-100 risks by EC" headline finding:
+
+**Experiment 1** (`experiment_xrisk_unmerge_ec.py`): EC race-framing
+fraction in top-100 risks across 4 variants:
+| Variant | sole_PA race% | any_PA race% |
+|---|---:|---:|
+| A — full + SIM≥0.8 (Gleb-equivalent) | 0% | 14% |
+| B — xrisk-keyword removed + SIM≥0.8 | 1% | 5% |
+| C — full + EDGE-only | 1% | 8% |
+| D — xrisk removed + EDGE-only | 3% | 10% |
+
+**Cannot reproduce Gleb's reported 90% race-framed top-100 in our
+un-merged graph.** Inspection of Variant A top-10 shows all 10 are
+near-duplicates of "Existential catastrophe from misaligned advanced AI" —
+the rev7 hub cluster (5+ near-dups at cos 0.955-0.984 per `MEMORY.md`).
+Without merging, EC ranks the cluster INSTANCES at the top, not a single
+merged hub. Variant B top-10 swaps in a parallel "Catastrophic misalignment"
+near-duplicate cluster that escaped the xrisk-keyword filter.
+
+**Experiment 2** (`experiment_xrisk_race_correlation.py`): direct xrisk ×
+race-framing co-occurrence at risk-node level (no merging):
+- xrisk nodes (n=2,124): 178 have race-framed PA neighbor = **8.4%**
+- non-xrisk nodes (n=16,972): 404 have race-framed PA neighbor = 2.4%
+- **Odds ratio = 3.75 (CI95 3.13–4.50, chi2 = 227.97, p < 0.001)**
+
+Real but modest discourse co-occurrence. The merging step amplifies this
+to ~80-90% via cluster collapse: P(race PA on merged hub) =
+1 − (1 − 0.084)^N reaches 90% at N≈25 near-duplicate xrisk nodes per
+merged hub.
+
+**Conclusion**: Gleb's finding is **real-but-amplified, not entirely
+artifactual.** The structural co-occurrence is reproducible (OR=3.75) but
+the reported magnitude (90% top-100) is a merging artifact. Recommended
+paper edits captured in `gleb_analysis_critique_DO_NOT_COMMIT.md`
+(gitignored).
+
+### 19.15 — Oversized-class split deep-dive sweeps (added 2026-05-19)
+
+After 5 routing batches + `consolidation_001`, six classes had grown past
+the `OVERSIZE_ALARM=25` member threshold. The new architecture
+(`§19.14` + the NO-HETEROGENEOUS-CATCH-ALL policy) allows large classes
+**iff** they are single-mechanism-family coherent; heterogeneity (not
+size) triggers required split. To validate large-class homogeneity
+**before** further batches grew them past Opus's single-pass capacity,
+six `final_misfit_sweep --classes <ID> --chunk-size 100` runs were
+executed, each presenting Opus the full membership of one class in a
+single pass with a 3-decision tree (HOLD / UNASSIGN / SPLIT_OUT to a
+new ≥3-member proposed class, with REASSIGN to an existing class as
+an alternative).
+
+**Results — all 6 defended as homogeneous, zero splits**:
+
+| Sweep | Class | n_in | HOLD | UNASSIGN | SPLIT_OUT | REASSIGN |
+|---|---|---:|---:|---:|---:|---:|
+| 2 | HC002 (AGI value misalignment) | 66 | 59 | 7 | 0 | 0 |
+| 3 | HC008 | 54 | 52 | 2 | 0 | 0 |
+| 4 | HC012 | 49 | 43 | 6 | 0 | 0 |
+| 5 | MC001 | 37 | 34 | 3 | 0 | 0 |
+| 6 | MC011 | 22 | 22 | 0 | 0 | 0 |
+| 7 | MC015 | 40 | 36 | 4 | 0 | 0 |
+| **Total** | | **268** | **246 (92%)** | **22 (8%)** | **0** | **0** |
+
+**Interpretation**:
+- After `consolidation_001` already carved off three distinct
+  sub-channels (HC015 instrumental-power-seeking, HC016/HC017 from HC013
+  split, HC018 governance-race), the residual large classes are
+  single-family coherent on their respective harm or mechanism
+  dimensions.
+- 22 UNASSIGN decisions are honest exits — risk-side or mechanism-side
+  does not actually match the class focus. Examples from HC002:
+  military/geopolitical AI competition (`02185`), alignment-misuse-for-
+  dystopia (`02065`), multi-agent cooperation failures (`02489`),
+  accident/robustness failures (`01690`, `02396`). These flag residual
+  catalog gaps for `misfit_review` to surface as PROPOSE_NEW candidates
+  if ≥3-member clusters emerge.
+- Zero SPLIT_OUT proposals across all 6 classes is itself a finding:
+  Opus is not forcing splits to please the prompt; it is making
+  principled defend-as-homogeneous decisions when the residual is
+  coherent.
+
+**Why this validates the §19.14 architecture for the paper**:
+1. The heterogeneity-not-size policy is operationally meaningful: large
+   classes (HC002=59, HC008=52, HC012=46) are kept; only flagged
+   sub-channels are split.
+2. The `consolidation_001` carve-outs were correct first-order
+   adjustments; second-pass scrutiny finds no further sub-channel
+   structure.
+3. The 18 HC + 19 MC catalog is stable at this corpus depth (475 routed
+   paths out of 2,772). Further batches may surface new classes but the
+   existing classes are robust.
+
+**Cost**: 6 Opus 4.7 sweeps via `claude -p` shim, ~23pp session total
+(actual; estimated 17pp pre-launch — calibration revised below).
+Wall-clock 50-150s per sweep depending on class size. Per-sweep outputs
+preserved at `phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/
+final_misfit_sweep_*/sweep_NNN_summary.json` for audit.
+
+**Implication for cost calibration**: the `claude -p` shim with no
+prompt-cache reuse, large catalog + member-detail input (~20-30k tokens
+each), and ~1-1.5k output tokens runs at **~3.5-5pp per sweep**.
+Pre-launch estimate of 17pp underestimated by ~35%; revised
+calibration: **per-50-member-class sweep ≈ 4pp session** (was 3pp).
+Used to budget the remaining 31 routing batches + consolidations.
+
+### 19.16 — Canonical batch-processing production plan (added 2026-05-19)
+
+After the 6 oversized-class deep-dives (§19.15), the canonical production
+plan for the remaining 31 routing batches + reviews is fixed as follows.
+Designed for workshop-paper defensibility against standard NLP-
+classification methodology review.
+
+**Three review-step types** (defensible methodology stack):
+
+**(R1) Self-flagged misfit pass** — Opus second-pass over paths the
+routing-batch Opus already flagged as uncertain. Inputs:
+  - fit_score ≤ 3 (Opus self-reported low-confidence assignment)
+  - heuristic keyword-overlap below threshold (algorithmic misfit signal)
+  - manual `reassign_pending` tag (analyst-flagged candidates)
+
+Cadence: every 5 routing batches. Cost: ~5-7pp/run.
+Coverage rationale: catches Opus's own confident-but-wrong calls only to
+the extent they self-flag — which is partial. Strongest defense is paired
+with (R3) faithfulness study.
+
+**(R2) Unassigned-pool audit** — Adjudicate every path with no HC and/or
+no MC assignment. Per-path verdicts: REASSIGN-to-existing-class | 
+PROPOSE_NEW (≥3 peers cited) | HOLD-unassigned. Chunks at ~80 paths
+per Opus call.
+
+Cadence: triggered when unassigned pool grows past ~50 paths OR at
+end of batch processing. Cost: ~10-15pp per ~150-path pool.
+Coverage rationale: closes the "no home" gap and surfaces new classes
+that didn't reach MIN_GROUP_SIZE within any single batch.
+
+**(R3) Cross-vendor faithfulness study** — Stratified random sample of
+N=30-50 paths re-classified independently by a **non-Anthropic** model
+(OpenAI o3 / GPT-5 or Google Gemini 2.5). Compute % agreement on HC,
+MC, and 6 axes. Headline metric for paper deliverable 1.
+
+Cadence: once after all routing batches complete. Cost: OpenAI/Google
+API tokens (not Max-plan pp; ~<$5 for N=50 at current pricing).
+Coverage rationale: this is the workshop-paper deliverable. Same-model
+faithfulness (Opus→Opus) is methodologically circular and will be
+flagged by reviewers. Cross-vendor judgment is the publication standard.
+
+**(R4) Oversized-class deep-dive sweeps** — Auto-fire when any HC or MC
+crosses OVERSIZE_ALARM=25 members and hasn't been swept yet. Single Opus
+call per class, full membership reviewed. Verdicts: HOLD / UNASSIGN /
+REASSIGN / SPLIT_OUT.
+
+Cadence: on-demand at the end of each batch cycle. Cost: ~3-5pp/sweep.
+Coverage rationale: enforces the NO-HETEROGENEOUS-CATCH-ALL policy
+(§19.15) — every large class must be defended as homogeneous or split.
+
+**Consolidation** — adjudicates accumulated batch-emitted catalog-
+improvement flags (merge_candidates, rename_suggestions, generalize_
+suggestions, axis_value_extensions, split_candidates, reassign_
+candidates). Already in place. Cadence: every 5 routing batches. Cost:
+~3-5pp/run when flags exist; no-op when none.
+
+**Axes review** — random sample N=50 → audit 6 axis values per path
+for vocab consistency. Cadence: once at ~batch 20 + once final.
+Cost: ~3-4pp/run.
+
+**Final audit** — single Opus pass over the entire catalog at end-of-
+run. Decides singletons, tightens definitions, finalizes axes vocab,
+surfaces transferability examples. Cost: ~5-7pp once.
+
+**CYCLE SIZE LOCKED AT 10 BATCHES** (revised 2026-05-19 from initial 5-batch
+proposal). First-cycle empirical results (§19.17) showed 0 new classes,
+14% reassignment rate at 215 candidates reviewed — catalog converged at
+this corpus depth, so larger cycles amortize review overhead without
+losing signal. Hard ceiling: Opus 4.7 context (~200k tokens) — at the
+observed ~33% fit_score≤3 rate, 10-batch cycles produce ~250 R1
+candidates → ~140k prompt → fits with margin. 15-batch cycles would
+push ~375 candidates → ~205k → over context, needing chunking.
+
+**Per-cycle automation (every 10 batches = 750 paths)**:
+```
+[10 routing batches × 75 paths]                              ~40-50pp, ~50-75 min
+   ↓
+[consolidation — all unprocessed batch flags]                ~5-7pp
+   ↓
+[R4 oversize sweeps — only NEWLY-oversized classes]          ~4pp × N (0-3 expected)
+   ↓
+[R2' incremental unassigned-pool audit]                      ~5-8pp
+       - SCOPE: newly-unassigned in last 10 batches
+              + paths on surfaced_sub_channels peer-watchlist
+              + paths appearing in any flag this cycle
+       - EXCLUDE: confirmed_out_of_scope (78% of prior R2 verdicts)
+   ↓
+[R1' incremental self-flagged misfit pass]                   ~5-8pp
+       - SCOPE: last-10-batch paths with fit_score≤3 OR heuristic-flag
+              + previously-HOLDed paths IF a new flag references them
+   ↓
+[STOP — user checkpoint review]
+```
+
+**Canonical R2→R1 order (locked 2026-05-19):** R2 first because it creates new
+classes from unassigned peer-clusters; R1 second because it can then reassign
+self-flagged misfits to the newly-created classes. Running R1 first would miss
+those re-routing opportunities. (Initial R1 in this pipeline ran before R2 by
+necessity — there was no R2 step yet; future cycles use the canonical order.)
+Cycle target: ~30-40pp + 25-35 min wall-clock, 2-3 cycles per session.
+
+**End-of-routing (after batch 36)**:
+1. R2 unassigned-pool audit (~10-15pp)
+2. Final consolidation (~5pp)
+3. Axes review × 1 (~4pp)
+4. Final audit (~5-7pp)
+5. R3 cross-vendor faithfulness study (OpenAI/Google tokens; not pp)
+Total end-of-routing: ~25-35pp + cross-vendor sample cost.
+
+**Why this stack is workshop-defensible**:
+- Opus self-uncertainty → R1 misfit pass (every cycle)
+- Heuristic-flagged misfits → R1 (every cycle)
+- Unassigned paths → R2 (end-of-routing)
+- Oversized catch-alls → R4 (auto-fire on threshold)
+- Confident-but-wrong → R3 cross-vendor sample (quantified error rate)
+- Catalog drift → consolidation (every cycle)
+- Axis consistency → axes_review (twice)
+
+**NOT in plan** (deliberately deferred or rejected):
+- Exhaustive per-path re-review across all classes (~98pp) — marginal
+  value over R3 faithfulness study; rejected as not workshop-required.
+- Direct-SDK with cache_control — 2026-05-19 decision to keep shim.
+- Same-model faithfulness — rejected per cross-vendor requirement.
+
+**Cost summary for remaining 31 batches + reviews + end-of-routing**:
+~6 cycles × 35pp + end-of-routing 30pp = **~240pp ≈ 2.4 session caps
+≈ 3 sessions including overhead**, plus modest OpenAI/Google tokens
+for R3.
+
+### 19.17 — R1 + R2 calibration results at 475 paths routed (added 2026-05-19)
+
+Ran the first instance of R1 (self-flagged misfit pass) and R2 (unassigned-
+pool audit) against the current 475-path corpus. Both confirm that the
+18 HC + 19 MC catalog is stable at this corpus depth.
+
+**R1 — self-flagged misfit pass** (`misfit_review_002.json`, scope=self_flagged):
+| | count | % |
+|---|---:|---:|
+| Candidates (low_fit ≤3 + heuristic + reassign_pending) | 155 | 100% |
+| **HOLD** — original assignment confirmed | **125** | **80.6%** |
+| REASSIGN_HC to existing class | 11 | 7.1% |
+| REASSIGN_MC to existing class | 4 | 2.6% |
+| UNASSIGN | 2 | 1.3% |
+| PROPOSE_NEW | 0 | 0% |
+| Wall-clock 384s; cost ~14pp | | |
+
+**R2 — unassigned-pool audit** (`misfit_review_003.json`, scope=unassigned):
+| | count | % |
+|---|---:|---:|
+| Unassigned candidates (HC=None or MC=None) | 60 | 100% |
+| **HOLD-as-unassigned** — honest non-AI-safety gap | **47** | **78.3%** |
+| REASSIGN_HC to existing class | 5 | 8.3% |
+| REASSIGN_MC to existing class | 7 | 11.7% |
+| UNASSIGN (explicit out-of-scope) | 1 | 1.7% |
+| PROPOSE_NEW | 0 | 0% |
+| Wall-clock 192s; cost ~8pp | | |
+
+**Catalog stability at 475 paths**: 0 new HCs, 0 new MCs, 30 path-level
+reassignments. The 18 HC + 19 MC taxonomy is converged at this corpus
+depth.
+
+**The unassigned pool is NOT routing failure — it is honest long-tail
+out-of-scope.** Opus confirmed 47 of 60 unassigned paths (78%) as
+genuine non-AI-safety domain content: biomedical ontology alignment,
+public health, education, marketing, fair division, corporate finance,
+nuclear governance, climate geoengineering, conservation-AI, bio-AI,
+generic-ML productivity. The dedup pipeline did not filter these (they
+were extracted as AI-safety-adjacent based on paper-level keywords) but
+the path-level intervention/risk is not AI-safety. This is a
+publication-reportable finding: corpus has a ~12% out-of-scope tail
+that explicit modeling can name and exclude.
+
+**Sub-channels surfaced but not yet actionable** (named by Opus across
+R1+R2, all with <3 corpus-wide peers as of 2026-05-19, so PROPOSE_NEW
+gating correctly rejected them):
+- prompt-engineering as a mechanism family (MC)
+- fairness-via-data-balancing (MC)
+- general optimizer-family beyond MC011 (MC)
+- Bayesian-optimization-for-hyperparameter-search (MC) — n=2 named peers
+- IoT-malware detection / AI-for-non-AI-cybersecurity (potential HC)
+- conservation-AI applications (MC)
+- bio-AI applications (MC)
+- capability-research-as-safety advocacy (HC sub-channel)
+
+These are tracked for the next misfit_review cycle (after batches 5-14)
+to check if any reach the ≥3-peer threshold for class creation.
+
+**Combined R1+R2 headline metric for workshop paper:**
+> "Two independent second-pass Opus adjudications — self-flagged misfit
+> review (N=155) and unassigned-pool audit (N=60) — yielded 80%
+> agreement with original routing decisions across 215 candidate paths.
+> 30 paths (14%) were reassigned to existing classes; zero new classes
+> were proposed. The catalog stabilized at 18 harm-class + 19
+> mechanism-class definitions at 475 routed paths, validating the
+> minimum-group-size (n≥3) discipline."
+
+#### 19.17.1 — Cycle 2 confirmation: out-of-scope tail is real (added 2026-05-20)
+
+After routing 1,225 paths (44% of corpus), a second unassigned-pool audit
+(`misfit_review_004.json`, N=141 candidates) yielded an **even stronger
+out-of-scope signal**:
+
+| Cycle | N candidates | HOLD-as-unassigned | Reassigned | UNASSIGN | PROPOSE_NEW |
+|---|---:|---:|---:|---:|---:|
+| R2 (cycle 1, n=475 routed) | 60 | 47 (78%) | 12 | 1 | 0 |
+| **R2' (cycle 2, n=1,225 routed)** | **141** | **134 (95%)** | **7** | **0** | **0** |
+
+**The HOLD-as-unassigned rate rose from 78% to 95% as the corpus expanded
+from 475 to 1,225 paths.** This is the opposite of what would happen if
+the catalog had genuine gaps: as more paths arrive, the catalog would
+either grow (gaps fill via PROPOSE_NEW) or the unassigned rate would
+plateau. Instead, **the rate INCREASED**, meaning the unassigned pool is
+increasingly populated by paths that are **legitimately outside the
+AI-safety scope**, not gaps in coverage.
+
+**5 at-quorum sub-channels surfaced in R2', all NON-AI-safety domains:**
+
+| Sub-channel (R2' surfaced) | Side | Peers | Category |
+|---|---|---:|---|
+| non-AI-existential-risk-cause-areas | HC | 13 | climate, biosec, nuclear governance NOT from AI |
+| general-ML-productivity-tooling | MC | 11 | generic ML tools without AI-safety risk |
+| human-cognitive-training-decision-aids | MC | 7 | AI-aided human cognition outside alignment |
+| bio-AI-non-safety-applications | MC | 6 | protein folding, drug discovery |
+| animal-welfare-harm-target | HC | 6 | speciesism, conservation paths |
+| corporate-finance-and-governance-non-AI | HC | 5 | financial markets, corporate ops |
+
+Per Opus's own R2' summary (verbatim):
+> "These should remain UNASSIGNED — they are evidence of catalog scoping
+> (paper Methods §) not gaps to fill."
+
+**Publication-defensible interpretation**:
+- The corpus extraction pipeline (`ARD` keyword-based extraction) has
+  precision ~88-90% for AI-safety adjacency at the path level.
+- The remaining ~10-12% is an honest scope-boundary tail that explicit
+  modeling correctly recognizes and refuses to absorb.
+- This is a **finding**, not a failure: the catalog architecture
+  (NO-HETEROGENEOUS-CATCH-ALL + MIN_GROUP_SIZE=3 + UNASSIGN-as-legitimate)
+  enforces conceptual coherence at the cost of recall.
+
+**Workshop paper §3.6 (faithfulness) revision**:
+> "Of 1,225 paths routed by Opus 4.7 across 15 batches, 132 (10.8%)
+> remained unassigned after a single routing pass. A subsequent
+> independent unassigned-pool audit confirmed 134 of 141 (95%) of these
+> were legitimately out-of-scope domain content (biomedical, public
+> health, financial markets, conservation, etc. without AI-safety risk
+> chains). The catalog correctly excludes these rather than forcing
+> catch-all absorption."
+
+**Cycle 2 R1+R2 combined: catalog at 23 HC + 23 MC, +9 new classes added,
+all grounded in ≥3-peer evidence; 9 R4 deep-dive sweeps + 23 batch R4
+sweep + consolidation_002 confirm cycle 1's defended-homogeneous pattern
+holds at the new corpus depth (96% HOLD rate across 1,085 sweep
+decisions).**
+
+#### 19.17.2 — Operations model revisions from cycle 2 (added 2026-05-20)
+
+Cycle 2 empirical learnings drive several locked-in changes to the
+production cadence (§19.16):
+
+**(a) Watchlist-aware R4 sweep prompt is MANDATORY** — the cycle 2
+HC008 first-pass sweep returned 0 SPLIT_OUT despite 17 named at-quorum
+peers (13 vision + 4 NLP). After patching the sweep prompt to load the
+surfaced_sub_channels watchlist, the re-run produced 2 SPLIT_OUTs (HC021,
+HC022) covering 13 of 17 peers. **Without watchlist visibility, R4
+sweeps systematically under-split.** Patch landed 2026-05-20 (all 6
+prompts now load watchlist + watch_items where appropriate).
+
+**(b) Sub-channels watchlist now populated by sweeps too** — cycle 2's
+23-class R4 batch couldn't contribute to the watchlist because the sweep
+schema didn't have a `surfaced_sub_channels` field. Patched 2026-05-20;
+future sweeps emit watchlist entries for any below-quorum sub-channels
+they observe during member review.
+
+**(c) No-rework filter on misfit_review** — without the filter, R1' and
+R2' in cycle 3+ would re-review ~236 paths previously HOLDed by R1+R2
+this cycle (~73% of the low-fit candidate set). Filter landed
+2026-05-20: misfit_review now excludes paths previously HOLDed unless
+re-flagged via consolidation/sweep reassignment. Per-cycle savings
+estimated at ~10-15pp. CLI flag `--include-previously-held` to override
+for catalog overhauls.
+
+**(d) Defended-homogeneous classes need cycle-by-cycle re-evaluation**
+— MC001, MC004, MC016 were defended in consolidation_002 but at the
+end of cycle 2 review chain they were NOT re-swept. Going forward,
+defended classes should be re-swept ONLY if they have grown by
+≥10 paths since last sweep AND a new sub-channel from the watchlist
+matches their members. Saves R4 cost without losing signal.
+
+**(e) Rate-limit safety: chunk multi-class sweep CLI args** — cycle 2's
+first 24-class sweep attempt failed on 23 of 24 due to API rate
+limiting (the shim is sequential but Anthropic-side per-minute rate
+applied across rapid-fire calls). Mitigation: chunk into groups of
+~10 classes per CLI invocation, with brief wait between groups.
+Alternative: accept the failure pattern, re-run after session reset.
+
+**(f) Out-of-scope sub-channels stop being actionable** — by R1'
+cycle 2, 14 of 19 surfaced sub-channels were AT QUORUM but Opus
+explicitly noted "non-AI-safety risk side → stay unassigned even at
+quorum". Watchlist needs a `confirmed_out_of_scope: true` tag to
+prevent re-surfacing in future reviews. Class B fix queued for cycle 3
+prep.
+
+**Operations model verdict: 10-batch cycle is correct. Review chain
+order locked as routing → consolidation → R4 sweeps (newly oversize +
+watchlist-driven only) → R2' (incremental, no-rework filter) → R1'
+(incremental, no-rework filter). Cycle pp budget revised to ~60-70pp
+(down from ~75pp) due to no-rework filter + selective R4 sweeps.**
+
+**Three sessions remaining for routing**: cycle 3 (batches 15-24, ~70pp
+including reviews), cycle 4 (batches 25-34, ~70pp), cycle 5 (batches
+35-36 + final audit + end-of-routing reviews + faithfulness sample
+generation, ~40pp).
+
+### 19.18 — Manual human-faithfulness study plan (added 2026-05-19)
+
+Same-model faithfulness validation (Opus 4.7 → Opus 4.7) is
+methodologically circular and will be flagged by workshop reviewers.
+LLM-as-judge with another vendor (OpenAI GPT-5 / Google Gemini 2.5)
+helps but is still indirect validation against ground truth. The
+canonical paper deliverable 1 will instead be **manual human
+classification** by the project authors (Martin Leitgab ± Gleb Posobin).
+
+**Decision deferred to end-of-routing** (post batch_0036 + final audit).
+Two methodological options to choose between at that point:
+
+**Option (a) — Annotator agreement with existing catalog**:
+- Stratified random sample N=30-50 paths across HC × MC quadrants
+- Human annotator(s) re-classify each path against the 18 HC + 19 MC
+  catalog definitions
+- Compute % agreement on HC, MC, and 6 axis dimensions
+- Optional: Cohen's κ if 2 annotators
+- **Headline metric**: "Human-LLM HC agreement = X%; MC agreement = Y%"
+
+**Option (b) — Independent human taxonomy**:
+- Same N=30-50 stratified sample
+- Annotator(s) propose their own risk/mechanism categories from scratch,
+  blind to the Opus-generated catalog
+- After annotation, manually map human → Opus categories
+- Compute concordance at the FAMILY level: "X of 18 HCs have a
+  corresponding human-named family; Y of 19 MCs likewise"
+- **Headline metric**: "Independent human-derived taxonomy concords with
+  X / 18 HCs (Z%) and Y / 19 MCs at the family level"
+
+**Option (b) is stronger for reviewer-defense** — it shows the catalog
+isn't a "Opus-confirms-Opus" artifact; independent human reasoning
+converges on similar structure. Tradeoff: slower (no anchor to start
+from), needs careful definition of "family-level concordance" to avoid
+hand-tuning.
+
+**Required infrastructure (to script near pipeline completion)**:
+- `phase2_step5b_faithfulness_sample.py` — stratified sampler:
+  1 path per HC × MC quadrant where populated; oversample large
+  quadrants. Output `phase2_faithfulness_sample.xlsx` with columns:
+  path_id, risk_node_name, intervention_node_name, body_summary,
+  current_HC, current_MC, human_HC, human_MC, human_axes, agree_flag,
+  rationale_if_disagree.
+- For option (b): same sheet structure but `current_HC`/`current_MC`
+  hidden until annotator completes their independent classification.
+- Annotation done locally in Excel; results re-imported via
+  `phase2_step5c_faithfulness_compute.py` for agreement metrics.
+
+**Cost**: ~zero LLM tokens. Human-hours: ~2-4 hrs for N=30 sample at
+~5 min/path (option a); ~4-6 hrs for option (b) including independent
+categorization + post-hoc family mapping.
+
+**Workshop paper section placement**: §3.6 "Faithfulness validation"
+or appendix table, citing the sample size, agreement metric, and the
+out-of-scope tail rate from §19.17 as a separate validity signal.
+
+### 19.19 — Cycle 3 outcomes + cycle 4 readiness (added 2026-05-21)
+
+**Cycle 3 = routing batches 15-25 (11 batches) + full review chain.** Catalog
+end-state: **28 HC + 32 MC + 6 axes** (was 23 HC + 23 MC at start of cycle).
+Total assignments: **2,047 paths routed** (was 1,225). Unassigned: 230 / 11.2%.
+**725 paths remain** = ~10 more batches across cycles 4 + 5.
+
+**Routing throughput (parallel mode, added this cycle).** A new
+`--mode opus_routing_parallel --n-workers 5` was added: 5 batches run as
+concurrent `claude -p` shim subprocesses on isolated `partial_w*.txt` files,
+followed by serial-merge in batch_idx order. Each catalog-mutation step
+(`_resolve_and_enforce`, `_append_flags`, `_save_active_catalog`,
+`_rebuild_routing_assignments_jsonl`, xlsx) runs once per group, not per worker.
+**Wall-clock 4.8× speedup** (10 batches: 437s + 420s ≈ 14.3 min total vs
+~70 min sequential). Session pp cost is unchanged (still no shim cache).
+
+**Consolidation_003 (after fixing off-by-one cutoff bug).** Prior cutoff
+filter was `batch_idx > cutoff`, which excluded the batch whose index equals
+the cutoff (silently dropping batch 15's 11 flag entries). Fixed to
+`batch_idx >= cutoff`; scope expanded from 57 → 68 flag entries. Verdicts:
+**6 splits applied** (38 paths moved):
+- MC011 → MC024 (Differential-privacy training, 3) · MC025 (Fairness via
+  data re-balancing, 4) · MC026 (Bayesian-opt hyperparameter search, 3)
+- MC017 → **MC027** (Inference-time prompt-engineering, **13** — heavily
+  surfaced since cycle 1)
+- MC015 → MC028 (AI-safety research-environment infrastructure, 8)
+- HC013 → HC024 (Recommender-platform engagement-maximization, 7)
+
+No merges, no renames, no axis extensions (both proposed extensions —
+scientific-compute, medical-imaging — were correctly auto-marked OOS).
+**3 defended-homogeneous classes**: MC001 (RLHF, 130), MC004 (adversarial
+robustness, 178), MC016 (governance/policy, 146).
+
+**R4 sweep (5 scheduled deep-dives, 8 chunks, 638 decisions).**
+
+| Class | n | HOLD | REASSIGN | SPLIT_OUT | UNASSIGN | New classes |
+|---|---|---|---|---|---|---|
+| HC008 | 183 | 92 | 65 | **26** | 0 | HC025, HC026, HC027, HC028 |
+| HC012 | 190 | 187 | 0 | **0** | 3 | — defended |
+| HC015 | 40 | 31 | 0 | **9** | 0 | HC029 |
+| MC011 | 159 | 149 | 4 | **4** | 2 | MC029, MC030 |
+| MC019 | 66 | 62 | 4 | **0** | 0 | — defended |
+| Total | 638 | 521 (82%) | 73 (11%) | 39 (6%) | 5 (1%) | 7 new classes |
+
+**HC012 (190) defended despite 3 named sub-channels in consolidation_003 flags.**
+Both R4 chunks (100 + 90 members) independently returned 0 SPLIT_OUT — a
+real defense, not a chunk-size artifact. Opus interpretation: HC012 is one
+coherent "research community readiness / institutional capacity" family.
+**MC019 (66) defended despite hybrid-neuro-symbolic at 3-peer watchlist quorum**
+— Opus held MC019 as coherent "alignment system patterns".
+
+**Cross-chunk duplicate bug (HC025 + HC026).** Both chunks of HC008's R4 sweep
+independently proposed an "Audio / speech perception accuracy ceiling" split;
+chunk 1 named it without a hyphen, chunk 2 with one. The
+`_resolve_and_enforce:970` idempotent-by-exact-name guard missed the near-match.
+Result: two HC IDs for the same concept, 6 audio members split 3+3 across them.
+**Fix (landed 2026-05-20)**: added `_normalize_class_name()` (lowercase + strip
+`-_/.,()` + collapse whitespace) wired into BOTH routing's
+`_resolve_and_enforce` AND R4 sweep's `split_groups` keying. R4 sweep now also
+redirects normalized-name matches against the existing catalog so future
+sweeps route members into pre-existing classes instead of creating duplicates.
+HC026 manually merged into HC025 via path-reassignment + class_remap (3 paths
+moved; HC025 now at 6 members; catalog dropped to 28 HC).
+
+**Capability-ceiling vs safety-harm distinction (Martin 2026-05-20).**
+**HC025, HC027, HC028 are capability-ceiling research harms** (model X can't
+yet do task Y well enough — perception, imitation, RL planning). They join
+HC008 residual + HC021 (vision) + HC022 (NLP) in the same family. **HC029 IS
+AI-safety-related** (shutdown-resistance, corrigibility failure — off-switch
+disabling, interruption avoidance, containment escape). Capture for paper
+writeup: present capability-ceiling HCs as **a labeled subgroup within the
+non-safety-risks bucket**, not mixed with safety-harm HCs in the canonical
+summary table. Tag each HC at end of cycle 5 with
+`harm_kind: {safety_harm, capability_ceiling, non_safety_risk_other}`.
+
+**R2' unassigned-pool audit (misfit_review_006).** 116 candidates (179
+previously-HOLDed paths excluded by no-rework filter); verdicts: **105 HOLD
+(90.5%)**, 3 UNASSIGN, 4 REASSIGN (2 HC + 2 MC). **0 new classes proposed.**
+**90.5% HOLD-as-unassigned rate** is consistent with cycle 2's 95% (R2) /
+78% (R2') — confirms the publication-defensible finding that the unassigned
+pool is honest scope-boundary signal, not catalog gap. 20 new sub-channels
+added to watchlist (mostly OOS — non-AI scientific-compute, non-AI medical
+imaging, classical control variants).
+
+**R1' self-flagged misfit review (misfit_review_007).** ~200 candidates after
+no-rework filter; verdicts: 176 HOLD (88.9%), 13 UNASSIGN, 7 REASSIGN, **2
+PROPOSE_NEW_MC** quorum-met. **2 new MCs created via reassignment:**
+- **MC031** Label-noise-robust training methods (6 members)
+- **MC032** RL training-time variance reduction & target normalization (7 members)
+
+18 new sub-channels added to watchlist.
+
+**Task #55 (confirmed_out_of_scope tag) — completed 2026-05-20.** The
+watchlist JSONL now carries `confirmed_out_of_scope: bool` per entry; OOS
+entries render in a separate "DO NOT PROPOSE — even at quorum" section of
+the prompt. Backfill at cycle 3 start tagged **23 of 40 entries as OOS** (13
+distinct names) — including non-AI x-risk causes (13 peers), general-ML
+productivity tooling (11), animal-welfare-harm-target (6), bio-AI non-safety
+applications (6), non-AI cryptography (6), corporate finance/governance (5),
+plus knowledge-base/ontology, AI-cybersecurity-tooling (= AI applied TO
+cybersecurity, not AI-MODEL security), classical control engineering, and
+probabilistic-programming inference engines. **17 ACTIVE in-scope** entries
+remain as legitimate catalog-gap candidates for future cycles.
+
+**Cumulative session cost (cycle 3, this session).** 11 routing batches
+(~50pp) + consolidation_003 (~5pp) + R4 sweep #13 (~37pp) + R2' (~7pp) +
+R1' (~9pp) = **~108pp session**.
+
+**Cycle 4 readiness (auto-propagated state).**
+- Active catalog: 28 HC + 32 MC + 6 axes, persisted at
+  `phase2_routing_active_catalog.json` (with backups `.pre_*.json` per stage).
+- Watchlist: 17 ACTIVE + 13+ OOS entries (sticky-OOS coalescing across
+  observations); auto-loaded into every prompt with explicit DO-NOT-PROPOSE
+  guidance for OOS entries.
+- No-rework filter: 358 paths now in the "previously-HOLDed" exclusion set
+  (179 from cycle 2 + 179 from cycle 3 R2'/R1'). Future R1'/R2' will skip
+  these unless re-flagged via consolidation/sweep reassignment.
+- Path reassignments log: ~250 entries (auto-applied during jsonl rebuild).
+- Step log: 47+ chronological entries (audit trail).
+
+**Cycle 4 plan**: 10 routing batches (26-35) via parallel mode, then full
+review chain (consolidation_004 → selective R4 sweeps for any new oversize
+classes + at-quorum watchlist sub-channels → R2' → R1'). Estimated session
+cost: ~70-80pp.
