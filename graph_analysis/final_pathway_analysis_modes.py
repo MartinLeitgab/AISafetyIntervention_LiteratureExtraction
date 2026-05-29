@@ -20,6 +20,14 @@ import time
 client = redis.Redis(host="localhost", port=6379, decode_responses=True)
 graph = "AISafetyIntervention"
 
+# CF-5 defense-in-depth: FalkorDB default RESULTSET_SIZE=10000 silently truncates
+# Cypher results. Bump to 10M to ensure no single-shot query is truncated.
+# Persists for the lifetime of the FalkorDB container.
+try:
+    client.execute_command("GRAPH.CONFIG", "SET", "RESULTSET_SIZE", "10000000")
+except Exception as _exc:
+    print(f"[WARN] Could not set RESULTSET_SIZE=10M: {_exc}", flush=True)
+
 
 def query(q, timeout=120000):
     result = client.execute_command("GRAPH.QUERY", graph, q, "--timeout", str(timeout))

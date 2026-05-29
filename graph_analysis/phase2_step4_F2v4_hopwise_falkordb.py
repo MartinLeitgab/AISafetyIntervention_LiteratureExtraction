@@ -365,7 +365,10 @@ with open(SUMMARY, "w") as f:
     f.write("rev8 hop-wise v4 (FalkorDB live) summary\n")
     f.write("=" * 50 + "\n")
     f.write(f"sim_threshold: {SIM_THRESHOLD}\n")
-    f.write(f"sim_score_max (euclidean): {SIM_SCORE_MAX:.6f}\n")
+    if SIM_SCORE_MAX is not None:
+        f.write(f"sim_score_max (euclidean): {SIM_SCORE_MAX:.6f}\n")
+    else:
+        f.write("sim_score_max (euclidean): N/A (EDGE-only mode)\n")
     f.write(f"edge_confidence_min: {EDGE_CONFIDENCE_MIN}\n")
     f.write(f"intervention_maturity_min: {INTERVENTION_MATURITY_MIN}\n")
     f.write(f"min_path_length: {MIN_PATH_LENGTH}\n")

@@ -76,6 +76,47 @@ CONSOLIDATION_DIR = STEP1 / "phase2_routing_consolidations"
 FINAL_AUDIT_FP = STEP1 / "phase2_routing_final_audit.json"
 ASSIGNMENTS_FP = STEP1 / "phase2_routing_assignments.jsonl"
 PARTIAL_FP = STEP1 / "phase2_routing_partial.txt"
+
+
+def _partial_path(label: str):
+    """Per-call partial file path so concurrent / sequential streams never
+    overwrite each other's raw output. Each label gets its own file; on
+    success it stays on disc for forensic recovery, on failure
+    `_mark_partial_failed` renames it to `.FAILED.txt` and writes a meta
+    sidecar.
+    """
+    return STEP1 / f"phase2_routing_partial_{label}.txt"
+
+
+def _mark_partial_failed(partial_path, reason: str):
+    """Rename a failed-call partial to `.FAILED.txt` and write a meta marker
+    so the raw payload is preserved for inspection / reparse. Idempotent:
+    safe to call when the file does not exist (just writes the marker)."""
+    if partial_path.exists():
+        failed = partial_path.with_name(partial_path.stem + ".FAILED.txt")
+        try:
+            if failed.exists():
+                failed.unlink()
+            partial_path.rename(failed)
+        except OSError:
+            failed = partial_path
+        try:
+            marker = partial_path.with_name(partial_path.stem + ".FAILED.meta.json")
+            marker.write_text(
+                json.dumps(
+                    {
+                        "reason": reason,
+                        "preserved_file": str(failed),
+                        "size_bytes": failed.stat().st_size if failed.exists() else 0,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
+
+
 # Path-level reassignments applied AFTER per-batch JSON write — append-only audit
 # log read by _rebuild_routing_assignments_jsonl to override the immutable batch
 # rows. Lets consolidation/misfit_review mutate path assignments without
@@ -281,22 +322,95 @@ def _robust_json_parse(payload, expected_start_pattern=None):
     JSONDecodeError if all strategies fail.
     """
     import json as _json
+    import re as _re
 
-    # Strategy 1: direct
+    # Strategy 1: direct (strict)
     try:
         return _json.loads(payload), "direct"
     except _json.JSONDecodeError as e0:
         last_err = e0
-    # Strategy 2/3/4: trailing-bracket appends
+    # Strategy 1b: direct with strict=False (permits raw control chars
+    # 0x00-0x1F inside string values; covers Opus echoing of control chars
+    # from path descriptions verbatim into JSON strings).
+    try:
+        return _json.loads(payload, strict=False), "direct-strict-false"
+    except _json.JSONDecodeError as e:
+        last_err = e
+    # Strategy 1c: strip markdown fences (```json ... ``` or ``` ... ```)
+    fenced = payload.strip()
+    if fenced.startswith("```"):
+        # remove opening fence (with optional language tag)
+        fenced = _re.sub(r"^```[a-zA-Z]*\s*\n?", "", fenced)
+        # remove trailing fence
+        fenced = _re.sub(r"\n?```\s*$", "", fenced)
+        for strict_flag, slabel in [(True, "strict"), (False, "lax")]:
+            try:
+                return _json.loads(
+                    fenced, strict=strict_flag
+                ), f"fence-stripped-{slabel}"
+            except _json.JSONDecodeError as e:
+                last_err = e
+    # Strategy 1d: sanitize control chars inside string values, then retry
+    # Strip 0x00-0x08, 0x0B-0x0C, 0x0E-0x1F (keep \t=0x09, \n=0x0A, \r=0x0D);
+    # also strip 0x7F (DEL). Applied to entire payload — strings only since
+    # JSON structural chars are all printable ASCII.
+    sanitized = _re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", payload)
+    if sanitized != payload:
+        for strict_flag, slabel in [(True, "strict"), (False, "lax")]:
+            try:
+                return (
+                    _json.loads(sanitized, strict=strict_flag),
+                    f"sanitized-controlchar-{slabel}",
+                )
+            except _json.JSONDecodeError as e:
+                last_err = e
+    # Strategy 1e (NEW): raw_decode from start with strict=False — handles
+    # trailing garbage after a complete JSON object (e.g. preamble prose +
+    # complete JSON, or complete JSON + post-amble notes). Returns the first
+    # parseable object and ignores the tail.
+    try:
+        obj, _end = _json.JSONDecoder(strict=False).raw_decode(payload)
+        return obj, "raw-decode-from-start"
+    except _json.JSONDecodeError as e:
+        last_err = e
+    # Strategy 1f (NEW): regex-based restart-point scan — handles Opus
+    # restarting JSON mid-stream after prose interruption (e.g. "...identical
+    # name.\n\n{\n"class_id": ...}"). Try each candidate restart point from
+    # LATEST to EARLIEST, since the later restart is usually the complete one.
+    # Pattern catches `{ <ws>* "<keyname>" <ws>* :` allowing any whitespace.
+    if expected_start_pattern:
+        # Build a regex from the literal expected pattern by allowing
+        # whitespace at all the `{`/`:` interior positions.
+        # E.g. `{"class_id":` becomes `\{\s*"class_id"\s*:`
+        esp = expected_start_pattern
+        if esp.startswith("{") and ":" in esp:
+            key = esp[esp.index('"') + 1 : esp.rindex('"')]
+            regex = _re.compile(r"\{\s*\"" + _re.escape(key) + r"\"\s*:")
+            candidates = [m.start() for m in regex.finditer(payload)]
+            # Try from LATEST candidate to earliest. raw_decode at each.
+            for idx in reversed(candidates):
+                for strict_flag, slabel in [(False, "lax"), (True, "strict")]:
+                    try:
+                        obj, _end = _json.JSONDecoder(strict=strict_flag).raw_decode(
+                            payload, idx
+                        )
+                        return obj, f"raw-decode-restart-{slabel} (at char {idx})"
+                    except _json.JSONDecodeError as e:
+                        last_err = e
+    # Strategy 2/3/4: trailing-bracket appends (try with strict=False too)
     for suffix, label in [
         ("}", "trailing-brace"),
         ("]}", "trailing-array-brace"),
         ('"}]}', "trailing-string-array-brace"),
     ]:
-        try:
-            return _json.loads(payload + suffix), f"appended-{label}"
-        except _json.JSONDecodeError as e:
-            last_err = e
+        for strict_flag, slabel in [(True, ""), (False, "-lax")]:
+            try:
+                return (
+                    _json.loads(payload + suffix, strict=strict_flag),
+                    f"appended-{label}{slabel}",
+                )
+            except _json.JSONDecodeError as e:
+                last_err = e
     # Strategy 5/6/7: unterminated-string at the tail (Opus emitted a string
     # value without a closing `"` before the final `}`). Insert `"` BEFORE the
     # trailing close brackets.
@@ -316,19 +430,29 @@ def _robust_json_parse(payload, expected_start_pattern=None):
         last = payload.rfind(expected_start_pattern)
         if last > 0:
             restart_payload = payload[last:]
-            for suffix, label in [
-                ("", "direct"),
-                ("}", "trailing-brace"),
-                ("]}", "trailing-array-brace"),
-                ('"}]}', "trailing-string-array-brace"),
+            # Apply sanitization variant alongside raw restart payload so a
+            # control-char inside the restart segment is also handled.
+            sanitized_restart = _re.sub(
+                r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", restart_payload
+            )
+            for src_payload, src_label in [
+                (restart_payload, "raw"),
+                (sanitized_restart, "sanitized"),
             ]:
-                try:
-                    return (
-                        _json.loads(restart_payload + suffix),
-                        f"rfind-restart-{label} (dropped {last} chars)",
-                    )
-                except _json.JSONDecodeError as e:
-                    last_err = e
+                for suffix, label in [
+                    ("", "direct"),
+                    ("}", "trailing-brace"),
+                    ("]}", "trailing-array-brace"),
+                    ('"}]}', "trailing-string-array-brace"),
+                ]:
+                    for strict_flag, slabel in [(True, ""), (False, "-lax")]:
+                        try:
+                            return (
+                                _json.loads(src_payload + suffix, strict=strict_flag),
+                                f"rfind-restart-{src_label}-{label}{slabel} (dropped {last} chars)",
+                            )
+                        except _json.JSONDecodeError as e:
+                            last_err = e
     raise last_err
 
 
@@ -1770,18 +1894,18 @@ def run_opus_routing(n_batches=None, batch_size=BATCH_SIZE):
         prompt = make_routing_prompt(batch, catalog, hc_counts, mc_counts, na, sentinel)
         print(f"  prompt: {len(prompt)} chars (~{len(prompt) // 4} tokens)", flush=True)
 
+        label = f"routing_batch_{batch_idx:04d}"
+        partial = _partial_path(label)
         json_part, dur, _, err = M.streaming_call_with_validation(
             prompt,
             sentinel,
-            f"routing_batch_{batch_idx:04d}",
-            PARTIAL_FP,
+            label,
+            partial,
             model="claude-opus-4-7",
         )
         if err or not json_part:
             print(f"  BATCH FAILED ({err}); skipping; partial preserved", flush=True)
-            M._preserve_failed_partial(
-                PARTIAL_FP, batch_idx, reason=f"routing_stream_err={err}"
-            )
+            _mark_partial_failed(partial, reason=f"routing_stream_err={err}")
             continue
         try:
             parsed, method = _robust_json_parse(json_part, '{"assignments":[')
@@ -1789,9 +1913,7 @@ def run_opus_routing(n_batches=None, batch_size=BATCH_SIZE):
                 print(f"  RECOVERED via {method}", flush=True)
         except json.JSONDecodeError as e:
             print(f"  JSON parse unrecoverable: {e}", flush=True)
-            M._preserve_failed_partial(
-                PARTIAL_FP, batch_idx, reason=f"routing_unrecoverable={e}"
-            )
+            _mark_partial_failed(partial, reason=f"routing_unrecoverable={e}")
             continue
 
         catalog, resolved, forced, dropped_hc, dropped_mc = _resolve_and_enforce(
@@ -1951,7 +2073,7 @@ def run_opus_routing_parallel(n_batches=None, n_workers=5, batch_size=BATCH_SIZE
             prompt = make_routing_prompt(
                 batch, catalog, hc_counts, mc_counts, na, sentinel
             )
-            partial = STEP1 / f"phase2_routing_partial_w{wi}.txt"
+            partial = _partial_path(f"routing_batch_{bi:04d}_w{wi}")
             worker_args.append(
                 {
                     "wi": wi,
@@ -2024,9 +2146,7 @@ def run_opus_routing_parallel(n_batches=None, n_workers=5, batch_size=BATCH_SIZE
                     f"  batch_{batch_idx:04d} FAILED: {err}; preserving partial",
                     flush=True,
                 )
-                M._preserve_failed_partial(
-                    wa["partial"], batch_idx, reason=f"routing_stream_err={err}"
-                )
+                _mark_partial_failed(wa["partial"], reason=f"routing_stream_err={err}")
                 skipped += 1
                 continue
             try:
@@ -2037,9 +2157,7 @@ def run_opus_routing_parallel(n_batches=None, n_workers=5, batch_size=BATCH_SIZE
                 print(
                     f"  batch_{batch_idx:04d} JSON parse unrecoverable: {e}", flush=True
                 )
-                M._preserve_failed_partial(
-                    wa["partial"], batch_idx, reason=f"routing_unrecoverable={e}"
-                )
+                _mark_partial_failed(wa["partial"], reason=f"routing_unrecoverable={e}")
                 skipped += 1
                 continue
 
@@ -2163,22 +2281,26 @@ def run_consolidation():
         catalog, accumulated, hc_counts, mc_counts, sentinel
     )
     print(f"  prompt: {len(prompt)} chars (~{len(prompt) // 4} tokens)", flush=True)
+    label = f"consolidation_{consolidation_idx:03d}"
+    partial = _partial_path(label)
     json_part, dur, _, err = M.streaming_call_with_validation(
         prompt,
         sentinel,
-        f"consolidation_{consolidation_idx:03d}",
-        PARTIAL_FP,
+        label,
+        partial,
         model="claude-opus-4-7",
     )
     if err or not json_part:
-        print(f"CONSOLIDATION FAILED ({err})", flush=True)
+        print(f"CONSOLIDATION FAILED ({err}); partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"consolidation_stream_err={err}")
         return
     try:
         parsed, method = _robust_json_parse(json_part, '{"merges_applied":')
         if method != "direct":
             print(f"  RECOVERED via {method}", flush=True)
     except json.JSONDecodeError as e:
-        print(f"JSON parse unrecoverable: {e}", flush=True)
+        print(f"JSON parse unrecoverable: {e}; partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"consolidation_unrecoverable={e}")
         return
 
     # Save raw consolidation output
@@ -2470,22 +2592,26 @@ def run_final_audit():
         f"final audit prompt: {len(prompt)} chars (~{len(prompt) // 4} tokens)",
         flush=True,
     )
+    label = "final_audit"
+    partial = _partial_path(label)
     json_part, dur, _, err = M.streaming_call_with_validation(
         prompt,
         sentinel,
-        "final_audit",
-        PARTIAL_FP,
+        label,
+        partial,
         model="claude-opus-4-7",
     )
     if err or not json_part:
-        print(f"FINAL AUDIT FAILED ({err})", flush=True)
+        print(f"FINAL AUDIT FAILED ({err}); partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"final_audit_stream_err={err}")
         return
     try:
         parsed, method = _robust_json_parse(json_part, '{"singleton_decisions":')
         if method != "direct":
             print(f"  RECOVERED via {method}", flush=True)
     except json.JSONDecodeError as e:
-        print(f"JSON parse unrecoverable: {e}", flush=True)
+        print(f"JSON parse unrecoverable: {e}; partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"final_audit_unrecoverable={e}")
         return
 
     M.atomic_write_json(
@@ -2657,22 +2783,26 @@ def run_axes_review(sample_n=50):
         f"axes_review #{axes_idx:03d}: sampling {sample_n} assignments, prompt {len(prompt)} chars",
         flush=True,
     )
+    label = f"axes_review_{axes_idx:03d}"
+    partial = _partial_path(label)
     json_part, dur, _, err = M.streaming_call_with_validation(
         prompt,
         sentinel,
-        f"axes_review_{axes_idx:03d}",
-        PARTIAL_FP,
+        label,
+        partial,
         model="claude-opus-4-7",
     )
     if err or not json_part:
-        print(f"axes_review failed: {err}", flush=True)
+        print(f"axes_review failed: {err}; partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"axes_review_stream_err={err}")
         return
     try:
         parsed, method = _robust_json_parse(json_part, '{"axis_corrections":')
         if method != "direct":
             print(f"  RECOVERED via {method}", flush=True)
     except json.JSONDecodeError as e:
-        print(f"JSON parse unrecoverable: {e}", flush=True)
+        print(f"JSON parse unrecoverable: {e}; partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"axes_review_unrecoverable={e}")
         return
 
     out_dir = STEP1 / "phase2_routing_axes_reviews"
@@ -3141,22 +3271,26 @@ def run_misfit_review(
     )
     print(f"  prompt: {len(prompt)} chars (~{len(prompt) // 4} tokens)", flush=True)
 
+    label = f"misfit_review_{mr_idx:03d}"
+    partial = _partial_path(label)
     json_part, dur, _, err = M.streaming_call_with_validation(
         prompt,
         sentinel,
-        f"misfit_review_{mr_idx:03d}",
-        PARTIAL_FP,
+        label,
+        partial,
         model="claude-opus-4-7",
     )
     if err or not json_part:
-        print(f"misfit_review failed: {err}", flush=True)
+        print(f"misfit_review failed: {err}; partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"misfit_review_stream_err={err}")
         return
     try:
         parsed, method = _robust_json_parse(json_part, '{"decisions":')
         if method != "direct":
             print(f"  RECOVERED via {method}", flush=True)
     except json.JSONDecodeError as e:
-        print(f"JSON parse unrecoverable: {e}", flush=True)
+        print(f"JSON parse unrecoverable: {e}; partial preserved", flush=True)
+        _mark_partial_failed(partial, reason=f"misfit_review_unrecoverable={e}")
         return
 
     out_dir = STEP1 / "phase2_routing_misfit_reviews"
@@ -3356,14 +3490,38 @@ def make_class_sweep_prompt(
     node_attrs,
     paths_idx,
     sentinel,
+    prior_chunk_proposals=None,
 ):
     """For one class, ask Opus to review every member and flag misfits.
 
     class_kind in {"HC", "MC"}.
     member_rows: full assignment rows for paths in this class.
+    prior_chunk_proposals: list of dicts {name, description, member_count}
+      collected from earlier chunks of THIS class sweep. Surfaced to Opus
+      so chunk N+1 can REUSE chunk N's proposed sub-class names instead of
+      coining a near-duplicate. Without this, chunked sweeps fan out into
+      n_chunks × n_sub_families slightly-different names that then must be
+      merged downstream.
     """
     watch_str = _load_watch_items() or "(no watch items recorded yet)"
     sub_channels_str = _load_surfaced_sub_channels_for_prompt()
+    if prior_chunk_proposals:
+        prior_lines = [
+            "The following sub-classes were ALREADY PROPOSED by EARLIER",
+            "CHUNKS of this same class sweep. If a member of THIS chunk fits",
+            "one of these, REUSE the EXACT name verbatim (do NOT create a",
+            "near-duplicate name). Only propose a genuinely NEW name if no",
+            "prior proposal matches.",
+            "",
+        ]
+        for p in prior_chunk_proposals:
+            n = p.get("member_count", "?")
+            desc = (p.get("description") or "")[:140]
+            prior_lines.append(f'  - "{p["name"]}" (n={n} from prior chunks)')
+            prior_lines.append(f"      {desc}")
+        prior_chunk_str = "\n".join(prior_lines)
+    else:
+        prior_chunk_str = "(no prior chunks for this class sweep)"
     lines = []
     for r in member_rows:
         p = paths_idx.get(r["path_id"])
@@ -3428,6 +3586,13 @@ ALL OTHER CLASSES (potential reassignment targets)
 ============================================================
 
 {all_classes_str}
+
+============================================================
+PROPOSED SUB-CLASSES FROM EARLIER CHUNKS OF THIS SWEEP
+(reuse these names verbatim if a member fits)
+============================================================
+
+{prior_chunk_str}
 
 ============================================================
 CURRENT MEMBERS OF THIS CLASS ({len(member_rows)} paths)
@@ -3593,6 +3758,10 @@ def run_final_misfit_sweep(chunk_size=100, max_classes=None, class_ids=None):
             continue
         # Chunk if large
         n_chunks = (len(members) + chunk_size - 1) // chunk_size
+        # Accumulator: sub-class names proposed in earlier chunks of THIS class
+        # sweep, so chunk N+1 can reuse chunk N's names instead of coining
+        # near-duplicates (the chunking-artifact bug observed on MC015).
+        prior_chunk_proposals = []  # list of {name, description, member_count}
         for ci in range(n_chunks):
             chunk = members[ci * chunk_size : (ci + 1) * chunk_size]
             sentinel = uuid.uuid4().hex[:12]
@@ -3605,33 +3774,86 @@ def run_final_misfit_sweep(chunk_size=100, max_classes=None, class_ids=None):
                 na,
                 paths_idx,
                 sentinel,
+                prior_chunk_proposals=prior_chunk_proposals,
             )
             print(
                 f"sweep #{sweep_idx} {class_kind} {cid} chunk {ci + 1}/{n_chunks} "
                 f"({len(chunk)} paths, {len(prompt)} chars) ...",
                 flush=True,
             )
+            label = f"sweep_{sweep_idx:03d}_{cid}_c{ci:02d}"
+            out_fp = (
+                out_dir / f"sweep_{sweep_idx:03d}_{class_kind}_{cid}_c{ci:02d}.json"
+            )
+            # Idempotent: if chunk output already exists (e.g. from a manual
+            # recovery or partial prior run), skip the stream call and feed
+            # its decisions into the apply-phase queue. Saves tokens AND
+            # preserves the original verdicts.
+            if out_fp.exists():
+                try:
+                    existing = json.loads(out_fp.read_text(encoding="utf-8"))
+                    parsed = existing.get("raw_output") or {}
+                    print(
+                        f"  [idempotent skip] chunk JSON already exists: "
+                        f"{out_fp.name} ({len(parsed.get('decisions', []))} decisions)",
+                        flush=True,
+                    )
+                    for d in parsed.get("decisions", []):
+                        d["_class_kind"] = class_kind
+                        d["_class_id"] = cid
+                        all_decisions.append(d)
+                    # Also seed prior_chunk_proposals from this chunk's splits
+                    for d in parsed.get("decisions", []):
+                        if d.get("verdict") == "SPLIT_OUT":
+                            sp = d.get("split_proposal") or {}
+                            name = sp.get("new_class_name")
+                            if not name:
+                                continue
+                            existing_entry = next(
+                                (p for p in prior_chunk_proposals if p["name"] == name),
+                                None,
+                            )
+                            if existing_entry:
+                                existing_entry["member_count"] += 1
+                            else:
+                                prior_chunk_proposals.append(
+                                    {
+                                        "name": name,
+                                        "description": sp.get(
+                                            "new_class_description", ""
+                                        ),
+                                        "member_count": 1,
+                                    }
+                                )
+                    n_class_calls += 1
+                    continue
+                except (json.JSONDecodeError, OSError) as e:
+                    print(
+                        f"  [idempotent skip FAILED to load {out_fp.name}: {e}; "
+                        f"re-streaming",
+                        flush=True,
+                    )
+            partial = _partial_path(label)
             json_part, dur, _, err = M.streaming_call_with_validation(
                 prompt,
                 sentinel,
-                f"sweep_{sweep_idx:03d}_{cid}_c{ci:02d}",
-                PARTIAL_FP,
+                label,
+                partial,
                 model="claude-opus-4-7",
             )
             if err or not json_part:
-                print(f"  FAILED: {err}", flush=True)
+                print(f"  FAILED: {err}; partial preserved", flush=True)
+                _mark_partial_failed(partial, reason=f"sweep_stream_err={err}")
                 continue
             try:
                 parsed, method = _robust_json_parse(json_part, '{"class_id":')
                 if method != "direct":
                     print(f"  RECOVERED via {method}", flush=True)
             except json.JSONDecodeError as e:
-                print(f"  JSON parse unrecoverable: {e}", flush=True)
+                print(f"  JSON parse unrecoverable: {e}; partial preserved", flush=True)
+                _mark_partial_failed(partial, reason=f"sweep_unrecoverable={e}")
                 continue
             # Save chunk output
-            out_fp = (
-                out_dir / f"sweep_{sweep_idx:03d}_{class_kind}_{cid}_c{ci:02d}.json"
-            )
             M.atomic_write_json(
                 out_fp,
                 {
@@ -3649,6 +3871,37 @@ def run_final_misfit_sweep(chunk_size=100, max_classes=None, class_ids=None):
                 d["_class_kind"] = class_kind
                 d["_class_id"] = cid
                 all_decisions.append(d)
+            # Accumulate SPLIT_OUT new-class proposals for downstream chunks
+            # of THIS sweep so chunk N+1 sees chunk N's coined names.
+            chunk_new_class_counts = {}
+            for d in parsed.get("decisions", []):
+                if d.get("verdict") == "SPLIT_OUT":
+                    sp = d.get("split_proposal") or {}
+                    name = sp.get("new_class_name")
+                    if not name:
+                        continue
+                    if name not in chunk_new_class_counts:
+                        chunk_new_class_counts[name] = {
+                            "description": sp.get("new_class_description", ""),
+                            "count": 0,
+                        }
+                    chunk_new_class_counts[name]["count"] += 1
+            for name, info in chunk_new_class_counts.items():
+                # Merge into prior_chunk_proposals; if name already there from
+                # an earlier chunk, just increment its count.
+                existing = next(
+                    (p for p in prior_chunk_proposals if p["name"] == name), None
+                )
+                if existing:
+                    existing["member_count"] += info["count"]
+                else:
+                    prior_chunk_proposals.append(
+                        {
+                            "name": name,
+                            "description": info["description"],
+                            "member_count": info["count"],
+                        }
+                    )
             # Persist any surfaced sub-channels Opus emitted for this class
             n_subs = _append_surfaced_sub_channels(
                 parsed, source_label=f"final_sweep_{sweep_idx:03d}_{cid}"
