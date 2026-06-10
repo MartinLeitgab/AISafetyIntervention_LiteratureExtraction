@@ -258,7 +258,7 @@ class KGJudge:
                         method="POST",
                         url="/v1/chat/completions",
                         body={
-                            "model": "gpt-4-vision-preview",
+                            "model": "gpt-5-nano",
                             "messages": [
                                 {
                                     "role": "system",
@@ -967,7 +967,7 @@ class KGJudge:
                     aliases=[add_node.name],
                     type=add_node.type,
                     description="Auto-generated node based on validation",
-                    concept_category="concept",
+                    concept_category=add_node.concept_category,
                     intervention_lifecycle=None,
                     intervention_maturity=None,
                     intervention_lifecycle_rationale=None,
@@ -978,10 +978,10 @@ class KGJudge:
             else:
                 final_nodes[add_node.name] = GraphNode(
                     name=add_node.name,
-                    aliases=[add_node.aliases],
+                    aliases=add_node.aliases,
                     type=add_node.type,
                     description="Auto-generated node based on validation",
-                    concept_category=add_node.concept_category,
+                    concept_category=None,
                     intervention_lifecycle=add_node.intervention_lifecycle
                     if add_node.intervention_lifecycle
                     else 1,
@@ -1040,7 +1040,12 @@ class KGJudge:
             edges_to_delete[d.data.source_node_name].add(d.data.target_node_name)
 
         out_final_edges: List[Dict[str, Any]] = []
-
+        # TODO
+        # logic for merging edges needs to land here
+        # kill self loops after merging
+        # eliminate when source and sink nodes are same
+        # ensure merging list is disjoint;  A <-- B ; B <-- C should not get confusing.
+        # be careful when adding new edges that it should't point to a node which gets merged into something else future
         for e in final_edges:
             if e.source_node == e.target_node:
                 continue
