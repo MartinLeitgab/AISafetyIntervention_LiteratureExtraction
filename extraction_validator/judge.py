@@ -15,7 +15,17 @@ from pathlib import Path
 import shutil
 import signal
 import tempfile
-from typing import Any, List, NotRequired, Optional, Tuple, TypedDict, Literal, Dict, cast
+from typing import (
+    Any,
+    List,
+    NotRequired,
+    Optional,
+    Tuple,
+    TypedDict,
+    Literal,
+    Dict,
+    cast,
+)
 from datetime import datetime
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -36,7 +46,7 @@ from extraction_validator.utilities import (
     get_last_json_block,
     unknown_judge_request,
     upload_and_create_batch,
-    AnthropicContent
+    AnthropicContent,
 )
 from extraction_validator.schema import (
     GPT_Assessment,
@@ -50,7 +60,9 @@ from fire import Fire  # type: ignore[reportMissingImports, reportMissingTypeStu
 
 from intervention_graph_creation.src.local_graph_extraction.core.edge import GraphEdge
 from intervention_graph_creation.src.local_graph_extraction.core.node import GraphNode
-from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import PaperSchema  # type: ignore[reportMissingImports, reportMissingTypeStubs]
+from intervention_graph_creation.src.local_graph_extraction.core.paper_schema import (
+    PaperSchema,
+)  # type: ignore[reportMissingImports, reportMissingTypeStubs]
 import anthropic
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 from anthropic.types.messages.message_batch import MessageBatch
@@ -96,13 +108,17 @@ class FinalGraphMetaError(TypedDict):
 #     source_hash: str
 #     validation_timestamp: Optional[str]
 
+
 class FinalGraphMeta(TypedDict):
     key: str
     value: str
+
+
 class Final_Knowledge_Graph(TypedDict):
     nodes: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
     meta: List[FinalGraphMeta]
+
 
 class JudgeReport(TypedDict):
     final_graph: Final_Knowledge_Graph
@@ -130,7 +146,6 @@ class AssessmentFailure(TypedDict):
     error_code: JudgeErrorCode
 
 
-
 GPT_Assessment_Result = AssessmentSuccess | AssessmentFailure
 
 
@@ -145,9 +160,11 @@ class JudgeInput:
 class OpenAIBatch:
     batch: Batch
 
+
 @dataclass
 class AnthropicBatch:
     message_batch: MessageBatch
+
 
 @dataclass
 class ReadyBatch:
@@ -155,16 +172,19 @@ class ReadyBatch:
     batch: AnthropicBatch | OpenAIBatch
     result: JudgeBatchResult
     is_debug: bool = False
+
     def get_status_string(self) -> str:
         if isinstance(self.batch, OpenAIBatch):
             return self.batch.batch.status
         else:
             return self.batch.message_batch.processing_status
 
+
 @dataclass
 class ReadyBatchError:
     result: JudgeBatchResult
     error: Exception
+
 
 @dataclass
 class DebugReadyBatch:
@@ -172,10 +192,12 @@ class DebugReadyBatch:
     ready: bool = True
     is_debug: bool = False
 
+
 SYSTEM_PROMPT = """You are KG-Judge, a precise and rigorous auditor for knowledge graphs. Always return valid JSON in the exact format requested."""
 
+
 class KGJudge:
-    def __init__(self, type: Literal["OpenAI" , "Anthropic"] , output_dir: Path):
+    def __init__(self, type: Literal["OpenAI", "Anthropic"], output_dir: Path):
         """Initialize KG-Judge with OpenAI API client."""
         # self.client = AsyncOpenAI()
         if type == "OpenAI":
@@ -194,12 +216,60 @@ class KGJudge:
         self.running_batch_ids: List[str] = []
         self.output_dir = output_dir
         self.cancelled = False
-        loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, self._cancel)
 
     def _cancel(self):
         print("Got your ctrl+c, cancelling..., please wait for cleanup...")
         self.cancelled = True
+
+    def _build_requests(self, inputs: List[JudgeInput]) -> List[JudgeRequest]:
+        """Build JudgeRequest objects for a list of inputs without side effects."""
+        MAX_TOKENS = 32_000
+        all_requests: List[JudgeRequest] = []
+        for i, judge_input in enumerate(inputs):
+            validation_prompt = create_validation_prompt(
+                judge_input.original_text, judge_input.kg_output
+            )
+            custom_id = f"request-{i}"
+            request: OpenAICompletionsRequest | AnthropicCompletionsRequest
+            if isinstance(self.client, AsyncOpenAI):
+                request = OpenAICompletionsRequest(
+                    request=CompletionsRequest(
+                        custom_id=custom_id,
+                        method="POST",
+                        url="/v1/chat/completions",
+                        body={
+                            "model": "gpt-5-nano",
+                            "messages": [
+                                {"role": "system", "content": SYSTEM_PROMPT},
+                                {"role": "user", "content": validation_prompt},
+                            ],
+                            "temperature": 1.0,
+                            "max_completion_tokens": MAX_TOKENS,
+                            "response_format": {"type": "json_object"},
+                        },
+                    )
+                )
+            else:
+                request = AnthropicCompletionsRequest(
+                    request=MessageCreateParamsNonStreaming(
+                        model="claude-haiku-4-5",
+                        max_tokens=MAX_TOKENS,
+                        system=SYSTEM_PROMPT,
+                        messages=[
+                            {"role": "user", "content": validation_prompt},
+                        ],
+                    )
+                )
+            all_requests.append(
+                JudgeRequest(
+                    request=request,
+                    original_text=judge_input.original_text,
+                    kg_output=judge_input.kg_output,
+                    data_source=judge_input.data_source,
+                    custom_id=custom_id,
+                )
+            )
+        return all_requests
 
     async def judge_knowledge_graph_batch(
         self,
@@ -217,64 +287,18 @@ class KGJudge:
         Returns:
             List of JudgeReports for each input
         """
+        loop = asyncio.get_running_loop()
+        loop.add_signal_handler(signal.SIGINT, self._cancel)
 
-        # order is not guaranteed, so let's create a map
-        # of custom_id to batch request
-        custom_id_to_request: Dict[str, JudgeRequest] = {}
-        all_requests: List[JudgeRequest] = []
-        for i, judge_input in enumerate(inputs):
-            validation_prompt = create_validation_prompt(
-                judge_input.original_text, judge_input.kg_output
-            )
-            custom_id = f"request-{i}"
-            request: OpenAICompletionsRequest | AnthropicCompletionsRequest
-            MAX_TOKENS = 32_000
-            if isinstance(self.client, AsyncOpenAI):
-                request = OpenAICompletionsRequest(request=CompletionsRequest(
-                    custom_id=custom_id,
-                    method="POST",
-                    url="/v1/chat/completions",
-                    body={
-                        "model": "gpt-4-vision-preview",
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": SYSTEM_PROMPT,
-                            },
-                            {"role": "user", "content": validation_prompt},
-                        ],
-                        # "temperature": 0.1,
-                        "temperature": 1.0,
-                        # "max_tokens": 4000,
-                        # "max_completion_tokens": 16_000,
-                        "max_completion_tokens": MAX_TOKENS,
-                        "response_format": {"type": "json_object"},
-                    },
-                ))
-            else:
-                request = AnthropicCompletionsRequest(request=MessageCreateParamsNonStreaming(
-                    model="claude-haiku-4-5",
-                    max_tokens=MAX_TOKENS,
-                    system=SYSTEM_PROMPT,
-                    messages=[
-                        {"role": "user", "content": validation_prompt},
-                    ],
-                    
-                ))
-            judge_request = JudgeRequest(
-                request=request,
-                original_text=judge_input.original_text,
-                kg_output=judge_input.kg_output,
-                data_source=judge_input.data_source,
-                custom_id=custom_id,
-            )
-            all_requests.append(judge_request)
-            custom_id_to_request[custom_id] = judge_request
+        all_requests = self._build_requests(inputs)
+        custom_id_to_request: Dict[str, JudgeRequest] = {
+            r.custom_id: r for r in all_requests
+        }
         batch_files: List[JudgeBatch] = []
         for i, batch_start in enumerate(range(0, len(all_requests), batch_size)):
             batch = all_requests[batch_start : batch_start + batch_size]
             if isinstance(self.client, AsyncOpenAI):
-                batch_file_path = self.temp_dir / f"batch_requests_{i+1}.jsonl"
+                batch_file_path = self.temp_dir / f"batch_requests_{i + 1}.jsonl"
                 with open(batch_file_path, "w") as f:
                     for req in batch:
                         f.write(json.dumps(req.request) + "\n")
@@ -284,11 +308,9 @@ class KGJudge:
                 JudgeBatch(file_path=str(batch_file_path), requests=batch)
             )
         total_amount_of_batches = len(batch_files)
-        first_slice_of_batches = batch_files[
-            0 : how_many_batches_in_flight_at_once
-        ]
+        first_slice_of_batches = batch_files[0:how_many_batches_in_flight_at_once]
         batch_files = batch_files[how_many_batches_in_flight_at_once:]
-        
+
         # Immediately upload each batch after it is written
         batches_in_flight = await asyncio.gather(
             *(
@@ -303,13 +325,18 @@ class KGJudge:
             if len(batches_in_flight) == 0 or self.cancelled:
                 break
             batches = await asyncio.gather(
-                *[self.is_batch_ready_for_processing(batch_result) for batch_result in batches_in_flight]
+                *[
+                    self.is_batch_ready_for_processing(batch_result)
+                    for batch_result in batches_in_flight
+                ]
             )
-            next_batches_in_flight : List[JudgeBatchResult] = []
+            next_batches_in_flight: List[JudgeBatchResult] = []
             for r in batches:
                 if isinstance(r, ReadyBatchError):
                     batch_result = r.result
-                    print(f"Batch {batch_result.batch_id}: encountered error: {str(r.error)}")
+                    print(
+                        f"Batch {batch_result.batch_id}: encountered error: {str(r.error)}"
+                    )
                     self.save_results(
                         self._error_result(
                             f"Error while checking batch status: {str(r.error)}",
@@ -325,28 +352,40 @@ class KGJudge:
                     continue
                 # A debug batch is None
                 if isinstance(r, DebugReadyBatch):
-                    with open("extraction_validator/debug_batch_results/1.jsonl", "r") as f:
-                        result_content = OpenAIBatchOutput(content=f.read(), type="content")
+                    with open(
+                        "extraction_validator/debug_batch_results/1.jsonl", "r"
+                    ) as f:
+                        result_content = OpenAIBatchOutput(
+                            content=f.read(), type="content"
+                        )
                 else:
                     print(f"Batch {batch_result.batch_id}: {r.get_status_string()}")
-                    result_content = await self.process_completed_batch(batch_result, r.batch)
-                self.process_result_content(custom_id_to_request, batch_result, result_content)
+                    result_content = await self.process_completed_batch(
+                        batch_result, r.batch
+                    )
+                self.process_result_content(
+                    custom_id_to_request, batch_result, result_content
+                )
                 if len(batch_files) > 0 and not self.cancelled:
                     new_judge_batch = batch_files.pop(0)
                     try:
-                        new_batch = await upload_and_create_batch(self.client, new_judge_batch)
+                        new_batch = await upload_and_create_batch(
+                            self.client, new_judge_batch
+                        )
                         next_batches_in_flight.append(new_batch)
                     except Exception as e:
                         self.save_results(
                             self._error_result(
-                                f"Could not upload and create new batch",
+                                "Could not upload and create new batch",
                                 str(e),
                                 "http_error",
                                 new_judge_batch.requests,
                             )
                         )
             batches_in_flight = next_batches_in_flight
-            print(f"\t{len(batches_in_flight)} in flight\n\t{len(batch_files)} remaining\n\t{total_amount_of_batches - (len(batches_in_flight) + len(batch_files))} completed\n\t{total_amount_of_batches} total")
+            print(
+                f"\t{len(batches_in_flight)} in flight\n\t{len(batch_files)} remaining\n\t{total_amount_of_batches - (len(batches_in_flight) + len(batch_files))} completed\n\t{total_amount_of_batches} total"
+            )
             await asyncio.sleep(10)
 
         if self.cancelled:
@@ -369,8 +408,10 @@ class KGJudge:
                         "Cancelled",
                         "Cancelled",
                         "batch_cancelled",
-                        batch_result.batch.requests
-                ))
+                        batch_result.batch.requests,
+                    )
+                )
+
     def save_results(self, results: List[JudgeReport]):
         """Save the judge reports to JSON files in the specified output directory."""
         for report in results:
@@ -394,7 +435,9 @@ class KGJudge:
                     line,
                     "unknown_custom_id",
                     [
-                        custom_id_to_request.get(custom_id, unknown_judge_request(custom_id))
+                        custom_id_to_request.get(
+                            custom_id, unknown_judge_request(custom_id)
+                        )
                     ],
                 ),
             )
@@ -408,8 +451,11 @@ class KGJudge:
                 ),
             )
 
-
-    def _validate_and_save_assessment(self, custom_id_to_request: Dict[str, JudgeRequest], gpt_assessment: GPT_Assessment_Result):
+    def _validate_and_save_assessment(
+        self,
+        custom_id_to_request: Dict[str, JudgeRequest],
+        gpt_assessment: GPT_Assessment_Result,
+    ):
         if gpt_assessment["type"] == "failure":
             self.save_results(
                 self._error_result(
@@ -425,9 +471,7 @@ class KGJudge:
                 ),
             )
             return
-        judge_request = custom_id_to_request.get(
-            gpt_assessment["custom_id"]
-        )
+        judge_request = custom_id_to_request.get(gpt_assessment["custom_id"])
         if judge_request is None:
             # this should not happen
             self.save_results(
@@ -441,9 +485,7 @@ class KGJudge:
             return
 
         # Perform local validation checks
-        local_validation = self._perform_local_validation(
-            judge_request.kg_output
-        )
+        local_validation = self._perform_local_validation(judge_request.kg_output)
         combined_report = self._combine_validations(
             gpt_assessment,
             local_validation,
@@ -453,7 +495,14 @@ class KGJudge:
         )
         self.save_results([combined_report])
 
-    def process_result_content(self, custom_id_to_request: Dict[str, JudgeRequest], batch_result: JudgeBatchResult, result_content: OpenAIBatchOutput | AnthropicBatchOutput | EverythingInTheBatchHasAnError):
+    def process_result_content(
+        self,
+        custom_id_to_request: Dict[str, JudgeRequest],
+        batch_result: JudgeBatchResult,
+        result_content: OpenAIBatchOutput
+        | AnthropicBatchOutput
+        | EverythingInTheBatchHasAnError,
+    ):
         if result_content.type == "error":
             self.save_results(
                 self._error_result(
@@ -465,7 +514,7 @@ class KGJudge:
             )
             return
         try:
-            if isinstance(result_content, OpenAIBatchOutput ):
+            if isinstance(result_content, OpenAIBatchOutput):
                 if result_content.error_content is not None:
                     for line in result_content.error_content.splitlines():
                         response_text = line.strip()
@@ -484,17 +533,22 @@ class KGJudge:
                         # Skip empty lines
                         continue
                     gpt_assessment = self._parse_openai_judge_response(response_text)
-                    self._validate_and_save_assessment(custom_id_to_request, gpt_assessment)
+                    self._validate_and_save_assessment(
+                        custom_id_to_request, gpt_assessment
+                    )
                 return
             for error_result in result_content.error_content:
-                 error_result.content
-                 self.save_results(
+                error_result.content
+                self.save_results(
                     self._error_result(
                         f"Unknown error in gpt response, custom_id: {error_result.request_id}. Got this error:",
                         error_result.content,
                         "unknown_custom_id",
                         [
-                            custom_id_to_request.get(error_result.request_id, unknown_judge_request(error_result.request_id))
+                            custom_id_to_request.get(
+                                error_result.request_id,
+                                unknown_judge_request(error_result.request_id),
+                            )
                         ],
                     ),
                 )
@@ -504,7 +558,7 @@ class KGJudge:
         except Exception as e:
             self.save_results(
                 self._error_result(
-                    f"Could not process result content",
+                    "Could not process result content",
                     str(e),
                     "process_result_content_error",
                     batch_result.batch.requests,
@@ -512,24 +566,41 @@ class KGJudge:
             )
             return
 
-    async def is_batch_ready_for_processing(self, batch_result: JudgeBatchResult) -> ReadyBatch | DebugReadyBatch | ReadyBatchError:
+    async def is_batch_ready_for_processing(
+        self, batch_result: JudgeBatchResult
+    ) -> ReadyBatch | DebugReadyBatch | ReadyBatchError:
         if batch_result.is_debug:
             return DebugReadyBatch(result=batch_result)
         try:
             if isinstance(self.client, AsyncOpenAI):
                 batch = await self.client.batches.retrieve(batch_result.batch_id)
                 print(f"Batch {batch_result.batch_id} status: {batch.status}")
-            
-                return ReadyBatch(ready=batch.status in ["completed", "failed", "expired", "cancelled"], batch=OpenAIBatch(batch=batch), result=batch_result)
+
+                return ReadyBatch(
+                    ready=batch.status
+                    in ["completed", "failed", "expired", "cancelled"],
+                    batch=OpenAIBatch(batch=batch),
+                    result=batch_result,
+                )
             else:
-                message_batch = self.client.messages.batches.retrieve(batch_result.batch_id)
-                print(f"Batch {batch_result.batch_id} status: {message_batch.processing_status}")
-                
-                return ReadyBatch(ready=message_batch.processing_status in [ "ended", "cancelled"], batch=AnthropicBatch(message_batch=message_batch), result=batch_result)
+                message_batch = self.client.messages.batches.retrieve(
+                    batch_result.batch_id
+                )
+                print(
+                    f"Batch {batch_result.batch_id} status: {message_batch.processing_status}"
+                )
+
+                return ReadyBatch(
+                    ready=message_batch.processing_status in ["ended", "cancelled"],
+                    batch=AnthropicBatch(message_batch=message_batch),
+                    result=batch_result,
+                )
         except Exception as e:
             return ReadyBatchError(result=batch_result, error=e)
 
-    async def process_completed_batch(self, batch_result: JudgeBatchResult, batch_in: AnthropicBatch | OpenAIBatch) -> BatchResult:
+    async def process_completed_batch(
+        self, batch_result: JudgeBatchResult, batch_in: AnthropicBatch | OpenAIBatch
+    ) -> BatchResult:
         try:
             if isinstance(self.client, AsyncOpenAI):
                 assert isinstance(batch_in, OpenAIBatch), "Expected OpenAIBatch"
@@ -546,7 +617,9 @@ class KGJudge:
 
                 error_content = None
                 if batch.error_file_id is not None:
-                    error_content_result = await self.client.files.content(batch.error_file_id)
+                    error_content_result = await self.client.files.content(
+                        batch.error_file_id
+                    )
                     error_content = error_content_result.text
 
                 if output_file_id is None:
@@ -570,7 +643,9 @@ class KGJudge:
                     debug_dir = Path("extraction_validator/debug_batch_results")
                     debug_dir.mkdir(parents=True, exist_ok=True)
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    debug_file = debug_dir / f"batch_{batch_result.batch_id}_{timestamp}.jsonl"
+                    debug_file = (
+                        debug_dir / f"batch_{batch_result.batch_id}_{timestamp}.jsonl"
+                    )
                     with open(debug_file, "w") as f:
                         f.write(content)
 
@@ -581,9 +656,7 @@ class KGJudge:
             out_content: List[AnthropicContent] = []
             out_error_content: List[AnthropicContent] = []
 
-            for response in self.client.messages.batches.results(
-                batch.id
-            ):
+            for response in self.client.messages.batches.results(batch.id):
                 result = response.result
                 request_id = response.custom_id
                 match result.type:
@@ -646,7 +719,9 @@ class KGJudge:
                                 output_tokens=0,
                             )
                         )
-            return AnthropicBatchOutput(content=out_content, error_content=out_error_content)
+            return AnthropicBatchOutput(
+                content=out_content, error_content=out_error_content
+            )
         except Exception as e:
             return EverythingInTheBatchHasAnError(
                 message=f"Could not process completed batch: {str(e)}",
@@ -664,11 +739,14 @@ class KGJudge:
         return "; ".join(error_messages)
 
     def _error_result(
-        self, error: str, raw_response: str, error_code: JudgeErrorCode, batch_requests: List[JudgeRequest]
+        self,
+        error: str,
+        raw_response: str,
+        error_code: JudgeErrorCode,
+        batch_requests: List[JudgeRequest],
     ) -> List[JudgeReport]:
         reports: List[JudgeReport] = []
         for request in batch_requests:
-
             local_validation = self._perform_local_validation(request.kg_output)
             combined_report = self._combine_validations(
                 {
@@ -686,8 +764,9 @@ class KGJudge:
             reports.append(combined_report)
         return reports
 
-
-    def _parse_anthropic_judge_response(self, result: AnthropicContent) -> GPT_Assessment_Result:
+    def _parse_anthropic_judge_response(
+        self, result: AnthropicContent
+    ) -> GPT_Assessment_Result:
         self.total_prompt_tokens += result.input_tokens
         self.total_completion_tokens += result.output_tokens
         try:
@@ -701,7 +780,8 @@ class KGJudge:
         except ValidationError as e:
             return {
                 "type": "failure",
-                "error": "Could not validate GPT response into GPT_Assessment model: " + str(e),
+                "error": "Could not validate GPT response into GPT_Assessment model: "
+                + str(e),
                 "raw_response": result.content,
                 "error_code": "parse_or_validate_error",
                 "custom_id": result.request_id,
@@ -711,11 +791,11 @@ class KGJudge:
         try:
             raw: OpenAIResponse = json.loads(response_text)
         except json.JSONDecodeError as e:
-             return {
+            return {
                 "type": "failure",
                 "error": "Could not extract JSON from GPT response, error: " + str(e),
                 "raw_response": response_text,
-                "error_code": "parse_or_validate_error"
+                "error_code": "parse_or_validate_error",
             }
         custom_id = raw["custom_id"]
         if raw["response"]["status_code"] != 200:
@@ -765,7 +845,8 @@ class KGJudge:
         except ValidationError as e:
             return {
                 "type": "failure",
-                "error": "Could not validate GPT response into GPT_Assessment model: " + str(e),
+                "error": "Could not validate GPT response into GPT_Assessment model: "
+                + str(e),
                 "raw_response": response_text,
                 "error_code": "parse_or_validate_error",
                 "custom_id": custom_id,
@@ -779,7 +860,7 @@ class KGJudge:
         # Only put checks here that are not covered by the model validation
 
         # Node validation
-        node_names : set[str] = set()
+        node_names: set[str] = set()
         for node in kg.nodes:
             node_names.add(node.name)
 
@@ -829,19 +910,27 @@ class KGJudge:
 
         gpt_assessment = gpt_assessment_result["gpt_assessment"]
 
-        final_graph = self._apply_fixes_to_graph(kg, gpt_assessment.proposed_fixes or ProposedFixes(), original_text)
+        final_graph = self._apply_fixes_to_graph(
+            kg, gpt_assessment.proposed_fixes or ProposedFixes(), original_text
+        )
 
         # Create complete report
         return JudgeReport(
-            decision=gpt_assessment.decision.model_dump() if gpt_assessment.decision else {},
-            validation_report=gpt_assessment.validation_report.model_dump() if gpt_assessment.validation_report else {},
+            decision=gpt_assessment.decision.model_dump()
+            if gpt_assessment.decision
+            else {},
+            validation_report=gpt_assessment.validation_report.model_dump()
+            if gpt_assessment.validation_report
+            else {},
             proposed_fixes=(
                 gpt_assessment.proposed_fixes.model_dump()
                 if gpt_assessment.proposed_fixes
                 else {}
             ),
             final_graph=final_graph,
-            rationale_record=gpt_assessment.rationale_record.model_dump() if gpt_assessment.rationale_record else {},
+            rationale_record=gpt_assessment.rationale_record.model_dump()
+            if gpt_assessment.rationale_record
+            else {},
             url=data_source.url,
             paper_id=data_source.paper_id,
             ard_file_source=data_source.ard_file_source,
@@ -854,7 +943,7 @@ class KGJudge:
         """Apply fixes to create the final improved knowledge graph."""
 
         # Start with original graph
-        final_nodes : Dict[str, GraphNode] = {node.name: node for node in kg.nodes}
+        final_nodes: Dict[str, GraphNode] = {node.name: node for node in kg.nodes}
         final_edges = list(kg.edges)
 
         existing_names = set(final_nodes.keys())
@@ -866,41 +955,42 @@ class KGJudge:
             add_node = add_node_fix.data.new_node
             candidate_name = add_node.name
             if not candidate_name:
-                break
+                continue
             # Ensure unique node names
             if candidate_name in existing_names:
-                break
+                continue
             existing_names.add(candidate_name)
             if add_node.type == "concept":
                 final_nodes[add_node.name] = GraphNode(
-                        name=add_node.name,
-                        aliases=[add_node.name],
-                        type=add_node.type,
-                        description="Auto-generated node based on validation",
-                        concept_category="concept",
-                        intervention_lifecycle=None,
-                        intervention_maturity=None,
-                        intervention_lifecycle_rationale=None,
-                        intervention_maturity_rationale=None,
-                        node_rationale=None,
-                    )
-                
+                    name=add_node.name,
+                    aliases=[add_node.name],
+                    type=add_node.type,
+                    description="Auto-generated node based on validation",
+                    concept_category=add_node.concept_category,
+                    intervention_lifecycle=None,
+                    intervention_maturity=None,
+                    intervention_lifecycle_rationale=None,
+                    intervention_maturity_rationale=None,
+                    node_rationale=None,
+                )
+
             else:
                 final_nodes[add_node.name] = GraphNode(
-                        name=add_node.name,
-                        aliases=[add_node.aliases],
-                        type=add_node.type,
-                        description="Auto-generated node based on validation",
-                        concept_category=add_node.concept_category,
-                        intervention_lifecycle=add_node.intervention_lifecycle if add_node.intervention_lifecycle else 
-                            1 
-                        ,
-                        intervention_maturity=add_node.intervention_maturity if add_node.intervention_maturity else 
-                            1 ,
-                        intervention_lifecycle_rationale=None,
-                        intervention_maturity_rationale=None,
-                        node_rationale=None,
-                    )
+                    name=add_node.name,
+                    aliases=add_node.aliases,
+                    type=add_node.type,
+                    description="Auto-generated node based on validation",
+                    concept_category=None,
+                    intervention_lifecycle=add_node.intervention_lifecycle
+                    if add_node.intervention_lifecycle
+                    else 1,
+                    intervention_maturity=add_node.intervention_maturity
+                    if add_node.intervention_maturity
+                    else 1,
+                    intervention_lifecycle_rationale=None,
+                    intervention_maturity_rationale=None,
+                    node_rationale=None,
+                )
             for edge in add_node_fix.data.new_edges:
                 if edge.data is None:
                     continue
@@ -916,23 +1006,30 @@ class KGJudge:
                         edge_confidence=edge.data.edge_confidence,
                     )
                 )
-            break
 
         # Apply deletions
-        nodes_to_delete = {d.data.node_name for d in proposed_fixes.deletions or [] if d.data is not None}
+        nodes_to_delete = {
+            d.data.node_name
+            for d in proposed_fixes.deletions or []
+            if d.data is not None
+        }
 
         for fix in proposed_fixes.change_node_fields or []:
             if fix.data is None:
                 continue
             # Have to pop here because we may need to change the node name
-            node_to_fix = cast(Dict[str, GraphNode | None], final_nodes).pop(fix.data.node_name, None)
+            node_to_fix = cast(Dict[str, GraphNode | None], final_nodes).pop(
+                fix.data.node_name, None
+            )
             if node_to_fix is None:
                 continue
             node_to_fix = fix_node_field(node_to_fix, fix.data)
             final_nodes[node_to_fix.name] = node_to_fix
-            
+
         final_node_list = [
-            n.model_dump() for n in final_nodes.values() if n.name not in nodes_to_delete
+            n.model_dump()
+            for n in final_nodes.values()
+            if n.name not in nodes_to_delete
         ]
 
         edges_to_delete = defaultdict[str, set[str]](set)
@@ -942,7 +1039,12 @@ class KGJudge:
             edges_to_delete[d.data.source_node_name].add(d.data.target_node_name)
 
         out_final_edges: List[Dict[str, Any]] = []
-
+        # TODO
+        # logic for merging edges needs to land here
+        # kill self loops after merging
+        # eliminate when source and sink nodes are same
+        # ensure merging list is disjoint;  A <-- B ; B <-- C should not get confusing.
+        # be careful when adding new edges that it should't point to a node which gets merged into something else future
         for e in final_edges:
             if e.source_node == e.target_node:
                 continue
@@ -950,7 +1052,7 @@ class KGJudge:
                 continue
             if e.target_node in edges_to_delete:
                 continue
-            if  e.target_node in edges_to_delete[e.source_node]:
+            if e.target_node in edges_to_delete[e.source_node]:
                 continue
             if e.source_node not in final_nodes:
                 continue
@@ -963,9 +1065,12 @@ class KGJudge:
             "edges": out_final_edges,
             "meta": [
                 {"key": "version", "value": "1.0"},
-                {"key": "source_hash", "value": hashlib.md5(original_text.encode()).hexdigest()},
+                {
+                    "key": "source_hash",
+                    "value": hashlib.md5(original_text.encode()).hexdigest(),
+                },
                 {"key": "validation_timestamp", "value": datetime.now().isoformat()},
-            ]
+            ],
             # "meta": {
             #     "version": "1.0",
             #     "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
@@ -1026,8 +1131,8 @@ class KGJudge:
             "meta": [
                 {"key": "version", "value": "1.0"},
                 {"key": "source_hash", "value": "fallback_hash"},
-                {"key": "validation_timestamp", "value":  datetime.now().isoformat()},
-            ]
+                {"key": "validation_timestamp", "value": datetime.now().isoformat()},
+            ],
             # "meta": {
             #     "version": "1.0",
             #     # "source_hash": hashlib.md5(original_text.encode()).hexdigest(),
@@ -1051,7 +1156,7 @@ def get_by_file_url_to_text_map(ard_path: str) -> URL_To_Text_Map:
                     data = json.loads(line)
                     url = data["url"]
                     out_dict[url] = data["text"]
-                except:
+                except Exception:
                     continue
         out[stem] = out_dict
     return out
@@ -1072,6 +1177,7 @@ def find_url(kg_output: PaperSchema) -> Optional[str]:
             if item.value and isinstance(item.value, str):
                 return item.value
     return None
+
 
 def get_judge_inputs(
     ard_dir: str,
@@ -1148,11 +1254,13 @@ def get_judge_inputs(
     output_dir_path = Path(output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
     return inputs, output_dir_path
+
+
 async def process_directory(
     ard_dir: str,
     processed_dir: str,
     output_dir: str,
-    model_type: Literal["OpenAI" , "Anthropic"],
+    model_type: Literal["OpenAI", "Anthropic"],
     how_many_batches_in_flight_at_once: int,
     batch_size: int,
 ):
@@ -1162,7 +1270,7 @@ async def process_directory(
         output_dir,
     )
 
-    judge = KGJudge( type=model_type, output_dir=output_dir_path)
+    judge = KGJudge(type=model_type, output_dir=output_dir_path)
     # Run batch validation
 
     await judge.judge_knowledge_graph_batch(
@@ -1202,7 +1310,7 @@ def main(
     processed_dir: str,
     ard_dir: str,
     output_dir: str,
-    model_type: Literal["OpenAI" , "Anthropic"]= "Anthropic",
+    model_type: Literal["OpenAI", "Anthropic"] = "Anthropic",
     # TODO look at openAI limits
     how_many_batches_in_flight_at_once: int = 5,
     batch_size: int = 5,
