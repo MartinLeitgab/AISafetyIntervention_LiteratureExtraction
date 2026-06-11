@@ -216,12 +216,60 @@ class KGJudge:
         self.running_batch_ids: List[str] = []
         self.output_dir = output_dir
         self.cancelled = False
-        loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, self._cancel)
 
     def _cancel(self):
         print("Got your ctrl+c, cancelling..., please wait for cleanup...")
         self.cancelled = True
+
+    def _build_requests(self, inputs: List[JudgeInput]) -> List[JudgeRequest]:
+        """Build JudgeRequest objects for a list of inputs without side effects."""
+        MAX_TOKENS = 32_000
+        all_requests: List[JudgeRequest] = []
+        for i, judge_input in enumerate(inputs):
+            validation_prompt = create_validation_prompt(
+                judge_input.original_text, judge_input.kg_output
+            )
+            custom_id = f"request-{i}"
+            request: OpenAICompletionsRequest | AnthropicCompletionsRequest
+            if isinstance(self.client, AsyncOpenAI):
+                request = OpenAICompletionsRequest(
+                    request=CompletionsRequest(
+                        custom_id=custom_id,
+                        method="POST",
+                        url="/v1/chat/completions",
+                        body={
+                            "model": "gpt-5-nano",
+                            "messages": [
+                                {"role": "system", "content": SYSTEM_PROMPT},
+                                {"role": "user", "content": validation_prompt},
+                            ],
+                            "temperature": 1.0,
+                            "max_completion_tokens": MAX_TOKENS,
+                            "response_format": {"type": "json_object"},
+                        },
+                    )
+                )
+            else:
+                request = AnthropicCompletionsRequest(
+                    request=MessageCreateParamsNonStreaming(
+                        model="claude-haiku-4-5",
+                        max_tokens=MAX_TOKENS,
+                        system=SYSTEM_PROMPT,
+                        messages=[
+                            {"role": "user", "content": validation_prompt},
+                        ],
+                    )
+                )
+            all_requests.append(
+                JudgeRequest(
+                    request=request,
+                    original_text=judge_input.original_text,
+                    kg_output=judge_input.kg_output,
+                    data_source=judge_input.data_source,
+                    custom_id=custom_id,
+                )
+            )
+        return all_requests
 
     async def judge_knowledge_graph_batch(
         self,
@@ -239,62 +287,13 @@ class KGJudge:
         Returns:
             List of JudgeReports for each input
         """
+        loop = asyncio.get_running_loop()
+        loop.add_signal_handler(signal.SIGINT, self._cancel)
 
-        # order is not guaranteed, so let's create a map
-        # of custom_id to batch request
-        custom_id_to_request: Dict[str, JudgeRequest] = {}
-        all_requests: List[JudgeRequest] = []
-        for i, judge_input in enumerate(inputs):
-            validation_prompt = create_validation_prompt(
-                judge_input.original_text, judge_input.kg_output
-            )
-            custom_id = f"request-{i}"
-            request: OpenAICompletionsRequest | AnthropicCompletionsRequest
-            MAX_TOKENS = 32_000
-            if isinstance(self.client, AsyncOpenAI):
-                request = OpenAICompletionsRequest(
-                    request=CompletionsRequest(
-                        custom_id=custom_id,
-                        method="POST",
-                        url="/v1/chat/completions",
-                        body={
-                            "model": "gpt-5-nano",
-                            "messages": [
-                                {
-                                    "role": "system",
-                                    "content": SYSTEM_PROMPT,
-                                },
-                                {"role": "user", "content": validation_prompt},
-                            ],
-                            # "temperature": 0.1,
-                            "temperature": 1.0,
-                            # "max_tokens": 4000,
-                            # "max_completion_tokens": 16_000,
-                            "max_completion_tokens": MAX_TOKENS,
-                            "response_format": {"type": "json_object"},
-                        },
-                    )
-                )
-            else:
-                request = AnthropicCompletionsRequest(
-                    request=MessageCreateParamsNonStreaming(
-                        model="claude-haiku-4-5",
-                        max_tokens=MAX_TOKENS,
-                        system=SYSTEM_PROMPT,
-                        messages=[
-                            {"role": "user", "content": validation_prompt},
-                        ],
-                    )
-                )
-            judge_request = JudgeRequest(
-                request=request,
-                original_text=judge_input.original_text,
-                kg_output=judge_input.kg_output,
-                data_source=judge_input.data_source,
-                custom_id=custom_id,
-            )
-            all_requests.append(judge_request)
-            custom_id_to_request[custom_id] = judge_request
+        all_requests = self._build_requests(inputs)
+        custom_id_to_request: Dict[str, JudgeRequest] = {
+            r.custom_id: r for r in all_requests
+        }
         batch_files: List[JudgeBatch] = []
         for i, batch_start in enumerate(range(0, len(all_requests), batch_size)):
             batch = all_requests[batch_start : batch_start + batch_size]
