@@ -113,6 +113,19 @@ caveat. If not recoverable, delete the marker.
 **G10. Cluster representatives** — publish `cluster_representatives_20.json` alongside the dataset so
 reviewers can audit cluster naming (Appendix D). *Owner: Gleb.*
 
+### 🔴 GATES — must be closed before submission (not just work items)
+
+**G14. Compute-donor consent — BLOCKING.** Inference credits came from a private acquaintance.
+Confirm with them whether they want to be (a) named, (b) acknowledged anonymously, or (c) not
+mentioned. The credits may have been issued under terms that did not contemplate transfer to a third
+party, so naming them unasked could cause them a real problem. Default if unreachable: (b).
+Gate text is in `paperA_draft_v2.tex` §Acknowledgments — do not delete that comment until closed.
+*Owner: Martin. Cannot be delegated.*
+
+**G15. Authorship + contribution statement — BLOCKING.** Not drafted, deliberately. Being settled
+separately; must not be populated from git history alone (git misses the Overleaf writing, the
+literature review, meeting participation, and the Discord subthreads). *Owner: Martin.*
+
 ### DECISIONS, not work
 
 **G11. Venue + page limit — not committed.** Current draft is AAAI 2-column, ~8 pages main + 7 appendices.
