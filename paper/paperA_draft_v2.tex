@@ -1,60 +1,53 @@
 %File: paperA_draft_v2.tex
-% Paper A -- draft v2, built 2026-08-11.
+% Paper A -- draft v2.
 % Basis: inputs/Gleb_overleaf_paper.txt (Iteration B, frozen 2026-01-26)
 %        restructured per graph_analysis/phase2_results/paperA_positive_outline_2026-06-26.md
-% Every number carries a source comment: SRC = on-disk receipt in graph_analysis/phase2_results/.
-% Markers used in this file:
-%   [GAP: ...]   -> missing content that must be supplied before submission (see paperA_v2_GAPS.md)
-%   [FIG: ...]   -> figure to be produced
-%   [CITE: ...]  -> citation to be added to aaai25.bib
-\documentclass[letterpaper]{article} % DO NOT CHANGE THIS
-\usepackage[submission]{aaai25}  % DO NOT CHANGE THIS
-\usepackage{times}  % DO NOT CHANGE THIS
-\usepackage{helvet}  % DO NOT CHANGE THIS
-\usepackage{courier}  % DO NOT CHANGE THIS
-\usepackage[hyphens]{url}  % DO NOT CHANGE THIS
-\usepackage{graphicx} % DO NOT CHANGE THIS
-\urlstyle{rm} % DO NOT CHANGE THIS
-\def\UrlFont{\rm}  % DO NOT CHANGE THIS
-\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
-\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
-\frenchspacing  % DO NOT CHANGE THIS
-\setlength{\pdfpagewidth}{8.5in} % DO NOT CHANGE THIS
-\setlength{\pdfpageheight}{11in} % DO NOT CHANGE THIS
+% Every number carries a source comment: SRC = on-disk receipt in graph_analysis/phase2_results/,
+% and is regression-checked by graph_analysis/experiment_paper_claim_audit.py.
+% Markers: [GAP: ...] missing content, [FIG: ...] figure to produce, [CITE: ...] bib entry needed.
+%
+% CLASS NOTE: deliberately NOT a conference class. Conference styles (aaai, acmart,
+% IEEEtran) carry publisher branding and licence conditions that make them a poor fit
+% for an arXiv preprint that has not been accepted anywhere. This is stock `article`
+% in two-column mode, which produces workshop-style formatting with no such strings
+% attached. Switching to a venue class later is a preamble-only change.
+\documentclass[10pt,twocolumn,letterpaper]{article}
 
-\usepackage{algorithm}
-\usepackage{algorithmic}
-\usepackage{newfloat}
-\usepackage{listings}
-\DeclareCaptionStyle{ruled}{labelfont=normalfont,labelsep=colon,strut=off} % DO NOT CHANGE THIS
-\lstset{%
-	basicstyle={\footnotesize\ttfamily},%
-	numbers=left,numberstyle=\footnotesize,xleftmargin=2em,%
-	aboveskip=0pt,belowskip=0pt,%
-	showstringspaces=false,tabsize=2,breaklines=true}
-\floatstyle{ruled}
-\newfloat{listing}{tb}{lst}{}
-\floatname{listing}{Listing}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{times}
+\usepackage[margin=0.75in,columnsep=0.25in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage[hyphens]{url}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{abstract}
+\usepackage{titlesec}
+\usepackage{authblk}
 
-\pdfinfo{
-/TemplateVersion (2025.1)
-}
+% compact workshop-style headings
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+\titlespacing*{\section}{0pt}{1.4ex plus .2ex}{0.8ex plus .1ex}
+\titlespacing*{\subsection}{0pt}{1.2ex plus .2ex}{0.6ex plus .1ex}
+\setlength{\parskip}{0pt}
+\setlength{\bibsep}{0pt plus 0.3ex}
+\renewcommand{\abstractnamefont}{\normalfont\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\small}
+\frenchspacing
+\pagestyle{plain}
 
-\setcounter{secnumdepth}{0}
+\title{\vspace{-2em}\textbf{Mechanism-Level Extraction of Risk-to-Intervention\\
+Reasoning Chains from the AI Safety Literature}\vspace{-0.5em}}
 
-\title{Mechanism-Level Extraction of Risk-to-Intervention Reasoning Chains from the AI Safety Literature}
-
-\author{
-    % [GAP: author list + affiliations. Contributors: Martin Leitgab, Gleb Maksimov,
-    %  Sai (validation), Mike (judge data), Axel (related work), Jeffrey Parks (review).
-    %  Confirm order + affiliations before submission.]
-    Anonymous Submission
-}
-\affiliations{
-    \textsuperscript{\rm 1}Affiliation 1\\
-    \textsuperscript{\rm 2}Affiliation 2\\
-    firstAuthor@affiliation1.com, secondAuthor@affilation2.com
-}
+% [GAP: author list + affiliations. Contributors: Martin Leitgab, Gleb Maksimov,
+%  Sai (validation), Mike (judge data), Axel (related work), Jeffrey Parks (review).
+%  Confirm order + affiliations before submission. Using authblk:
+%    \author[1]{Name}  \affil[1]{Institution, \texttt{email}}]
+\author{Anonymous Submission}
+\date{}
 
 \begin{document}
 
@@ -191,6 +184,24 @@ population--intervention--comparison--outcome structure from trials. Our task is
 the analogous reduction for a field whose "evidence" is largely theoretical, which
 is why validation evidence appears as a reasoning stage rather than as an outcome
 measurement.
+
+\paragraph{Graph-based retrieval-augmented generation.}
+% [CITE: Peng et al., "Graph Retrieval-Augmented Generation: A Survey",
+%  arXiv:2408.08921 -- VERIFIED 2026-08-11.
+%  Sarmah et al., "HybridRAG: Integrating Knowledge Graphs and Vector Retrieval
+%  Augmented Generation for Efficient Information Extraction", arXiv:2408.04948 --
+%  VERIFIED 2026-08-11.
+%  Also candidates from the team reading list, IDs not yet verified -- verify before
+%  citing: Medical Graph RAG; LEGO-GraphRAG; AutoGraph-R1.]
+GraphRAG systems build a graph over a corpus so that a language model can retrieve
+structured context rather than isolated passages
+\citep{peng2024graphrag,sarmah2024hybridrag}. The graph there is
+\emph{instrumental}: it exists to improve an answer, and its edges are whatever
+indexing produced. Our graph is the object of study rather than an index --- each
+edge is a confidence-scored assertion that one specific paper made, so a query
+returns the paper's own argument with provenance attached instead of a synthesised
+answer. The two are complementary: a GraphRAG layer over this dataset is an obvious
+application, and one we do not attempt here.
 
 \paragraph{LLM extraction validation.}
 % [CITE: LLM-as-a-judge; judge-of-judge / meta-evaluation; faithfulness metrics.]
@@ -617,65 +628,54 @@ The dataset supports a query that document-level resources cannot serve:
 \emph{by what mechanism does intervention $I$ reduce risk $R$?} Because the
 mechanism is stored as an explicit path, answering it is a single graph lookup
 returning the chain and its source citation --- no clustering, no ranking, no
-embedding search over abstracts. Table~\ref{tab:query} shows three chains
-retrieved this way, spanning governance, preference learning, and adversarial
-robustness.
+embedding search over abstracts. Table~\ref{tab:query} shows two chains retrieved this way --- one governance,
+one technical --- both from arXiv sources so the extraction input is structured
+and the citation is unambiguous.
 % SRC: experiment_query_demo_report.json -> query_demo.*
 
 \begin{table*}[t]
 \centering
 \small
-\begin{tabular}{p{0.10\textwidth}p{0.85\textwidth}}
+\begin{tabular}{p{0.09\textwidth}p{0.86\textwidth}}
 \hline
-\textbf{Stage} & \textbf{Query 1: governance / compute} \\
+\textbf{Stage} & \textbf{Query 1 --- governance.} Source: Shavit, \emph{What does it take to catch a Chinchilla?} (arXiv:2303.11341) \\
 \hline
-risk & Chinese military AI capability superiority over US \\
-pa & Unrestricted access to advanced US GPUs by Chinese entities \\
-ti & Export controls on advanced compute can slow adversary AI progress \\
-dr & Licensing regime for GPU exports to China \\
-im & Foreign direct product rule applied to AI chips and machinery \\
-va & Huawei export sanctions reduced company capabilities \\
-\textbf{intv} & Deny export licenses for advanced GPUs and chipmaking equipment to Chinese military-linked entities \textbf{(maturity 4, deployed)} \\
-% SRC: node ids [185429,185432,185435,185439,185444,185448,185453]; source
-%      https://www.lesswrong.com/posts/oBTkthd7h8sDpkiu2/analysis-us-restricts-gpu-sales-to-china
-%      Replaces the original Query 1 (2026-08-11): its source document was
-%      "Transformative AI and Compute - Reading List [shared]", a bibliography,
-%      not a paper. See paperA_v2_AUDIT.md P3.
+risk & Covert development of dangerous ML models using large-scale training \\
+pa & Tampering with logging mechanisms via supply chain attacks \\
+ti & Open-source Hardware Roots-of-Trust enhance transparency and tamper evidence \\
+dr & Embed open-source HRoT like Caliptra in ML chips \\
+im & Signed firmware enforced by HRoT with anti-rollback protections \\
+va & Industry adoption of Caliptra HRoT across major vendors \\
+\textbf{intv} & Adopt open-source HRoT in data-center ML chips to enforce secure logging \textbf{(maturity 3)} \\
 \hline
 \multicolumn{2}{c}{} \\
 \hline
-\textbf{Stage} & \textbf{Query 2: reward / preference learning} \\
+\textbf{Stage} & \textbf{Query 2 --- technical alignment.} Source: Ngo, Chan \& Mindermann, \emph{The Alignment Problem from a Deep Learning Perspective} (arXiv:2209.00626) \\
 \hline
-risk & Misaligned model behavior in complex tasks \\
-pa & Human evaluation difficulty for long-text outputs \\
-ti & Recursive task decomposition reduces evaluation burden \\
-dr & Combining RLHF with recursive summarization to scale alignment \\
-im & Hierarchical summarization of books via section summaries \\
-va & 6/7 human rating parity achieved 5\% of time \\
-\textbf{intv} & Fine-tune models with RLHF and recursive task decomposition to align long-text summarization \textbf{(maturity 3)} \\
-\hline
-\multicolumn{2}{c}{} \\
-\hline
-\textbf{Stage} & \textbf{Query 3: adversarial robustness} \\
-\hline
-risk & Unsafe injury descriptions in LM fiction output \\
-pa & Unfiltered generation of injury content by fine-tuned LMs \\
-ti & Adversarial training with unsafe examples increases robustness \\
-dr & Fine-tuning LM on classifier-detected unsafe examples \\
-im & Adversarial training loop combining generation, filtering, fine-tuning \\
-va & Increased adversarial prompt discovery time by contractors \\
-\textbf{intv} & Fine-tune language model with adversarial training examples to avoid injury descriptions \textbf{(maturity 3)} \\
+risk & Catastrophic disempowerment of humanity by misaligned AGI \\
+pa & Misaligned goal formation during AGI training \\
+ti & Reward misspecification in real-world RL tasks \\
+dr & Automated scalable supervision to reduce reward misspecification \\
+im & Reinforcement learning from human feedback scaling \\
+va & Instruction-following improvement in InstructGPT via RLHF \\
+\textbf{intv} & Scale RLHF fine-tuning using AI-generated feedback signals \textbf{(maturity 3)} \\
 \hline
 \end{tabular}
-\caption{Three mechanism-level retrievals. Each row set is a single extracted
-chain returned verbatim by a risk--intervention query; stage abbreviations follow
-the logical chain order (pa = problem analysis, ti = theoretical insight,
-dr = design rationale, im = implementation mechanism, va = validation evidence).
-% [GAP: add the source paper citation for each of the three chains --
-%  node_attrs[nid]['url'] for path_node_ids in experiment_query_demo_report.json.]
-}
+\caption{Two mechanism-level retrievals, one governance and one technical, both from
+arXiv sources. Each block is a single extracted chain returned verbatim by a
+risk--intervention query; stage abbreviations follow the logical chain order
+(pa = problem analysis, ti = theoretical insight, dr = design rationale,
+im = implementation mechanism, va = validation evidence). Neither answer is
+synthesised: each is one stored path with its source document attached.}
 \label{tab:query}
 \end{table*}
+% SRC: Query 1 = node ids [1067,1086,1087,1088,1089,1090,1091], arxiv.org/abs/2303.11341
+%      Query 2 = node ids [415,416,417,426,431,437,442],      arxiv.org/abs/2209.00626
+%      Both verified against paths_hopwise_v4_edge_only_deduped.jsonl 2026-08-11.
+%      Titles/authors verified against arXiv the same day.
+%      These replace the earlier three examples: the original Query 1 was sourced from a
+%      Google-Doc reading list, and the other two from non-arXiv sources. See
+%      paperA_v2_AUDIT.md P3.
 
 Three properties of these results are worth stating. They are \emph{single-hit}:
 the answer is one stored path, not a synthesis over retrieved passages. They are
