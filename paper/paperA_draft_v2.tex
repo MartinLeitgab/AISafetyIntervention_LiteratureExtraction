@@ -153,12 +153,14 @@ result as a contribution rather than as a caveat.
 %  Four strands below are the agreed scope. ~3 paragraphs is the workshop bar.]
 
 \paragraph{Knowledge graphs from scientific literature.}
-% [CITE: SciERC / SemEval scientific IE; OpenIE over papers; CS-KG / ORKG.]
 Prior work extracts entities and relations from scientific text, typically
-targeting citation, method--task--dataset, or claim structures. Our schema
-differs in that the relation of interest is an \emph{argument} internal to one
-paper --- risk to intervention through explicit reasoning stages --- rather than
-a bibliographic or method-level relation.
+targeting citation, method--task--dataset, or claim structures;
+\citet{luan2018scierc} is representative, jointly identifying entities, relations
+and coreference to build a scientific knowledge graph, and the task has a long
+methodological history \citep{bach2007relation}. Our schema differs in that the
+relation of interest is an \emph{argument} internal to one paper --- risk to
+intervention through explicit reasoning stages --- rather than a bibliographic or
+method-level relation.
 
 \paragraph{Agentic and self-organising knowledge graphs.}
 % [CITE: Buehler 2025, "Agentic Deep Graph Reasoning Yields Self-Organizing
@@ -175,13 +177,17 @@ confidence-scored assertions traceable to one source document rather than
 model-generated links.
 
 \paragraph{AI safety literature resources.}
-% [CITE: Alignment Research Dataset; Stampy / AISafety.info; AI Safety Atlas;
-%  MIT AI Risk Repository v2 (Slattery et al., Patterns 2026).]
-ARD, Stampy and the AI Safety Atlas organise the field at the level of
-documents or hand-curated topics. The MIT AI Risk Repository provides a curated
-risk vocabulary. These are complementary to, not competitive with, a
-mechanism-level extraction: a risk taxonomy says what can go wrong, whereas our
-dataset records what has been proposed about it and on what argument.
+% [CITE: AI Safety Atlas -- no canonical reference resolved; cite URL inline if used.]
+The Alignment Research Dataset \citep{kirchner2022ard}, maintained by the Stampy /
+AI Safety Info project, and hand-curated topic maps such as the AI Safety Atlas
+organise the field at the level of documents or topics. The MIT AI Risk Repository
+\citep{slattery2026airisk} provides a curated risk vocabulary --- 1{,}725 risks
+distilled from 74 frameworks into causal and domain taxonomies. These are
+complementary to, not competitive with, a mechanism-level extraction: a risk
+taxonomy says what can go wrong, a directory says who wrote about it, and neither
+records the argument connecting a risk to a proposed remedy. Anchoring our
+extracted risks to an external vocabulary of this kind is the natural next step
+(§Limitations and Outlook).
 
 \paragraph{Causal and mechanism extraction.}
 % [CITE: causal claim extraction; intervention/outcome extraction in evidence-based
@@ -213,9 +219,11 @@ and a GraphRAG layer over this dataset is an obvious application we do not attem
 here.
 
 \paragraph{LLM extraction validation.}
-% [CITE: LLM-as-a-judge; judge-of-judge / meta-evaluation; faithfulness metrics.]
-We adopt the LLM-as-a-judge paradigm with an explicit judge-of-judge calibration
-step, and report its scope limits honestly in §Limitations.
+We adopt the LLM-as-a-judge paradigm \citep{zheng2023judging} with an explicit
+judge-of-judge calibration step in which several independent stronger models score
+the judge's proposals, and we report its scope limits honestly in §Limitations ---
+in particular that no human adjudicated any verdict, so the chain is
+LLM-internal end to end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Methods}
@@ -647,7 +655,7 @@ and the citation is unambiguous.
 \small
 \begin{tabular}{p{0.09\textwidth}p{0.86\textwidth}}
 \hline
-\textbf{Stage} & \textbf{Query 1 --- governance.} Source: Shavit, \emph{What does it take to catch a Chinchilla?} (arXiv:2303.11341) \\
+\textbf{Stage} & \textbf{Query 1 --- governance.} Source: \citet{shavit2023chinchilla} \\
 \hline
 risk & Covert development of dangerous ML models using large-scale training \\
 pa & Tampering with logging mechanisms via supply chain attacks \\
@@ -659,7 +667,7 @@ va & Industry adoption of Caliptra HRoT across major vendors \\
 \hline
 \multicolumn{2}{c}{} \\
 \hline
-\textbf{Stage} & \textbf{Query 2 --- technical alignment.} Source: Ngo, Chan \& Mindermann, \emph{The Alignment Problem from a Deep Learning Perspective} (arXiv:2209.00626) \\
+\textbf{Stage} & \textbf{Query 2 --- technical alignment.} Source: \citet{ngo2022alignment} \\
 \hline
 risk & Catastrophic disempowerment of humanity by misaligned AGI \\
 pa & Misaligned goal formation during AGI training \\
@@ -780,7 +788,9 @@ sensitive to.
 
 Direct $k$-means on the 1536-dimensional embeddings fails outright (silhouette
 $\approx 0.02$). UMAP reduction to 150 dimensions followed by $k$-means at
-$k{=}40$ reaches silhouette 0.298 (Appendix~C), and the resulting clusters are
+$k{=}40$ reaches silhouette 0.298 --- modest against the conventional
+interpretation thresholds \citep{kaufman1990finding} (Appendix~C) --- and the
+resulting clusters are
 recognisable field topics (Appendix~D). But cluster co-membership at
 $\tau{=}0.80$ tracks vocabulary, not mechanism: the same threshold that produces
 navigable topics also merges the largest connected component from 61 nodes to
@@ -939,6 +949,10 @@ scientific graphs.
 % [GAP: EleutherAI cohort acknowledgment + compute/API funding source.]
 TBD
 
+% Exactly ONE \bibliography command is allowed per document; the appendix must not
+% carry a second one. \bibliographystyle is required -- the old AAAI class supplied it
+% implicitly, stock article does not, which is why citations rendered as "??".
+\bibliographystyle{plainnat}
 \bibliography{refs}
 
 \clearpage
@@ -1175,6 +1189,7 @@ substantively correct --- that is what the judge study (§Methods) is for.
 % [GAP: optionally add 1-2 further chains (e.g. one with a missing stage) if space
 %  permits. The failure case above is the one that must stay.]
 
-\bibliography{refs}
+% NOTE: no \bibliography here -- it lives once, before the appendix. A second one
+% makes BibTeX abort with "Illegal, another \bibdata command".
 
 \end{document}
