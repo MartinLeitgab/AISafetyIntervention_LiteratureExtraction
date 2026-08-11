@@ -1,10 +1,15 @@
 %File: paperA_draft_v2.tex
-% Paper A -- draft v2.
+% Paper A -- draft v3 (restructured 2026-08-11 against five ML-paper-writing guides:
+%   Nanda "Highly Opinionated Advice on How to Write ML Papers";
+%   ICML 2022 Best Practices; Foerster "How to ML Paper"; Perez "Easy Paper Writing
+%   Tips"; Nanda/Perez "Tips for Empirical Alignment Research").
+% v2 -> v3 changes are recorded in paper/paperA_v3_RESTRUCTURE.md.
+%
 % Basis: inputs/Gleb_overleaf_paper.txt (Iteration B, frozen 2026-01-26)
 %        restructured per graph_analysis/phase2_results/paperA_positive_outline_2026-06-26.md
 % Every number carries a source comment: SRC = on-disk receipt in graph_analysis/phase2_results/,
 % and is regression-checked by graph_analysis/experiment_paper_claim_audit.py.
-% Markers: [GAP: ...] missing content, [FIG: ...] figure to produce, [CITE: ...] bib entry needed.
+% Markers: [GAP: ...] missing content, [CITE: ...] bib entry needed.
 %
 % CLASS NOTE: deliberately NOT a conference class. Conference styles (aaai, acmart,
 % IEEEtran) carry publisher branding and licence conditions that make them a poor fit
@@ -26,6 +31,10 @@
 \usepackage{abstract}
 \usepackage{titlesec}
 \usepackage{authblk}
+% hyperref + cleveref per Foerster's formatting checklist. hyperref must load late;
+% cleveref must load after hyperref.
+\usepackage[hidelinks,backref=page]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
 
 % compact workshop-style headings
 \titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
@@ -39,8 +48,9 @@
 \frenchspacing
 \pagestyle{plain}
 
-\title{\vspace{-2em}\textbf{Mechanism-Level Extraction of Risk-to-Intervention\\
-Reasoning Chains from the AI Safety Literature}\vspace{-0.5em}}
+\title{\vspace{-2em}\textbf{Reasoning Chains, Not Knowledge Graphs:\\
+Mechanism-Level Extraction from the AI Safety Literature\\
+and the Limits of Graph-Analytic Inference}\vspace{-0.5em}}
 
 % [GAP: author list + affiliations. Contributors: Martin Leitgab, Gleb Maksimov,
 %  Sai (validation), Mike (judge data), Axel (related work), Jeffrey Parks (review).
@@ -58,103 +68,130 @@ Reasoning Chains from the AI Safety Literature}\vspace{-0.5em}}
   \maketitle
   \begin{abstract}
   \noindent
-Directories of AI safety research catalogue papers by metadata; embedding maps
-place them by topical proximity. Neither records \emph{by what mechanism} a
-proposed intervention is argued to reduce a specific risk. We apply a reasoning
-LLM to 11{,}779 documents from the Alignment Research Dataset and extract, per
-paper, the explicit logical chain running from a named risk through problem
+Directories of AI safety research catalogue papers by metadata and embedding maps
+place them by topical proximity, so neither records \emph{by what mechanism} a
+proposed intervention is argued to reduce a specific risk. Recovering that
+mechanism at corpus scale is hard because it is an argument internal to one
+document rather than a bibliographic relation between documents. We prompt a
+reasoning LLM to read 11{,}779 documents from the Alignment Research Dataset and
+emit, per paper, the explicit chain running from a named risk through problem
 analysis, theoretical insight, design rationale, implementation mechanism and
-validation evidence to a proposed intervention, yielding 200{,}525 typed nodes
-(19{,}096 risks, 36{,}959 interventions) in a queryable graph. On the
-quality-controlled, de-duplicated set of 2{,}772 single-paper chains drawn from
-1{,}868 documents, 87.4\% carry all five intermediate reasoning stages, and chain
-length spans 4--16 nodes, indicating that the extraction captures argument
-structure rather than filling a fixed template. We characterise the dataset with clustering-free descriptives --- most
-notably an intervention maturity profile in which only 2.5\% of extracted
-interventions are described as deployed --- and demonstrate mechanism-level
-retrieval, in which a risk--intervention query returns the actual extracted
-chain with its source citation. Finally, we report a set of measured failure
-modes for graph-analytic inference on LLM-extracted safety corpora: we show that
-near-duplicate merging manufactures a centrality super-hub whose eigenvector
-centrality is 90$\times$ the next node, that excluding similarity edges does not
-repair it, and that a keyword pattern occurring in 2.2\% of the corpus appears
-in 2.2\% of the corpus can be made to look like a dominant pattern by conditioning
-on a centrality-selected head. We release the extraction pipeline and the pathway
-dataset.
+validation evidence to a proposed intervention, giving 200{,}525 typed nodes
+(19{,}096 risks, 36{,}959 interventions). We defend three claims. First, the
+extracted chains carry argument structure rather than a filled-in template:
+across 2{,}772 quality-controlled de-duplicated chains, 87.4\% contain all five
+intermediate stages while chain length spans 4--16 nodes, and an LLM-as-judge
+study with judge-of-judge calibration finds omission rather than fabrication to
+be the dominant error. Second, chains are a usable unit of analysis: a
+risk--intervention query returns one stored chain with its citation, and
+chain-level descriptives expose what the corpus actually holds --- only 2.5\% of
+extracted interventions are described as deployed, and only one document in six
+yields a complete chain at all. Third, the
+aggregate graph assembled from the same extraction does \emph{not} support the
+network analysis it invites: merging near-duplicate nodes manufactures a
+centrality hub at 90$\times$ the next node that excluding similarity edges fails
+to repair, and two previously reported findings on this corpus fail to reproduce
+under re-derivation. We release the pipeline, the chain dataset, and the audit
+scripts that regenerate every number here.
 % All abstract figures audited against raw data 2026-08-11 --
-% experiment_paper_claim_audit.json, 35/35 numeric claims PASS.
-% The unreproducible 88% figure has been REMOVED from the abstract (2026-08-11).
-% See experiment_race_top100_rederive_report.json and paperA_v2_AUDIT.md finding P1.
+% experiment_paper_claim_audit.json, 42/42 numeric claims PASS (2026-08-11, v3).
+% The unreproducible 88% figure is REMOVED from the abstract (2026-08-11).
+% See experiment_race_top100_rederive_report.json and paperA_v2_AUDIT.md finding P5.
   \end{abstract}
-  \vspace{1em}
+  \vspace{0.6em}
   \end{@twocolumnfalse}
 ]
+
+% Figure 1 spans both columns and lands on page 1, per Foerster and Perez.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figure1_dataset.png}
+\caption{What the extraction produced, and what it does not contain.
+\textbf{(A)} Length distribution of the 2{,}772 de-duplicated quality-controlled
+chains. The canonical risk$\rightarrow$intervention chain has seven nodes
+(orange); the spread from 4 to 16 nodes is the evidence that extraction follows
+each paper's argument instead of filling a fixed template, since 25.8\% of chains
+carry extra nodes for some stage and 10.2\% have genuine gaps.
+\textbf{(B)} LLM-assessed maturity of all 36{,}959 extracted interventions:
+roughly six in seven sit at conceptual or early-stage maturity and 2.5\% are
+described as deployed --- a field-state descriptive that paper metadata cannot
+yield.
+\textbf{(C)} Corpus yield: 1{,}868 of the 11{,}779 documents (15.9\%) produce any
+complete high-confidence chain, and those documents contribute every chain in
+panel A. Panel B is an LLM-assigned attribute that our judge study does not
+score; we read it as coarse composition rather than as a measured rate
+(\cref{sec:claim2}).}
+\label{fig:dataset}
+\end{figure*}
+% SRC: graph_analysis/experiment_figure1.py, which plots only from committed receipts
+%      (experiment_paper_claim_audit.json, experiment_dataset_strength_report.json,
+%      experiment_dataset_strength_report.json). No PKL checkpoint required.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
 The AI safety literature grows faster than any individual can track, and the
-question a practitioner actually asks of it is mechanistic: \emph{if I care
-about risk $R$, what has been proposed to reduce it, by what mechanism, and how
-far has that proposal been validated?} Existing resources cannot answer this.
-Curated directories such as the Alignment Research Dataset (ARD) and Stampy
-index papers by metadata. Embedding-based field maps place papers near
-topically similar papers. In both cases the unit of organisation is the
-document; the argument inside the document --- the chain from a risk to an
-intervention --- is not represented, so it cannot be queried, aggregated, or
-compared across papers.
+question a practitioner asks of it is mechanistic: \emph{if I care about risk
+$R$, what has been proposed to reduce it, by what mechanism, and how far has that
+proposal been validated?} Existing resources cannot answer this. Curated
+directories such as the Alignment Research Dataset (ARD) and Stampy index papers
+by metadata. Embedding-based field maps place papers near topically similar
+papers. In both cases the unit of organisation is the document, so the argument
+inside the document --- the chain from a risk to an intervention --- is not
+represented and cannot be queried, aggregated, or compared across papers.
 
-This paper reports a dataset and a pipeline that represent that chain
-explicitly. We prompt a reasoning LLM (\texttt{o3}) to read each paper and emit
-a typed graph: \textsc{risk} and \textsc{intervention} endpoints connected
-through five intermediate concept subtypes --- \emph{problem analysis},
-\emph{theoretical insight}, \emph{design rationale}, \emph{implementation
-mechanism}, \emph{validation evidence} --- with per-edge confidence and
-per-intervention maturity and lifecycle attributes. Applied across the ARD
-corpus, this produces a graph of 200{,}525 nodes over 11{,}779 documents.
+Recovering that argument is harder than the usual scientific-information-extraction
+task. The relation of interest connects concepts that the same paper introduces,
+it spans several reasoning steps rather than one predicate, and no annotated
+corpus of such chains exists to train or evaluate against.
 
-\paragraph{Research question.} Can the mechanism by which proposed
-interventions reduce AI safety risks be extracted at scale, with enough
-structural fidelity to support mechanism-level querying and field-state
-characterisation?
+We prompt a reasoning LLM (\texttt{o3}) to read each paper and emit a typed
+graph: \textsc{risk} and \textsc{intervention} endpoints connected through five
+intermediate concept subtypes --- \emph{problem analysis}, \emph{theoretical
+insight}, \emph{design rationale}, \emph{implementation mechanism},
+\emph{validation evidence} --- with per-edge confidence and per-intervention
+maturity and lifecycle attributes. Across the ARD corpus this produces 200{,}525
+nodes over 11{,}779 documents.
 
-\paragraph{Contributions.}
+\paragraph{Thesis.} For a corpus of this kind, \emph{the per-paper reasoning
+chain is a reliable unit of analysis and the aggregate graph is not}. We defend
+that sentence with three claims, each with its own evidence section.
+
+\paragraph{Claims and evidence.}
 \begin{enumerate}
-\setlength{\itemsep}{0pt}
-\item \textbf{An extraction pipeline and its validation protocol} for reducing a
-safety paper to the logical chain linking a risk to an intervention
-(§Methods), with an LLM-as-judge faithfulness study and judge-of-judge
-calibration.
-\item \textbf{The pathway dataset}: 2{,}772 de-duplicated quality-controlled single-paper
-risk$\rightarrow$intervention chains from 1{,}868 documents, of which 87.4\%
-carry all five reasoning stages, released with the graph (§The Pathway Dataset).
-\item \textbf{Clustering-free descriptive characterisation} of the extracted
-field state --- chain-structure distribution, intervention maturity profile,
-and end-to-end coverage --- none of which is derivable from paper metadata.
-\item \textbf{A mechanism-level retrieval demonstration}: a risk--intervention
-query returns the extracted chain and its citation, without any clustering step
-(§Mechanism-Level Retrieval).
-\item \textbf{Practical guidance for analysing LLM-extracted safety graphs}: four
-measured failure modes, each with the control that removes it
-(§Practical Guidance). We report these as measurements on this corpus, not as
-folklore.
+\setlength{\itemsep}{2pt}
+\item[\textbf{C1}] \textbf{The extracted chains carry argument structure rather
+than a filled-in schema.} 87.4\% of 2{,}772 quality-controlled de-duplicated
+chains contain all five intermediate reasoning stages while length spans 4--16
+nodes (\cref{fig:dataset}A); an LLM-as-judge study over 100 papers with three
+independent meta-graders finds omission, not fabrication, to be the dominant
+failure (\cref{sec:claim1}).
+\item[\textbf{C2}] \textbf{Chains are a usable unit of analysis, and reading the
+corpus at chain level exposes what it holds.} A risk--intervention query returns
+one stored chain with its source citation and no clustering step; the same view
+shows 2.5\% of interventions described as deployed and a corpus yield of one
+complete chain per six documents (\cref{fig:dataset}B,C; \cref{sec:claim2}).
+\item[\textbf{C3}] \textbf{The aggregate graph does not support the network
+analysis it invites.} Merging near-duplicate nodes manufactures a centrality hub
+at 90$\times$ the next node, and two findings previously reported on this corpus
+fail to reproduce under re-derivation (\cref{sec:claim3}).
 \end{enumerate}
 
-We deliberately do \emph{not} claim ecosystem-level findings ("the field
-neglects $X$"). We show in §Practical Guidance that the graph-analytic
-quantities such claims are usually built from --- centrality rankings, cluster
-risk-to-intervention ratios, co-occurrence on a centrality-selected head --- are
-dominated on this kind of corpus by construction artefacts, and we treat that
-result as a contribution rather than as a caveat.
+C3 is a negative result, and we report it as a first-class contribution rather
+than as a caveat. The quantities that ecosystem-level claims about this
+literature are usually built from --- centrality rankings, per-cluster
+risk-to-intervention ratios, co-occurrence measured on a centrality-selected head
+--- are dominated on this corpus by construction artefacts. Consequently we make
+no ecosystem-level claim ourselves.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Work}
-% [GAP: Axel started this section; needs prose + bibliography entries.
-%  Four strands below are the agreed scope. ~3 paragraphs is the workshop bar.]
+% [GAP: Axel started this section. The five strands below are the agreed scope and
+%  all citations resolve; a final read-through for flow is the remaining work.]
 
 \paragraph{Knowledge graphs from scientific literature.}
 Prior work extracts entities and relations from scientific text, typically
-targeting citation, method--task--dataset, or claim structures;
+targeting citation, method--task--dataset, or claim structures.
 \citet{luan2018scierc} is representative, jointly identifying entities, relations
 and coreference to build a scientific knowledge graph, and the task has a long
 methodological history \citep{bach2007relation}. Our schema differs in that the
@@ -163,18 +200,13 @@ intervention through explicit reasoning stages --- rather than a bibliographic o
 method-level relation.
 
 \paragraph{Agentic and self-organising knowledge graphs.}
-% [CITE: Buehler 2025, "Agentic Deep Graph Reasoning Yields Self-Organizing
-%  Knowledge Networks", arXiv:2502.13025 -- VERIFIED 2026-08-11.
-%  Rasmussen et al. 2025, "Zep: A Temporal Knowledge Graph Architecture for Agent
-%  Memory", arXiv:2501.13956 -- VERIFIED 2026-08-11.]
 A parallel line of work has models build and extend knowledge graphs
-autonomously: \citet{buehler2025agentic} shows a language model iteratively
-growing a scale-free knowledge network through feedback, and
-\citet{rasmussen2025zep} uses a temporal knowledge graph as agent memory. Those
-systems optimise a graph for an agent's downstream reasoning; we optimise for
-\emph{fidelity to what a specific paper argued}, which is why our edges are
-confidence-scored assertions traceable to one source document rather than
-model-generated links.
+autonomously. \citet{buehler2025agentic} grows a scale-free knowledge network
+through iterative model feedback, and \citet{rasmussen2025zep} uses a temporal
+knowledge graph as agent memory. Those systems optimise a graph for an agent's
+downstream reasoning; we optimise for fidelity to what a specific paper argued,
+which is why our edges are confidence-scored assertions traceable to one source
+document rather than model-generated links.
 
 \paragraph{AI safety literature resources.}
 % [CITE: AI Safety Atlas -- no canonical reference resolved; cite URL inline if used.]
@@ -182,48 +214,44 @@ The Alignment Research Dataset \citep{kirchner2022ard}, maintained by the Stampy
 AI Safety Info project, and hand-curated topic maps such as the AI Safety Atlas
 organise the field at the level of documents or topics. The MIT AI Risk Repository
 \citep{slattery2026airisk} provides a curated risk vocabulary --- 1{,}725 risks
-distilled from 74 frameworks into causal and domain taxonomies. These are
-complementary to, not competitive with, a mechanism-level extraction: a risk
-taxonomy says what can go wrong, a directory says who wrote about it, and neither
-records the argument connecting a risk to a proposed remedy. Anchoring our
-extracted risks to an external vocabulary of this kind is the natural next step
-(§Limitations and Outlook).
+distilled from 74 frameworks into causal and domain taxonomies. These complement
+rather than compete with a mechanism-level extraction: a risk taxonomy says what
+can go wrong, a directory says who wrote about it, and neither records the
+argument connecting a risk to a proposed remedy. Anchoring our extracted risks to
+an external vocabulary of this kind is the natural next step
+(\cref{sec:limitations}).
 
 \paragraph{Causal and mechanism extraction.}
-% [CITE: causal claim extraction; intervention/outcome extraction in evidence-based
-%  medicine (PICO); mechanism mining.]
+% [CITE: PICO extraction in evidence-based medicine; causal claim extraction.]
 Evidence-based medicine has a mature tradition of extracting
 population--intervention--comparison--outcome structure from trials. Our task is
-the analogous reduction for a field whose "evidence" is largely theoretical, which
+the analogous reduction for a field whose evidence is largely theoretical, which
 is why validation evidence appears as a reasoning stage rather than as an outcome
 measurement.
 
 \paragraph{Graph-based retrieval-augmented generation.}
 % All IDs below VERIFIED against the source 2026-08-11. Entries in refs.bib.
-GraphRAG systems build a graph over a corpus so that a language model can retrieve
+GraphRAG systems build a graph over a corpus so that a language model retrieves
 structured context rather than isolated passages
-\citep{peng2024graphrag,sarmah2024hybridrag}, and the design space has been
-mapped modularly \citep{cao2024legographrag} and pushed towards learning the graph
-construction itself against downstream task reward
-\citep{tsang2025autographr1}. The broader programme of joining language models to
-knowledge graphs is surveyed by \citet{pan2024unifying}. The closest analogue to
-our setting is domain-specific: \citet{wu2025medgraphrag} build a medical GraphRAG
-whose selling point is that answers carry credible sourcing.
-
-In all of that work the graph is \emph{instrumental} --- it exists to improve an
-answer, and its edges are whatever the indexing step produced. Our graph is the
-object of study rather than an index: each edge is a confidence-scored assertion
-that one identified paper made, so a query returns that paper's own argument with
-provenance attached rather than a synthesised answer. The two are complementary,
-and a GraphRAG layer over this dataset is an obvious application we do not attempt
-here.
+\citep{peng2024graphrag,sarmah2024hybridrag}; the design space has been mapped
+modularly \citep{cao2024legographrag} and pushed towards learning graph
+construction against downstream task reward \citep{tsang2025autographr1}.
+\citet{pan2024unifying} survey the broader programme of joining language models to
+knowledge graphs, and \citet{wu2025medgraphrag} build a medical GraphRAG whose
+selling point is credible sourcing. In all of that work the graph is
+\emph{instrumental}: it exists to improve an answer, and its edges are whatever
+the indexing step produced. Our graph is the object of study, each edge is a
+confidence-scored assertion that one identified paper made, and a query returns
+that paper's own argument with provenance attached rather than a synthesised
+answer. A GraphRAG layer over this dataset is an obvious application we do not
+attempt here.
 
 \paragraph{LLM extraction validation.}
 We adopt the LLM-as-a-judge paradigm \citep{zheng2023judging} with an explicit
-judge-of-judge calibration step in which several independent stronger models score
-the judge's proposals, and we report its scope limits honestly in §Limitations ---
-in particular that no human adjudicated any verdict, so the chain is
-LLM-internal end to end.
+judge-of-judge calibration step, in which several independent stronger models
+score the judge's proposals. \Cref{sec:limitations} states its scope limits: no
+human adjudicated any verdict, so the validation chain is LLM-internal end to
+end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Methods}
@@ -237,8 +265,8 @@ extraction, the working corpus is 11{,}779 documents.
 % SRC: experiment_query_demo_report.json -> coverage_bound.papers_with_risk = 11779
 
 Each document is passed in full to \texttt{o3} with a schema-constrained
-extraction prompt (Appendix~A). The model is instructed to trace the paper's own
-logical chain and emit:
+extraction prompt (\cref{app:prompt}). The model traces the paper's own logical
+chain and emits:
 
 \begin{itemize}
 \setlength{\itemsep}{0pt}
@@ -249,7 +277,7 @@ evidence}\}.
 \item \textbf{Intervention nodes}, each carrying
 \texttt{intervention\_lifecycle} $\in 1..6$ (position in the research-to-deployment
 cycle) and \texttt{intervention\_maturity} $\in 1..4$ (1 = conceptual proposal,
-2 = early prototype/experiment, 3 = mature method, 4 = deployed in practice).
+2 = early prototype or experiment, 3 = mature method, 4 = deployed in practice).
 \item \textbf{Typed edges} carrying a relation type, a natural-language
 description of the claimed relationship, and \texttt{edge\_confidence} $\in 1..5$
 reflecting how explicitly the paper asserts the link.
@@ -259,9 +287,9 @@ The canonical chain the schema encourages is
 \emph{risk} $\rightarrow$ \emph{problem analysis} $\rightarrow$ \emph{theoretical
 insight} $\rightarrow$ \emph{design rationale} $\rightarrow$ \emph{implementation
 mechanism} $\rightarrow$ \emph{validation evidence} $\rightarrow$
-\emph{intervention}. Papers frequently deviate from it --- omitting stages,
-or supplying several nodes for one stage --- and we quantify that deviation in
-§The Pathway Dataset rather than forcing conformity.
+\emph{intervention}. Papers frequently deviate from it, omitting stages or
+supplying several nodes for one stage, and we quantify that deviation in
+\cref{sec:claim1} rather than forcing conformity.
 
 Per-paper graphs are embedded (1536-dimensional OpenAI embeddings over node name,
 aliases and description) and loaded into FalkorDB, giving 200{,}525 nodes:
@@ -271,37 +299,37 @@ rationale, 34{,}222 implementation mechanism, 28{,}596 validation evidence).
 % SRC: experiment_race_prevalence_report.json -> by_node_type_full_graph.*.n
 %      (n per type; 19096+27748+26361+27543+34222+28596+36959 = 200525)
 
-\paragraph{Corpus composition.} ARD is heterogeneous, and the chain dataset
-inherits that: of the 2{,}772 chains, 1{,}055 come from arXiv, 326 from the
-Alignment Forum, 267 from LessWrong, 265 from the EA Forum, 238 from YouTube
-transcripts, 120 from MIRI, and the remainder from a long tail of institutional
-and personal sites. A small number (7 chains, 0.3\%, from 3 documents) originate
-from Google Docs, at least one of which is a reading list rather than a research
-document --- a reminder that ``document'' in ARD does not always mean ``paper''.
+\paragraph{Corpus composition.} ARD is heterogeneous and the chain dataset
+inherits that heterogeneity: of the 2{,}772 chains, 1{,}055 come from arXiv, 326
+from the Alignment Forum, 267 from LessWrong, 265 from the EA Forum, 238 from
+YouTube transcripts, 120 from MIRI, and the remainder from a long tail of
+institutional and personal sites. Seven chains (0.3\%, from 3 documents)
+originate from Google Docs, at least one of which is a reading list rather than a
+research document --- a reminder that ``document'' in ARD does not always mean
+``paper''.
 % SRC: recomputed 2026-08-11 over paths_hopwise_v4_edge_only_deduped.jsonl,
 %      grouping by the source URL host of each chain's risk node.
 
 \paragraph{Extraction is single-source.} Every structural edge comes from one
-paper. The global graph is a concatenation of per-paper graphs; the pipeline
-never asserts a relation between concepts introduced by two different papers.
-This is a deliberate fidelity choice and it has consequences for every
-downstream graph statistic, which we make explicit below and in
-§Practical Guidance.
+paper. The global graph concatenates per-paper graphs, and the pipeline never
+asserts a relation between concepts introduced by two different papers. This
+deliberate fidelity choice has consequences for every downstream graph statistic,
+which we make explicit below and in \cref{sec:claim3}.
 
 \paragraph{Extraction failures, and the limits of automated repair.}
 Extraction fails outright on a minority of ARD records. The large majority of
-those failures are records with no usable source text --- ARD entries that carry
-a title and URL but an empty or \texttt{None} body --- which are unrecoverable in
-principle. Filtering to failures that are repairable in principle (a URL,
-non-empty source text, and at least one extracted node) leaves \textbf{441
-candidates}. Running the judge over all 441 in repair mode produced a non-empty
-graph for \textbf{23 of them (5.2\%)}, and those recovered graphs are very thin
---- a mean of 2.4 nodes and 0.9 edges, against 16.0 nodes and 10.8 edges for the
-audited successful extractions. The practical conclusion, which we state because
-it is useful to others attempting the same thing: \emph{an LLM judge is effective
-at auditing and repairing an extraction that already exists, and largely
-ineffective at reconstructing one that failed.} We therefore treat failed
-extractions as corpus loss rather than as a recoverable pool.
+those failures are records with no usable source text --- ARD entries carrying a
+title and URL but an empty or \texttt{None} body --- which are unrecoverable in
+principle. Filtering to failures repairable in principle (a URL, non-empty source
+text, and at least one extracted node) leaves \textbf{441 candidates}. Running
+the judge over all 441 in repair mode produced a non-empty graph for \textbf{23
+of them (5.2\%)}, and those recovered graphs are thin: a mean of 2.4 nodes and
+0.9 edges, against 16.0 nodes and 10.8 edges for audited successful extractions.
+The practical conclusion, which we state because it is useful to others
+attempting the same thing: \emph{an LLM judge audits and repairs an extraction
+that already exists effectively, and reconstructs one that failed poorly.} We
+therefore treat failed extractions as corpus loss rather than as a recoverable
+pool.
 % SRC: experiment_judge_full_report.json ->
 %      item3_recovery.population_A_extraction_error_candidates (441 attempts, 23 with
 %      a non-empty final_graph = 5.2%, mean 2.35 nodes / 0.87 edges)
@@ -314,36 +342,36 @@ extractions as corpus loss rather than as a recoverable pool.
 % Reused near-verbatim from Gleb_overleaf_paper.txt L143-168.
 
 The raw extraction produced duplicate nodes representing identical concepts with
-different phrasings (e.g.\ ``US semiconductor export controls'' and ``AI chip
-export control regulations'') and inconsistent edge types (e.g.\
-\textit{mitigated\_by} vs \textit{mitigates}, naming variants like
-\textit{design\_rationale} vs \textit{design\_rationale\_for}). We applied a
-two-threshold deduplication: candidate pairs required both cosine similarity
-$\geq 0.88$ on embeddings and Jaccard overlap $\geq 0.05$ on node names. We used
-blocking by node type and category to reduce comparisons, FAISS
-\texttt{IndexIVFFlat} for approximate similarity search, and Union-Find to group
-transitive duplicates. For merged nodes we selected the canonical representative
-by longest description and averaged embeddings. Four threshold configurations
-were tested (Appendix~B). We prioritised precision over recall: false merges
-corrupt downstream pathway analysis by conflating distinct concepts, whereas
-missed duplicates only introduce redundancy. Edge types were normalised by
-unifying bidirectional pairs (\textit{mitigates} $\rightarrow$
-\textit{mitigated\_by}) and standardising naming variants, yielding 12 canonical
-edge types. Deduplication removed 2{,}385 nodes (1.2\%).
+different phrasings (``US semiconductor export controls'' and ``AI chip export
+control regulations'') and inconsistent edge types (\textit{mitigated\_by} versus
+\textit{mitigates}, or \textit{design\_rationale} versus
+\textit{design\_rationale\_for}). We applied a two-threshold deduplication:
+candidate pairs required both cosine similarity $\geq 0.88$ on embeddings and
+Jaccard overlap $\geq 0.05$ on node names. We blocked by node type and category
+to reduce comparisons, used FAISS \texttt{IndexIVFFlat} for approximate
+similarity search, and applied Union-Find to group transitive duplicates. For
+merged nodes we selected the canonical representative by longest description and
+averaged embeddings. \Cref{app:dedup} reports four threshold configurations. We
+prioritised precision over recall, because false merges corrupt downstream
+pathway analysis by conflating distinct concepts whereas missed duplicates only
+introduce redundancy. Edge normalisation unified bidirectional pairs
+(\textit{mitigates} $\rightarrow$ \textit{mitigated\_by}) and standardised naming
+variants, yielding 12 canonical edge types. Deduplication removed 2{,}385 nodes
+(1.2\%).
 
 \paragraph{Honest scope of the merge.} The merge is approximate in two respects
 that we quantify rather than hide. First, the approximate nearest-neighbour
 search under-retrieves: re-running the same threshold specification with
-exhaustive search finds 54{,}282 candidate pairs against the 4{,}411 found by
-the deployed configuration, a factor of 12.
+exhaustive search finds 54{,}282 candidate pairs against the 4{,}411 found by the
+deployed configuration, a factor of 12.
 % SRC: experiment_J6_merge_approx_v2_report.json -> variants.V2_T1_T2_T3.phase2_both_pass
 %      = 54282 vs gleb_reference.candidate_pairs = 4411
-Second, 1{,}140 nodes across 448 groups remain exact-name duplicates within
-their category after the merge.
+Second, 1{,}140 nodes across 448 groups remain exact-name duplicates within their
+category after the merge.
 % SRC: experiment_J6_merge_approx_v2_report.json -> provenance_diagnostic
-Both facts matter only where node identity is load-bearing; §Practical Guidance
-shows exactly where that is, and the pathway results in
-§The Pathway Dataset do not depend on the merge.
+Both facts matter only where node identity is load-bearing. \Cref{sec:claim3}
+shows exactly where that is, and the chain-level results in \cref{sec:claim1,sec:claim2}
+do not depend on the merge.
 
 \subsection{Structural Diagnostics of the Concatenated Graph}
 % Reused from Gleb_overleaf_paper.txt L172-180, relocated from Results to Methods
@@ -356,69 +384,71 @@ clustering coefficient of 0.013.
 %      only) 2026-08-11, union-find over 200,525 nodes / 202,149 EDGE edges.
 %      NOTE: the frozen Overleaf reported 18,424 / 55 / 2.0 / 0.007 -- measured on
 %      the MERGED 200,061-node graph with 197,542 edges, a different substrate.
-%      We report our own numbers for the graph this paper describes. This is not a finding about the literature. It is the
-arithmetic consequence of concatenating per-paper chains without asserting
-cross-paper edges: a corpus of $N$ short chains is exactly $N$ components until
-something links them. We record it here so that no later section is read as
-discovering it.
+%      We report our own numbers for the graph this paper describes.
+This is not a finding about the literature. It is the arithmetic consequence of
+concatenating per-paper chains without asserting cross-paper edges: a corpus of
+$N$ short chains is exactly $N$ components until something links them. We record
+it in Methods so that no later section reads as discovering it.
 
 \subsection{Similarity Augmentation and Quality-Controlled Path Extraction}
+\label{sec:paths}
 
 Two graph layers are available for analysis, and the distinction governs every
 claim in this paper.
 
-\paragraph{EDGE layer (structural).} The extracted relations. Single-paper,
+\paragraph{EDGE layer (structural).} The extracted relations: single-paper,
 LLM-asserted, confidence-scored.
 
 \paragraph{SIM layer (similarity).} Cosine-similarity edges between nodes of the
 same concept category, added to connect content across documents. At
 $\tau \geq 0.80$ this adds 1{,}435{,}806 within-category edges, reduces components
 from 15{,}123 to 4{,}124, and expands the largest component from 61 nodes to
-152{,}753 (76.2\%). That expansion is the point --- and also the hazard: a
-threshold that turns 0.03\% of the graph into 76.2\% of it in one step is not a
-neutral operation (Appendix~E).
+152{,}753 (76.2\%). That expansion is the point, and also the hazard: a threshold
+turning 0.03\% of the graph into 76.2\% of it in one step is not a neutral
+operation (\cref{app:sensitivity}).
 % SRC: re-derived 2026-08-11 from graph_edge_data.pkl, SIMILARITY edges with
 %      cos_sim >= 0.80 restricted to same concept_category.
 %      NOTE: the frozen Overleaf reported 169,083 edges -> 6,522 components ->
 %      142,772 (71.4%); that k-NN construction is ~8.5x sparser than the dump this
 %      paper uses. Same qualitative conclusion, different counts; we report ours.
 
-For every quantitative result in §The Pathway Dataset and
-§Mechanism-Level Retrieval we use the \textbf{EDGE-only path set} under strict
-quality cuts, applied at path-construction time: structural edges only (no
-similarity hops), edge confidence $\geq 3$, intervention-endpoint maturity
-$\geq 3$, exactly one risk node and it must be the path root. Enumerating all
-such paths yields 8{,}954 raw chains.
+For every quantitative result in \cref{sec:claim1,sec:claim2} we use the
+\textbf{EDGE-only path set} under strict quality cuts applied at
+path-construction time: structural edges only with no similarity hops, edge
+confidence $\geq 3$, intervention-endpoint maturity $\geq 3$, and exactly one
+risk node which must be the path root. Enumerating all such paths yields 8{,}954
+raw chains.
 % SRC: phase2_step4_F2v4_hopwise_falkordb.py (EDGE_CONFIDENCE_MIN=3,
 %      INTERVENTION_MATURITY_MIN=3, single-risk); verified empirically in
 %      experiment_paper_claim_audit.json: 100% of paths start at a risk node, 0 paths
 %      contain a risk after position 0, all endpoints have maturity 3 (8050) or 4 (904).
 
-\paragraph{De-duplication of near-identical chains within a paper (the reporting
-unit).} Raw path enumeration over-counts prolific papers: a single paper
-contributes 700 of the 8{,}954 raw chains (7.8\%), two others contribute 200 and
-184, and 169 papers contribute ten or more. Reporting per-path statistics on that
-set would weight the corpus by how branched each paper's extracted graph happens
-to be --- the same unit-of-analysis error we document in §Practical Guidance. We
-therefore collapse near-duplicate chains within each source paper: two chains are
-near-duplicates when the smaller one's node set is $\geq 70\%$ contained in the
-larger's, and the shorter is dropped. This yields the \textbf{2{,}772-chain
-de-duplicated set} (at most 7 chains from any one paper), which is the reporting
-unit for every number below. Both sets cover the same \textbf{1{,}868 source
-papers}, and we report the raw set alongside as a sensitivity check.
+\paragraph{The reporting unit.} Raw path enumeration over-counts prolific papers:
+one paper contributes 700 of the 8{,}954 raw chains (7.8\%), two others
+contribute 200 and 184, and 169 papers contribute ten or more. Reporting
+per-chain statistics on that set would weight the corpus by how branched each
+paper's extracted graph happens to be --- the same unit-of-analysis error we
+document in \cref{sec:claim3}. We therefore collapse near-duplicate chains within
+each source paper: two chains are near-duplicates when the smaller one's node set
+is $\geq 70\%$ contained in the larger's, and the shorter is dropped. This yields
+the \textbf{2{,}772-chain de-duplicated set} (at most 7 chains from any one
+paper), the reporting unit for every number below. Both sets cover the same
+\textbf{1{,}868 source papers}, and we report the raw set alongside as a
+sensitivity check.
 % SRC: phase1_dedup_paths.py (CONTAINMENT_THRESHOLD = 0.70 -- note the module
 %      docstring says 80%, the code uses 70%; the code is what ran).
 %      Counts + skew: experiment_paper_claim_audit.json -> path_set_comparison.
 
 The path set is free of similarity-threshold sensitivity and of merge artefacts
-by construction; it is the substrate on which we are willing to make numerical
+by construction. It is the substrate on which we are willing to make numerical
 claims.
 
 \subsection{Validation}
+\label{sec:validation}
 
-Extraction quality is assessed with an LLM-as-a-judge protocol. A judge model
-from a different provider than the extractor (\texttt{claude-sonnet-4-5}, batch
-API) receives the source text together with the extracted graph and returns a
+We assess extraction quality with an LLM-as-a-judge protocol. A judge model from
+a different provider than the extractor (\texttt{claude-sonnet-4-5}, batch API)
+receives the source text together with the extracted graph and returns a
 structured audit: schema conformance, referential integrity, orphan and duplicate
 detection, rationale consistency, coverage of the source's claims, and a set of
 proposed repairs. We ran it on a random sample of \textbf{100 successfully
@@ -436,26 +466,25 @@ repairs.
 the dominant pattern is an edge whose source or target names a node absent from
 the node list; \textbf{42 orphan nodes} (present in 40\% of papers); and
 \textbf{56 within-paper duplicate node pairs} (55\% of papers). The mean audited
-graph is 16.0 nodes and 10.8 edges.
+graph has 16.0 nodes and 10.8 edges.
 % SRC: experiment_judge_item2_report.json -> findings_total,
 %      findings_papers_with_at_least_one, per_paper_means
 
 \paragraph{Coverage.} Asked to identify content in the source that the extraction
 missed, the judge proposed \textbf{new nodes for only 7 of 100 papers} (9 nodes
 in total). Its coverage list flags a mean of 7.8 relationships per paper that it
-judges the source to support but the extraction not to contain --- an
-upper-bound opinion signal rather than a measured omission rate, since the judge
-has no schema slot in which to propose those edges and they were never
-adjudicated.
+judges the source to support but the extraction not to contain --- an upper-bound
+opinion signal rather than a measured omission rate, since the judge has no
+schema slot in which to propose those edges and no human adjudicated them.
 % SRC: experiment_judge_item2_report.json -> proposed_fix_totals.add_nodes = 9;
 %      findings_papers_with_at_least_one.add_nodes = 7; per_paper_means.missing_edges_flagged
 
-\paragraph{Judge-of-judge.} Three meta-graders scored each extraction on a
-0--100 holistic rubric before and after applying the judge's proposed repairs
-(Table~\ref{tab:graders}). All three agree on direction --- every grader records
-an improvement on every paper it scored, and on the 13 papers all three scored,
+\paragraph{Judge-of-judge.} Three meta-graders scored each extraction on a 0--100
+holistic rubric before and after applying the judge's proposed repairs
+(\cref{tab:graders}). All three agree on direction: every grader records an
+improvement on every paper it scored, and on the 13 papers all three scored,
 agreement that the judge improved the extraction is unanimous. They disagree
-sharply on magnitude: the mean gain ranges from $+3.5$ to $+33.1$ points.
+sharply on magnitude, with mean gains from $+3.5$ to $+33.1$ points.
 % SRC: experiment_judge_full_report.json -> item2_meta_graders,
 %      item2_grader_agreement (reproduces extraction_validator/results.md exactly)
 
@@ -463,21 +492,21 @@ sharply on magnitude: the mean gain ranges from $+3.5$ to $+33.1$ points.
 \centering
 \small
 \begin{tabular}{lrrrr}
-\hline
+\toprule
 \textbf{Meta-grader} & \textbf{$n$} & \textbf{pre} & \textbf{post} & \textbf{$\Delta$} \\
-\hline
+\midrule
 Claude Opus 4.5 & 95 & 69.7$\pm$18.0 & 73.1$\pm$18.2 & $+3.5$ \\
 GPT-5.1         & 95 & 67.0$\pm$16.2 & 80.2$\pm$10.2 & $+13.2$ \\
 Gemini 3 Pro    & 13 & 62.7$\pm$22.6 & 95.8$\pm$1.8  & $+33.1$ \\
-\hline
+\bottomrule
 \end{tabular}
-\caption{Meta-grader rubric scores before and after the judge's repairs.
-The three graders scored \emph{unequal, partly disjoint} subsets of the 100
-papers --- only 13 papers carry all three scores --- because the rubric was run
-across several prompt iterations and only some iterations emit a paired
-pre/post score. The rows are therefore not directly comparable, and Gemini's
-$n{=}13$ post-repair mean of 95.8 with a standard deviation of 1.8 shows
-saturation at the top of the scale.}
+\caption{Meta-grader rubric scores before and after the judge's repairs. The
+three graders scored \emph{unequal, partly disjoint} subsets of the 100 papers
+--- only 13 papers carry all three scores --- because the rubric ran across
+several prompt iterations and only some iterations emit a paired pre/post score.
+The rows are therefore not directly comparable, and Gemini's $n{=}13$ post-repair
+mean of 95.8 with a standard deviation of 1.8 shows saturation at the top of the
+scale.}
 \label{tab:graders}
 \end{table}
 
@@ -490,14 +519,14 @@ correlate negatively with both ($\rho = -0.63$, $-0.64$). We therefore report th
 its \emph{magnitude} as unresolved.
 % SRC: experiment_judge_full_report.json -> item2_grader_agreement
 
-\paragraph{What the post-repair score is.} The meta-graders were shown the source
-text, the extraction, and the judge's report including its \emph{proposed} fixes,
-and asked to score the extraction before and after those fixes. The post-repair
-score is therefore an assessment of the proposed repairs as described, not a
-measurement of a re-built graph. This is a real limitation --- no repaired graph
-was re-extracted and re-scored --- but it also means the known defects in the
-fix-application code (which under-applied multi-node additions and dropped
-proposed merges) do \emph{not} contaminate these scores.
+\paragraph{What the post-repair score is.} The meta-graders saw the source text,
+the extraction, and the judge's report including its \emph{proposed} fixes, and
+scored the extraction before and after those fixes. The post-repair score
+therefore assesses the proposed repairs as described rather than measuring a
+re-built graph. This is a real limitation, since no repaired graph was
+re-extracted and re-scored. It also means the known defects in the fix-application
+code, which under-applied multi-node additions and dropped proposed merges, do
+\emph{not} contaminate these scores.
 % SRC: prompts/judge_and_extraction_evaluation_prompt.md ("give a score between
 %      0-100 before and after the judge's proposed fixes") + combine_judge_and_
 %      extraction_with_original_text.py, which bundles Original Text + Extraction
@@ -507,40 +536,30 @@ proposed merges) do \emph{not} contaminate these scores.
 
 \textbf{[GAP: a human-anchored spot-check. No human adjudicated any judge or
 meta-grader verdict, so the whole validation chain is LLM-internal. Owner: Sai,
-ticket \#147, together with the manual 50-instance error taxonomy.]}
+ticket \#150, together with the manual 50-instance error taxonomy.]}
 
-\paragraph{Auto-derived error profile.} The Opus meta-grader emits structured
-lists of missed concepts, fabricated content and category errors per paper.
-Across the 95 papers it scored, it recorded \textbf{216 missed concepts}
-(at least one in every paper), \textbf{20 instances of fabricated content}
-(in 16\% of papers) and \textbf{15 category errors} (in 33\% of papers) --- i.e.\
-under this grader the dominant failure mode is omission, not hallucination.
-These counts are un-adjudicated LLM output and are reported as a profile, not as
-a measured error rate; the manual taxonomy remains outstanding.
-% SRC: experiment_judge_full_report.json -> item3_error_taxonomy_auto
-
-\paragraph{Two measurement caveats we do not hide.}
-First, the judge grades against a schema that expects rationale fields inline on
-nodes and edges, whereas the pipeline stores rationale as separate nodes linked
-by a dedicated relation. That mismatch accounts for \textbf{184 of the 218
-blocker-severity schema flags (84\%)}; excluding it leaves 34 substantive
-blocker-severity schema findings across 100 papers. Any headline "error rate"
-computed from the raw judge output without this split is measuring a schema
-version difference, not extraction quality.
+\paragraph{Two measurement caveats we do not hide.} First, the judge grades
+against a schema expecting rationale fields inline on nodes and edges, whereas
+the pipeline stores rationale as separate nodes linked by a dedicated relation.
+That mismatch accounts for \textbf{184 of the 218 blocker-severity schema flags
+(84\%)}; excluding it leaves 34 substantive blocker-severity schema findings
+across 100 papers. Any headline error rate computed from raw judge output without
+this split measures a schema version difference, not extraction quality.
 % SRC: experiment_judge_item2_report.json -> schema_check_severity_rationale_field_mismatch
 %      vs schema_check_severity_substantive
 Second, the judge scores node and edge faithfulness, referential structure and
 edge type. It does \emph{not} score the \texttt{intervention\_maturity}
-assignment. Wherever maturity appears below it is labelled LLM-assessed and used
+assignment. Wherever maturity appears below we label it LLM-assessed and use it
 descriptively, never as a validated measurement.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Pathway Dataset}
+\section{C1: The Chains Carry Argument Structure}
+\label{sec:claim1}
 
-This section characterises what the extraction produced. Every number is a
-structural property of the EDGE-only quality-cut path set or a direct count over
-extracted attributes. No clustering, no centrality, no similarity threshold
-enters any of them.
+Every number in this section is a structural property of the EDGE-only
+quality-cut path set (\cref{sec:paths}) or a direct count over extracted
+attributes. No clustering, no centrality, and no similarity threshold enters any
+of them.
 
 \subsection{Chains carry the full reasoning structure}
 
@@ -548,115 +567,108 @@ Across the 2{,}772 de-duplicated chains, \textbf{87.4\% (2{,}423) contain all
 five intermediate reasoning stages}. Stage-wise presence is: problem analysis
 99.0\%, theoretical insight 93.9\%, design rationale 96.1\%, implementation
 mechanism 96.0\%, validation evidence 98.0\%. On the raw 8{,}954-chain set the
-same figure is 89.0\%, so the result is not an artefact of the de-duplication
+same figure is 89.0\%, so the result does not depend on the de-duplication
 choice.
 % SRC: experiment_paper_claim_audit.json -> path_set_comparison.deduped
 %      (all5 2423/2772 = 87.4%; subtype_presence_pct) and .raw (89.0%)
 
-This is the central property of the dataset: a large majority of extracted
-chains do not merely connect a risk to an intervention, they carry the
-paper's argument for why the intervention should work, stage by stage.
+A large majority of extracted chains therefore do more than connect a risk to an
+intervention: they carry the paper's argument for why the intervention should
+work, stage by stage.
 
-\paragraph{What this is not.} 87.4\% is the share \emph{of complete chains} that
-carry all five stages, not the share of the corpus. Only 1{,}868 of the 11{,}779
-documents (15.9\%) yield any complete high-confidence chain at all; the
+\paragraph{What this is not.} 87.4\% is the share \emph{of complete chains}
+carrying all five stages, not the share of the corpus. Only 1{,}868 of the
+11{,}779 documents (15.9\%) yield any complete high-confidence chain; the
 remaining documents contribute nodes and partial structure. Both numbers matter:
 the corpus-level yield is modest, and what is yielded is structurally rich.
 
 \subsection{The chains are not a filled-in template}
 
-The obvious objection is that a schema which suggests a seven-node chain will
-produce seven-node chains regardless of the source. The length distribution
-refutes the strong form of that objection (Table~\ref{tab:chainlen}): chains
-span 4--16 nodes. The mode is indeed 7 (1{,}775 chains, 64.0\%), but 25.8\%
-of chains are \emph{longer} than the canonical seven --- carrying multiple nodes
-for one or more stages, i.e.\ richer argumentation --- and 10.2\% are shorter,
-carrying genuine gaps.
+The obvious objection is that a schema suggesting a seven-node chain will produce
+seven-node chains regardless of the source. \Cref{fig:dataset}A refutes the
+strong form of that objection: chains span 4--16 nodes, the mode is 7 (1{,}775
+chains, 64.0\%), but 25.8\% run \emph{longer} than the canonical seven --- carrying
+multiple nodes for one or more stages, that is, richer argumentation --- and
+10.2\% run shorter, carrying genuine gaps.
 % SRC: experiment_paper_claim_audit.json -> path_set_comparison.deduped.len_hist
 %      (=7: 1775 = 64.0%; >7: 715 = 25.8%; <7: 282 = 10.2%)
 
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{lrrrrrrr}
-\hline
-\textbf{Length} & 4 & 5 & 6 & \textbf{7} & 8 & 9 & 10 \\
-\textbf{Chains} & 28 & 41 & 213 & \textbf{1{,}775} & 273 & 260 & 66 \\
-\hline
-\textbf{Length} & 11 & 12 & 13 & 14 & 15 & 16 & \\
-\textbf{Chains} & 56 & 26 & 19 & 5 & 8 & 2 & \\
-\hline
-\end{tabular}
-\caption{Length distribution of the 2{,}772 de-duplicated EDGE-only quality-cut
-chains. The canonical risk$\rightarrow$intervention chain has 7 nodes; the spread
-from 4 to 16 shows the extraction follows the paper's argument rather than
-emitting a fixed template. The raw (pre-de-duplication) set has a flatter
-distribution --- 48.0\% at length 7 --- because prolific papers contribute many
-overlapping long variants.}
-\label{tab:chainlen}
-\end{table}
+\paragraph{What the length spread does and does not settle.} A spread is
+consistent with the extraction following each paper's argument, and it is also
+consistent with a schema that bends a little under pressure. Settling the
+question requires separating two failure modes that are easy to conflate.
+\emph{Scope} failure means the pipeline emits a chain from a document that is not
+about AI safety. \emph{Fidelity} failure means the pipeline emits a chain whose
+structure the source document does not contain. Only the second bears on C1.
 
-\subsection{Intervention maturity profile}
+An out-of-domain control does not test fidelity. Any literature that names a
+problem, analyses it, and proposes a remedy --- materials science, epidemiology,
+software engineering --- contains genuine risk-to-intervention arguments, so a
+high chain-emission rate on non-safety documents would show the schema is
+domain-general, which is a scope property and arguably a feature. Two controls do
+test fidelity, and both hold the domain fixed:
 
-Of the 36{,}959 extracted interventions, the LLM-assessed maturity distribution
-is: \textbf{27.6\% conceptual} (10{,}189), \textbf{57.3\% early-stage}
-(21{,}180), \textbf{12.7\% mature} (4{,}681), and \textbf{2.5\% deployed} (909).
-% SRC: experiment_dataset_strength_report.json -> interventions.maturity
-Roughly six in seven proposed interventions in this corpus sit at conceptual or
-early-stage maturity, and fewer than one in thirty is described as deployed.
+\begin{itemize}
+\setlength{\itemsep}{1pt}
+\item \textbf{Schema ablation.} Re-extract a sample with a prompt that asks for
+the chain from problem to proposed solution \emph{without naming the five
+stages}, then measure how often the emergent chain maps onto them. Structure that
+survives un-prompted is read from the document rather than imposed on it.
+\item \textbf{Degraded-source control.} Re-extract from versions of the same
+safety documents whose argument has been destroyed but whose vocabulary is
+retained --- sentence-shuffled text, abstract only, reference list only. A
+complete five-stage chain arising at a similar rate would show the model
+confabulating structure from topical vocabulary.
+\end{itemize}
 
-This is a field-state characterisation that no metadata directory can produce,
-because maturity is a property of the argument inside the paper, not of the
-paper's bibliographic record. It is also, as flagged in §Methods, an
-LLM-assigned attribute that the judge study does not score. We therefore present
-it as a descriptive profile: the gross skew toward the immature end is a
-four-bucket coarse call with a very large margin, and would survive a
-substantial per-item error rate, but the individual bucket boundaries should not
-be read as precise.
+We ran neither, and we flag them as the most valuable additions to this work.
+\Cref{app:failure} is the one fidelity failure we exhibit: a chain that passes
+every structural filter, extracted from an expository article proving that there
+are infinitely many primes, in which the model invents a safety framing the
+source never asserts. We report it as an existence proof, not as a rate.
 
-\subsection{End-to-end coverage}
+\paragraph{What C1 does not claim.} C1 concerns fidelity to what a paper argued.
+It says nothing about whether the argument is \emph{correct}, whether the
+intervention works, or whether the analysis is good safety research. A faithfully
+extracted chain from a weak paper is a successful extraction.
 
-All 11{,}779 corpus documents yield at least one risk node and at least one
-intervention node --- the two sets are identical --- which is a property of the
-extraction schema, not a measurement of the literature. The informative number
-is how many documents yield a \emph{complete, high-confidence, mature-intervention
-chain end to end}: \textbf{1{,}868 documents} (15.9\%), contributing
-\textbf{2{,}643 distinct risk$\rightarrow$intervention node pairs} after
-de-duplication (3{,}222 before).
-% SRC: experiment_paper_claim_audit.json -> n_source_papers = 1868 recomputed from
-%      the raw path file (identical on the de-duplicated set);
-%      distinct_ri_node_pairs deduped 2643 / raw 3222.
-%      NOTE: experiment_query_demo_report.json carries the field
-%      "papers_with_complete_strict_chain": 1868 but it is a HARDCODED literal in
-%      experiment_query_demo.py:125, not computed there. Cite the audit receipt.
-The ratio between the two figures is the honest statement of yield: roughly one
-document in six argues a complete mechanism from a named risk to an intervention
-that is at least a mature method, under our quality cuts.
+\subsection{What the judge study supports}
 
-% [FIG: figure1_chain_structure.png -- two panels.
-%  (A) chain-length histogram from Table~\ref{tab:chainlen}.
-%  (B) stacked bar of intervention maturity (27.6/57.3/12.7/2.5).
-%  Both plot directly from experiment_dataset_strength_report.json. White background.]
+\Cref{sec:validation} reports the judge results in full. Their bearing on C1 is
+narrow and worth stating plainly. The judge proposed new nodes for 7 of 100
+papers, and the Opus meta-grader recorded 216 missed concepts across the 95
+papers it scored (at least one in every paper) against 20 instances of fabricated
+content in 16\% of papers and 15 category errors in 33\%.
+% SRC: experiment_judge_full_report.json -> item3_error_taxonomy_auto
+Under this grader the dominant failure mode is \emph{omission, not
+hallucination}. That supports reading an extracted chain as a partial record of
+what a paper argued, and does not support reading the absence of a stage as
+evidence that the paper lacked one. These counts are un-adjudicated LLM output
+and we report them as a profile rather than as a measured error rate; the manual
+taxonomy remains outstanding.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Mechanism-Level Retrieval}
+\section{C2: Chains as the Unit of Analysis}
+\label{sec:claim2}
+
+\subsection{Mechanism-level retrieval}
 
 The dataset supports a query that document-level resources cannot serve:
 \emph{by what mechanism does intervention $I$ reduce risk $R$?} Because the
 mechanism is stored as an explicit path, answering it is a single graph lookup
-returning the chain and its source citation --- no clustering, no ranking, no
-embedding search over abstracts. Table~\ref{tab:query} shows two chains retrieved this way --- one governance,
-one technical --- both from arXiv sources so the extraction input is structured
-and the citation is unambiguous.
+returning the chain and its source citation, with no clustering, no ranking, and
+no embedding search over abstracts. \Cref{tab:query} shows two chains retrieved
+this way, one governance and one technical, both from arXiv sources so that the
+extraction input is structured and the citation is unambiguous.
 % SRC: experiment_query_demo_report.json -> query_demo.*
 
 \begin{table*}[t]
 \centering
 \small
 \begin{tabular}{p{0.09\textwidth}p{0.86\textwidth}}
-\hline
+\toprule
 \textbf{Stage} & \textbf{Query 1 --- governance.} Source: \citet{shavit2023chinchilla} \\
-\hline
+\midrule
 risk & Covert development of dangerous ML models using large-scale training \\
 pa & Tampering with logging mechanisms via supply chain attacks \\
 ti & Open-source Hardware Roots-of-Trust enhance transparency and tamper evidence \\
@@ -664,11 +676,11 @@ dr & Embed open-source HRoT like Caliptra in ML chips \\
 im & Signed firmware enforced by HRoT with anti-rollback protections \\
 va & Industry adoption of Caliptra HRoT across major vendors \\
 \textbf{intv} & Adopt open-source HRoT in data-center ML chips to enforce secure logging \textbf{(maturity 3)} \\
-\hline
+\midrule
 \multicolumn{2}{c}{} \\
-\hline
+\midrule
 \textbf{Stage} & \textbf{Query 2 --- technical alignment.} Source: \citet{ngo2022alignment} \\
-\hline
+\midrule
 risk & Catastrophic disempowerment of humanity by misaligned AGI \\
 pa & Misaligned goal formation during AGI training \\
 ti & Reward misspecification in real-world RL tasks \\
@@ -676,10 +688,10 @@ dr & Automated scalable supervision to reduce reward misspecification \\
 im & Reinforcement learning from human feedback scaling \\
 va & Instruction-following improvement in InstructGPT via RLHF \\
 \textbf{intv} & Scale RLHF fine-tuning using AI-generated feedback signals \textbf{(maturity 3)} \\
-\hline
+\bottomrule
 \end{tabular}
-\caption{Two mechanism-level retrievals, one governance and one technical, both from
-arXiv sources. Each block is a single extracted chain returned verbatim by a
+\caption{Two mechanism-level retrievals, one governance and one technical, both
+from arXiv sources. Each block is a single extracted chain returned verbatim by a
 risk--intervention query; stage abbreviations follow the logical chain order
 (pa = problem analysis, ti = theoretical insight, dr = design rationale,
 im = implementation mechanism, va = validation evidence). Neither answer is
@@ -694,36 +706,88 @@ synthesised: each is one stored path with its source document attached.}
 %      Google-Doc reading list, and the other two from non-arXiv sources. See
 %      paperA_v2_AUDIT.md P3.
 
-Three properties of these results are worth stating. They are \emph{single-hit}:
-the answer is one stored path, not a synthesis over retrieved passages. They are
+Three properties of these results matter. They are \emph{single-hit}: the answer
+is one stored path, not a synthesis over retrieved passages. They are
 \emph{attributable}: every node carries its source document. And they are
 \emph{comparable}: because all chains share the same stage vocabulary, chains
-from different papers addressing the same risk can be placed side by side, which
-is the precondition for the cross-paper mechanism analysis we identify as the
-natural next step (§Limitations and Outlook).
+from different papers addressing the same risk sit side by side, which is the
+precondition for the cross-paper mechanism analysis we identify as the natural
+next step (\cref{sec:limitations}).
+
+\subsection{Reading the corpus at chain level}
+
+The same unit supports descriptives that no metadata directory can produce,
+because they are properties of the argument inside each paper.
+
+\paragraph{Intervention maturity.} Of the 36{,}959 extracted interventions, the
+LLM-assessed maturity distribution is \textbf{27.6\% conceptual} (10{,}189),
+\textbf{57.3\% early-stage} (21{,}180), \textbf{12.7\% mature} (4{,}681), and
+\textbf{2.5\% deployed} (909) (\cref{fig:dataset}B). Roughly six in seven proposed
+interventions in this corpus sit at conceptual or early-stage maturity, and fewer
+than one in thirty is described as deployed.
+% SRC: experiment_dataset_strength_report.json -> interventions.maturity
+
+\paragraph{How to read maturity.} Maturity is an LLM assignment that no human
+adjudicated and that our judge study does not score (\cref{sec:validation}). We
+read it as coarse composition rather than as measurement. The skew is a
+four-bucket call with a very large margin and would survive a substantial
+per-item error rate, but the individual bucket boundaries should not be read as
+precise.
+% NOTE 2026-08-11: a scope-composition paragraph (share of chains whose risk is a
+%      capability gap rather than a human harm) was drafted here and WITHDRAWN. It
+%      depended on phase2_routing_assignments.jsonl, which is not committed and is
+%      not re-derivable by a reader at reasonable cost, and it belongs to a separate
+%      line of work. Do not reinstate it unless that file ships with the release and
+%      a committed script reproduces it. See paperA_v3_RESTRUCTURE.md §2.2.
+
+\subsection{End-to-end coverage}
+
+All 11{,}779 corpus documents yield at least one risk node and at least one
+intervention node --- the two sets are identical --- which is a property of the
+extraction schema, not a measurement of the literature. The informative number is
+how many documents yield a \emph{complete, high-confidence, mature-intervention
+chain end to end}: \textbf{1{,}868 documents} (15.9\%), contributing
+\textbf{2{,}643 distinct risk$\rightarrow$intervention node pairs} after
+de-duplication (3{,}222 before).
+% SRC: experiment_paper_claim_audit.json -> n_source_papers = 1868 recomputed from
+%      the raw path file (identical on the de-duplicated set);
+%      distinct_ri_node_pairs deduped 2643 / raw 3222.
+%      NOTE: experiment_query_demo_report.json carries the field
+%      "papers_with_complete_strict_chain": 1868 but it is a HARDCODED literal in
+%      experiment_query_demo.py:125, not computed there. Cite the audit receipt.
+The ratio between the two figures is the honest statement of yield: roughly one
+document in six argues a complete mechanism from a named risk to an intervention
+that is at least a mature method, under our quality cuts.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Practical Guidance for Analysing LLM-Extracted Safety Graphs}
+\section{C3: The Aggregate Graph Does Not Support Graph-Analytic Inference}
+\label{sec:claim3}
 
 A graph of this shape invites standard network analysis: cluster the nodes, rank
 by centrality, compare risk and intervention densities per cluster, look for
 co-occurring framings. We ran that analysis. This section reports what we
-measured when we checked those quantities against construction artefacts, because
-the failure modes are systematic, reproducible, and --- in our experience ---
-not obvious in advance. Each is stated as a measurement on this corpus with the
-control that removes it.
+measured when we checked those quantities against construction artefacts. Each
+failure mode is stated as a measurement on this corpus together with the control
+that removes it.
+
+\paragraph{Provenance of this section.} The analyses below are \emph{post-hoc}.
+An earlier pass over this corpus produced a set of graph-analytic findings; we
+then re-derived them under controls, and two did not survive. We report the
+re-derivations rather than the originals, and we flag the post-hoc status because
+a reader should weight a hypothesis formed after seeing the data less than one
+registered before it.
 
 \subsection{Near-duplicate merging manufactures a centrality super-hub}
 
 The corpus contains thousands of near-identical existential-risk concept nodes
 (``Existential catastrophe from misaligned advanced AI'' and close paraphrases)
-contributed by different papers. Merging them is the natural cleanup step, and
-it is exactly what breaks centrality: the canonical node inherits every member's
-structural edges. In our measurement the largest merged risk node absorbed
-\textbf{4{,}066 members and 7{,}777 structural edges}.
+contributed by different papers. Merging them is the natural cleanup step, and it
+is exactly what breaks centrality, because the canonical node inherits every
+member's structural edges. In our measurement the largest merged risk node
+absorbed \textbf{4{,}066 members and 7{,}777 structural edges}.
 % SRC: experiment_merge_vs_simexcl_ec_report.json -> biggest_merged_node_members / _edge_degree
 
-Table~\ref{tab:ec} shows eigenvector centrality under the four combinations of
+\Cref{tab:ec} shows eigenvector centrality under the four combinations of
 (merged / un-merged) $\times$ (similarity edges included / risk--risk similarity
 excluded).
 
@@ -731,21 +795,21 @@ excluded).
 \centering
 \small
 \begin{tabular}{lrrr}
-\hline
+\toprule
 \textbf{Condition} & \textbf{EC$_1$} & \textbf{EC$_1$/EC$_2$} & \textbf{xrisk} \\
                    &                 &                        & \textbf{in top-10} \\
-\hline
+\midrule
 un-merged, full SIM        & 0.0328 & 1.0$\times$ & 10/10 \\
 un-merged, risk--risk SIM excl. & 0.0011 & 1.0$\times$ & 8/10 \\
 merged, full SIM           & 0.5069 & 33.6$\times$ & 1/10 \\
 merged, risk--risk SIM excl.    & 0.3337 & \textbf{90.1$\times$} & 2/10 \\
-\hline
+\bottomrule
 \end{tabular}
 \caption{Eigenvector centrality of the top node under four graph-construction
 choices. Merging near-duplicate risk nodes produces a single node with 90$\times$
 the centrality of the next node, and excluding similarity edges does not repair
-it. On the un-merged graph the top nodes are within 1\% of each other --- there is
-no dominant hub in the corpus, only one manufactured by the merge.}
+it. On the un-merged graph the top nodes fall within 1\% of each other: the
+corpus contains no dominant hub, only one manufactured by the merge.}
 \label{tab:ec}
 \end{table}
 % SRC: experiment_merge_vs_simexcl_ec_report.json -> conditions[0..3].top10[0].ec
@@ -754,7 +818,7 @@ no dominant hub in the corpus, only one manufactured by the merge.}
 
 Two consequences follow, and their order matters. \textbf{(a)~Un-merging is
 primary.} On the merged graph the super-hub retains a 90$\times$ lead even after
-all risk--risk similarity edges are deleted, because the merge baked the
+deleting all risk--risk similarity edges, because the merge baked the
 concentration into the structural topology. \textbf{(b)~Excluding risk--risk
 similarity is still necessary}, but as the \emph{second} step: on the un-merged
 graph it flattens the top centrality value by a factor of 31 (0.0328
@@ -764,10 +828,10 @@ alone, either control leaves the artefact intact.
 The substantive point for readers of this literature: \emph{``the most central
 risks are existential'' is a statement about graph construction, not about the
 field.} On the un-merged graph the ten highest-centrality nodes differ from each
-other by less than 1\%, i.e.\ there is no ranking to report.
+other by less than 1\%, so no ranking exists to report.
 
-\paragraph{Control.} Do not merge near-duplicates before computing centrality;
-exclude within-category similarity edges from all centrality measures; count
+\paragraph{Control.} Do not merge near-duplicates before computing centrality.
+Exclude within-category similarity edges from all centrality measures. Count
 canonical concepts or source papers, never raw nodes, for any co-occurrence
 statistic.
 
@@ -776,92 +840,93 @@ statistic.
 Deduplication quality is usually reported as a removal rate. That number is
 uninformative on its own: re-running our own threshold specification with
 exhaustive rather than approximate search returns \textbf{54{,}282 candidate
-pairs against 4{,}411} --- a factor of 12 --- and the gap is concentrated almost
-entirely in the risk block, precisely where the centrality artefact lives.
+pairs against 4{,}411}, a factor of 12, and the gap concentrates almost entirely
+in the risk block, precisely where the centrality artefact lives.
 % SRC: experiment_J6_merge_approx_v2_report.json -> variants.V2_T1_T2_T3 vs gleb_reference
 
 \paragraph{Control.} Report recall of the candidate-generation stage, not only
-the removal rate; verify on the node block that downstream metrics are most
-sensitive to.
+the removal rate. Verify recall on the node block that downstream metrics are
+most sensitive to.
 
 \subsection{Loose similarity thresholds group topics, not mechanisms}
 
 Direct $k$-means on the 1536-dimensional embeddings fails outright (silhouette
 $\approx 0.02$). UMAP reduction to 150 dimensions followed by $k$-means at
-$k{=}40$ reaches silhouette 0.298 --- modest against the conventional
-interpretation thresholds \citep{kaufman1990finding} (Appendix~C) --- and the
-resulting clusters are
-recognisable field topics (Appendix~D). But cluster co-membership at
-$\tau{=}0.80$ tracks vocabulary, not mechanism: the same threshold that produces
-navigable topics also merges the largest connected component from 61 nodes to
-152{,}753. We attempted to derive a clean, non-overlapping risk/intervention
-taxonomy this way, tightening quality cuts step by step --- maturity, edge
-confidence, EDGE-only paths, clustering each node type on its own axis --- and
-node-level semantic clustering remained insufficient to carry mechanism-level
-conclusions.
+$k{=}40$ reaches silhouette 0.298 --- modest against conventional interpretation
+thresholds \citep{kaufman1990finding} (\cref{app:clustering}) --- and the
+resulting clusters are recognisable field topics (\cref{app:clusters}). But
+cluster co-membership at $\tau{=}0.80$ tracks vocabulary rather than mechanism:
+the same threshold producing navigable topics also grows the largest connected
+component from 61 nodes to 152{,}753. We attempted to derive a clean,
+non-overlapping risk/intervention taxonomy this way, tightening quality cuts step
+by step --- maturity, edge confidence, EDGE-only paths, clustering each node type
+on its own axis --- and node-level semantic clustering remained insufficient to
+carry mechanism-level conclusions.
 
 \paragraph{Control.} Treat node-level clusters as a browsing index, not as an
 inferential unit. Cluster risk and intervention nodes on separate axes. Do not
-compute risk-to-intervention ratios per cluster: the numerator and denominator
-are populated by different extraction stages and the ratio inherits the merge
-artefact above.
+compute risk-to-intervention ratios per cluster, because numerator and
+denominator are populated by different extraction stages and the ratio inherits
+the merge artefact above.
 
 \subsection{Co-occurrence measured on a centrality-selected head is circular}
 
-Selecting the top-100 risks by eigenvector centrality and measuring which
-framings appear there is a natural exploratory move, and in an earlier pass on
-this corpus it produced a striking-looking result: 88\% of the single-path risks
-in that head appeared to be framed through competitive race dynamics, with an
-apparent 44-fold gradient from the centrality head to the full risk population.
-Neither figure survives re-derivation. Re-running the same measurement under the
-same definitions --- importance by eigenvector centrality, path diversity by
-distinct first-hop structural problem-analysis neighbours, race framing by the
-same keyword rule --- reproduces the \emph{structural} part (38 of the top-100
-risks are single-path, against 41 reported) but not the framing part: 2.6\% of
-those single-path risks are race-framed, and the head-to-population gradient is
-2.0-fold, not 44-fold.
+Selecting the top-100 risks by eigenvector centrality and measuring which framings
+appear there is a natural exploratory move, and in an earlier pass on this corpus
+it produced a striking-looking result: 88\% of the single-path risks in that head
+appeared to be framed through competitive race dynamics, with an apparent
+44-fold gradient from the centrality head to the full risk population. Neither
+figure survives re-derivation. Re-running the same measurement under the same
+definitions --- importance by eigenvector centrality, path diversity by distinct
+first-hop structural problem-analysis neighbours, race framing by the same
+keyword rule --- reproduces the \emph{structural} part (38 of the top-100 risks
+are single-path, against 41 reported) but not the framing part: 2.6\% of those
+single-path risks are race-framed, and the head-to-population gradient is
+2.0-fold, not 44-fold. The keyword classifier itself is sound ---
+\cref{app:race} reports 92\% precision on a stratified manual sample --- so the
+failure lies in the selection step, not in the measurement instrument.
 % SRC: experiment_race_top100_rederive_report.json -> condition_A (merged + full
 %      within-category SIM, the closest reconstruction of the original setup).
 %      The similarity layer in the graph dump we use is ~8.5x denser than the one
 %      the original analysis ran on, so the centrality ranking -- and hence the
 %      selected head -- is not identical. We report the failure to reproduce rather
 %      than the original figure.
-The corpus-wide prevalence of the framing is \textbf{2.21\% of problem-analysis
+Corpus-wide prevalence of the framing is \textbf{2.21\% of problem-analysis
 nodes} (614/27{,}748) and 1.65\% of risk nodes; only 0.50\% of EDGE-only chains
 contain a race-framed problem-analysis node, and the re-derived head rates
 (1.3--6.3\% across centrality tiers) sit within a small multiple of that base.
 % SRC: experiment_race_prevalence_report.json + experiment_race_top100_rederive_report.json
 
-\paragraph{The lesson is stronger, not weaker, for the reproduction failing.}
-A selection-conditioned statistic on this kind of graph is not merely inflated,
-it is \emph{unstable}: it depends on the similarity-layer density and the merge
+\paragraph{The lesson is stronger, not weaker, for the reproduction failing.} A
+selection-conditioned statistic on this kind of graph is not merely inflated, it
+is \emph{unstable}: it depends on the similarity-layer density and the merge
 decisions that set the ranking, and those are pipeline parameters rather than
-properties of the literature. A number computed this way should not be reported
-at all without the selection rule, the graph construction, and a full-population
-baseline stated alongside it.
+properties of the literature. Nobody should report a number computed this way
+without stating the selection rule, the graph construction, and a full-population
+baseline alongside it.
 
-The underlying association is nevertheless real but modest. Table~\ref{tab:race}
-shows the race$\times$existential-risk co-occurrence odds ratio under three
-units of analysis; it survives collapsing near-duplicates, which rules out
-pure pseudo-replication, but at 2.7--5.2$\times$ on a $\sim$2\% base rate it
-supports no claim about the field's discourse structure.
+The underlying association is real but modest. \Cref{tab:race} shows the
+race$\times$existential-risk co-occurrence odds ratio under three units of
+analysis. It survives collapsing near-duplicates, which rules out pure
+pseudo-replication, but at 2.7--5.2$\times$ on a $\sim$2\% base rate it supports
+no claim about the field's discourse structure.
 
 \begin{table}[t]
 \centering
 \small
 \begin{tabular}{lrrr}
-\hline
+\toprule
 \textbf{Unit} & \textbf{OR} & \textbf{95\% CI} & \textbf{$P$(race)} \\
-\hline
+\midrule
 node               & 3.82 & 3.24--4.50 & 7.6\% vs 2.1\% \\
 merged node        & 2.73 & 2.06--3.64 & 5.5\% vs 2.1\% \\
 source paper       & 5.17 & 4.32--6.20 & 10.7\% vs 2.3\% \\
-\hline
+\bottomrule
 \end{tabular}
 \caption{Race-framing $\times$ existential-risk co-occurrence across units of
 analysis (all $p < 10^{-12}$). $P$(race) columns give the rate within
-existential-risk vs non-existential-risk nodes. The association is directionally
-robust and quantitatively minor.}
+existential-risk versus non-existential-risk nodes. The association is
+directionally robust and quantitatively minor.}
 \label{tab:race}
 \end{table}
 % SRC: experiment_race_dedup_robustness_report.json -> A_node_level / B_merged_node_level / C_paper_level
@@ -873,79 +938,122 @@ corrected merge, the same deletion isolates \textbf{2 of 100}.
 %      vs gleb_reference.j6_isolated = 51
 
 \paragraph{Control.} Report prevalence on the full population before reporting
-any pattern in a selected head; state the selection rule as part of the result;
-choose the unit of analysis (node / merged node / paper) explicitly and show that
+any pattern in a selected head. State the selection rule as part of the result.
+Choose the unit of analysis (node, merged node, paper) explicitly and show that
 the effect survives all three.
 
 \subsection{Single-source extraction makes several ``findings'' true by design}
 
 Three quantities that look like discoveries are consequences of the pipeline.
-\emph{Path diversity}: because each paper contributes one chain, a risk
-discussed in one paper necessarily has one route to an intervention --- this is
-extraction structure, not fragility in the literature. \emph{Path completion}:
-under risk-rooted breadth-first search over a similarity-augmented graph, most
-branches terminate at intermediate stages, so a low completion percentage
-measures the traversal, not the corpus. \emph{Siloing}: cross-paper links exist
-only in the similarity layer, so the structural layer is siloed by construction
-while the similarity layer's connectivity is a function of $\tau$; no layer
-measures real siloing.
+\emph{Path diversity}: because each paper contributes one chain, a risk discussed
+in one paper necessarily has one route to an intervention, which is extraction
+structure rather than fragility in the literature. \emph{Path completion}: under
+risk-rooted breadth-first search over a similarity-augmented graph most branches
+terminate at intermediate stages, so a low completion percentage measures the
+traversal, not the corpus. \emph{Siloing}: cross-paper links exist only in the
+similarity layer, so the structural layer is siloed by construction while the
+similarity layer's connectivity is a function of $\tau$, and no layer measures
+real siloing.
 
 \paragraph{Control.} Before reporting any structural statistic, ask what value it
-would take on a corpus of independent single-paper chains. If the answer is
-``the value we observed'', it is a pipeline property.
+would take on a corpus of independent single-paper chains. If the answer is the
+value you observed, it is a pipeline property.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Reproducibility and Release}
+\label{sec:repro}
+
+Every quantitative claim in this paper carries a source comment in the manuscript
+naming the receipt file it came from, and one script re-derives all of them from
+the raw path files and the node attributes, then compares each against the value
+printed here. On the current draft it reports 42 of 42 numeric claims passing. A claim-to-script-to-receipt map ships with the code.
+
+The extraction pipeline, the path builders, the audit scripts and the receipt
+JSONs are released together with the chain dataset under a permissive licence.
+Two large intermediate checkpoints (node attributes and edge data, together
+$\sim$3.2 GB) are rebuildable from the released graph dump with a released
+script; because the receipts are committed, every number here is checkable
+without them. \Cref{fig:dataset} plots only from committed receipts for the same
+reason.
+
+\paragraph{Compute.} Extraction used the OpenAI batch API with \texttt{o3} over
+11{,}779 documents. The judge and meta-grader runs used the Anthropic, OpenAI and
+Google batch APIs at the model versions named in \cref{sec:validation}; model
+identifiers are pinned rather than floating, so a re-run reproduces the same model
+generation. All graph analysis runs on one workstation CPU without a GPU, with
+path enumeration against the graph database as the heaviest step.
+% [GAP: exact wall-clock and token totals for the extraction run, if recoverable from
+%  the batch-API logs. Not blocking.]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Limitations and Outlook}
+\label{sec:limitations}
 
-\paragraph{Corpus.} ARD is a curated snapshot and its coverage thins after 2023;
-frontier-era discourse is under-represented. Claims here describe the extracted
+\paragraph{No comparative baseline.} We claim that this extraction recovers
+argument structure, not that it beats an alternative extractor. We compare
+against no simpler pipeline --- flat triple extraction, abstract-only extraction,
+a non-reasoning model --- and we ran no ablation over schema components.
+A reader should therefore read C1 as evidence that the output has the claimed
+structure, not as evidence that the design choices are necessary for it. The
+schema-ablation and degraded-source controls described in \cref{sec:claim1} are
+the highest-value missing experiments, and the first doubles as the missing
+ablation.
+
+\paragraph{Corpus.} ARD is a curated snapshot and its coverage thins after 2023,
+so frontier-era discourse is under-represented. Claims here describe the extracted
 corpus, not the field as of publication.
 
-\paragraph{Single extractor.} All extractions come from one model
-(\texttt{o3}) under one prompt. Model-specific extraction bias is not
-characterised by our validation design.
+\paragraph{Single extractor.} All extractions come from one model (\texttt{o3})
+under one prompt. Our validation design does not characterise model-specific
+extraction bias.
 % [GAP: Mike ran an n=20 multi-model consistency check (o3 / GPT-5 / Claude-4).
 %  If those numbers are recoverable, one sentence here materially strengthens this
-%  limitation. Owner: Sai/Mike via ticket #147 recovery bundle.]
+%  limitation. Owner: Sai/Mike via ticket #150 recovery bundle.]
 
-\paragraph{Validation is LLM-based.} Faithfulness is judged by an LLM with
-judge-of-judge calibration, not by domain experts at scale.
+\paragraph{Validation is LLM-based.} An LLM judges faithfulness with
+judge-of-judge calibration; domain experts do not, at any scale. No human
+adjudicated a single verdict in the chain.
 
 \paragraph{LLM-assigned attributes.} Concept subtype, edge confidence,
-intervention lifecycle and maturity are model assignments. Only node/edge
-faithfulness and edge type are scored by the judge; maturity in particular is
-descriptive here.
+intervention lifecycle and maturity are model assignments. The judge scores only
+node and edge faithfulness and edge type.
 
-\paragraph{Outlook.} The natural next step, and the reason the dataset is
-released, is cross-paper mechanism analysis: grouping interventions into
-mechanism families and anchoring risks to an external risk taxonomy, so that one
-can ask which mechanism families address which risks, at what stage of validation
-evidence, across the whole corpus --- and, where a mechanism family is densely
-populated for every risk but one, whether that gap is a research opportunity.
-We deliberately do not attempt it here: §Practical Guidance shows that
-node-level semantic clustering on this data is not strong enough to carry
-mechanism-family grouping, and doing it properly requires an external anchor
-rather than a better threshold.
+\paragraph{Dual-use and misreading risk.} The most likely harm from this dataset
+is misuse of its aggregate statistics: a reader who takes cluster sizes or
+centrality rankings from the released graph and reports them as facts about which
+risks the field neglects will produce a confident and wrong claim.
+\Cref{sec:claim3} exists partly to make that harder, and the release
+(\cref{sec:repro}) carries the same warning.
+
+\paragraph{Outlook.} The natural next step, and the reason for the release, is
+cross-paper mechanism analysis: grouping interventions into mechanism families and
+anchoring risks to an external risk taxonomy, so that one can ask which mechanism
+families address which risks, at what stage of validation evidence, across the
+whole corpus --- and, where a mechanism family is densely populated for every risk
+but one, whether that gap marks a research opportunity. We deliberately do not
+attempt it here, because \cref{sec:claim3} shows that node-level semantic
+clustering on this data is too weak to carry mechanism-family grouping, and doing
+it properly requires an external anchor rather than a better threshold.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
 
 We extracted, from 11{,}779 AI safety documents, the explicit logical chains by
-which proposed interventions are argued to reduce named risks, and showed that
-87.4\% of the 2{,}772 quality-controlled chains carry all five reasoning stages
-while spanning 4--16 nodes in length --- structure that is captured from the papers
-rather than imposed on them. The resulting dataset answers mechanism-level
-queries that document-level resources cannot, and characterises the field's
-intervention maturity profile, in which 2.5\% of extracted interventions are
-described as deployed. We also report, as a first-class result, four measured
-ways in which routine graph analysis of such a corpus produces artefacts rather
-than findings --- most sharply, a merge-manufactured centrality hub at 90$\times$
-the next node --- together with the controls that remove them. We hope both the
-dataset and the guidance are useful to teams building on LLM-extracted
-scientific graphs.
+which proposed interventions are argued to reduce named risks. Across 2{,}772
+quality-controlled chains, 87.4\% carry all five reasoning stages while spanning
+4--16 nodes, structure captured from the papers rather than imposed on them. The
+chains answer mechanism-level queries that document-level resources cannot, and
+they expose what the corpus holds: 2.5\% of extracted interventions are described
+as deployed, and one document in six yields a complete chain at all. We also
+report, as a first-class result, four measured ways in which
+routine graph analysis of such a corpus produces artefacts rather than findings
+--- most sharply a merge-manufactured centrality hub at 90$\times$ the next node
+--- together with the controls that remove them, and two previously reported
+findings on this corpus that fail to reproduce. The chain is the unit that
+survives scrutiny on this data; the aggregate graph is not.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Acknowledgments}
+\section*{Acknowledgments}
 
 This work was carried out by a distributed volunteer team convened through
 \textbf{EleutherAI}, whose Discord server hosted all project coordination ---
@@ -989,12 +1097,14 @@ project. We thank EleutherAI for providing and maintaining that platform.
 \clearpage
 \appendix
 
-\section{Appendix A: Extraction Prompt and Schema}
+\section{Extraction Prompt and Schema}
+\label{app:prompt}
 % [GAP: paste PROMPT_EXTRACT from
 %  intervention_graph_creation/src/prompt/final_primary_prompt.py, plus the node/edge
 %  Pydantic schema summary. Trim to one page.]
 
-\section{Appendix B: Deduplication Threshold Experiments}
+\section{Deduplication Threshold Experiments}
+\label{app:dedup}
 % Reused verbatim from Gleb_overleaf_paper.txt Appendix D.
 
 We evaluated four threshold configurations for node deduplication, measuring the
@@ -1005,25 +1115,25 @@ legitimate duplicates).
 \centering
 \small
 \begin{tabular}{ccccc}
-\hline
+\toprule
 \textbf{Cosine} & \textbf{Jaccard} & \textbf{Cand. Pairs} & \textbf{Dedup \%} & \textbf{Result} \\
-\hline
+\midrule
 0.65 & 0.30 & 416 & 0.2\% & Too conservative \\
 0.85 & 0.00 & 105,390 & 11.9\% & False clusters \\
 \textbf{0.88} & \textbf{0.05} & \textbf{4,411} & \textbf{1.2\%} & \textbf{Selected} \\
 0.95 & 0.00 & 503 & 0.2\% & Too conservative \\
-\hline
+\bottomrule
 \end{tabular}
 \caption{Deduplication threshold experiments. Candidate pairs shows node pairs
 passing the similarity threshold; after Union-Find grouping fewer nodes are
 removed as duplicates merge transitively (4{,}411 pairs yield 2{,}385 removed
 nodes). The Jaccard-free configuration (0.85/0.00) created false clusters merging
-unrelated concepts. See §Practical Guidance for the recall audit of this
+unrelated concepts. \Cref{sec:claim3} reports the recall audit of the selected
 configuration.}
 \label{tab:dedup-thresholds}
 \end{table}
 
-\paragraph{Boundary Examples (Selected Configuration).}
+\paragraph{Boundary examples (selected configuration).}
 Representative merged pairs at the decision boundary (cosine $\approx$ 0.88):
 \begin{itemize}
 \setlength{\itemsep}{0pt}
@@ -1032,44 +1142,46 @@ Representative merged pairs at the decision boundary (cosine $\approx$ 0.88):
 \item ``Insufficient AI safety research capacity'' $\leftrightarrow$ ``Insufficient AI alignment research capacity''
 \end{itemize}
 
-\paragraph{Edge Type Normalisation.}
+\paragraph{Edge type normalisation.}
 The 12 canonical edge types after normalisation:
 \textit{motivates, implemented\_by, validated\_by, caused\_by, mitigated\_by,
 enabled\_by, addressed\_by, refined\_by, specified\_by, required\_by,
 preceded\_by, related\_to}.
 
-\section{Appendix C: Clustering Methods Comparison}
+\section{Clustering Methods Comparison}
+\label{app:clustering}
 % Reused verbatim from Gleb_overleaf_paper.txt Appendix F.
 
 \begin{table}[h]
 \centering
 \small
 \begin{tabular}{lccc}
-\hline
+\toprule
 \textbf{Method} & \textbf{Silhouette} & \textbf{CH Score} & \textbf{DB Index} \\
-\hline
+\midrule
 Direct 1536D, $k=5$ & 0.022 & 3,831 & 5.18 \\
 Direct 1536D, $k=8$ & 0.017 & 2,922 & 5.03 \\
 UMAP 150D, $k=8$ & 0.287 & 97,380 & 1.27 \\
 \textbf{UMAP 150D, $k=40$} & \textbf{0.298} & \textbf{55,410} & \textbf{1.15} \\
-\hline
+\bottomrule
 \end{tabular}
 \caption{Clustering quality metrics. Direct clustering in 1536D embedding space
 fails (silhouette $\approx$ 0.02). UMAP reduction to 150D enables meaningful
-topical clustering with 13--17$\times$ silhouette improvement.
-Calinski-Harabasz (CH) measures separation (higher better); Davies-Bouldin (DB)
-measures overlap (lower better).}
+topical clustering with a 13--17$\times$ silhouette improvement.
+Calinski-Harabasz (CH) measures separation (higher is better); Davies-Bouldin
+(DB) measures overlap (lower is better).}
 \label{tab:clustering-methods}
 \end{table}
 
-\section{Appendix D: Topical Cluster Reference}
+\section{Topical Cluster Reference}
+\label{app:clusters}
 % Reused from Gleb_overleaf_paper.txt Appendix E. Reframed as a browsing index.
 % [GAP: also publish cluster_representatives_20.json (20 representative nodes per
 %  cluster) alongside the dataset so reviewers can audit cluster naming. Owner: Gleb.]
 
 The 40 topical clusters from $k$-means on UMAP-reduced embeddings, cluster sizes
 2{,}065--8{,}098 nodes. These are a \emph{browsing index} over the corpus, not a
-taxonomy: co-membership indicates vocabulary proximity, not a mechanistic
+taxonomy: co-membership indicates vocabulary proximity rather than a mechanistic
 relationship, and boundaries between adjacent sub-fields overlap.
 
 \begin{small}
@@ -1118,7 +1230,8 @@ relationship, and boundaries between adjacent sub-fields overlap.
 \end{enumerate}
 \end{small}
 
-\section{Appendix E: Similarity Threshold and Hop Sensitivity}
+\section{Similarity Threshold and Hop Sensitivity}
+\label{app:sensitivity}
 % Reused from Gleb_overleaf_paper.txt Appendices G + H, merged.
 
 \paragraph{Similarity threshold ($\tau$).}
@@ -1137,58 +1250,60 @@ Graph traversal with 0--3 similarity hops on 500 sampled risks:
 \centering
 \footnotesize
 \begin{tabular}{cccc}
-\hline
+\toprule
 \textbf{Hops} & \textbf{Scope (mean)} & \textbf{Intv. (mean)} & \textbf{Intv. (med.)} \\
-\hline
+\midrule
 0 & 14 & 2.5 & 2 \\
 1 & 300 & 56 & 10 \\
 2 & 6,209 & 1,172 & 120 \\
 3 & 26,827 & 5,065 & 2,384 \\
-\hline
+\bottomrule
 \end{tabular}
 \caption{Similarity hop comparison. Scope is the mean number of nodes reachable
 from a risk via BFS; Intv. is reachable interventions. Each hop multiplies reach
-by roughly 20$\times$ --- which is why hop-augmented reachability is reported here
-as a sensitivity, not used as evidence in the main text.}
+by roughly 20$\times$, which is why hop-augmented reachability appears here as a
+sensitivity rather than as evidence in the main text.}
 \label{tab:sim-hops}
 \end{table}
 
 \paragraph{PageRank mixing coefficient ($\alpha$).}
-For the centrality analyses in §Practical Guidance we combine structural and
+For the centrality analyses in \cref{sec:claim3} we combine structural and
 similarity transition matrices as
 $P = \alpha P_{\text{struct}} + (1-\alpha) P_{\text{sim}}$.
 Rankings are stable across $\alpha \in [0.5, 0.9]$ (Spearman $\rho = 1.0$,
 identical top-20); only pure structural weighting ($\alpha = 1.0$) deviates, with
-2 risks leaving the top-20. Note that this stability is a robustness property of
-the mixing parameter and says nothing about the merge artefact documented in
-§Practical Guidance --- the rankings are stably contaminated.
+2 risks leaving the top-20. This stability is a robustness property of the mixing
+parameter and says nothing about the merge artefact documented in
+\cref{sec:claim3}: the rankings are stably contaminated.
 
-\section{Appendix F: Race-Framing Classifier Validation}
+\section{Race-Framing Classifier Validation}
+\label{app:race}
 % Reused from Gleb_overleaf_paper.txt Appendix J, kept because it is a valid
 % classifier validation; prevalence claims moved to the main text.
 
 We validated keyword-based race-framing classification (keywords: ``competi-'',
 ``race'') on a stratified sample of 52 problem-analysis nodes.
-\textbf{Stratum 1} ($n{=}36$): all race-flagged PA nodes from top-100
-single-path risks --- 36/36 = 100\% precision. Example PAs: ``Competitive
-deployment pressures reducing safety measures,'' ``AI arms race dynamics
-reducing safety investment.'' \textbf{Stratum 2} ($n{=}16$): random sample from
-remaining risks --- 12/16 = 75\% precision. The four false positives matched
-keywords but described competition \emph{among} AI systems rather than a human
-race \emph{to develop} AI. Overall precision 48/52 = 92\%.
+\textbf{Stratum 1} ($n{=}36$): all race-flagged PA nodes from top-100 single-path
+risks --- 36/36 = 100\% precision. Example PAs: ``Competitive deployment
+pressures reducing safety measures,'' ``AI arms race dynamics reducing safety
+investment.'' \textbf{Stratum 2} ($n{=}16$): random sample from remaining risks
+--- 12/16 = 75\% precision. The four false positives matched keywords but
+described competition \emph{among} AI systems rather than a human race \emph{to
+develop} AI. Overall precision 48/52 = 92\%.
 
 \paragraph{Recall estimation.} On a stratified sample ($n{=}50$) of non-flagged
-PA nodes, one false negative was found among top-100 single-path risks
-(``AI developers racing without adequate safety''), giving recall 36/37 = 97.3\%
-in that stratum. Recall falls to an estimated $\sim$68\% in tiers 101--500 due to
+PA nodes, one false negative appeared among top-100 single-path risks (``AI
+developers racing without adequate safety''), giving recall 36/37 = 97.3\% in
+that stratum. Recall falls to an estimated $\sim$68\% in tiers 101--500 due to
 morphological variants and synonyms without keywords.
 
-\paragraph{Scope.} This validates the \emph{classifier} on the sampled strata. It
-establishes nothing about prevalence: corpus-wide prevalence is reported in
-§Practical Guidance (2.21\% of problem-analysis nodes) and was measured
-separately by exhaustive scan.
+\paragraph{Scope.} This validates the \emph{classifier} on the sampled strata and
+establishes nothing about prevalence. \Cref{sec:claim3} reports corpus-wide
+prevalence (2.21\% of problem-analysis nodes), measured separately by exhaustive
+scan.
 
-\section{Appendix G: A Failure Case}
+\section{A Failure Case}
+\label{app:failure}
 
 Quality cuts do not make every extracted chain meaningful. The chain below passes
 every structural filter we apply --- seven nodes, all five reasoning stages, edge
@@ -1209,13 +1324,19 @@ key generation standards
 % SRC: node ids [60117..60123], source https://arbital.com/p/infinitely_many_primes
 
 The extraction has taken Euclid's proof and cast it into the risk--intervention
-schema, inventing a safety framing ("prime scarcity") the source never asserts.
+schema, inventing a safety framing (``prime scarcity'') the source never asserts.
 This is the characteristic failure mode of schema-guided extraction over a
 heterogeneous corpus: when a document contains a problem, an argument and a
-construction, the schema will find a chain whether or not the document is about
-safety at all. It is also why the structural statistics in §The Pathway Dataset
-are reported as structural properties and never as evidence that a chain is
-substantively correct --- that is what the judge study (§Methods) is for.
+construction, the schema will find a chain whether or not the document concerns
+safety at all. Note which failure this is: the source document is a real
+mathematical argument, so the failure is not that the pipeline read an
+out-of-domain document, but that it \emph{invented} a risk framing absent from
+the source. That is a fidelity failure of the kind \cref{sec:claim1} identifies
+as needing a control, and it is why the structural statistics there are reported
+as structural properties, never as evidence that a chain is substantively
+correct. Establishing the rate at which this happens requires the schema-ablation
+and degraded-source controls named in \cref{sec:claim1}; this appendix is an
+existence proof only.
 
 % [GAP: optionally add 1-2 further chains (e.g. one with a missing stage) if space
 %  permits. The failure case above is the one that must stay.]

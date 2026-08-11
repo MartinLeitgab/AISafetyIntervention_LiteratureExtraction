@@ -248,6 +248,12 @@ def main():
         rec["conditions"][2]["biggest_merged_node_edge_degree"],
     )
 
+    # NOTE 2026-08-11: three scope-composition checks (routed-chain count, share
+    # unplaceable, share capability-gap-only) were added here and then REMOVED. They
+    # read phase2_routing_assignments.jsonl, which is untracked and not re-derivable
+    # by a reader at reasonable cost, so the claims they backed were withdrawn from
+    # the manuscript. Reinstate only if that file ships with the release.
+
     out = {
         "audit": "paperA_draft_v2.tex quantitative claims vs raw data",
         "n_claims_checked": len(results),
