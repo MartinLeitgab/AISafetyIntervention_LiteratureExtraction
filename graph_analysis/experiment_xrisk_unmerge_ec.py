@@ -1,16 +1,16 @@
 """experiment_xrisk_unmerge_ec.py
 
-Test the hypothesis (gleb_analysis_critique_DO_NOT_COMMIT.md, Claim 3) that
-Gleb's "race dynamics dominates top-100 risks by eigenvector centrality"
+Test the hypothesis (local-only analysis critique note, Claim 3) that
+the frozen analysis's "race dynamics dominates top-100 risks by eigenvector centrality"
 finding is an artifact of (a) merging xrisk near-duplicates, which (b)
 concentrates degree on a small number of merged-hub risk nodes, which (c)
 inherit high EC, and these (d) tend to co-occur with race-framing PAs in
 source papers.
 
 Method:
-  Variant A (baseline, Gleb-equivalent): EC on combined structural+similarity
+  Variant A (baseline, frozen-equivalent): EC on combined structural+similarity
   graph at SIM>=0.8 (his threshold). Top-100 risk nodes by EC. For each,
-  count PA neighbors containing 'race' or 'competitive' (Gleb's race-framing
+  count PA neighbors containing 'race' or 'competitive' (the frozen race-framing
   definition, broadened to "any PA neighbor" first then "sole PA neighbor").
 
   Variant B (xrisk hubs removed): same graph minus risk nodes whose name
@@ -156,10 +156,10 @@ def is_race_framed_name(name):
 
 
 def race_check(risk_nid, node_attrs, edges_by_endpoint, mode="any_pa_neighbor"):
-    """Per Gleb: 'sole PA neighbor contains race/competitive'.
+    """Per the frozen analysis: 'sole PA neighbor contains race/competitive'.
     Our checks:
       'any_pa_neighbor' — any PA neighbor matches (broader)
-      'sole_pa_neighbor' — single PA neighbor and it matches (strictest, Gleb's)
+      'sole_pa_neighbor' — single PA neighbor and it matches (strictest, frozen rule)
     Returns bool.
     """
     pa = get_pa_neighbors_for_risk(risk_nid, node_attrs, edges_by_endpoint)
@@ -280,9 +280,9 @@ def main():
 
     results = {}
 
-    # ===== Variant A: full graph + similarity at 0.8 (Gleb-equivalent) =====
+    # ===== Variant A: full graph + similarity at 0.8 (frozen-equivalent) =====
     print("\n" + "=" * 70)
-    print("VARIANT A: full graph + SIM>=0.8 (Gleb-equivalent)")
+    print("VARIANT A: full graph + SIM>=0.8 (frozen-equivalent)")
     print("=" * 70)
     A_a, n2i_a, nids_a = build_sparse(na, ed, include_edge=True, include_sim_at=0.8)
     ec_a = eigenvector_centrality_sparse(A_a)

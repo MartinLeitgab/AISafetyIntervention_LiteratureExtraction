@@ -1,3 +1,7 @@
+> 🔴 **SUPERSEDED 2026-06-10** by `paper_split_plan_2026_06_10.md` §3 (Paper A work items) + `paper_B_plan_2026_06_10.md` (Paper B work items).
+> Of the 9 workshop-critical goals in this document, Goals 1-6 are now Paper B scope (the path-level substrate work). Goals 7, 9 partially apply to Paper A (hub-merge analysis within the frozen preprocessing + Limitations section). Goal 8 (temporal coverage) is reduced to an ARD-corpus-level pub-date appendix histogram in Paper A. **Cross-check against the Drive workshop-minimum list (file ID 1Z8f7MJuWIvjWvcWvPSe3_r3g32z5n9j7KcV9vNawh6I) is recorded in `paper_split_plan_2026_06_10.md` §4.**
+> Do not use this document as a current planning reference; it is preserved for historical traceability only.
+
 # APPENDIX B: Phase 2 Analysis Substep Mapping to Workshop Goals
 
 **Document Version:** 2.0  

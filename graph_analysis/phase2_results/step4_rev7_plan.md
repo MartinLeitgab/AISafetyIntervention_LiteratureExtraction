@@ -261,7 +261,7 @@ These items were discussed in the rev7 review but **not yet implemented**. They 
   - **Hierarchy breadcrumb:** persistent top bar like `Triplets > Group G14 > Intervention I35 > Node 12345` so user can navigate up/down.
   - **Frozenset group page:** shows constituent frozensets as nodes; click a frozenset to see its constituent paths and their counts.
 **Hosting candidates:**
-  - GitHub Pages on `MartinLeitgab.github.io/<repo>` (free, static-only)
+  - GitHub Pages on `<user>.github.io/<repo>` (free, static-only)
   - Fly.io / Render free tier if dynamic backend is needed
   - Static HTML + JSON data files is preferred (no backend needed)
 **Tech stack candidate:** static HTML + Plotly/D3 for the triplet network plot + JSON-driven detail panes. All data already in CSVs/PKLs.

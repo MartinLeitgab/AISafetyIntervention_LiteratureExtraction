@@ -3,7 +3,7 @@
 
 That number is the load-bearing example of the selection artefact in the paper's
 guidance section, but it originates from the frozen Overleaf analysis and we held no
-receipt for it. This reproduces it on our substrate under Gleb's own definitions, and
+receipt for it. This reproduces it on our substrate under the frozen analysis's own definitions, and
 then repeats the measurement on the decontaminated graph to show it is a selection
 artefact rather than a corpus property.
 
@@ -16,7 +16,7 @@ Definitions taken verbatim from the frozen Overleaf:
                       "competitive" or "race"
 
 Conditions:
-  A  merged risk block + full within-category SIM   (reproduces Gleb's setup)
+  A  merged risk block + full within-category SIM   (reproduces the frozen setup)
   B  un-merged + risk<->risk SIM excluded           (decontaminated, per our controls)
 
 Class B (no LLM). Run from graph_analysis/:
@@ -39,8 +39,8 @@ ROOT = Path(__file__).parent
 STEP1 = ROOT / "phase2_results/step1_load_and_parse_umapwithoutlocalsatellites"
 OUT = ROOT / "phase2_results/experiment_race_top100_rederive_report.json"
 
-# Gleb's classifier, verbatim: name contains "competitive" or "race".
-GLEB_RACE = re.compile(r"competitive|race", re.I)
+# The frozen analysis's classifier, verbatim: name contains "competitive" or "race".
+FROZEN_RACE = re.compile(r"competitive|race", re.I)
 # Our broader strict pattern, for comparison with the corpus-prevalence receipt.
 OUR_RACE = re.compile(r"\brac(?:e|es|ed|ing)\b|competi|arms.?race", re.I)
 
@@ -89,7 +89,7 @@ def measure(label, na, ed, risk_map, exclude_risk_sim):
         race_g, race_o = 0, 0
         for r in single:
             nm = na.get(next(iter(pa[r])), {}).get("name") or ""
-            if GLEB_RACE.search(nm):
+            if FROZEN_RACE.search(nm):
                 race_g += 1
             if OUR_RACE.search(nm):
                 race_o += 1
@@ -144,14 +144,14 @@ def main():
     print(f"  {len(na)} nodes, {len(ed)} edges", flush=True)
 
     print(
-        "merging risk block (Gleb rule: alias P0 + cos>=0.88 AND Jaccard>=0.05) ...",
+        "merging risk block (frozen rule: alias P0 + cos>=0.88 AND Jaccard>=0.05) ...",
         flush=True,
     )
     risk_map, member_count, n_risk, n_groups = M.merge_risk_block(na)
     print(f"  {n_risk} risk nodes -> {n_groups} canonical", flush=True)
 
     print(
-        "\ncondition A: merged + full within-category SIM (Gleb's setup) ...",
+        "\ncondition A: merged + full within-category SIM (the frozen setup) ...",
         flush=True,
     )
     a = measure(
@@ -175,7 +175,7 @@ def main():
             "importance": "eigenvector centrality",
             "path_diversity": "distinct first-hop EDGE neighbours of concept_category='problem analysis'",
             "single_path": "path diversity == 1",
-            "race_framed": "sole problem-analysis neighbour name matches /competitive|race/i (Gleb's rule)",
+            "race_framed": "sole problem-analysis neighbour name matches /competitive|race/i (frozen rule)",
         },
         "frozen_overleaf_claim": {
             "top100_single_path_risks": 41,

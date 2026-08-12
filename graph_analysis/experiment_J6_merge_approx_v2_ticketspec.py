@@ -1,6 +1,6 @@
 """experiment_J6_merge_approx_v2_ticketspec.py
 
-Re-run of the Gleb merge approximation incorporating the FULLER spec that GitHub
+Re-run of the frozen-analysis merge approximation incorporating the FULLER spec that GitHub
 Issue #139 (Stage-1 comment, 2025-12-01) documents but the paper text omits:
 
   (T1) Phase 0 exact-match is ALIAS-BASED: union nodes where one node's name
@@ -20,7 +20,7 @@ Variants reported:
   V1  alias Phase0   + name+alias Jaccard  + exhaustive cos>=0.88   (T1+T2)
   V2  alias Phase0   + name+alias Jaccard  + top-50 cap per node    (T1+T2+T3)
 
-Gleb reference: 4,411 candidate pairs -> 2,385 nodes removed -> 200,061 canonical;
+Frozen-analysis reference: 4,411 candidate pairs -> 2,385 nodes removed -> 200,061 canonical;
 169,083 within-cat SIM edges
 J.6 isolation 51/100.
 
@@ -135,7 +135,7 @@ class UF:
 
 def provenance_diagnostic(na):
     print("\n" + "=" * 70)
-    print("PROVENANCE DIAGNOSTIC (is our PKL un-merged? does it carry Gleb cols?)")
+    print("PROVENANCE DIAGNOSTIC (is our PKL un-merged? does it carry merge cols?)")
     print("=" * 70)
     n = len(na)
     # embedding dim
@@ -384,10 +384,13 @@ def run_variant(label, na, p0_mapping, use_alias_jaccard, topk):
         )
     n_total = sum(1 for nid, c in mapping.items() if nid != c)
     n_canon = len(set(mapping.values()))
-    print(f"  Phase2 candidate pairs (both pass): {tot_jac}  (Gleb: 4,411)", flush=True)
+    print(
+        f"  Phase2 candidate pairs (both pass): {tot_jac}  (reference: 4,411)",
+        flush=True,
+    )
     print(f"  Phase2 nodes collapsed: {n_p2}", flush=True)
-    print(f"  TOTAL nodes collapsed (P0+P2): {n_total}  (Gleb: 2,385)", flush=True)
-    print(f"  canonical nodes remaining: {n_canon}  (Gleb: 200,061)", flush=True)
+    print(f"  TOTAL nodes collapsed (P0+P2): {n_total}  (reference: 2,385)", flush=True)
+    print(f"  canonical nodes remaining: {n_canon}  (reference: 200,061)", flush=True)
     return {
         "label": label,
         "phase0_collapsed": n_p0,
@@ -518,7 +521,7 @@ def run_j6(na, ed, mapping, label):
         build_merged_graph(na, ed, mapping)
     )
     print(
-        f"  merged nodes={len(merged)} struct={n_struct} within-cat-sim={n_sim} (Gleb sim 169,083)",
+        f"  merged nodes={len(merged)} struct={n_struct} within-cat-sim={n_sim} (reference sim 169,083)",
         flush=True,
     )
     print(f"  PA={len(all_pa)} race-PA={len(race_pa)} interv={len(interv)}", flush=True)
@@ -541,7 +544,7 @@ def run_j6(na, ed, mapping, label):
                 if len(examples) < 10:
                     examples.append({"nid": n, "name": na.get(n, {}).get("name", "")})
     print(
-        f"  baseline reachable {base}/100; isolated by race-PA removal {iso} (Gleb 51)",
+        f"  baseline reachable {base}/100; isolated by race-PA removal {iso} (reference 51)",
         flush=True,
     )
     return {
@@ -590,7 +593,7 @@ def main():
         TOPK_NN,
     )
 
-    # J.6 on V2 (closest-to-Gleb merge expected)
+    # J.6 on V2 (closest-to-reference merge expected)
     j6_v2 = run_j6(na, ed, map_v2, "V2")
 
     out = {

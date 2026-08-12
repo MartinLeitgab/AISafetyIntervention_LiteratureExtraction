@@ -7,7 +7,7 @@ by scanning RACE-keyword prevalence across:
       reasoning chains that contain any race-worded node, and PA-specifically.
 
 Two keyword variants:
-  loose  = Gleb-style substring ["race","racing","competi"]  (catches embrace/trace/grace/racial too)
+  loose  = frozen-analysis substring ["race","racing","competi"]  (catches embrace/trace/grace/racial too)
   strict = word-boundary regex  \\brac(e|es|ed|ing)\\b | competi | arms.?race
 
 Class B (no LLM). Run from graph_analysis/:

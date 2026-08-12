@@ -13,7 +13,7 @@ Four conditions (top-10 risks by EC, count how many are xrisk-keyword):
   3. merged(risk), full within-cat SIM
   4. merged(risk), risk<->risk SIM EXCLUDED    <- THE KEY TEST
 
-Risk-block merge = alias Phase0 + cos>=0.88 AND name+alias Jaccard>=0.05 (Gleb rule).
+Risk-block merge = alias Phase0 + cos>=0.88 AND name+alias Jaccard>=0.05 (frozen-analysis rule).
 Only the risk block is merged (other blocks identity) — the question is risk-side EC
 domination, and risk-merge is the relevant collapse.
 

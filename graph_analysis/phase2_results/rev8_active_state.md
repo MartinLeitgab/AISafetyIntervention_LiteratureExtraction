@@ -1,9 +1,41 @@
 # rev8 Active State — Comprehensive Todo + Critical Findings
 
-**Last updated:** 2026-04-30 (end-of-session)
+> 🔴 **2026-05-17 PIPELINE RESTART IN PROGRESS** — see `restart_plan_2026_05_17.md`.
+> First-run doublet artifacts (200-seed → 42 RG + 138 MG → 3,050 paths) being
+> archived to `archive/2026_05_15_first_run/`. New seed + Sonnet Pass B + REVIEW
+> cycles will run on the deduped 2,949-path corpus under refined prompts
+> (human-risk framing, continuum guidance, anti-singleton, organic multi-axial).
+> Tasks #34 (prep, Class B) + #35 (execute, Class A) are the active work items.
+> All other open task work paused pending restart completion.
+
+> 🔴 **2026-05-15 STRATEGIC PIVOT — PUBLICATION-PATH PLAN LOCKED.**
+> The §19.10/§19.12 full-VPN LLM clustering plan below (locked 2026-05-09) is **SUPERSEDED** for the immediate publication path by the doublet pipeline in `Step4_Findings_Report.md` §19.13 and the forward plan in `forward_plan_2026_05_15_publication_path.md`.
+>
+> **Active strategy:** Sonnet-only full-VPN Pass B over all 8,954 paths using the 200-path Opus seed catalog as fixed read-only input (no Opus mid-run reviews). One Opus meta-grouping pass at end. Targets ~5-7 working day timeline. Read `forward_plan_2026_05_15_publication_path.md` first; this state doc preserves history below for context.
+>
+> **D1 (faithfulness) is now LLM-as-judge** (validation lead owns), not hand-validation (replaces earlier plan; saves time + reuses the existing judge framework built on Mike's judge artifacts).
+>
+> **Why full VPN over truncated sample:** the 2026-05-15 review of the frozen Overleaf draft raised quality concerns about its algorithmic node-clustering approach (no quality cuts, hub poisoning risk, similarity-edge traps at τ≥0.80). The LLM-central path-level analysis must stand alone with full corpus coverage to justify the methodology contribution distinct from those navigational k=40 clusters.
+
+**Last updated:** 2026-05-15 (publication-path plan locked; supersedes 2026-05-09 §19.12 plan for the immediate ship)
+**Earlier last-update:** 2026-05-09 (Pass-2 complete; granularity-gap reconciliation plan locked — see Step4_Findings_Report.md §19.10) — SUPERSEDED but preserved below
+
+**Latest Phase 2 Task A status (see Step4 §19.10 + §19.12):**
+- Pass-2 complete: 26/27 batches OK; batch 24 (80 nodes) deferred — Claude AUP block, not retried.
+- 2,015 of 2,095 NR residuals assigned: 1,149 seed-group (33 v3 mechanism classes) / 587 HDBSCAN rescue / 279 residual.
+- **2026-05-09 strategic pivot — LLM-central, full-VPN clustering (§19.12 LOCKED):** drop the "Track 1 / Track 2" dual-resolution framing. Run a single full-VPN LLM clustering pass on all 19,073 nodes (subtype as metadata, NR + risk pools, v3 + v2 seed taxonomy as starting catalog). HDBSCAN's role downgrades from substrate to validation check on whether LLM mechanism boundaries agree with embedding-density structure. Mirrors the single-extraction LLM-as-judge pattern.
+- Estimated cost: ~11.8M Max-plan tokens, ~10–15h wall. Smoke-test (5 batches, ~250k tokens, 30min) runs first; user reviews granularity + subtype-as-metadata utility before approving full chain.
+- Per-batch atomic save mandatory (`phase2_full_vpn_batches/batch_NNN.json` written before next API call) so a Max-plan session-limit hit mid-run does not lose data.
+- AUP-resilience: per Pass-2 batch-24 lesson, AUP-blocked batches auto-split into 8 sub-batches of 10 nodes; failed sub-batches logged for manual review, script continues.
+
+**Earlier last-update (preserved):** 2026-04-30 23:24 CDT
 **Branch:** `martin/main`
 **Project root:** `/mnt/c/Users/malei/0_project_work/eleutherAI_SOAR_step1knowledgegraphcreation/AISafetyIntervention_LiteratureExtraction`
 **Container:** FalkorDB `:edge` running in WSL Ubuntu (auto-named, e.g. `reverent_faraday`), mounted from `intervention_graph_creation/data/`. Uses `-it` (foreground) — `-d` exits 255 silently. See issue #129 comment 4354839797. **CRITICAL: container has `RESULTSET_SIZE=10000000` set live; this is not persistent across container restart. Every FalkorDB-query script must SET this at startup or batch queries (see Bug Audit below).**
+
+**Completed runs (2026-05-01 07:46 CDT):**
+- F2v4 sim=0.85 DFS: COMPLETED (20,439,041 paths, 481,414 unique R-I pairs, 19,178/19,178 risks). 78 min runtime, hit_global_cap=False. 7.3 GB jsonl. Path-length histogram top-heavy at L=12 (14M of 20M).
+- Custom-BFS rerun for sim=0.8 + sim=0.85 (CF-5-clean): COMPLETED 07:46 CDT (~8.5h total). Defense-in-depth `RESULTSET_SIZE=10M` bump applied to `final_pathway_analysis_modes.py`. EDGE/sim=0.9/sim=0.95 skipped via existing checkpoints. New custom-mode counts: sim=0.8=4,900,771 paths, sim=0.85=1,309,004 paths, sim=0.9=21,521 paths (from prior run, identical), sim=0.95=3,293 paths, EDGE=3,283 paths. CF-1 silent-drop fix verified: all custom-mode paths have max 1 risk/path (vs 94-99% multi-risk in unconstrained). New jsonl files moved from `phase1_otherrawdata/` to `phase1_rawpathsfiles/`; CF-5-contaminated old files (Apr 30 13:32) archived to `phase1_rawpathsfiles/archive_pre_cf5fix/`.
 
 This file is the canonical work-in-progress state. Update as items resolve. **Persists across context compactions** by living in the project repo.
 
@@ -133,26 +165,69 @@ Affected scripts (per audit, even those with batched queries currently):
 
 **Estimated time:** 2-3 hours for all patches + reruns.
 
-### Task #7: Body recluster on VPN-only nodes with k-scan (BLOCKED → unblocked once F2v4 set is canonical)
+### Task #7: Body recluster on VPN-only nodes with k-scan + Pareto frontier — CROSS-THRESHOLD QUALITY-BASED THRESHOLD SELECTION (UNBLOCKED 2026-05-01 07:46)
 
-**File to write:** `graph_analysis/phase2_step4_F3_body_recluster.py`
-**Inputs:** F2v4 path file → defines VPN_paperpair = nodes appearing in any custom-hop-wise path. Restrict body clustering to these nodes only.
+**Quality rationale (added 2026-05-01):** body cluster Pareto is the primary quality signal across thresholds (link/path-quality dropped as weakly informative; see Step 4 §19.3a). Sweep runs F3 on each of the 5 thresholds; chosen threshold is the lowest at which all 5 body subtypes pass intra ≥ 0.70 / inter ≤ 0.30. Full Agglomerative, no sampling. Wall times recorded per threshold.
+
+**Files written:**
+- `graph_analysis/phase2_step4_F3_body_recluster.py` ✅ DRAFTED 2026-04-30, updated 2026-05-01 (output-suffix arg, sample-cap=0 default)
+- `graph_analysis/phase2_step4_F3_sweep_thresholds.sh` ✅ DRAFTED 2026-05-01
+**Inputs:** F2v4 path file → defines VPN_paperpair = nodes appearing in any custom-hop-wise path. Restrict body clustering to these nodes only (also exclude any non-VPN nodes from the clustering input).
 **Algorithm:**
 1. Build VPN_paperpair from `paths_hopwise_v4_sim0.9.jsonl` (union of body nodes appearing in any path)
 2. For each of 5 body subtypes, extract embeddings of VPN_paperpair body nodes
 3. K-scan: for k in [10, 15, 20, 25, 30, 35, 40, 50, 60]:
    - AgglomerativeClustering(n_clusters=k, metric='cosine', linkage='average')
-   - Compute mean intra-cluster cosine sim (high = good)
-   - Compute max inter-cluster centroid cosine sim (low = good)
-   - Compute silhouette
-4. Pick k per subtype on Pareto frontier (intra/inter trade-off)
-5. Save new cluster_memberships.pkl with the optimized clusters
+   - Compute mean within-cluster cosine sim (intra; high = good)
+   - Compute max between-cluster centroid cosine sim (inter; low = good)
+   - Compute silhouette as reference
+4. **Pareto frontier check (REVIEWER-CRITICAL):** pick k where BOTH:
+   - mean intra-cluster cosine sim >= **0.70** (calibrate per subtype if 0.70 unattainable)
+   - max inter-cluster centroid sim <= **0.30**
+   If no k achieves both thresholds, the clustering at this resolution is inadequate; report as a finding (cluster homogeneity insufficient at all k).
+5. Save new cluster_memberships.pkl with the optimized clusters per subtype
 6. Apply same scan to risk and intervention clusters (smaller populations)
 **Output:**
-- `phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/cluster_memberships_rev8.pkl`
-- `phase2_results/step4_finalanalysis/step4_cluster_tables/body_kscan_metrics.csv`
-- `phase2_results/step4_finalanalysis/step4_cluster_tables/body_kscan_chosen_k.csv`
-**Estimated time:** 2-4 hours (k-scan is fast; integration with downstream is the main work).
+- `graph_analysis/phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/cluster_memberships_rev8.pkl`
+- `graph_analysis/phase2_results/step4_finalanalysis/step4_cluster_tables/body_kscan_metrics.csv` (k vs intra vs inter vs silhouette per subtype)
+- `graph_analysis/phase2_results/step4_finalanalysis/step4_cluster_tables/body_kscan_chosen_k.csv` (final k choice + Pareto justification per subtype)
+- `graph_analysis/phase2_results/step4_finalanalysis/step4_cluster_tables/body_kscan_pareto_plot_<subtype>.png` (visual Pareto frontier per subtype, for paper)
+**Estimated time:** 3-5 hours (k-scan is fast; Pareto rigor + plotting per subtype is the main work).
+**Sweep run command (when ready, requires user authorization — heavy multi-hour run):**
+```
+bash graph_analysis/phase2_step4_F3_sweep_thresholds.sh
+```
+Default order: edge_only → sim0.95 → sim0.9 → sim0.85 → sim0.8 (cheapest-first; failures surface early).
+Override order: `bash phase2_step4_F3_sweep_thresholds.sh --order sim0.9 sim0.95 ...`
+
+**Single-threshold dry-run (to validate before full sweep):**
+```
+conda run --no-capture-output -n base python -u graph_analysis/phase2_step4_F3_body_recluster.py \
+  --paths-file graph_analysis/phase1_rawpathsfiles/paths_hopwise_v4_edge_only.jsonl \
+  --output-suffix edge_only \
+  --intra-threshold 0.70 --inter-threshold 0.30 \
+  --k-values 10,15,20,25,30,35,40,50,60 --sample-cap 0
+```
+
+### Task #7b: Pareto-frontier check for L2 Jaccard frozenset grouping (extension of E3 / F4)
+
+**File written:** `graph_analysis/phase2_step4_F4b_pareto_frozenset.py` ✅ DRAFTED 2026-04-30 end-of-session
+
+After Task #7, when E3-equivalent (Jaccard binary-vector grouping of frozensets) reruns on the new body clusters:
+- **Intra-tight:** mean within-group Jaccard sim >= **0.50** (Jaccard is harsher than cosine; lower threshold)
+- **Inter-loose:** max between-group centroid Jaccard sim <= **0.20**
+- Use same k-scan + Pareto framework
+- If Pareto cannot be satisfied, report as a finding (frozenset diversity at L2 too high)
+
+This is the L2 (mechanism family) coherence test, parallel to the L1 (body cluster) coherence test in Task #7. **Both are required for reviewer-defensible mechanism family extraction.**
+
+**Run command (after F1 cooccurrence_families CSV is rebuilt on rev8 body clusters):**
+```
+conda run --no-capture-output -n base python -u graph_analysis/phase2_step4_F4b_pareto_frozenset.py \
+  --cooccurrence-csv graph_analysis/phase2_results/step4_finalanalysis/step4_cluster_tables/optionB_cooccurrence_families_custom_consim1.csv \
+  --suffix custom_consim1 --intra-threshold 0.50 --inter-threshold 0.20 \
+  --k-values 3,5,8,10,12,15,18,20,25,30
+```
 
 ### Task #6: Re-run E1-E5 chain on cleaned data (BLOCKED → unblocked once #7 done)
 
