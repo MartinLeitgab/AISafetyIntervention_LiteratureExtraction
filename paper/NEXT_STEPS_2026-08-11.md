@@ -18,6 +18,7 @@ and withdrawn (untracked input). **No number in the paper changed.** Full accoun
 | Artifact | State |
 |---|---|
 | `paper/paperA_draft_v2.tex` | **Complete draft, v3.** Venue-neutral two-column `article`. Every number carries a `% SRC:` comment. 42/42 claims re-derive. Pure ASCII |
+| `paper/paperA_altstyle.tex` | **Alternative-style edition** of the same paper, presentation modelled on arXiv:2506.03053v2 (MAEBE): Research-Goals subsection, findings-as-headings, Related Work after Results, combined Limitations/Outlook/Conclusions, Impact Statement, appendices A--H. Same claims, same numbers, all 152 claim strings verified present. A presentation choice for Martin, not a replacement — pick one before submission |
 | `paper/figure1_dataset.{png,pdf}` | **Figure 1 built** — chain length / maturity / corpus yield, from committed receipts only |
 | `paper/texlint.py` | static manuscript check (no LaTeX toolchain here) — run before every commit |
 | `paper/asciify_tex.py` | forces the `.tex` to pure ASCII; fails loudly on unmapped characters |
@@ -28,7 +29,8 @@ and withdrawn (untracked input). **No number in the paper changed.** Full accoun
 | `paper/paperA_v2_GAPS.md` | gap list incl. gates G14 (compute donor) + G15 (authorship) |
 | `paper/gleb_message_2026-08-11.md` | drafted, **not sent** — needs the Overleaf link |
 | Repo `AISafetyIntervention_PaperA` | `origin/master` @ `9e6f4fc`, one branch only, Overleaf syncing cleanly |
-| Analysis repo | branch `paper/reproducible-claim-chain`, **88 commits ahead of `origin/main`**, PR #149 open |
+| Analysis repo | branch `paper/reproducible-claim-chain`, well ahead of `origin/main`, PR #149 open and unmerged |
+| Issue **#147** | **closed** — rewritten as #150. `paper/ticket_147_rewrite_proposal.md` is the historical record |
 | Issue **#150** | open, assigned to Sai — 5 human-only items |
 | Authorship working notes | 🔒 `C:\Users\malei\paperA_private\AUTHORSHIP_WORKING_NOTES_DO_NOT_COMMIT.md` — never commit |
 
@@ -41,10 +43,8 @@ about a day.
 
 - [x] ~~Overleaf shows `main.tex` as binary~~ — fixed 2026-08-12. Cause + permanent guard in
       "Operational knowledge" below.
-- [ ] 🔴 **Compile on Overleaf and read the built PDF.** Still never compiled anywhere. Check
-      specifically: the `figure*` float lands on page 1 without colliding with the abstract; the
-      bibliography renders (no `??`); `cleveref` cross-references resolve; the new
-      §"Use of AI assistance" sits where intended.
+- [x] ~~Compile on Overleaf and read the built PDF.~~ **Done 2026-08-12 — compiles and renders
+      correctly** (figure float, bibliography, `cleveref` references, the AI-assistance section).
 - [ ] **Decide on item 0** (the two fidelity controls). The one thing a reviewer will ask for that
       no amount of rewriting supplies.
 

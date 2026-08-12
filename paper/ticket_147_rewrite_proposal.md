@@ -1,7 +1,11 @@
-# Issue #147 — proposed rewrite (drafted 2026-08-11, NOT yet posted)
+# Issue #147 — rewrite proposal (drafted 2026-08-11; ACTED ON — historical record)
 
-Current ticket body last updated **2026-06-10**; it is now substantially stale. Below: what changed,
-what to drop, and a replacement body scoped to the minimum workshop-paper threshold.
+**Status 2026-08-12: closed out.** #147 is **CLOSED**; the replacement body below was posted as the new
+issue **#150** ("Judge validation close-out: the 5 remaining human-only items"), open and assigned to
+Sai. This file is kept as the record of what changed and why, not as a pending action.
+
+The old #147 body was last updated **2026-06-10** and had gone substantially stale. Below: what
+changed, what was dropped, and the replacement body scoped to the minimum workshop-paper threshold.
 
 ---
 
