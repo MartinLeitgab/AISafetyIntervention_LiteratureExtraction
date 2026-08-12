@@ -244,15 +244,12 @@ organisational reports and transcripts. After filtering to documents that yield 
 parseable extraction, the working corpus is 11{,}779 documents.
 % SRC: experiment_query_demo_report.json -> coverage_bound.papers_with_risk = 11779
 
-ARD is heterogeneous, and the chain dataset inherits that heterogeneity. Of the 2{,}772
-chains defined in \cref{sec:m-reporting}, 1{,}055 come from arXiv, 326 from the
-Alignment Forum, 267 from LessWrong, 265 from the EA Forum, 238 from YouTube
-transcripts, 120 from MIRI, and the remainder from a long tail of institutional and
-personal sites. Seven chains (0.3\%, from three documents) originate from Google Docs.
-A ``document'' in ARD is therefore not always a research paper --- the tail includes
-reading lists and expository material --- which is why we report source composition
-alongside every corpus-level number and why \cref{app:failure} exhibits what the
-extraction does with a document of that kind.
+ARD is heterogeneous and the chain dataset inherits that heterogeneity: arXiv preprints
+contribute the largest share of chains, and forum posts, transcripts and institutional
+pages contribute the rest (\cref{app:composition}). A ``document'' in ARD is therefore
+not always a research paper --- the tail includes reading lists and expository material
+--- which is why \cref{app:failure} exhibits what the extraction does with a document of
+that kind.
 % SRC: recomputed 2026-08-11 over paths_hopwise_v4_edge_only_deduped.jsonl,
 %      grouping by the source URL host of each chain's risk node.
 
@@ -286,9 +283,8 @@ several nodes for one stage --- is permitted by the prompt and is measured in
 
 Per-paper graphs are embedded (1536-dimensional OpenAI embeddings over node name,
 aliases and description) and loaded into a FalkorDB graph database. The result is
-200{,}525 nodes: 19{,}096 risks, 36{,}959 interventions, and 144{,}470 intermediate
-concept nodes (27{,}748 problem analysis, 26{,}361 theoretical insight, 27{,}543 design
-rationale, 34{,}222 implementation mechanism, 28{,}596 validation evidence).
+200{,}525 nodes, of which 19{,}096 are risks and 36{,}959 are interventions; the rest are
+intermediate concept nodes, broken down by subtype in \cref{app:composition}.
 % SRC: experiment_race_prevalence_report.json -> by_node_type_full_graph.*.n
 %      (19096+27748+26361+27543+34222+28596+36959 = 200525)
 
@@ -301,26 +297,15 @@ that an identified document made. It has consequences for every downstream graph
 statistic, which we make explicit in \cref{sec:m-structural} and measure in
 \cref{sec:r-bydesign}.
 
-\subsubsection{Extraction failures and the limits of automated repair}
+\subsubsection{Extraction failures}
 \label{sec:m-recovery}
 
-Extraction fails outright on a minority of ARD records. Most of those failures are
-records with no usable source text --- entries carrying a title and URL but an empty or
-\texttt{None} body --- which are unrecoverable in principle. Filtering to failures
-repairable in principle (a URL, non-empty source text, and at least one extracted node)
-leaves \textbf{441 candidates}. Running the judge of \cref{sec:m-validation} over all
-441 in repair mode produced a non-empty graph for \textbf{23 of them (5.2\%)}, and those
-recovered graphs are thin: a mean of 2.4 nodes and 0.9 edges, against 16.0 nodes and
-10.8 edges for audited successful extractions. An LLM judge audits and repairs an
-extraction that already exists effectively, and reconstructs one that failed poorly. We
-therefore treat failed extractions as corpus loss rather than as a recoverable pool.
-% SRC: experiment_judge_full_report.json ->
-%      item3_recovery.population_A_extraction_error_candidates (441 attempts, 23 with a
-%      non-empty final_graph = 5.2%, mean 2.35 nodes / 0.87 edges).
-% NOTE: the frequently-quoted "~60 recovered of ~400" figure is NOT used here. The 65
-%      files in recovered_errors_graph/ are disjoint from these 441 attempts (overlap
-%      = 0) and come from a different failure population whose denominator is not in
-%      the bundle -- see item3_recovery.PROVENANCE_FINDING.
+Extraction fails outright on a minority of ARD records, most of them entries carrying a
+title and URL but an empty source body, which are unrecoverable in principle. We tested
+whether the judge of \cref{sec:m-validation} can reconstruct the remainder and found that
+it cannot at a useful rate (\cref{app:judge}). An LLM judge audits and repairs an
+extraction that already exists effectively, and reconstructs one that failed poorly, so
+we treat failed extractions as corpus loss rather than as a recoverable pool.
 
 \subsection{Deduplication and Edge Normalisation}
 \label{sec:m-dedup}
@@ -343,26 +328,20 @@ Deduplication removes 2{,}385 nodes (1.2\%).
 
 \subsubsection{Measured scope of the merge}
 
-The merge is approximate in two respects that we quantify. First, the approximate
-nearest-neighbour search under-retrieves: re-running the same threshold specification
-with exhaustive search finds 54{,}282 candidate pairs against the 4{,}411 found by the
-deployed configuration, a factor of 12.
-% SRC: experiment_J6_merge_approx_v2_report.json -> variants.V2_T1_T2_T3.phase2_both_pass
-%      = 54282 vs gleb_reference.candidate_pairs = 4411
-Second, 1{,}140 nodes across 448 groups remain exact-name duplicates within their
-category after the merge.
-% SRC: experiment_J6_merge_approx_v2_report.json -> provenance_diagnostic
-Both facts matter only where node identity is load-bearing. \Cref{sec:r-hub} shows
-exactly where that is; the chain-level results of \cref{sec:r-stages}--\cref{sec:r-corpus}
-do not depend on the merge.
+The merge is approximate in two respects that we quantify rather than assume: the
+approximate nearest-neighbour search under-retrieves candidate pairs
+(\cref{sec:r-recall}), and a residue of exact-name duplicates survives it
+(\cref{app:composition}). Both facts matter only where node identity is load-bearing.
+\Cref{sec:r-hub} shows exactly where that is; the chain-level results of
+\cref{sec:r-stages}--\cref{sec:r-corpus} do not depend on the merge.
 
 \subsection{Structural Diagnostics of the Concatenated Graph}
 \label{sec:m-structural}
 % Reused from Gleb_overleaf_paper.txt L172-180, relocated from Results to Methods.
 
 The concatenated graph is highly fragmented: 15{,}123 disconnected components, the
-largest containing 61 nodes (0.03\%), average degree 2.02, and an average clustering
-coefficient of 0.013.
+largest containing 61 nodes (0.03\% of the graph), with the degree and
+clustering-coefficient statistics of a near-linear graph (\cref{app:composition}).
 % SRC: re-derived from graph_node_attributes.pkl + graph_edge_data.pkl (EDGE type only)
 %      2026-08-11, union-find over 200,525 nodes / 202,149 EDGE edges.
 %      NOTE: the frozen Overleaf reported 18,424 / 55 / 2.0 / 0.007 -- measured on the
@@ -386,12 +365,11 @@ LLM-asserted, confidence-scored.
 concept category, added to connect content across documents.
 \end{itemize}
 
-At $\tau \geq 0.80$ the similarity layer adds 1{,}435{,}806 within-category edges,
-reduces the component count from 15{,}123 to 4{,}124, and expands the largest component
-from 61 nodes to 152{,}753 (76.2\%). That expansion is the purpose of the layer and also
+At $\tau \geq 0.80$ the similarity layer expands the largest component from 61 nodes to
+152{,}753, or 76.2\% of the graph. That expansion is the purpose of the layer and also
 its hazard: a threshold that turns 0.03\% of the graph into 76.2\% of it in one step is
-not a neutral operation. \Cref{app:sensitivity} reports the threshold and hop
-sensitivity in full.
+not a neutral operation. \Cref{app:composition} gives the edge and component counts and
+\cref{app:sensitivity} the threshold and hop sensitivity.
 % SRC: re-derived 2026-08-11 from graph_edge_data.pkl, SIMILARITY edges with
 %      cos_sim >= 0.80 restricted to same concept_category.
 %      NOTE: the frozen Overleaf reported 169,083 edges -> 6,522 components ->
@@ -413,10 +391,10 @@ carries maturity 3 or 4.
 \subsection{Chain De-duplication and the Reporting Unit}
 \label{sec:m-reporting}
 
-Raw path enumeration over-counts prolific papers: one paper contributes 700 of the
-8{,}954 raw chains (7.8\%), two others contribute 200 and 184, and 169 papers contribute
-ten or more. Per-chain statistics on that set would weight the corpus by how branched
-each paper's extracted graph happens to be. We therefore collapse near-duplicate chains
+Raw path enumeration over-counts prolific papers: one paper alone contributes 700 of the
+8{,}954 raw chains (7.8\%), followed by a tail of papers contributing ten or more each
+(\cref{app:composition}). Per-chain statistics on that set would weight the corpus by how
+branched each paper's extracted graph happens to be. We therefore collapse near-duplicate chains
 within each source paper: two chains are near-duplicates when the smaller one's node set
 is $\geq 70\%$ contained in the larger's, and the shorter is dropped. This yields the
 \textbf{2{,}772-chain de-duplicated set} (at most 7 chains from any one paper), which is
@@ -515,10 +493,9 @@ than one registered before it.
 \label{sec:r-stages}
 
 Across the 2{,}772 de-duplicated chains, \textbf{87.4\% (2{,}423) contain all five
-intermediate reasoning stages}. Stage-wise presence is 99.0\% for problem analysis,
-93.9\% for theoretical insight, 96.1\% for design rationale, 96.0\% for implementation
-mechanism, and 98.0\% for validation evidence. On the raw 8{,}954-chain set the same
-figure is 89.0\%, so the result does not depend on the de-duplication choice.
+intermediate reasoning stages}; every stage is present in at least 93.9\% of chains
+(\cref{app:composition}). On the raw 8{,}954-chain set the same figure is 89.0\%, so the
+result does not depend on the de-duplication choice.
 % SRC: experiment_paper_claim_audit.json -> path_set_comparison.deduped
 %      (all5 2423/2772 = 87.4%; subtype_presence_pct) and .raw (89.0%)
 
@@ -588,79 +565,38 @@ research. A faithful extraction from a weak paper is a successful extraction.
 \subsection{The judge study finds omission, not fabrication, to be the dominant error}
 \label{sec:r-judge}
 
-\paragraph{Structural error classes.} Across the 100 audited papers the judge found
-\textbf{108 referential-integrity findings}, of which 68 are blocker-severity, the
-dominant pattern being an edge whose source or target names a node absent from the node
-list; \textbf{42 orphan nodes}, present in 40\% of papers; and \textbf{56 within-paper
-duplicate node pairs}, in 55\% of papers. The mean audited graph has 16.0 nodes and 10.8
-edges.
-% SRC: experiment_judge_item2_report.json -> findings_total,
-%      findings_papers_with_at_least_one, per_paper_means
+\paragraph{Error profile.} The Opus meta-grader recorded \textbf{216 missed concepts}
+across the 95 papers it scored, at least one in every paper, against \textbf{20 instances
+of fabricated content}. Under this grader the dominant failure mode is \emph{omission,
+not hallucination}. That supports reading an extracted chain as a partial record of what
+a paper argued, and does not support reading the absence of a stage as evidence that the
+paper lacked one. These counts are un-adjudicated LLM output and we report them as a
+profile rather than as a measured error rate. The judge's structural findings ---
+referential-integrity, orphan and duplicate classes --- point the same way and are
+tabulated in \cref{app:judge}.
+% SRC: experiment_judge_full_report.json -> item3_error_taxonomy_auto
 
-\paragraph{Coverage.} Asked to identify content in the source that the extraction
-missed, the judge proposed \textbf{new nodes for only 7 of 100 papers} (9 nodes in
-total). Its coverage list flags a mean of 7.8 relationships per paper that it judges the
-source to support and the extraction not to contain --- an upper-bound opinion signal
-rather than a measured omission rate, since the judge has no schema slot in which to
-propose those edges and no human adjudicated them.
-% SRC: experiment_judge_item2_report.json -> proposed_fix_totals.add_nodes = 9;
-%      findings_papers_with_at_least_one.add_nodes = 7;
-%      per_paper_means.missing_edges_flagged
-
-\paragraph{Direction of the judge effect is robust; magnitude is not.}
-\Cref{tab:graders} reports the meta-grader scores. All three graders agree on direction:
-every grader records an improvement on every paper it scored, and on the 13 papers all
-three scored, agreement that the judge improved the extraction is unanimous. They
-disagree sharply on magnitude, with mean gains from $+3.5$ to $+33.1$ points.
-Inter-grader agreement on those 13 papers is moderate before the repairs (Fleiss'
-$\kappa = 0.54$ on four ordinal score bands) and collapses afterwards
-($\kappa = 0.09$): Opus and GPT-5.1 remain rank-correlated on the post-repair scores
-(Spearman $\rho = 0.50$) while Gemini's saturated scores correlate negatively with both
-($\rho = -0.63$ and $-0.64$). We report the \emph{direction} of the judge's effect as a
-robust, unanimous finding and treat its \emph{magnitude} as unresolved.
+\paragraph{Direction of the judge effect is robust; magnitude is not.} All three
+meta-graders agree on direction: every grader records an improvement on every paper it
+scored, and on the 13 papers all three scored, agreement that the judge improved the
+extraction is unanimous. They disagree sharply on magnitude. Inter-grader agreement on
+those 13 papers is moderate before the repairs (Fleiss' $\kappa = 0.54$ on four ordinal
+score bands) and collapses afterwards ($\kappa = 0.09$), with one grader saturating at
+the top of the scale (\cref{app:judge}). We therefore report the \emph{direction} of the
+judge's effect as a robust, unanimous finding and treat its \emph{magnitude} as
+unresolved.
 % SRC: experiment_judge_full_report.json -> item2_meta_graders, item2_grader_agreement
 %      (reproduces extraction_validator/results.md exactly)
-
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{Meta-grader} & \textbf{$n$} & \textbf{pre} & \textbf{post} & \textbf{$\Delta$} \\
-\midrule
-Claude Opus 4.5 & 95 & 69.7$\pm$18.0 & 73.1$\pm$18.2 & $+3.5$ \\
-GPT-5.1         & 95 & 67.0$\pm$16.2 & 80.2$\pm$10.2 & $+13.2$ \\
-Gemini 3 Pro    & 13 & 62.7$\pm$22.6 & 95.8$\pm$1.8  & $+33.1$ \\
-\bottomrule
-\end{tabular}
-\caption{Meta-grader rubric scores before and after the judge's proposed repairs, mean
-$\pm$ standard deviation. The graders scored unequal, partly disjoint subsets of the 100
-papers --- only 13 papers carry all three scores --- because the rubric ran across
-several prompt iterations and only some iterations emit a paired pre/post score. Rows
-are therefore not directly comparable, and Gemini's $n{=}13$ post-repair mean of 95.8
-with a standard deviation of 1.8 indicates saturation at the top of the scale.}
-\label{tab:graders}
-\end{table}
-
-\paragraph{Error profile.} The Opus meta-grader recorded 216 missed concepts across the
-95 papers it scored, at least one in every paper, against 20 instances of fabricated
-content in 16\% of papers and 15 category errors in 33\%.
-% SRC: experiment_judge_full_report.json -> item3_error_taxonomy_auto
-Under this grader the dominant failure mode is \emph{omission, not hallucination}. That
-supports reading an extracted chain as a partial record of what a paper argued, and does
-not support reading the absence of a stage as evidence that the paper lacked one. These
-counts are un-adjudicated LLM output and we report them as a profile rather than as a
-measured error rate.
 
 \paragraph{One measurement artefact to separate before quoting any error rate.} The
 judge grades against a schema expecting rationale fields inline on nodes and edges,
 whereas the pipeline stores rationale as separate nodes linked by a dedicated relation.
-That mismatch accounts for \textbf{184 of the 218 blocker-severity schema flags
-(84\%)}; excluding it leaves 34 substantive blocker-severity schema findings across 100
-papers. A headline error rate computed from raw judge output without this split measures
-a schema version difference rather than extraction quality.
+That mismatch accounts for \textbf{84\% of the blocker-severity schema flags}. A headline
+error rate computed from raw judge output without this split measures a schema version
+difference rather than extraction quality.
 % SRC: experiment_judge_item2_report.json ->
-%      schema_check_severity_rationale_field_mismatch vs schema_check_severity_substantive
+%      schema_check_severity_rationale_field_mismatch (184) vs
+%      schema_check_severity_substantive (34), of 218 total.
 
 \subsection{A risk--intervention query returns one stored chain with its citation}
 \label{sec:r-retrieval}
@@ -729,9 +665,9 @@ The same unit supports descriptives that no metadata directory can produce, beca
 are properties of the argument inside each paper.
 
 \paragraph{Intervention maturity.} Of the 36{,}959 extracted interventions, the
-LLM-assessed maturity distribution is \textbf{27.6\% conceptual} (10{,}189),
-\textbf{57.3\% early-stage} (21{,}180), \textbf{12.7\% mature} (4{,}681) and
-\textbf{2.5\% deployed} (909); see \cref{fig:dataset} (middle). Roughly six in seven
+LLM-assessed maturity distribution is \textbf{27.6\% conceptual}, \textbf{57.3\%
+early-stage}, \textbf{12.7\% mature} and \textbf{2.5\% deployed}; see \cref{fig:dataset}
+(middle). Roughly six in seven
 proposed interventions in this corpus sit at conceptual or early-stage maturity, and
 fewer than one in thirty is described as deployed. Maturity is an LLM assignment that no
 human adjudicated and that the judge protocol does not score (\cref{sec:m-validation}),
@@ -751,8 +687,8 @@ node and at least one intervention node --- the two sets are identical --- which
 property of the extraction schema, not a measurement of the literature. The informative
 number is how many documents yield a \emph{complete, high-confidence,
 mature-intervention chain end to end}: \textbf{1{,}868 documents} (15.9\%), contributing
-\textbf{2{,}643 distinct risk-to-intervention node pairs} after de-duplication (3{,}222
-before); see \cref{fig:dataset} (right). The ratio between the two figures is the honest
+\textbf{2{,}643 distinct risk-to-intervention node pairs}; see \cref{fig:dataset}
+(right). The ratio between the two figures is the honest
 statement of yield: roughly one document in six argues a complete mechanism from a named
 risk to an intervention that is at least a mature method, under our quality cuts.
 % SRC: experiment_paper_claim_audit.json -> n_source_papers = 1868 recomputed from the
@@ -883,17 +819,16 @@ measurement instrument.
 %      head -- is not identical. We report the failure to reproduce rather than the
 %      original figure.
 
-Corpus-wide prevalence of the framing is \textbf{2.21\% of problem-analysis nodes}
-(614/27{,}748) and 1.65\% of risk nodes; only 0.50\% of EDGE-only chains contain a
-race-framed problem-analysis node, and the re-derived head rates (1.3--6.3\% across
-centrality tiers) sit within a small multiple of that base.
-% SRC: experiment_race_prevalence_report.json + experiment_race_top100_rederive_report.json
-
-A related quantity behaves the same way: deleting race-framed problem-analysis nodes
-appeared to disconnect 51 of the top-100 risks from all interventions. Recomputed on the
-corrected merge, the same deletion isolates \textbf{2 of 100}.
-% SRC: experiment_J6_merge_approx_v2_report.json -> j6_on_V2.isolated_after_race_removal
-%      = 2 vs gleb_reference.j6_isolated = 51
+Corpus-wide prevalence of the framing is \textbf{2.21\% of problem-analysis nodes}, and
+the re-derived head rates across centrality tiers sit within a small multiple of that
+base (\cref{app:race}). A second quantity from the same analysis behaves the same way:
+deleting race-framed problem-analysis nodes appeared to disconnect 51 of the top-100
+risks from all interventions, and recomputed on the corrected merge the same deletion
+isolates \textbf{2 of 100}.
+% SRC: experiment_race_prevalence_report.json (2.21% of PA nodes = 614/27,748; 1.65% of
+%      risk nodes; 0.50% of EDGE-only chains) + experiment_race_top100_rederive_report.json
+%      (head rates 1.3-6.3% across tiers) + experiment_J6_merge_approx_v2_report.json ->
+%      j6_on_V2.isolated_after_race_removal = 2 vs gleb_reference.j6_isolated = 51
 
 \subsubsection{The lesson is stronger, not weaker, for the reproduction failing}
 
@@ -905,29 +840,12 @@ the graph construction, and a full-population baseline alongside it.
 
 \subsubsection{The underlying association is real but modest}
 
-\Cref{tab:race} reports the race-by-existential-risk co-occurrence odds ratio under three
-units of analysis. The association survives collapsing near-duplicates, which rules out
-pure pseudo-replication, but at 2.7--5.2$\times$ on a $\sim$2\% base rate it supports no
-claim about the discourse structure of the field.
-
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Unit} & \textbf{OR} & \textbf{95\% CI} & \textbf{$P$(race)} \\
-\midrule
-node               & 3.82 & 3.24--4.50 & 7.6\% vs 2.1\% \\
-merged node        & 2.73 & 2.06--3.64 & 5.5\% vs 2.1\% \\
-source paper       & 5.17 & 4.32--6.20 & 10.7\% vs 2.3\% \\
-\bottomrule
-\end{tabular}
-\caption{Race-framing by existential-risk co-occurrence across units of analysis (all
-$p < 10^{-12}$). The $P$(race) column gives the rate within existential-risk versus
-non-existential-risk nodes. The association is directionally robust and quantitatively
-minor.}
-\label{tab:race}
-\end{table}
+Measured on the full population rather than on a selected head, the co-occurrence between
+race framing and existential risk is a genuine association that survives collapsing
+near-duplicates, which rules out pure pseudo-replication. At 2.7--5.2$\times$ on a
+$\sim$2\% base rate it nevertheless supports no claim about the discourse structure of
+the field. \Cref{app:race} reports the odds ratio, confidence interval and base rate
+under all three units of analysis.
 % SRC: experiment_race_dedup_robustness_report.json ->
 %      A_node_level / B_merged_node_level / C_paper_level
 
@@ -1166,6 +1084,63 @@ is an author, and none is credited as one.
 %  intervention_graph_creation/src/prompt/final_primary_prompt.py, plus the node/edge
 %  Pydantic schema summary. Trim to one page.]
 
+\section{Corpus, Graph and Chain-Set Composition}
+\label{app:composition}
+
+This appendix carries the composition figures that the main text refers to but does not
+need in order to state a claim.
+
+\paragraph{Node inventory by subtype.} The 200{,}525 extracted nodes comprise 19{,}096
+risks, 36{,}959 interventions, and 144{,}470 intermediate concept nodes: 27{,}748 problem
+analysis, 26{,}361 theoretical insight, 27{,}543 design rationale, 34{,}222
+implementation mechanism, and 28{,}596 validation evidence.
+% SRC: experiment_race_prevalence_report.json -> by_node_type_full_graph.*.n
+%      (19096+27748+26361+27543+34222+28596+36959 = 200525)
+
+\paragraph{Chain sources.} Of the 2{,}772 de-duplicated chains, 1{,}055 come from arXiv,
+326 from the Alignment Forum, 267 from LessWrong, 265 from the EA Forum, 238 from YouTube
+transcripts, and 120 from MIRI, with the remainder from a long tail of institutional and
+personal sites. Seven chains (0.3\%, from three documents) originate from Google Docs.
+% SRC: recomputed 2026-08-11 over paths_hopwise_v4_edge_only_deduped.jsonl, grouping by
+%      the source URL host of each chain's risk node.
+
+\paragraph{Chain-count skew before de-duplication.} In the raw 8{,}954-chain set one
+paper contributes 700 chains, two others contribute 200 and 184, and 169 papers
+contribute ten or more. After the containment-based de-duplication of
+\cref{sec:m-reporting} no paper contributes more than 7.
+% SRC: experiment_paper_claim_audit.json -> path_set_comparison
+
+\paragraph{Stage-wise presence.} Within the 2{,}772 de-duplicated chains, presence by
+stage is 99.0\% problem analysis, 93.9\% theoretical insight, 96.1\% design rationale,
+96.0\% implementation mechanism, and 98.0\% validation evidence.
+% SRC: experiment_paper_claim_audit.json -> path_set_comparison.deduped.subtype_presence_pct
+
+\paragraph{Structural statistics of the concatenated graph.} Average degree is 2.02 and
+the average clustering coefficient 0.013, both consistent with a collection of short
+independent chains.
+% SRC: re-derived from graph_node_attributes.pkl + graph_edge_data.pkl (EDGE type only)
+%      2026-08-11, union-find over 200,525 nodes / 202,149 EDGE edges.
+%      NOTE: the frozen Overleaf reported 18,424 components / 55 / 2.0 / 0.007, measured
+%      on the MERGED 200,061-node graph with 197,542 edges, a different substrate.
+
+\paragraph{Similarity layer at $\tau \geq 0.80$.} The layer adds 1{,}435{,}806
+within-category edges and reduces the component count from 15{,}123 to 4{,}124.
+% SRC: re-derived 2026-08-11 from graph_edge_data.pkl, SIMILARITY edges with
+%      cos_sim >= 0.80 restricted to same concept_category.
+%      NOTE: the frozen Overleaf reported 169,083 edges -> 6,522 components ->
+%      142,772 (71.4%); that k-NN construction is ~8.5x sparser than the dump used here.
+
+\paragraph{Exact-name duplicate residue after the merge.} 1{,}140 nodes across 448 groups
+remain exact-name duplicates within their category.
+% SRC: experiment_J6_merge_approx_v2_report.json -> provenance_diagnostic
+
+\paragraph{Intervention maturity counts.} The percentages in \cref{sec:r-corpus}
+correspond to 10{,}189 conceptual, 21{,}180 early-stage, 4{,}681 mature and 909 deployed
+interventions. The 2{,}643 distinct risk-to-intervention node pairs are 3{,}222 before
+chain de-duplication.
+% SRC: experiment_dataset_strength_report.json -> interventions.maturity;
+%      experiment_paper_claim_audit.json -> distinct_ri_node_pairs
+
 \section{Deduplication Threshold Experiments}
 \label{app:dedup}
 % Reused verbatim from Gleb_overleaf_paper.txt Appendix D.
@@ -1352,21 +1327,117 @@ an estimated $\sim$68\% in tiers 101--500 due to morphological variants and syno
 without keywords.
 
 \paragraph{Scope.} This validates the \emph{classifier} on the sampled strata and
-establishes nothing about prevalence. \Cref{sec:r-selection} reports corpus-wide
-prevalence (2.21\% of problem-analysis nodes), measured separately by exhaustive scan.
+establishes nothing about prevalence.
 
-\section{Judge Sample Composition}
+\paragraph{Corpus-wide prevalence.} Measured by exhaustive scan, race-framed nodes are
+2.21\% of problem-analysis nodes (614 of 27{,}748) and 1.65\% of risk nodes; 0.50\% of
+EDGE-only chains contain a race-framed problem-analysis node. The re-derived rates in the
+centrality-selected head run from 1.3\% to 6.3\% across tiers, within a small multiple of
+that base.
+% SRC: experiment_race_prevalence_report.json + experiment_race_top100_rederive_report.json
+
+\paragraph{Co-occurrence with existential risk, by unit of analysis.}
+\Cref{tab:race} reports the odds ratio under three units. The association is
+directionally robust --- it survives collapsing near-duplicates, which rules out pure
+pseudo-replication --- and quantitatively minor.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Unit} & \textbf{OR} & \textbf{95\% CI} & \textbf{$P$(race)} \\
+\midrule
+node               & 3.82 & 3.24--4.50 & 7.6\% vs 2.1\% \\
+merged node        & 2.73 & 2.06--3.64 & 5.5\% vs 2.1\% \\
+source paper       & 5.17 & 4.32--6.20 & 10.7\% vs 2.3\% \\
+\bottomrule
+\end{tabular}
+\caption{Race-framing by existential-risk co-occurrence across units of analysis (all
+$p < 10^{-12}$). The $P$(race) column gives the rate within existential-risk versus
+non-existential-risk nodes.}
+\label{tab:race}
+\end{table}
+% SRC: experiment_race_dedup_robustness_report.json ->
+%      A_node_level / B_merged_node_level / C_paper_level
+
+\section{Judge Protocol: Sample, Structural Findings and Grader Scores}
 \label{app:judge}
 
-The 100 judged papers were sampled at random from successfully extracted papers and span
-all nine ARD source types: LessWrong 28, Alignment Forum 21, blogs 15, EA Forum 11,
-arXiv 11, Arbital 6, special documents 4, YouTube transcripts 2, aisafety.info 2.
+\paragraph{Sample composition.} The 100 judged papers were sampled at random from
+successfully extracted papers and span all nine ARD source types: LessWrong 28,
+Alignment Forum 21, blogs 15, EA Forum 11, arXiv 11, Arbital 6, special documents 4,
+YouTube transcripts 2, aisafety.info 2. The audited sample is forum-weighted in the same
+way the corpus is, so the error profile it yields describes extraction over heterogeneous
+web documents rather than over arXiv papers alone.
 % SRC: experiment_judge_item2_report.json (n=100, by_source_type) +
 %      extraction_validator/STATUS.md on branch judge_handoff_workshop_items_2_3
 
-The composition matters for reading \cref{sec:r-judge}: the audited sample is
-forum-weighted in the same way the corpus is, so the error profile it yields describes
-extraction over heterogeneous web documents rather than over arXiv papers alone.
+\paragraph{Structural error classes.} Across the 100 audited papers the judge found 108
+referential-integrity findings, of which 68 are blocker-severity, the dominant pattern
+being an edge whose source or target names a node absent from the node list; 42 orphan
+nodes, present in 40\% of papers; and 56 within-paper duplicate node pairs, in 55\% of
+papers. The mean audited graph has 16.0 nodes and 10.8 edges. Of the 218
+blocker-severity schema flags, 184 (84\%) are the rationale-field mismatch described in
+\cref{sec:r-judge}, leaving 34 substantive findings across 100 papers.
+% SRC: experiment_judge_item2_report.json -> findings_total,
+%      findings_papers_with_at_least_one, per_paper_means,
+%      schema_check_severity_rationale_field_mismatch vs _substantive
+
+\paragraph{Coverage.} Asked to identify content in the source that the extraction missed,
+the judge proposed new nodes for only 7 of 100 papers (9 nodes in total). Its coverage
+list flags a mean of 7.8 relationships per paper that it judges the source to support and
+the extraction not to contain --- an upper-bound opinion signal rather than a measured
+omission rate, since the judge has no schema slot in which to propose those edges and no
+human adjudicated them. The Opus error profile of \cref{sec:r-judge} also records 15
+category errors, in 33\% of papers, alongside the 216 missed concepts and 20 fabrications.
+% SRC: experiment_judge_item2_report.json -> proposed_fix_totals.add_nodes = 9;
+%      findings_papers_with_at_least_one.add_nodes = 7;
+%      per_paper_means.missing_edges_flagged;
+%      experiment_judge_full_report.json -> item3_error_taxonomy_auto
+
+\paragraph{Meta-grader scores.} \Cref{tab:graders} gives the rubric scores behind the
+direction-versus-magnitude result of \cref{sec:r-judge}. Opus and GPT-5.1 remain
+rank-correlated on the post-repair scores (Spearman $\rho = 0.50$) while Gemini's
+saturated scores correlate negatively with both ($\rho = -0.63$ and $-0.64$).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Meta-grader} & \textbf{$n$} & \textbf{pre} & \textbf{post} & \textbf{$\Delta$} \\
+\midrule
+Claude Opus 4.5 & 95 & 69.7$\pm$18.0 & 73.1$\pm$18.2 & $+3.5$ \\
+GPT-5.1         & 95 & 67.0$\pm$16.2 & 80.2$\pm$10.2 & $+13.2$ \\
+Gemini 3 Pro    & 13 & 62.7$\pm$22.6 & 95.8$\pm$1.8  & $+33.1$ \\
+\bottomrule
+\end{tabular}
+\caption{Meta-grader rubric scores before and after the judge's proposed repairs, mean
+$\pm$ standard deviation. The graders scored unequal, partly disjoint subsets of the 100
+papers --- only 13 papers carry all three scores --- because the rubric ran across
+several prompt iterations and only some iterations emit a paired pre/post score. Rows are
+therefore not directly comparable, and Gemini's $n{=}13$ post-repair mean of 95.8 with a
+standard deviation of 1.8 indicates saturation at the top of the scale.}
+\label{tab:graders}
+\end{table}
+% SRC: experiment_judge_full_report.json -> item2_meta_graders, item2_grader_agreement
+%      (reproduces extraction_validator/results.md exactly)
+
+\paragraph{Repair of failed extractions.} Filtering the outright extraction failures to
+those repairable in principle --- a URL, non-empty source text, and at least one
+extracted node --- leaves 441 candidates. Running the judge over all 441 in repair mode
+produced a non-empty graph for 23 of them (5.2\%), and those recovered graphs are thin: a
+mean of 2.4 nodes and 0.9 edges, against 16.0 nodes and 10.8 edges for audited successful
+extractions. This is the measurement behind the corpus-loss decision in
+\cref{sec:m-recovery}.
+% SRC: experiment_judge_full_report.json ->
+%      item3_recovery.population_A_extraction_error_candidates (441 attempts, 23 with a
+%      non-empty final_graph = 5.2%, mean 2.35 nodes / 0.87 edges).
+% NOTE: the frequently-quoted "~60 recovered of ~400" figure is NOT used. The 65 files in
+%      recovered_errors_graph/ are disjoint from these 441 attempts (overlap = 0) and
+%      come from a different failure population whose denominator is not in the bundle --
+%      see item3_recovery.PROVENANCE_FINDING.
 
 \section{A Failure Case}
 \label{app:failure}

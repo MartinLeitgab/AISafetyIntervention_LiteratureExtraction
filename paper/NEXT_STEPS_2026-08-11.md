@@ -18,7 +18,7 @@ and withdrawn (untracked input). **No number in the paper changed.** Full accoun
 | Artifact | State |
 |---|---|
 | `paper/paperA_draft_v2.tex` | **Complete draft, v3.** Venue-neutral two-column `article`. Every number carries a `% SRC:` comment. 42/42 claims re-derive. Pure ASCII |
-| `paper/paperA_altstyle.tex` | **Alternative-style edition** of the same paper, presentation modelled on arXiv:2506.03053v2 (MAEBE): Research-Goals subsection, findings-as-headings, Related Work after Results, combined Limitations/Outlook/Conclusions, Impact Statement, appendices A--H. Same claims, same numbers, all 152 claim strings verified present. A presentation choice for Martin, not a replacement — pick one before submission |
+| `paper/paperA_altstyle.tex` | **Alternative-style edition** of the same paper, presentation modelled on arXiv:2506.03053v2 (MAEBE): Research-Goals subsection, findings-as-headings, Related Work after Results, combined Limitations/Outlook/Conclusions, Impact Statement, appendices A--I. Same claims; the main body was then thinned from 159 to **75 distinct result numbers** (benchmarked against arXiv:2602.06941v3, which carries ~28), everything cut moving to Appendix B (composition), G (race) or H (judge protocol). Nothing deleted but raw counts printed beside their own percentages. A presentation choice for Martin, not a replacement — pick one before submission |
 | `paper/figure1_dataset.{png,pdf}` | **Figure 1 built** — chain length / maturity / corpus yield, from committed receipts only |
 | `paper/texlint.py` | static manuscript check (no LaTeX toolchain here) — run before every commit |
 | `paper/asciify_tex.py` | forces the `.tex` to pure ASCII; fails loudly on unmapped characters |
