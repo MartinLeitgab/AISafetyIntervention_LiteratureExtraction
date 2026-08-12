@@ -12,10 +12,10 @@ Run them from `graph_analysis/`.
 |---|---|---|
 | `paths_hopwise_v4_edge_only.jsonl` (8,954 raw chains) | `graph_analysis/phase1_rawpathsfiles/` | ✅ committed |
 | `paths_hopwise_v4_edge_only_deduped.jsonl` (2,772 chains) | same | ✅ committed |
-| `graph_node_attributes.pkl` (200,525 nodes) | `graph_analysis/phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/` | ❌ too large — rebuild with `phase2_step1_loadandparse.py` against the FalkorDB dump, or ask Martin |
+| `graph_node_attributes.pkl` (200,525 nodes) | `graph_analysis/phase2_results/step1_load_and_parse_umapwithoutlocalsatellites/` | ❌ too large — rebuild with `phase2_step1_loadandparse.py` against the FalkorDB dump, or ask the corresponding author |
 | `graph_edge_data.pkl` (1,767,833 edges) | same | ❌ same |
 | 100 judge reports | branch `anthropic_judge_test`, `extraction_validator/extend_try_1/` | ✅ in git, different branch |
-| Mike's meta-grader archive | Drive `judge_material/Final-archive-from-Mike_item2.zip` | ❌ Drive only |
+| Meta-grader archive | Drive folder `judge_material` | ❌ Drive only |
 | Judge recovery bundle | Drive `judge_material/judge_recovery_bundle_item3.zip` | ❌ Drive only |
 
 The **receipts are committed**, so every number in the paper is checkable without the two PKLs or the
@@ -55,7 +55,7 @@ git archive origin/anthropic_judge_test extraction_validator/extend_try_1 | tar 
 cd graph_analysis
 python -u experiment_judge_full_receipt.py \
     --judge-reports /tmp/judge/extraction_validator/extend_try_1 \
-    --mike-archive  <unzipped Final-archive-from-Mike> \
+    --grader-archive <unzipped meta-grader archive> \
     --recovery      <unzipped judge_recovery_bundle>/data
 ```
 

@@ -2,7 +2,7 @@
 """
 Judge validation -- FULL receipt for Paper A (Workshop items 2 and 3).
 
-Consolidates every judge artifact Mike produced into ONE validated summary so the
+Consolidates every judge artifact produced in the validation runs into ONE validated summary so the
 paper never re-derives from raw data.
 
 Inputs (all local, no network, no LLM calls):
@@ -11,12 +11,12 @@ Inputs (all local, no network, no LLM calls):
                               Repo/branch source:
                                 git archive origin/anthropic_judge_test \
                                   extraction_validator/extend_try_1 | tar -x -C <DEST>
-  2. --mike-archive   <dir>   Final-archive-from-Mike/ containing:
+  2. --grader-archive <dir>   meta-grader archive directory containing:
                                 test_extend_all_evaluation_opus_4_5/      (Opus 4.5 rubric)
                                 test_extend_all_evaluation_gemini_pro_3/  (Gemini 3 Pro rubric)
                                 extend_try_with_extration_and_judge_and_original_text/
                                                                           (3rd grader *_evaluation.json)
-  3. --recovery       <dir>   Mike2/judge_recovery_bundle/data/
+  3. --recovery       <dir>   judge recovery bundle data directory
 
 Output: graph_analysis/phase2_results/experiment_judge_full_report.json
 
@@ -197,7 +197,7 @@ def judge_audit(src: Path):
 def _find_scored(obj, want: str):
     """Recursively find a numeric value under a key naming want ('pre'|'post') judge score.
 
-    Mike ran the rubric across several prompt iterations, so these directories hold
+    The rubric was run across several prompt iterations, so these directories hold
     HETEROGENEOUS json shapes (>=5 distinct schemas per directory). Hand-coding one shape
     silently drops the rest, so we search the tree instead and report the misses.
     """
@@ -591,12 +591,12 @@ def recovery_stats(root: Path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--judge-reports", required=True)
-    ap.add_argument("--mike-archive", required=True)
+    ap.add_argument("--grader-archive", required=True)
     ap.add_argument("--recovery", required=True)
     a = ap.parse_args()
 
     jr = need_dir(Path(a.judge_reports), "judge reports dir")
-    ma = need_dir(Path(a.mike_archive), "Mike archive dir")
+    ma = need_dir(Path(a.grader_archive), "grader archive dir")
     rc = need_dir(Path(a.recovery), "recovery bundle data dir")
 
     opus, opus_diag = load_grader(
@@ -633,7 +633,7 @@ def main():
         "experiment": "Judge validation -- full receipt (Workshop items 2 + 3)",
         "inputs": {
             "judge_reports": str(jr),
-            "mike_archive": str(ma),
+            "grader_archive": str(ma),
             "recovery_bundle": str(rc),
         },
         "item2_judge_audit": judge_audit(jr),

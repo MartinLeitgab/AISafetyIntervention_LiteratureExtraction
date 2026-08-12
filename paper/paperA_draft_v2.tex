@@ -16,7 +16,7 @@
 %   Tips"; Nanda/Perez "Tips for Empirical Alignment Research").
 % v2 -> v3 changes are recorded in paper/paperA_v3_RESTRUCTURE.md.
 %
-% Basis: inputs/Gleb_overleaf_paper.txt (Iteration B, frozen 2026-01-26)
+% Basis: the frozen Overleaf source draft (Iteration B, 2026-01-26)
 %        restructured per graph_analysis/phase2_results/paperA_positive_outline_2026-06-26.md
 % Every number carries a source comment: SRC = on-disk receipt in graph_analysis/phase2_results/,
 % and is regression-checked by graph_analysis/experiment_paper_claim_audit.py.
@@ -63,9 +63,8 @@
 Mechanism-Level Extraction from the AI Safety Literature\\
 and the Limits of Graph-Analytic Inference}\vspace{-0.5em}}
 
-% [GAP: author list + affiliations. Contributors: Martin Leitgab, Gleb Maksimov,
-%  Sai (validation), Mike (judge data), Axel (related work), Jeffrey Parks (review).
-%  Confirm order + affiliations before submission. Using authblk:
+% [GAP: author list + affiliations. Settled separately; do not populate here.
+%  Using authblk:
 %    \author[1]{Name}  \affil[1]{Institution, \texttt{email}}]
 \author{Anonymous Submission}
 \date{}
@@ -192,8 +191,8 @@ no ecosystem-level claim ourselves.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Work}
-% [GAP: Axel started this section. The five strands below are the agreed scope and
-%  all citations resolve; a final read-through for flow is the remaining work.]
+% [GAP: Related Work. The five strands below are the agreed scope and all citations
+%  resolve; a final read-through for flow is the remaining work.]
 
 \paragraph{Knowledge graphs from scientific literature.}
 Prior work extracts entities and relations from scientific text, typically
@@ -345,7 +344,7 @@ pool.
 %      the bundle -- see item3_recovery.PROVENANCE_FINDING.
 
 \subsection{Deduplication and Edge Normalisation}
-% Reused near-verbatim from Gleb_overleaf_paper.txt L143-168.
+% Reused near-verbatim from the frozen source draft, Methods.
 
 The raw extraction produced duplicate nodes representing identical concepts with
 different phrasings (``US semiconductor export controls'' and ``AI chip export
@@ -371,7 +370,7 @@ search under-retrieves: re-running the same threshold specification with
 exhaustive search finds 54{,}282 candidate pairs against the 4{,}411 found by the
 deployed configuration, a factor of 12.
 % SRC: experiment_J6_merge_approx_v2_report.json -> variants.V2_T1_T2_T3.phase2_both_pass
-%      = 54282 vs gleb_reference.candidate_pairs = 4411
+%      = 54282 vs the deployed configuration's candidate_pairs = 4411
 Second, 1{,}140 nodes across 448 groups remain exact-name duplicates within their
 category after the merge.
 % SRC: experiment_J6_merge_approx_v2_report.json -> provenance_diagnostic
@@ -380,8 +379,8 @@ shows exactly where that is, and the chain-level results in \cref{sec:claim1,sec
 do not depend on the merge.
 
 \subsection{Structural Diagnostics of the Concatenated Graph}
-% Reused from Gleb_overleaf_paper.txt L172-180, relocated from Results to Methods
-% per paperA_positive_outline Sec.3 ("never in Results").
+% Reused from the frozen source draft, relocated from Results to Methods per the
+% agreed outline ("never in Results").
 
 The concatenated graph is highly fragmented: 15{,}123 disconnected components,
 the largest containing 61 nodes (0.03\%), average degree 2.02, and an average
@@ -540,9 +539,11 @@ code, which under-applied multi-node additions and dropped proposed merges, do
 %      corrects an earlier working assumption that the graders scored the applied
 %      final_graph.
 
-\textbf{[GAP: a human-anchored spot-check. No human adjudicated any judge or
-meta-grader verdict, so the whole validation chain is LLM-internal. Owner: Sai,
-ticket \#150, together with the manual 50-instance error taxonomy.]}
+No human adjudicated any judge or meta-grader verdict, so the validation chain is
+LLM-internal end to end. A human-anchored spot-check and a manual error taxonomy over
+stratified error instances are in progress and are not part of this report.
+% [GAP: the human-anchored spot-check and the manual 50-instance error taxonomy are
+%  tracked separately; fold the numbers in here when they land.]
 
 \paragraph{Two measurement caveats we do not hide.} First, the judge grades
 against a schema expecting rationale fields inline on nodes and edges, whereas
@@ -848,7 +849,8 @@ uninformative on its own: re-running our own threshold specification with
 exhaustive rather than approximate search returns \textbf{54{,}282 candidate
 pairs against 4{,}411}, a factor of 12, and the gap concentrates almost entirely
 in the risk block, precisely where the centrality artefact lives.
-% SRC: experiment_J6_merge_approx_v2_report.json -> variants.V2_T1_T2_T3 vs gleb_reference
+% SRC: experiment_J6_merge_approx_v2_report.json -> variants.V2_T1_T2_T3 vs the
+%      deployed-configuration reference block in the same report
 
 \paragraph{Control.} Report recall of the candidate-generation stage, not only
 the removal rate. Verify recall on the node block that downstream metrics are
@@ -941,7 +943,7 @@ A related trap: deleting race-framed problem-analysis nodes appeared to
 disconnect 51 of the top-100 risks from all interventions. Recomputed on the
 corrected merge, the same deletion isolates \textbf{2 of 100}.
 % SRC: experiment_J6_merge_approx_v2_report.json -> j6_on_V2.isolated_after_race_removal = 2
-%      vs gleb_reference.j6_isolated = 51
+%      vs the deployed-configuration reference value of 51
 
 \paragraph{Control.} Report prevalence on the full population before reporting
 any pattern in a selected head. State the selection rule as part of the result.
@@ -1035,9 +1037,9 @@ corpus, not the field as of publication.
 \paragraph{Single extractor.} All extractions come from one model (\texttt{o3})
 under one prompt. Our validation design does not characterise model-specific
 extraction bias.
-% [GAP: Mike ran an n=20 multi-model consistency check (o3 / GPT-5 / Claude-4).
-%  If those numbers are recoverable, one sentence here materially strengthens this
-%  limitation. Owner: Sai/Mike via ticket #150 recovery bundle.]
+% [GAP: an n=20 multi-model consistency check (o3 / GPT-5 / Claude-4) was run earlier
+%  in the project. If those numbers are recoverable, one sentence here materially
+%  strengthens this limitation. Tracked separately.]
 
 \paragraph{Validation is LLM-based.} An LLM judges faithfulness with
 judge-of-judge calibration; domain experts do not, at any scale. No human
@@ -1093,8 +1095,8 @@ project. We thank EleutherAI for providing and maintaining that platform.
 %
 % COMPUTE ACKNOWLEDGEMENT. Model inference for the extraction and judge runs was paid
 % for with API credits provided by a private acquaintance. Before this paper is
-% submitted, Martin must confirm with them whether they wish to be acknowledged by
-% name, acknowledged anonymously, or not mentioned at all.
+% submitted, the corresponding author must confirm with them whether they wish to be
+% acknowledged by name, acknowledged anonymously, or not mentioned at all.
 %
 % Why this is a gate and not a nicety: the credits may have been granted under terms
 % that did not contemplate being passed to a third party. Naming the donor without
@@ -1134,7 +1136,7 @@ project. We thank EleutherAI for providing and maintaining that platform.
 
 \section{Deduplication Threshold Experiments}
 \label{app:dedup}
-% Reused verbatim from Gleb_overleaf_paper.txt Appendix D.
+% Reused verbatim from the frozen source draft, dedup appendix.
 
 We evaluated four threshold configurations for node deduplication, measuring the
 trade-off between precision (avoiding false merges) and recall (capturing
@@ -1179,7 +1181,7 @@ preceded\_by, related\_to}.
 
 \section{Clustering Methods Comparison}
 \label{app:clustering}
-% Reused verbatim from Gleb_overleaf_paper.txt Appendix F.
+% Reused verbatim from the frozen source draft, clustering appendix.
 
 \begin{table}[h]
 \centering
@@ -1204,9 +1206,9 @@ Calinski-Harabasz (CH) measures separation (higher is better); Davies-Bouldin
 
 \section{Topical Cluster Reference}
 \label{app:clusters}
-% Reused from Gleb_overleaf_paper.txt Appendix E. Reframed as a browsing index.
+% Reused from the frozen source draft, cluster appendix. Reframed as a browsing index.
 % [GAP: also publish cluster_representatives_20.json (20 representative nodes per
-%  cluster) alongside the dataset so reviewers can audit cluster naming. Owner: Gleb.]
+%  cluster) alongside the dataset so reviewers can audit cluster naming.]
 
 The 40 topical clusters from $k$-means on UMAP-reduced embeddings, cluster sizes
 2{,}065--8{,}098 nodes. These are a \emph{browsing index} over the corpus, not a
@@ -1261,7 +1263,7 @@ relationship, and boundaries between adjacent sub-fields overlap.
 
 \section{Similarity Threshold and Hop Sensitivity}
 \label{app:sensitivity}
-% Reused from Gleb_overleaf_paper.txt Appendices G + H, merged.
+% Reused from the frozen source draft, threshold + hop appendices, merged.
 
 \paragraph{Similarity threshold ($\tau$).}
 We tested $\tau \in \{0.80, 0.85, 0.90, 0.95\}$ on within-category node pairs.
@@ -1307,8 +1309,8 @@ parameter and says nothing about the merge artefact documented in
 
 \section{Race-Framing Classifier Validation}
 \label{app:race}
-% Reused from Gleb_overleaf_paper.txt Appendix J, kept because it is a valid
-% classifier validation; prevalence claims moved to the main text.
+% Reused from the frozen source draft, classifier appendix, kept because it is a
+% valid classifier validation; prevalence claims moved to the main text.
 
 We validated keyword-based race-framing classification (keywords: ``competi-'',
 ``race'') on a stratified sample of 52 problem-analysis nodes.
