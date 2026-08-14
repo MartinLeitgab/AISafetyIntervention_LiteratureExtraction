@@ -100,9 +100,7 @@ def main() -> None:
     ax_a.set_xlabel("chain length (nodes)")
     ax_a.set_ylabel("chains")
     ax_a.set_xticks(lengths)
-    ax_a.set_title(
-        "A  Chains are not a filled-in template", loc="left", fontweight="bold"
-    )
+    ax_a.set_title("A  Chain length spans 4 to 16 nodes", loc="left", fontweight="bold")
     ax_a.annotate(
         f"canonical 7-node chain\n{hist[7]:,} chains ({dedup['pct_len_eq7']}%)",
         xy=(7, hist[7]),
@@ -152,7 +150,7 @@ def main() -> None:
     ax_b.set_yticks([])
     ax_b.set_xlabel(f"share of {n_intv:,} extracted interventions (%)")
     ax_b.set_title(
-        "B  Almost nothing proposed is deployed", loc="left", fontweight="bold"
+        "B  LLM-assessed intervention maturity", loc="left", fontweight="bold"
     )
     ax_b.spines["left"].set_visible(False)
 

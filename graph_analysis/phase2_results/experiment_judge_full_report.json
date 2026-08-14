@@ -2,7 +2,7 @@
  "experiment": "Judge validation -- full receipt (Workshop items 2 + 3)",
  "inputs": {
   "judge_reports": "C:\\Users\\malei\\AppData\\Local\\Temp\\claude\\C--Users-malei-0-project-work-eleutherAI-SOAR-step1knowledgegraphcreation-AISafetyIntervention-LiteratureExtraction\\dc24a154-837d-43df-bb05-b5176c9cd079\\scratchpad\\judge\\extraction_validator\\extend_try_1",
-  "mike_archive": "C:\\Users\\malei\\0_project_work\\eleutherAI_SOAR_step1knowledgegraphcreation\\Final-archive-from-Mike",
+  "grader_archive": "C:\\Users\\malei\\0_project_work\\eleutherAI_SOAR_step1knowledgegraphcreation\\Final-archive-from-Mike",
   "recovery_bundle": "C:\\Users\\malei\\0_project_work\\eleutherAI_SOAR_step1knowledgegraphcreation\\Mike2\\judge_recovery_bundle\\data"
  },
  "item2_judge_audit": {
@@ -287,7 +287,10 @@
  },
  "item3_error_taxonomy_auto": {
   "grader": "claude-opus-4-5 structured extraction_assessment fields",
-  "n_papers": 95,
+  "n_papers_profiled": 43,
+  "n_papers_scored_pre_post": 95,
+  "DENOMINATOR_NOTE": "All rates below are over the 43 papers whose grader output carries the structured taxonomy fields, NOT over every paper the grader scored. The remaining papers ran under rubric iterations that do not emit these fields; they are absent from this taxonomy, not error-free.",
+  "BUG_FIX": "Before 2026-08-14 this block divided by the pre/post-paired row count, counting unemitted fields as zeros and roughly halving every reported rate. Fixed by gating on has_taxonomy_fields.",
   "mapping_to_workshop_taxonomy": {
    "missed_concepts": "missing nodes/content",
    "fabricated_content": "hallucinated content",
@@ -301,21 +304,21 @@
   "papers_with_at_least_one": {
    "missed_concepts": {
     "n": 43,
-    "pct": 45.3
+    "pct": 100.0
    },
    "fabricated_content": {
     "n": 7,
-    "pct": 7.4
+    "pct": 16.3
    },
    "category_errors": {
     "n": 14,
-    "pct": 14.7
+    "pct": 32.6
    }
   },
   "per_paper_mean": {
-   "missed_concepts": 2.27,
-   "fabricated_content": 0.21,
-   "category_errors": 0.16
+   "missed_concepts": 5.02,
+   "fabricated_content": 0.47,
+   "category_errors": 0.35
   },
   "by_source_type": {
    "aisafety.info": {
@@ -328,52 +331,81 @@
     "missed_concepts": 90,
     "fabricated_content": 9,
     "category_errors": 5,
-    "n_papers": 21
+    "n_papers": 18
    },
    "arbital": {
     "missed_concepts": 11,
     "fabricated_content": 2,
     "category_errors": 2,
-    "n_papers": 6
+    "n_papers": 3
    },
    "arxiv": {
     "missed_concepts": 40,
     "fabricated_content": 0,
     "category_errors": 3,
-    "n_papers": 11
+    "n_papers": 8
    },
    "blogs": {
     "missed_concepts": 44,
     "fabricated_content": 8,
     "category_errors": 3,
-    "n_papers": 15
+    "n_papers": 8
    },
    "eaforum": {
     "missed_concepts": 25,
     "fabricated_content": 0,
     "category_errors": 2,
-    "n_papers": 11
-   },
-   "lesswrong": {
-    "missed_concepts": 0,
-    "fabricated_content": 0,
-    "category_errors": 0,
-    "n_papers": 24
-   },
-   "special_docs": {
-    "missed_concepts": 0,
-    "fabricated_content": 0,
-    "category_errors": 0,
-    "n_papers": 3
-   },
-   "youtube": {
-    "missed_concepts": 0,
-    "fabricated_content": 0,
-    "category_errors": 0,
-    "n_papers": 2
+    "n_papers": 4
    }
   },
-  "SCOPE_NOTE": "Auto-derived from one meta-grader's structured findings. This is NOT the manual 50-instance error taxonomy specified for Workshop item 3 -- it is un-adjudicated LLM output and no human confirmed any instance."
+  "source_type_coverage": {
+   "aisafety.info": {
+    "profiled": 2,
+    "scored_pre_post": 2,
+    "pct_profiled": 100.0
+   },
+   "alignmentforum": {
+    "profiled": 18,
+    "scored_pre_post": 21,
+    "pct_profiled": 85.7
+   },
+   "arbital": {
+    "profiled": 3,
+    "scored_pre_post": 6,
+    "pct_profiled": 50.0
+   },
+   "arxiv": {
+    "profiled": 8,
+    "scored_pre_post": 11,
+    "pct_profiled": 72.7
+   },
+   "blogs": {
+    "profiled": 8,
+    "scored_pre_post": 15,
+    "pct_profiled": 53.3
+   },
+   "eaforum": {
+    "profiled": 4,
+    "scored_pre_post": 11,
+    "pct_profiled": 36.4
+   },
+   "lesswrong": {
+    "profiled": 0,
+    "scored_pre_post": 24,
+    "pct_profiled": 0.0
+   },
+   "special_docs": {
+    "profiled": 0,
+    "scored_pre_post": 3,
+    "pct_profiled": 0.0
+   },
+   "youtube": {
+    "profiled": 0,
+    "scored_pre_post": 2,
+    "pct_profiled": 0.0
+   }
+  },
+  "SCOPE_NOTE": "Auto-derived from one meta-grader's structured findings. This is NOT the manual 50-instance error taxonomy specified for Workshop item 3 -- it is un-adjudicated LLM output and no human confirmed any instance. The profiled subset is determined by rubric iteration, not by sampling, so it is not a stratified sample of the corpus: see source_type_coverage."
  },
  "item3_recovery": {
   "PROVENANCE_FINDING": "The two output directories are DISJOINT: |recovered_errors_graph n recovered_errors| = 0 of 65. recovered_errors_graph also contains source types absent (agisf) or near-absent (arxiv: 14 files vs 2 candidates) from the candidate set, so it is NOT the success subset of these attempts -- it comes from a different failure population, most likely the graph_error set (91 dirs) the bundle README says it excluded. THEREFORE the widely-quoted '~60 recovered / ~400 processable ~= 15%' figure divides two different populations and is NOT supported by this bundle.",

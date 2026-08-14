@@ -259,6 +259,37 @@ def _count_list_anywhere(obj, key: str) -> int:
     return total
 
 
+def _has_key_anywhere(obj, keys) -> bool:
+    """True if any of `keys` appears as a dict key anywhere in `obj`.
+
+    Distinguishes "the grader scored this paper and found nothing" from "this
+    grader output used a rubric iteration that does not emit these fields at
+    all". _count_list_anywhere returns 0 for both, which silently inflates the
+    denominator of the error taxonomy.
+    """
+    hit = False
+
+    def walk(o):
+        nonlocal hit
+        if hit:
+            return
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if str(k).lower() in keys:
+                    hit = True
+                    return
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+
+    walk(obj)
+    return hit
+
+
+TAXONOMY_KEYS = ("missed_concepts", "fabricated_content", "category_errors")
+
+
 def load_grader(d: Path, pattern: str):
     """Return (rows, diagnostics). Never silently drops a file -- misses are counted."""
     rows, no_pair, unparsed = {}, [], 0
@@ -285,6 +316,7 @@ def load_grader(d: Path, pattern: str):
             "missed_concepts": _count_list_anywhere(x, "missed_concepts"),
             "fabricated_content": _count_list_anywhere(x, "fabricated_content"),
             "category_errors": _count_list_anywhere(x, "category_errors"),
+            "has_taxonomy_fields": _has_key_anywhere(x, set(TAXONOMY_KEYS)),
         }
     diag = {
         "files_seen": len(list(d.glob(pattern))),
@@ -442,22 +474,44 @@ def grader_agreement(graders):
 
 
 def opus_error_taxonomy(opus_rows):
-    n = len(opus_rows)
+    # DENOMINATOR: only papers whose grader output actually carries the structured
+    # taxonomy fields. Papers scored under a different rubric iteration do not emit
+    # them; counting those as zeros understates every rate (see BUG_FIX note below).
+    profiled = {p: r for p, r in opus_rows.items() if r.get("has_taxonomy_fields")}
+    n = len(profiled)
+    if n == 0:
+        die("no grader outputs carry the structured error-taxonomy fields")
     tot = Counter()
     papers_with = Counter()
     by_src = defaultdict(Counter)
     by_src_n = Counter()
+    coverage = defaultdict(lambda: {"profiled": 0, "scored_pre_post": 0})
     for paper, r in opus_rows.items():
+        coverage[r["source_type"]]["scored_pre_post"] += 1
+    for paper, r in profiled.items():
         stype = r["source_type"]
         by_src_n[stype] += 1
-        for k in ("missed_concepts", "fabricated_content", "category_errors"):
+        coverage[stype]["profiled"] += 1
+        for k in TAXONOMY_KEYS:
             tot[k] += r[k]
             by_src[stype][k] += r[k]
             if r[k] > 0:
                 papers_with[k] += 1
     return {
         "grader": "claude-opus-4-5 structured extraction_assessment fields",
-        "n_papers": n,
+        "n_papers_profiled": n,
+        "n_papers_scored_pre_post": len(opus_rows),
+        "DENOMINATOR_NOTE": (
+            f"All rates below are over the {n} papers whose grader output carries the "
+            "structured taxonomy fields, NOT over every paper the grader scored. The "
+            "remaining papers ran under rubric iterations that do not emit these "
+            "fields; they are absent from this taxonomy, not error-free."
+        ),
+        "BUG_FIX": (
+            "Before 2026-08-14 this block divided by the pre/post-paired row count, "
+            "counting unemitted fields as zeros and roughly halving every reported "
+            "rate. Fixed by gating on has_taxonomy_fields."
+        ),
         "mapping_to_workshop_taxonomy": {
             "missed_concepts": "missing nodes/content",
             "fabricated_content": "hallucinated content",
@@ -471,10 +525,23 @@ def opus_error_taxonomy(opus_rows):
         "by_source_type": {
             s: {**dict(by_src[s]), "n_papers": by_src_n[s]} for s in sorted(by_src_n)
         },
+        "source_type_coverage": {
+            s: {
+                **coverage[s],
+                "pct_profiled": round(
+                    100 * coverage[s]["profiled"] / coverage[s]["scored_pre_post"], 1
+                )
+                if coverage[s]["scored_pre_post"]
+                else 0.0,
+            }
+            for s in sorted(coverage)
+        },
         "SCOPE_NOTE": (
             "Auto-derived from one meta-grader's structured findings. This is NOT the "
             "manual 50-instance error taxonomy specified for Workshop item 3 -- it is "
-            "un-adjudicated LLM output and no human confirmed any instance."
+            "un-adjudicated LLM output and no human confirmed any instance. The "
+            "profiled subset is determined by rubric iteration, not by sampling, so it "
+            "is not a stratified sample of the corpus: see source_type_coverage."
         ),
     }
 
