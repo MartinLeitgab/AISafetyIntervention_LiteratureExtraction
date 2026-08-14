@@ -674,6 +674,38 @@ This is an open space for analyzing and researching the built knowledge graph. R
 - Identify isolated idea clusters
 - Analyze distribution of relationship types (edges)
 
+#### Loading the full ARD dump.rdb
+
+To load the full ARD wide-embeddings dump (per issue
+[#132](https://github.com/MartinLeitgab/AISafetyIntervention_LiteratureExtraction/issues/132))
+for graph analysis (`graph_analysis/` scripts), use the `:edge` image and mount
+the dump directory at `/var/lib/falkordb/data`:
+
+```bash
+# Foreground (-it) — required. ~15 min for indices to build before DB is ready.
+docker run -p 6379:6379 -p 3000:3000 -it --rm \
+  --volume ./data:/var/lib/falkordb/data \
+  falkordb/falkordb falkordb:edge
+```
+
+Notes:
+- **Use `-it` (foreground TTY), not `-d` (detached).** Detached mode silently
+  exits with code 255 during index construction with no logs — the container's
+  child processes die silently when there's no TTY. Run in a dedicated terminal
+  and leave open.
+- Mount target MUST be `/var/lib/falkordb/data` (the `:edge` image's data
+  directory). The earlier `:latest` command in this section is for an empty
+  in-container graph and does not work for loading external dumps.
+- The dump file must be named `dump.rdb` and placed in the mounted directory.
+- On Windows, run the command inside a WSL shell directly (Docker is typically
+  only available inside WSL on Windows).
+- The container will print
+  `<module> Graph 'AISafetyIntervention' processing virtual key: N/23` lines
+  for each of 23 virtual keys, then `Constructing indexes.` After ~15 min
+  indices finish and the DB is ready to accept queries on port 6379.
+
+and you can see the result at <http://localhost:3000/graph>
+
 **Semantic Analysis:**
 - Search for similar concepts via vector embeddings
 - Cluster concepts by semantic similarity
