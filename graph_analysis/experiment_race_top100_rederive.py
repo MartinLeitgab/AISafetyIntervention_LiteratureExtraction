@@ -100,7 +100,7 @@ def measure(label, na, ed, risk_map, exclude_risk_sim):
             "pct_single_path": round(100 * len(single) / len(subset), 1)
             if subset
             else None,
-            "n_race_framed_gleb_keywords": race_g,
+            "n_race_framed_frozen_keywords": race_g,
             "pct_of_single_path_race_framed": round(100 * race_g / len(single), 1)
             if single
             else None,

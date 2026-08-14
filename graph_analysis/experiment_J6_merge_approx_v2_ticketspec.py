@@ -183,8 +183,8 @@ def provenance_diagnostic(na):
         "n_with_embedding_umap_150d": n_umap,
         "n_exact_name_dup_groups_within_category": n_exact_dup_groups,
         "n_exact_name_dup_nodes_within_category": n_exact_dup_nodes,
-        "gleb_raw_nodes": 202446,
-        "gleb_merged_nodes": 200061,
+        "frozen_raw_nodes": 202446,
+        "frozen_merged_nodes": 200061,
     }
     for k, v in diag.items():
         print(f"  {k}: {v}", flush=True)
@@ -598,7 +598,7 @@ def main():
 
     out = {
         "experiment": "J.6 merge-approx v2 — ticket-spec (alias Phase0 + name+alias Jaccard + 50-NN cap)",
-        "gleb_reference": {
+        "frozen_reference": {
             "candidate_pairs": 4411,
             "nodes_removed": 2385,
             "canonical_nodes": 200061,
