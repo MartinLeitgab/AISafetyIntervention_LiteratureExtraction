@@ -3,7 +3,7 @@
 
 Both simulated reviews name this as the single highest-value addition to the paper: four
 differently-named reduction operations are described only in prose -- quality cuts,
-containment de-duplication of paths, the node merge (measured but NOT applied to this
+sub-path collapse, the node merge (measured but NOT applied to this
 substrate), and similarity thresholding -- and readers conflate them.
 
 The figure draws two lanes, documents and chains, with every arrow labelled by its
@@ -139,7 +139,6 @@ def main() -> None:
     n_nodes = 200525
     n_raw = raw["n_paths"]
     n_ded = ded["n_paths"]
-    merge_removed = 2385
     cont_lost_pct = gates["containment_losslessness"]["pct_of_raw_chain_set_nodes_lost"]
 
     plt.rcParams.update(
@@ -150,9 +149,9 @@ def main() -> None:
             "savefig.facecolor": "white",
         }
     )
-    fig, ax = plt.subplots(figsize=(13.0, 5.0))
+    fig, ax = plt.subplots(figsize=(13.0, 4.15))
     ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+    ax.set_ylim(0.20, 1)
     ax.axis("off")
 
     w, h = 0.135, 0.155
@@ -285,7 +284,7 @@ def main() -> None:
     ax.text(
         x_mid,
         y_chain - 0.02,
-        f"containment de-duplication (70%):\nwithin-paper sub-paths dropped,\n{cont_lost_pct}% of chain-set nodes lost",
+        f"sub-path collapse (70% containment):\nwithin-paper sub-paths dropped,\n{cont_lost_pct}% of chain-set nodes lost",
         ha="center",
         va="top",
         fontsize=7.8,
@@ -308,7 +307,7 @@ def main() -> None:
     ax.text(
         0.472,
         (y_doc + y_chain + h) / 2 + 0.012,
-        "quality cuts: edge confidence >= 3, intervention\nmaturity >= 3, exactly one risk node, at the root",
+        "gates: edge confidence >= 3, intervention\nmaturity >= 3, exactly one risk node, at the root",
         ha="left",
         va="center",
         fontsize=7.8,
@@ -349,44 +348,12 @@ def main() -> None:
         linespacing=1.25,
     )
 
-    # ---- measured-only operations ------------------------------------------------
-    ax.add_patch(
-        FancyBboxPatch(
-            (0.015, 0.015),
-            0.72,
-            0.175,
-            boxstyle="round,pad=0.012,rounding_size=0.02",
-            linewidth=1.3,
-            edgecolor=VERM,
-            facecolor="white",
-            linestyle=(0, (4, 2)),
-            zorder=3,
-        )
-    )
-    ax.text(
-        0.375,
-        0.152,
-        "MEASURED, NOT APPLIED TO THE RELEASED SUBSTRATE",
-        ha="center",
-        va="center",
-        fontsize=7.8,
-        fontweight="bold",
-        color=VERM,
-        zorder=4,
-    )
-    ax.text(
-        0.375,
-        0.077,
-        f"node merge (cosine >= 0.88 and Jaccard >= 0.05) would remove {merge_removed:,} nodes and manufacture a centrality super-hub;\n"
-        "similarity edges (cosine >= 0.80) join documents but enter no chain reported here.\n"
-        "Both are costed in the use-case section. The node inventory above is the un-merged count.",
-        ha="center",
-        va="center",
-        fontsize=7.2,
-        color=INK,
-        linespacing=1.4,
-        zorder=4,
-    )
+    # REMOVED 2026-08-15: a dashed "MEASURED, NOT APPLIED TO THE RELEASED SUBSTRATE"
+    # box carrying the node merge and the similarity layer. It occupied the bottom
+    # fifth of the figure to say that two operations did NOT happen -- a failure path
+    # that costs graphic space to convey nothing the reader must trace. The point is
+    # made in one sentence in the caption and at length in the use-case section, which
+    # is where a reader who applies either operation is looking.
 
     fig.tight_layout(pad=0.4)
     OUT_PNG.parent.mkdir(parents=True, exist_ok=True)
