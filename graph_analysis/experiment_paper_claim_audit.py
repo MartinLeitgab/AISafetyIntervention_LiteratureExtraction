@@ -363,6 +363,25 @@ def main():
         ga["post_repair"]["krippendorff_alpha_interval"],
     )
 
+    om = receipt("experiment_review_omission_relative_report.json")
+    j = om["judge_proposed_additions_over_the_100_audited"]
+    g = om["grader_missed_concepts_over_the_43_profiled"]
+    check("judged papers: extracted nodes", 1617, j["extracted_nodes_total"])
+    check(
+        "judge additions as pct of extracted nodes",
+        0.6,
+        j["omissions_as_pct_of_extracted_nodes"],
+    )
+    check("judge implied coverage pct", 99.4, j["implied_coverage_pct"])
+    check("profiled papers: extracted nodes", 751, g["extracted_nodes_total"])
+    check(
+        "missed concepts as pct of extracted nodes",
+        28.8,
+        g["omissions_as_pct_of_extracted_nodes"],
+    )
+    check("grader implied coverage pct", 77.7, g["implied_coverage_pct"])
+    check("missed concepts total", 216, g["omissions_total"])
+
     sil = receipt("experiment_review_silhouette_report.json")["headline"]
     check(
         "UMAP k=40 silhouette in its own space",
