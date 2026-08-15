@@ -605,6 +605,72 @@ def main():
         got = next(c for c in ec["conditions"] if c["label"] == label)["xrisk_in_top10"]
         check(f"xrisk in EC top-10, {label}", expected, got)
 
+    # ---- extraction cost (sec:m-repro, Compute) -------------------------------------
+    cost = receipt("experiment_review_extraction_cost_report.json")
+    check("cost: prompt tokens per call", 3706, cost["prompt"]["tokens"])
+    check(
+        "cost: documents matched to an ARD record",
+        11779,
+        cost["coverage"]["matched_to_an_ARD_record_by_url"],
+    )
+    check("cost: match rate pct", 100.0, cost["coverage"]["match_rate_pct"])
+    ci = cost["input_tokens_per_document_EXACT"]
+    check("cost: mean input tokens per document", 10389, round(ci["mean"]))
+    check("cost: median input tokens per document", 6952, round(ci["median"]))
+    check("cost: p90 input tokens per document", 18757, round(ci["p90"]))
+    check("cost: total input tokens (millions)", 122.4, round(ci["total"] / 1e6, 1))
+    cal = cost["output_calibration"]
+    check("cost: calibration response tokens", 8155, cal["visible_output_tokens"])
+    check(
+        "cost: calibration emitted elements",
+        52,
+        cal["emitted_elements_nodes_plus_edges"],
+    )
+    check("cost: tokens per emitted element", 157, round(cal["tokens_per_element"]))
+    co = cost["visible_output_tokens_per_document_CALIBRATED"]
+    check("cost: mean visible output per document", 5361, round(co["mean"]))
+    check("cost: total visible output (millions)", 63.2, round(co["total"] / 1e6, 1))
+    bill = cost["pricing_ASSUMED_not_measured"]["bill"]
+    lo = bill["reasoning_x0_visible_output"]
+    hi = bill["reasoning_x4_visible_output"]
+    check(
+        "cost: low end of the assumed band, USD",
+        375,
+        round(lo["usd_over_matched_documents"]),
+    )
+    check(
+        "cost: high end of the assumed band, USD",
+        1385,
+        round(hi["usd_over_matched_documents"]),
+    )
+    check("cost: USD per 1,000 documents, low", 32, round(lo["usd_per_1000_documents"]))
+    check(
+        "cost: USD per 1,000 documents, high", 118, round(hi["usd_per_1000_documents"])
+    )
+    check(
+        "cost: mean document text tokens (prompt subtracted)",
+        6683,
+        round(ci["mean"] - cost["prompt"]["tokens"]),
+    )
+
+    # ---- gate corner, figure 1 panel B ----------------------------------------------
+    gc = receipt("experiment_review_gate_corner_report.json")
+    check(
+        "gate corner: interventions",
+        4228,
+        gc["gate_corner_maturity_ge3_and_best_conf_ge3"]["n"],
+    )
+    check(
+        "gate corner: pct of extracted interventions",
+        11.4,
+        round(gc["gate_corner_maturity_ge3_and_best_conf_ge3"]["pct_of_placed"], 1),
+    )
+    check(
+        "gate corner: interventions placed",
+        36959,
+        gc["n_with_at_least_one_structural_edge"],
+    )
+
     # ---- stage separability probe (sec:r-stages, app:stages) ------------------------
     sep = receipt("experiment_review_stage_separability_report.json")
     five, seven = sep["five_intermediate_stages"], sep["all_seven_stages"]
