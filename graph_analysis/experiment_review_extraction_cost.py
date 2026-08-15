@@ -72,14 +72,32 @@ OUT = ROOT / "phase2_results/experiment_review_extraction_cost_report.json"
 
 ENCODING = "o200k_base"
 
-# Rates are ASSUMPTIONS, printed with the result. o3 via the OpenAI batch API, which
-# bills at half the synchronous rate. Reasoning tokens bill as output tokens.
-USD_PER_M_INPUT = 1.00
-USD_PER_M_OUTPUT = 4.00
+# Rates are ASSUMPTIONS, printed with the result. Every figure below is at the BATCH
+# rate, which is half the synchronous rate on both providers; the extraction ran through
+# a batch API, so batch is the correct basis and no further discount applies. Reasoning
+# tokens bill as output tokens on both providers.
+#
+# NAME: (synchronous input, synchronous output) USD per million tokens.
+SYNC_RATES = {
+    "o3 (as run)": (2.00, 8.00),
+    "Claude Opus 5": (5.00, 25.00),
+    "Claude Sonnet 5": (3.00, 15.00),
+    "Claude Haiku 4.5": (1.00, 5.00),
+}
+BATCH_DISCOUNT = 0.5
 RATE_NOTE = (
-    "o3 batch API, assumed USD 1.00/M input and USD 4.00/M output (half the synchronous "
-    "USD 2/M and USD 8/M). Reasoning tokens bill as output. Verify against current "
-    "pricing before quoting a dollar figure."
+    "Every figure is at BATCH rates, half the synchronous rate, because the run used a "
+    "batch API; no further discount applies. o3 assumed at USD 2/8 per M synchronous. "
+    "Anthropic rates from the model catalog cached 2026-06-24: Opus 5 USD 5/25, Sonnet 5 "
+    "USD 3/15 (introductory USD 2/10 through 2026-08-31, not used here), Haiku 4.5 "
+    "USD 1/5. Verify against current pricing before quoting a dollar figure."
+)
+TOKENIZER_CAVEAT = (
+    "Token counts are measured with o200k_base, the tokenizer the run billed against. "
+    "Anthropic models tokenize differently, so the non-o3 rows reprice THIS token volume "
+    "at another vendor's rates rather than predicting that vendor's own token count. "
+    "Read them as the order of the cost, not as a quote; a count_tokens call on a sample "
+    "would pin the difference."
 )
 # Reasoning-token multipliers on visible output, reported as a band, never as one number.
 REASONING_RATIOS = [0.0, 1.0, 2.0, 4.0]
@@ -192,16 +210,24 @@ def main():
     scale = len(corpus_urls) / len(matched)  # extrapolate to the unmatched tail
 
     bill = {}
-    for r in REASONING_RATIOS:
-        billed_out = out_s["total"] * (1 + r)
-        usd = (
-            in_s["total"] / 1e6 * USD_PER_M_INPUT + billed_out / 1e6 * USD_PER_M_OUTPUT
-        )
-        bill[f"reasoning_x{r:g}_visible_output"] = {
-            "billed_output_tokens": round(billed_out),
-            "usd_over_matched_documents": round(usd, 2),
-            "usd_per_1000_documents": round(usd / len(matched) * 1000, 2),
-            "ASSUMPTION": "reasoning tokens are not recoverable; this row assumes a ratio",
+    for name, (sync_in, sync_out) in SYNC_RATES.items():
+        rate_in = sync_in * BATCH_DISCOUNT
+        rate_out = sync_out * BATCH_DISCOUNT
+        rows = {}
+        for r in REASONING_RATIOS:
+            billed_out = out_s["total"] * (1 + r)
+            usd = in_s["total"] / 1e6 * rate_in + billed_out / 1e6 * rate_out
+            rows[f"reasoning_x{r:g}_visible_output"] = {
+                "billed_output_tokens": round(billed_out),
+                "usd_over_matched_documents": round(usd, 2),
+                "usd_per_1000_documents": round(usd / len(matched) * 1000, 2),
+            }
+        bill[name] = {
+            "batch_rate_usd_per_M_input": rate_in,
+            "batch_rate_usd_per_M_output": rate_out,
+            "synchronous_rate_usd_per_M": [sync_in, sync_out],
+            "by_reasoning_ratio": rows,
+            "ASSUMPTION": "reasoning tokens are not recoverable; each row assumes a ratio",
         }
 
     report = {
@@ -250,7 +276,12 @@ def main():
             "visible_output_tokens": round(out_s["total"] * scale),
             "scale_factor": round(scale, 4),
         },
-        "pricing_ASSUMED_not_measured": {"rate_note": RATE_NOTE, "bill": bill},
+        "pricing_ASSUMED_not_measured": {
+            "rate_note": RATE_NOTE,
+            "tokenizer_caveat": TOKENIZER_CAVEAT,
+            "batch_discount_applied": BATCH_DISCOUNT,
+            "bill_by_model": bill,
+        },
         "linearity": (
             "One call per document with no tool use, no retrieval loop and no multi-turn "
             "control flow, so call count is exactly the document count and the input bill "
@@ -274,11 +305,16 @@ def main():
     )
     print(f"input total  : {in_s['total'] / 1e6:.2f}M tokens")
     print(f"output total : {out_s['total'] / 1e6:.2f}M tokens (visible only)")
-    for k, v in bill.items():
-        print(
-            f"  {k:<34} USD {v['usd_over_matched_documents']:>8.2f}   "
-            f"({v['usd_per_1000_documents']:.2f} / 1k docs)"
+    print("\nUSD per 1,000 documents at BATCH rates, by reasoning ratio:")
+    print(
+        f"  {'model':<18}" + "".join(f"{'x' + f'{r:g}':>10}" for r in REASONING_RATIOS)
+    )
+    for name, v in bill.items():
+        cells = "".join(
+            f"{v['by_reasoning_ratio'][f'reasoning_x{r:g}_visible_output']['usd_per_1000_documents']:>10.2f}"
+            for r in REASONING_RATIOS
         )
+        print(f"  {name:<18}" + cells)
     print(f"\nwrote {OUT}")
 
 

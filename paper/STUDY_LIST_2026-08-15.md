@@ -158,6 +158,34 @@ proxy that a reviewer will discount.
 
 ---
 
+---
+
+## Not a study, but still owed: the body must reach 10 pages
+
+**This is a hard requirement regardless of venue, and it is not yet met.** Ten pages
+excluding references is the ceiling at conferences as well as workshops, so there is no
+target under which the current draft fits.
+
+Estimated body after the 2026-08-15 pass: **~12.5–13 pages**, down from ~15–16. That
+estimate is a character-count heuristic, not a build — **compile on Overleaf and read the
+real number before deciding what else to cut.**
+
+Where the remaining ~3 pages would have to come from, in the order I would take them:
+
+1. **The three artifact use cases** (clustering, centrality, co-occurrence) — roughly 110
+   source lines. Keeping each finding plus its control inline and moving the derivations to
+   an appendix recovers most of it. Both reviews call this material the paper's strongest
+   evidence, so this is an author call, not an editorial one.
+2. **Methods §From path enumeration to the reporting unit** — the containment sweep and its
+   loss measurement can sit in the appendix behind one sentence.
+3. **Figure 2 (the funnel)** — a full-width figure whose job is disambiguating four
+   operations that now have four distinct names. Cutting it recovers about half a page.
+4. **The judge subsection** — the structural-findings detail can follow the grader mechanics
+   into Appendix I.
+
+Items 2–4 are mechanical and cost little. Item 1 costs prominence, which is why it is
+listed first by yield and last by preference.
+
 ## What is deliberately not on this list
 
 - **Extending the corpus past 2023.** Both reviews note ARD stops at 2023. Running the

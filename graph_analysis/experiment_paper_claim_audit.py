@@ -630,9 +630,11 @@ def main():
     co = cost["visible_output_tokens_per_document_CALIBRATED"]
     check("cost: mean visible output per document", 5361, round(co["mean"]))
     check("cost: total visible output (millions)", 63.2, round(co["total"] / 1e6, 1))
-    bill = cost["pricing_ASSUMED_not_measured"]["bill"]
-    lo = bill["reasoning_x0_visible_output"]
-    hi = bill["reasoning_x4_visible_output"]
+    pricing = cost["pricing_ASSUMED_not_measured"]
+    check("cost: batch discount applied", 0.5, pricing["batch_discount_applied"])
+    o3 = pricing["bill_by_model"]["o3 (as run)"]["by_reasoning_ratio"]
+    lo = o3["reasoning_x0_visible_output"]
+    hi = o3["reasoning_x4_visible_output"]
     check(
         "cost: low end of the assumed band, USD",
         375,
@@ -652,6 +654,21 @@ def main():
         6683,
         round(ci["mean"] - cost["prompt"]["tokens"]),
     )
+    # The same token volume repriced on current models at batch rates, no reasoning
+    # premium. Cross-vendor rows reprice o200k_base counts; see the receipt's caveat.
+    for model, per_k in [
+        ("Claude Opus 5", 93),
+        ("Claude Sonnet 5", 56),
+        ("Claude Haiku 4.5", 19),
+    ]:
+        row = pricing["bill_by_model"][model]["by_reasoning_ratio"][
+            "reasoning_x0_visible_output"
+        ]
+        check(
+            f"cost: USD per 1,000 documents on {model}, no reasoning premium",
+            per_k,
+            round(row["usd_per_1000_documents"]),
+        )
 
     # ---- gate corner, figure 1 panel B ----------------------------------------------
     gc = receipt("experiment_review_gate_corner_report.json")
