@@ -605,6 +605,50 @@ def main():
         got = next(c for c in ec["conditions"] if c["label"] == label)["xrisk_in_top10"]
         check(f"xrisk in EC top-10, {label}", expected, got)
 
+    # ---- stage separability probe (sec:r-stages, app:stages) ------------------------
+    sep = receipt("experiment_review_stage_separability_report.json")
+    five, seven = sep["five_intermediate_stages"], sep["all_seven_stages"]
+    check("stage probe: five-stage accuracy", 0.9876, five["accuracy"])
+    check("stage probe: five-stage macro-F1", 0.9876, five["macro_f1"])
+    check(
+        "stage probe: five-stage chance", 0.2, five["baseline_uniform_chance_accuracy"]
+    )
+    check("stage probe: held-out nodes", 9115, five["n_test_nodes"])
+    check(
+        "stage probe: documents in the five-stage task",
+        10446,
+        five["n_train_documents"] + five["n_test_documents"],
+    )
+    cm = five["confusion_matrix_rows_true_cols_pred"]
+    check(
+        "stage probe: total held-out errors",
+        113,
+        sum(sum(r) - r[i] for i, r in enumerate(cm)),
+    )
+    check("stage probe: pa vs ti errors", 37, cm[0][1] + cm[1][0])
+    check("stage probe: dr vs im errors", 17, cm[2][3] + cm[3][2])
+    check(
+        "stage probe: validation evidence F1",
+        0.994,
+        round(five["per_class_f1"]["validation evidence"], 3),
+    )
+    margins = [v["margin"] for v in five["centroid_separation"].values()]
+    check("stage probe: smallest centroid margin", 0.0541, min(margins))
+    check("stage probe: largest centroid margin", 0.0847, max(margins))
+    lex = five["lexical_ablation"]
+    check("stage probe: TF-IDF on the name alone", 0.6943, lex["name_only"]["accuracy"])
+    check(
+        "stage probe: TF-IDF on name and description",
+        0.7864,
+        lex["name_and_description"]["accuracy"],
+    )
+    check("stage probe: seven-stage accuracy", 0.9856, seven["accuracy"])
+    check(
+        "stage probe: seven-stage chance",
+        0.1429,
+        seven["baseline_uniform_chance_accuracy"],
+    )
+
     # ---- race framing across centrality tiers (app:race) ----------------------------
     rr = json.loads(
         (ROOT / "phase2_results/experiment_race_top100_rederive_report.json").read_text(
