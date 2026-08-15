@@ -363,6 +363,24 @@ def main():
         ga["post_repair"]["krippendorff_alpha_interval"],
     )
 
+    # ---- grader session diagnostics (tab:graders caption, sec:m-repro) --------------
+    mg = receipt("experiment_judge_full_report.json")["item2_meta_graders"]
+    for key, n, files, shapes in [
+        ("claude-opus-4-5", 95, 101, 13),
+        ("gemini-3-pro", 13, 100, 12),
+        ("third_grader_gpt-5.1", 95, 95, 1),
+    ]:
+        cd = mg[key]["coverage_diagnostics"]
+        check(f"grader {key}: paired pre/post rows", n, mg[key]["n"])
+        check(f"grader {key}: files seen", files, cd["files_seen"])
+        check(
+            f"grader {key}: distinct JSON shapes",
+            shapes,
+            cd["n_distinct_json_shapes"],
+            note="the agent-session design of app:judgeprompt is why the shape drifts "
+            "within one grader's output; 1 shape -> a paired score on every file",
+        )
+
     om = receipt("experiment_review_omission_relative_report.json")
     j = om["judge_proposed_additions_over_the_100_audited"]
     g = om["grader_missed_concepts_over_the_43_profiled"]
