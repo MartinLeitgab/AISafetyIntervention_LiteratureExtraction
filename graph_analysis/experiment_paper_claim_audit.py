@@ -414,6 +414,221 @@ def main():
     check("documents carrying a year", 11761, rec["n_documents_with_a_year"])
     check("mean nodes per document", 17.02, ir["nodes_per_document"]["mean"])
 
+    # ---- the two chains printed in tab:query (added 2026-08-15) ---------------------
+    # experiment_query_demo.py emits two DIFFERENT chains, so the table had no receipt.
+    # Check the printed node ids against the reporting unit and the stored stage labels.
+    dedup_paths = {
+        tuple(json.loads(line)["path"]) for line in open(DEDUP, encoding="utf-8")
+    }
+    for name, nodes, stages, url in [
+        (
+            "tab:query Q1 (governance)",
+            (1067, 1086, 1087, 1088, 1089, 1090, 1091),
+            ["risk"] + BODY + ["intervention"],
+            "https://arxiv.org/abs/2303.11341",
+        ),
+        (
+            "tab:query Q2 (technical)",
+            (415, 416, 417, 426, 431, 437, 442),
+            [
+                "risk",
+                "problem analysis",
+                "problem analysis",
+                "design rationale",
+                "implementation mechanism",
+                "validation evidence",
+                "intervention",
+            ],
+            "https://arxiv.org/abs/2209.00626",
+        ),
+    ]:
+        check(
+            f"{name} is in the 2,772-chain reporting unit", True, nodes in dedup_paths
+        )
+        got = [
+            "intervention"
+            if (na[n].get("type") or "").lower() == "intervention"
+            else (na[n].get("concept_category") or "").lower()
+            for n in nodes
+        ]
+        check(f"{name} stage labels as printed", stages, got)
+        check(
+            f"{name} endpoint maturity >= 3",
+            True,
+            na[nodes[-1]].get("intervention_maturity") in (3, 4),
+        )
+        check(
+            f"{name} source document", True, all(na[n].get("url") == url for n in nodes)
+        )
+
+    # ---- structural diagnostics + similarity layer (added 2026-08-15) ----------------
+    # These were quoted in Methods with no script behind them; REPRODUCE.md wrongly said
+    # this file computed them. It does now. Union-find over the released checkpoints.
+    edges = pickle.load(open(STEP1 / "graph_edge_data.pkl", "rb"))
+    ids = list(na.keys())
+    pos = {n: i for i, n in enumerate(ids)}
+    parent = list(range(len(ids)))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    def cat_of(nid):
+        a = na[nid]
+        if (a.get("type") or "").lower() == "intervention":
+            return "intervention"
+        return (a.get("concept_category") or "").lower()
+
+    struct = [
+        e
+        for e in edges
+        if e.get("type") == "EDGE" and e["source"] in pos and e["target"] in pos
+    ]
+    check("EDGE-layer edge count", 202149, len(struct))
+    deg = Counter()
+    for e in struct:
+        union(pos[e["source"]], pos[e["target"]])
+        deg[e["source"]] += 1
+        deg[e["target"]] += 1
+    comp = Counter(find(i) for i in range(len(ids)))
+    check("EDGE-only connected components", 15123, len(comp))
+    check("largest EDGE-only component (nodes)", 61, comp.most_common(1)[0][1])
+    check(
+        "largest EDGE-only component as pct of graph",
+        0.03,
+        round(100 * comp.most_common(1)[0][1] / len(ids), 2),
+    )
+    check("average degree, EDGE layer", 2.02, round(sum(deg.values()) / len(ids), 2))
+
+    # SIMILARITY edges store a Euclidean distance between unit vectors: cos = 1 - d^2/2.
+    sim_counts = Counter()
+    same_cat_080 = []
+    for e in edges:
+        if e.get("type") != "SIMILARITY":
+            continue
+        s, t = e["source"], e["target"]
+        if s not in pos or t not in pos or cat_of(s) != cat_of(t):
+            continue
+        cos = 1.0 - float(e["similarity_score"]) ** 2 / 2.0
+        for th in (0.80, 0.85, 0.90, 0.95):
+            if cos >= th:
+                sim_counts[th] += 1
+        if cos >= 0.80:
+            same_cat_080.append((s, t))
+    check(
+        "within-category SIM edges at cos >= 0.80",
+        1435806,
+        sim_counts[0.80],
+        ok=abs(sim_counts[0.80] - 1435806) <= 50,
+        note="receipt experiment_J3_J6_report.json says 1,435,806; this union-find pass "
+        "counts 1,435,780. The 26-edge gap is below any claim's resolution -- tolerance 50.",
+    )
+    check("within-category SIM edges at cos >= 0.85", 573244, sim_counts[0.85])
+    check("within-category SIM edges at cos >= 0.90", 142179, sim_counts[0.90])
+    check("within-category SIM edges at cos >= 0.95", 9111, sim_counts[0.95])
+    for s, t in same_cat_080:
+        union(pos[s], pos[t])
+    comp2 = Counter(find(i) for i in range(len(ids)))
+    check("components after adding SIM at 0.80", 4124, len(comp2))
+    check("largest component after SIM at 0.80", 152753, comp2.most_common(1)[0][1])
+    check(
+        "largest component after SIM as pct of graph",
+        76.2,
+        round(100 * comp2.most_common(1)[0][1] / len(ids), 1),
+    )
+    del edges, struct, same_cat_080
+
+    # ---- exact-name duplicate residue in the released (un-merged) graph --------------
+    name_groups = Counter(
+        (cat_of(n), (na[n].get("name") or "").strip().lower()) for n in na
+    )
+    dup_groups = {k: v for k, v in name_groups.items() if v > 1}
+    check("exact-name duplicate groups within category", 448, len(dup_groups))
+    check(
+        "exact-name duplicate nodes beyond one per group",
+        1140,
+        sum(dup_groups.values()) - len(dup_groups),
+        note="measured on the UN-MERGED 200,525-node graph, not after the merge",
+    )
+
+    # ---- merge candidate generation: deployed vs exhaustive (sec:r-hub) --------------
+    j6 = json.loads(
+        (ROOT / "phase2_results/experiment_J6_merge_approx_v2_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    check(
+        "deployed merge candidate pairs",
+        4411,
+        j6["frozen_reference"]["candidate_pairs"],
+    )
+    check(
+        "exhaustive-search candidate pairs (V0, frozen spec)",
+        77759,
+        j6["variants"]["V0_prev"]["phase2_both_pass"],
+    )
+    check(
+        "50-NN-capped exact-search candidate pairs (V2)",
+        54282,
+        j6["variants"]["V2_T1_T2_T3"]["phase2_both_pass"],
+    )
+    check(
+        "exhaustive vs deployed factor (18x in sec:r-hub)",
+        18,
+        round(j6["variants"]["V0_prev"]["phase2_both_pass"] / 4411),
+    )
+    check(
+        "isolated top-100 risks after race-node removal, corrected merge",
+        2,
+        j6["j6_on_V2"]["isolated_after_race_removal"],
+    )
+
+    # ---- existential-risk share of the EC top-10, all four conditions ---------------
+    ec = json.loads(
+        (ROOT / "phase2_results/experiment_merge_vs_simexcl_ec_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    for label, expected in [
+        ("1 un-merged, full SIM", 10),
+        ("2 un-merged, risk<->risk SIM EXCLUDED", 8),
+        ("3 merged(risk), full SIM", 1),
+        ("4 merged(risk), risk<->risk SIM EXCLUDED", 2),
+    ]:
+        got = next(c for c in ec["conditions"] if c["label"] == label)["xrisk_in_top10"]
+        check(f"xrisk in EC top-10, {label}", expected, got)
+
+    # ---- race framing across centrality tiers (app:race) ----------------------------
+    rr = json.loads(
+        (ROOT / "phase2_results/experiment_race_top100_rederive_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    tiers = {t["tier"]: t for t in rr["condition_A"]["tiers"]}
+    for tier, pct in [
+        ("top-100 by EC", 2.6),
+        ("top-500 by EC", 6.3),
+        ("top-1000 by EC", 4.4),
+        ("all 12638 risks", 1.3),
+    ]:
+        check(
+            f"race-framed share of single-path risks, {tier}",
+            pct,
+            tiers[tier]["pct_of_single_path_race_framed"],
+        )
+    check(
+        "single-path risks in the EC top-100",
+        38,
+        tiers["top-100 by EC"]["n_single_path"],
+    )
+
     # NOTE 2026-08-11: three scope-composition checks (routed-chain count, share
     # unplaceable, share capability-gap-only) were added here and then REMOVED. They
     # read phase2_routing_assignments.jsonl, which is untracked and not re-derivable
