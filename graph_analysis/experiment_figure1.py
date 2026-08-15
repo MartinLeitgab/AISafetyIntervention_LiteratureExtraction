@@ -108,7 +108,11 @@ def main() -> None:
     ax_a.set_xlabel("chain length (nodes)")
     ax_a.set_ylabel("chains (log scale)")
     ax_a.set_xticks(lengths)
-    ax_a.set_title("A  Chain length spans 4 to 16 nodes", loc="left", fontweight="bold")
+    ax_a.set_title(
+        "A  Chain length, from the 4-node enumeration floor to 16",
+        loc="left",
+        fontweight="bold",
+    )
     ax_a.annotate(
         f"canonical 7-node chain\n{hist[7]:,} chains ({dedup['pct_len_eq7']}%)",
         xy=(7, hist[7]),

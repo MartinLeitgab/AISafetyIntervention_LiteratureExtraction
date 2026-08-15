@@ -82,6 +82,7 @@ SYNC_RATES = {
     "o3 (as run)": (2.00, 8.00),
     "Claude Opus 5": (5.00, 25.00),
     "Claude Sonnet 5": (3.00, 15.00),
+    "Claude Sonnet 4.6": (3.00, 15.00),
     "Claude Haiku 4.5": (1.00, 5.00),
 }
 BATCH_DISCOUNT = 0.5
@@ -89,7 +90,8 @@ RATE_NOTE = (
     "Every figure is at BATCH rates, half the synchronous rate, because the run used a "
     "batch API; no further discount applies. o3 assumed at USD 2/8 per M synchronous. "
     "Anthropic rates from the model catalog cached 2026-06-24: Opus 5 USD 5/25, Sonnet 5 "
-    "USD 3/15 (introductory USD 2/10 through 2026-08-31, not used here), Haiku 4.5 "
+    "and Sonnet 4.6 both USD 3/15 (Sonnet 5 has an introductory USD 2/10 through "
+    "2026-08-31, not used here), Haiku 4.5 "
     "USD 1/5. Verify against current pricing before quoting a dollar figure."
 )
 TOKENIZER_CAVEAT = (

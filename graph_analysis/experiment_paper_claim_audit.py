@@ -414,6 +414,103 @@ def main():
     check("documents carrying a year", 11761, rec["n_documents_with_a_year"])
     check("mean nodes per document", 17.02, ir["nodes_per_document"]["mean"])
 
+    # ---- every quality cut the enumerator applies, verified on the released file ----
+    # Added 2026-08-15. The manuscript previously named four cuts; the builder applies
+    # ten. Each row below checks one of them against the emitted paths, so the Methods
+    # list and app:cuts cannot drift from what actually ran.
+    raw_rows = [json.loads(line) for line in open(RAW, encoding="utf-8")]
+
+    def node_cat(nid):
+        a = na.get(nid, {})
+        if (a.get("type") or "").lower() == "intervention":
+            return "intervention"
+        return (a.get("concept_category") or "").lower()
+
+    hops = [len(r["path"]) - 1 for r in raw_rows]
+    check("cut: minimum path length in hops", 3, min(hops))
+    check("cut: maximum path length in hops observed", 15, max(hops))
+    check("cut: shortest chain in nodes", 4, min(hops) + 1)
+    check("cut: longest chain in nodes", 16, max(hops) + 1)
+    check(
+        "cut: 30-hop ceiling never binds",
+        True,
+        max(hops) < 30,
+        note="the cap is a safeguard, not a shaping cut; the floor of 3 hops IS a cut",
+    )
+    check(
+        "cut: 50M global path cap never binds",
+        True,
+        len(raw_rows) < 50_000_000,
+    )
+    check(
+        "cut: every path roots at a risk node",
+        True,
+        all(node_cat(r["path"][0]) == "risk" for r in raw_rows),
+    )
+    check(
+        "cut: no risk node after position 0",
+        True,
+        all(not any(node_cat(n) == "risk" for n in r["path"][1:]) for r in raw_rows),
+    )
+    check(
+        "cut: first hop always lands on an intermediate subtype",
+        True,
+        all(node_cat(r["path"][1]) in set(BODY) for r in raw_rows),
+        note="no risk-to-intervention shortcut is enumerable",
+    )
+    check(
+        "cut: every endpoint is an intervention",
+        True,
+        all(node_cat(r["path"][-1]) == "intervention" for r in raw_rows),
+    )
+    check(
+        "cut: every path is simple (no repeated node)",
+        True,
+        all(len(set(r["path"])) == len(r["path"]) for r in raw_rows),
+    )
+    check(
+        "cut: paths passing through a sub-threshold intervention",
+        540,
+        sum(
+            1
+            for r in raw_rows
+            if any(node_cat(n) == "intervention" for n in r["path"][1:-1])
+        ),
+        note="enumeration stops at the first maturity>=3 intervention, so a lower-maturity "
+        "one can sit mid-chain; disclosed in sec:m-paths",
+    )
+    check(
+        "cut: interventions clearing the maturity gate, pct",
+        15.1,
+        round(
+            100
+            * sum(
+                1
+                for a in na.values()
+                if (a.get("type") or "").lower() == "intervention"
+                and (a.get("intervention_maturity") or 0) >= 3
+            )
+            / by_type.get("intervention", 1),
+            1,
+        ),
+        note="the marginal; the joint with the confidence gate is 11.4% (gate corner)",
+    )
+    check(
+        "cut: sub-path collapse preserves the length range",
+        (3, 15),
+        (
+            min(
+                len(json.loads(line)["path"]) - 1
+                for line in open(DEDUP, encoding="utf-8")
+            ),
+            max(
+                len(json.loads(line)["path"]) - 1
+                for line in open(DEDUP, encoding="utf-8")
+            ),
+        ),
+    )
+    del raw_rows
+
     # ---- the two chains printed in tab:query (added 2026-08-15) ---------------------
     # experiment_query_demo.py emits two DIFFERENT chains, so the table had no receipt.
     # Check the printed node ids against the reporting unit and the stored stage labels.
@@ -659,6 +756,7 @@ def main():
     for model, per_k in [
         ("Claude Opus 5", 93),
         ("Claude Sonnet 5", 56),
+        ("Claude Sonnet 4.6", 56),
         ("Claude Haiku 4.5", 19),
     ]:
         row = pricing["bill_by_model"][model]["by_reasoning_ratio"][
