@@ -198,7 +198,11 @@ measurements. A second annotator on 5 of the 20 gives an inter-annotator figure,
 which the anchor is one person's opinion.
 
 **Cost.** Zero dollars. **~2–4 hours of one author's time**, plus ~1 hour for the second
-annotator's subset. I can generate the annotation packet — the 20 papers, their
+annotator's subset.
+
+**Owner.** This is issue #150's centre of gravity, assigned to Sai and untouched since
+2026-08-11. The ticket as written does not carry the chain-yielding sampling change above —
+see D8 and `paper/TICKET_150_UPDATE_LOCAL.md` before anyone starts. I can generate the annotation packet — the 20 papers, their
 extractions, a blank verdict sheet and the rubric — so the time spent is judgment only.
 
 ### S5. Manual 50-instance error taxonomy
@@ -318,7 +322,8 @@ number in the paper and is discussed nowhere beyond the source-type mix.
 | D4 | **Licence pair + ARD redistribution position** | team, possibly legal | = C1 row 2; Opus asks for a stated fallback rather than a deferral |
 | D5 | **Release hosting + URL** | team | = C1 row 1. Blocks C1 and every reviewer's first question |
 | D6 | Compute-donor consent (G14), author list + contribution statement (G15), AI-drafting scope | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** — these three are tracked there, not here, and they gate four of the eight `\OPEN{}` blocks |
-| D7 | Co-author coordination: Gleb draft send, Axel's `--local` question, Sai on issue #150, PR #149 merge | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** |
+| D7 | Co-author coordination: Gleb draft send, Axel's `--local` question, Sai on issue #150, PR #151 (#149 was closed unmerged) | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** |
+| D8 | **Issue #150 refresh — priority, and whether to send it now.** Verified 2026-08-15: all five open items and all three nice-to-haves untouched, no comments or commits since 2026-08-11, neither target CSV exists. Four things changed underneath the ticket, one of which would waste the work if he starts from it as written (the human anchor must sample **chain-yielding** documents, not the judged 100) | team; change 3 of it waits on D2 | 🔒 **Full write-up and a ready-to-send draft comment in `paper/TICKET_150_UPDATE_LOCAL.md`** (local, gitignored). Nothing has been posted to the ticket |
 
 ---
 
