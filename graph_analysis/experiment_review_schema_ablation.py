@@ -82,6 +82,7 @@ ARD = REPO / "intervention_graph_creation/data/raw/ard_json_full"
 PROMPT_PY = REPO / "intervention_graph_creation/src/prompt/final_primary_prompt.py"
 RAW_DIR = ROOT / "phase2_results/ablation_raw"
 OUT = ROOT / "phase2_results/experiment_review_schema_ablation_report.json"
+LABEL_CACHE = ROOT / "phase2_results/ablation_raw/arm_E_label_mapping.json"
 
 # The key is read from another project's .env at run time and never copied into this repo,
 # never logged, and never written into a receipt. This repo is public.
@@ -523,6 +524,13 @@ def enumerate_chains(nodes: dict, edges: list) -> list:
     endpoint maturity >= 3, exactly one risk at the root, first hop on an intermediate,
     simple paths, stop at the first qualifying intervention, 3..30 hops.
     """
+    # UNDIRECTED, because the released enumerator is. phase2_step4_F2v4_hopwise_falkordb.py
+    # queries `MATCH (n)-[e:EDGE]-(m)` and fills `adj[s].add(t); adj[t].add(s)`, so a
+    # released chain may traverse an edge against its stored direction -- and 3 of the 55
+    # documents here have exactly that, their released chain being unreachable if direction
+    # is honoured. Relation semantics are mixed (`caused_by` points from the effect to the
+    # cause), so the enumerator's choice is defensible; what matters is that this scorer is
+    # the same instrument.
     adj = defaultdict(list)
     for e in edges:
         try:
@@ -533,6 +541,7 @@ def enumerate_chains(nodes: dict, edges: list) -> list:
             continue
         if e["source"] in nodes and e["target"] in nodes:
             adj[e["source"]].append(e["target"])
+            adj[e["target"]].append(e["source"])
 
     def is_risk(n):
         return nodes[n]["type"] == "concept" and (nodes[n]["category"] or "") == "risk"
@@ -897,8 +906,20 @@ def score(sample, built) -> dict:
         got = {}
         for fp in sorted(d.glob("*.json")):
             rec = json.loads(fp.read_text(encoding="utf-8"))
-            ext = parse_extraction(rec.get("text") or "")
-            got[rec["url"]] = {"rec": rec, "ext": ext}
+            text = rec.get("text") or ""
+            ext = parse_extraction(text)
+            # A response with no JSON block at all is the model DECLINING to emit a graph,
+            # which is a different event from a graph it emitted badly. Arm G turns on the
+            # difference: refusing to extract from a bibliography is correct behaviour and
+            # must not be counted as a malformed response.
+            failure = None
+            if not ext:
+                failure = (
+                    "declined_no_json_block"
+                    if "```json" not in text
+                    else "malformed_json"
+                )
+            got[rec["url"]] = {"rec": rec, "ext": ext, "failure": failure}
         parsed[arm] = got
 
     # arm E label mapping
@@ -913,8 +934,17 @@ def score(sample, built) -> dict:
                 if c and c != "risk" and (n.get("type") or "concept") == "concept":
                     labels[c].append((n.get("name") or "")[:90])
         if labels:
-            client = openai_client()
-            label_receipt = map_labels(client, labels)
+            # Cached: the mapping is one metered call and re-scoring must not re-buy it.
+            if LABEL_CACHE.exists():
+                label_receipt = json.loads(LABEL_CACHE.read_text(encoding="utf-8"))
+                label_receipt["from_cache"] = True
+            else:
+                client = openai_client()
+                label_receipt = map_labels(client, labels)
+                LABEL_CACHE.write_text(
+                    json.dumps(label_receipt, ensure_ascii=False, indent=1),
+                    encoding="utf-8",
+                )
             cat_map = label_receipt["map"]
             cat_map["risk"] = "risk"
 
@@ -922,7 +952,7 @@ def score(sample, built) -> dict:
         rows = {}
         for u, p in got.items():
             if not p["ext"]:
-                rows[u] = {"parse_failure": True}
+                rows[u] = {"parse_failure": True, "failure_kind": p["failure"]}
                 continue
             nodes, edges = graph_from_extraction(p["ext"])
             rows[u] = score_graph(nodes, edges, cat_map if arm == "E" else None)
@@ -933,9 +963,17 @@ def score(sample, built) -> dict:
         ok = [r for r in rows.values() if not r.get("parse_failure")]
         if not ok:
             return {"n": 0}
+        kinds = Counter(
+            r.get("failure_kind") for r in rows.values() if r.get("parse_failure")
+        )
         return {
+            "n_documents_attempted": len(rows),
             "n": len(ok),
-            "parse_failures": sum(1 for r in rows.values() if r.get("parse_failure")),
+            "no_graph_returned": dict(kinds),
+            "pct_of_attempted_yielding_a_chain": round(
+                100 * sum(r.get("has_chain", False) for r in rows.values()) / len(rows),
+                1,
+            ),
             "pct_with_chain": round(100 * sum(r["has_chain"] for r in ok) / len(ok), 1),
             "mean_chains": round(statistics.mean([r["n_chains"] for r in ok]), 2),
             "mean_nodes": round(statistics.mean([r["n_nodes"] for r in ok]), 1),
@@ -950,10 +988,42 @@ def score(sample, built) -> dict:
             ),
         }
 
+    # Every arm is read against ITS OWN baseline. Arms E and F run on the 30-document
+    # common sample and arm G on its own 25, so one pooled arm-A row would compare each
+    # arm against a population it never saw.
+    ef, gs = set(sample["picked"]), set(sample["picked_G"])
+    headline = {
+        "A_released_on_the_EF_sample": agg({u: arm_a[u] for u in ef}),
+        "A_released_on_the_G_sample": agg({u: arm_a[u] for u in gs}),
+    }
+    for arm, rows in arms.items():
+        if arm != "A_released":
+            headline[arm] = agg(rows)
+
+    paired = {}
+    for arm, rows in arms.items():
+        if arm == "A_released":
+            continue
+        pop = gs if arm == "G" else ef
+        both = [u for u in pop if u in rows and not rows[u].get("parse_failure")]
+        paired[arm] = {
+            "documents_with_a_chain_in_the_released_extraction": sum(
+                arm_a[u]["has_chain"] for u in pop
+            ),
+            "of_those_also_yielding_a_chain_in_this_arm": sum(
+                1 for u in both if arm_a[u]["has_chain"] and rows[u]["has_chain"]
+            ),
+            "documents_compared": len(both),
+        }
+
     return {
-        "headline": {arm: agg(rows) for arm, rows in arms.items()},
+        "headline": headline,
+        "paired_against_the_released_extraction": paired,
         "per_document": arms,
         "arm_E_label_mapping": label_receipt,
+        "arm_E_label_mapping_summary": (
+            dict(Counter(cat_map.values())) if cat_map else {}
+        ),
         "arm_E_rubric": LABEL_MAP_RUBRIC,
     }
 
