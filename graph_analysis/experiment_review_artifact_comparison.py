@@ -167,6 +167,7 @@ def main() -> None:
 
     # ---- per-subcategory resolution -------------------------------------------------
     per_sub = []
+    union_pairs: set[tuple[str, str]] = set()
     for (cat, sub), titles in sorted(subcat_titles.items()):
         urls = [matched[t] for t in titles if t in matched]
         chain_urls = [u for u in urls if chains_by_url.get(u)]
@@ -176,6 +177,7 @@ def main() -> None:
                 risks.add(node_name(p[0]))
                 intvs.add(node_name(p[-1]))
                 pairs.add((node_name(p[0]), node_name(p[-1])))
+        union_pairs |= pairs
         per_sub.append(
             {
                 "category": cat,
@@ -261,12 +263,16 @@ def main() -> None:
                 if covered
                 else 0
             ),
-            "total_our_directed_pairs_inside_their_subcategories": sum(
+            # DISTINCT across the covered subcategories, not the sum of the per-subcategory
+            # counts: a paper can sit in more than one subcategory, so summing counts the
+            # same directed pair twice. The sum is reported beside it and is 10 higher.
+            "total_our_directed_pairs_inside_their_subcategories": len(union_pairs),
+            "sum_of_per_subcategory_pair_counts": sum(
                 s["our_directed_pairs"] for s in covered
             ),
             "total_their_labels_for_the_same_material": len(covered),
             "directed_pairs_per_label": round(
-                sum(s["our_directed_pairs"] for s in covered) / max(1, len(covered)), 1
+                len(union_pairs) / max(1, len(covered)), 1
             ),
             "per_subcategory": per_sub,
         },
@@ -296,6 +302,10 @@ def main() -> None:
                 "threshold-dependent (sec:m-paths)."
             ),
         },
+        # The 8.6 MB input CSV is not vendored, so this mapping is what lets
+        # experiment_paper_claim_audit.py re-derive every number above from the committed
+        # categories.json plus the released graph, with no download and no network.
+        "title_to_url": matched,
         "worked_example": worked,
         "unmatched_examples": {
             "missing_from_their_own_csv": unmatched_no_csv[:10],

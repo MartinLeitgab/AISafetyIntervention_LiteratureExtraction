@@ -572,6 +572,102 @@ def main():
         note="653 of 653 nodes came back with a label inside the five-stage vocabulary",
     )
 
+    # ---- comparison against an existing topical index (S12, issue #166) -------------
+    # Re-derived here from the VENDORED categories.json plus the released graph, not read
+    # back from the comparison receipt. The receipt supplies only the title-to-URL map,
+    # because their 8.6 MB input CSV is not vendored; every count below is recomputed.
+    ac = receipt("experiment_review_artifact_comparison_report.json")
+    cats = json.loads(
+        (ROOT / "phase2_results/external_artifacts/categories.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    t2u = ac["title_to_url"]
+    chains_by_url = {}
+    for r in load_paths(DEDUP, na):
+        u = next(iter(r["urls"]))
+        chains_by_url.setdefault(u, []).append(r["nodes"])
+    covered_subs, pairs_total, comembership, n_subs = 0, set(), 0, 0
+    adv = {"papers": 0, "risks": set(), "intvs": set()}
+    for subs in cats.values():
+        for sub, titles in subs.items():
+            n_subs += 1
+            matched_here = [t for t in titles if t2u.get(t)]
+            comembership += len(matched_here) * (len(matched_here) - 1) // 2
+            sub_pairs, sub_risks, sub_intvs, sub_papers = set(), set(), set(), 0
+            for t in matched_here:
+                paths = chains_by_url.get(t2u[t], [])
+                if paths:
+                    sub_papers += 1
+                for p in paths:
+                    sub_risks.add(na.get(p[0], {}).get("name"))
+                    sub_intvs.add(na.get(p[-1], {}).get("name"))
+                    sub_pairs.add(
+                        (na.get(p[0], {}).get("name"), na.get(p[-1], {}).get("name"))
+                    )
+            if sub_pairs:
+                covered_subs += 1
+                pairs_total |= sub_pairs
+            if sub == "Adversarial Machine Learning":
+                adv = {"papers": sub_papers, "risks": sub_risks, "intvs": sub_intvs}
+    check(
+        "artifact comparison: their clustered papers",
+        554,
+        len({t for s in cats.values() for ts in s.values() for t in ts}),
+    )
+    check("artifact comparison: their subcategories", 160, n_subs)
+    check(
+        "artifact comparison: their clustered papers matched to our corpus",
+        534,
+        len(t2u),
+    )
+    check(
+        "artifact comparison: matched papers yielding a chain",
+        216,
+        sum(1 for u in t2u.values() if chains_by_url.get(u)),
+    )
+    check(
+        "artifact comparison: their subcategories holding a chain-yielding paper",
+        79,
+        covered_subs,
+    )
+    check(
+        "artifact comparison: our directed pairs inside those subcategories",
+        325,
+        len(pairs_total),
+        note="79 topic labels against 325 DISTINCT directed risk-to-intervention pairs is "
+        "the resolution claim in sec:related. Summing the per-subcategory counts gives 335 "
+        "because a paper can sit in more than one subcategory; this check is what caught "
+        "that, and the receipt now reports both",
+    )
+    check(
+        "artifact comparison: chain yield on their paper list, pct",
+        40.4,
+        round(100 * sum(1 for u in t2u.values() if chains_by_url.get(u)) / len(t2u), 1),
+        note="independent check on the 40.5% arXiv yield of tab:populations, over a paper "
+        "list we did not choose",
+    )
+    check(
+        "artifact comparison: their input records",
+        7011,
+        ac["their_artifact"]["input_papers"],
+    )
+    check(
+        "artifact comparison: Adversarial ML chain-yielding papers", 17, adv["papers"]
+    )
+    check("artifact comparison: Adversarial ML distinct risks", 18, len(adv["risks"]))
+    check(
+        "artifact comparison: Adversarial ML distinct interventions",
+        23,
+        len(adv["intvs"]),
+    )
+    check(
+        "artifact comparison: their cross-document co-membership pairs",
+        2986,
+        comembership,
+        note="sec:related reports this beside our zero cross-document structural edges",
+    )
+
     # ---- extraction-failure recovery, now printed in the body (C6) -------------------
     rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
         "population_A_extraction_error_candidates"
