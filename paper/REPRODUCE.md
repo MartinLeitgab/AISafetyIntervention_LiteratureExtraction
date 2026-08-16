@@ -45,7 +45,7 @@ Drive archives. The PKLs are only needed to re-derive the receipts from scratch.
 ```bash
 cd graph_analysis
 python -u experiment_paper_claim_audit.py
-# -> 235/235 PASS, 0 FAIL   (2026-08-16)
+# -> 257/257 PASS, 0 FAIL   (2026-08-16)
 ```
 
 It re-derives each claim from the **raw** path files and node PKL (not from the other receipts) and
