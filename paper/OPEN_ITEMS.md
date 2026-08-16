@@ -79,6 +79,17 @@ closes a rendered gap in Limitations either way.
 artifact downloads. Answers "why is this needed at all" rather than "why is this design
 needed", which is the question the Introduction raises and never tests.
 
+**R7. Produce the un-gated enumeration, before the release URL is filled in.** D3 makes it
+the release's primary unit and `sec:m-repro` now describes it, but it does not exist:
+`experiment_review_gate_sensitivity.py` enumerates every grid cell in memory and writes
+counts, not paths. Add a `--dump-paths` mode that writes the conf$\geq$1 / maturity$\geq$1
+cell (31,740 chains over 11,709 documents) as JSON lines in the same format as the two
+released path files, and ship the gate thresholds as a config a reuser can change. Class B,
+no LLM call. **Until this lands the manuscript describes an artifact we do not ship**, which
+is the one kind of error the receipt discipline exists to prevent. Verify by re-filtering the
+new file at conf$\geq$3 / maturity$\geq$3 and checking it reproduces the released
+8,954-chain file exactly.
+
 **R4. Finish L3.** 44 "rather than" constructions survive outside comments plus 13 ", not X"
 and 8 "never as". Keep the ones where a plausible misreading exists *and* the paper has
 evidence about it; the reviewers set that test themselves. Target under 15. This needs a
@@ -125,6 +136,7 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
+| Open PRs from this work, stacked | #158 (edge coverage, issue #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair preservation, #163) | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main` |
 | Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **257/257** (2026-08-16, after S3). The stale 42/42 references are fixed; C9 is closed |
 
 ## 🔴 Locked decisions — do not revert
@@ -583,8 +595,18 @@ None of this requires a decision; all of it is a prose pass.
 | L10 **PARTIAL** | **Same three caveats repeated across 6–8 sections** (verified ≠ analysed; yield is a gate property; completeness is schema-filling) | 2/3 | one clear statement each plus cross-references |
 | L11 **DONE** | **Acknowledgments carry project-management detail** (Discord stand-ups, working threads) | 1/3 | not scholarly acknowledgment |
 | L12 **PARTIAL** (abstract + contribution bullet say *audit*; the defined term "verification stage" is unchanged, and renaming it is all-or-nothing) | **Terminology overstates the evidence** — "verification", "implied coverage", documents "argue a complete mechanism" | 1/3 | → "the extractor produced a chain judged to pass the model-assigned gates"; "auditable" or "subject to an LLM diagnostic pass" rather than "verified" |
-| L13 **DONE** | **Mechanical sweeps** (from the internal reviews, not re-raised externally): mixed British/American spelling — "randomisation", "neighbourhood", "specialised", "favourable" against "normalization", "labeling", "colored"; number-words inconsistent — "Twelve of the 100" vs "12 of the 100"; `\emph{}` 40+ times, mostly on ordinary words | internal | one spelling variety, one number rule, `\emph{}` for term introductions only |
+| L13 **DONE** (see also the sentence-length note below) | **Mechanical sweeps** (from the internal reviews, not re-raised externally): mixed British/American spelling — "randomisation", "neighbourhood", "specialised", "favourable" against "normalization", "labeling", "colored"; number-words inconsistent — "Twelve of the 100" vs "12 of the 100"; `\emph{}` 40+ times, mostly on ordinary words | internal | one spelling variety, one number rule, `\emph{}` for term introductions only |
 | L14 🔴 **STRIP BEFORE RELEASE — last action before posting** | **Source-file editorial trail** — "REMOVED 2026-08-14", "Moved out of sec:r-hub", "the frozen Overleaf reported...", "the module docstring says 80%, the code uses 70%", the compute-donor gate block. Several disclose internal disagreement, an Overleaf workflow and a private donor | internal | strip or move to a NOTES file before any public posting. **Not** the same as C1: these are comments and never render |
+
+**Sentence length, measured 2026-08-16.** Mean 20.6 words over 588 body sentences; 33
+exceed 40 words (5.6%) and 12 exceed 55. That is ordinary for this kind of paper and a
+blanket split would add length to a draft that must lose three pages. 🔴 Only **two** were
+genuine offenders, not the five a first pass reported: the sentence splitter breaks on
+LaTeX, so the abstract's apparent 82-word sentence is three sentences separated by `(1)` and
+`(2)`, and the 69-word practitioner sentence is two separated by a question mark inside
+`\emph{}`. The two real ones — the nine-constraint sentence at 91 words and the
+edge-confidence rubric at 69 — are split. **Do not re-run a naive splitter and conclude
+there are five.**
 
 **Prose pass, 2026-08-16.** Seventeen targeted edits, listed in the manuscript's own
 source comments. Fully done: the three named aphoristic enders (L2), both "honest"-as-
@@ -620,12 +642,12 @@ number in the paper and is discussed nowhere beyond the source-type mix.
 |---|---|---|---|
 | D1 | **Venue.** Nothing committed. The draft is venue-neutral two-column `article`, so switching is a preamble-only change | team | The external round prices the choice: conference 3 / 2 / 3 across the three models (all reject or borderline reject), workshop 4 / 3 / 5 (split). On this evidence a main-track submission is not currently viable and a workshop is borderline-to-positive. Re-check the AI-disclosure wording against the choice: ICLR 2026 desk-rejects undisclosed LLM use; ICML 2026 permits assistance but forbids crediting an LLM |
 | D2 **RESOLVED 2026-08-16: cut** | Cut vs run S1 | — | 3/3 reviewers, and two of the three graders are unreachable on subscription auth. Nothing replaces the stage and nothing needs to: the judge is a diagnostic pass, not a validated instrument. See S1 |
-| D3 | **Ungated vs gated release** as the primary unit | team | See the ungated-release note above; interacts with S2 and S4 |
+| D3 **RESOLVED 2026-08-16: un-gated, provisional until team review** | Ungated vs gated release as the primary unit | — | The release's primary units are the code, the un-merged dump and the **un-gated enumeration** (31,740 chains, 11,709 documents), with the two gates shipped as a filter over it. Our setting travels alongside for reproducibility. This answers "the reporting unit is selected by two unvalidated attributes" structurally rather than by measurement, which is why it also lowers the value of S2 and S4. Written into `sec:m-repro` and Limitations, manuscript `1638834`. 🔴 **The file does not exist yet — runbook R7.** |
 | D4 **RESOLVED 2026-08-16: MIT + CC-BY-4.0** | Our own licence pair | — | = C1 row 2. **Narrowed 2026-08-16**: ARD is published under MIT (dataset card, verified; now cited as `stampyai2023ardataset`), so our use of the collection is unambiguously permitted and the manuscript says so. The card is silent on the terms of the individual documents ARD aggregates, which is why we release derived structure and not source text. What is left is picking our pair -- MIT for code, CC-BY-4.0 for the derived data is the natural one -- which is a decision, not a question of fact. **Taken 2026-08-16**: MIT for code, CC-BY-4.0 for the derived data, so anyone may reuse the framework subject only to the terms their own sources impose. Written into `sec:m-repro`; one rendered gap closed |
 | D5 | **Release hosting + URL** | team | = C1 row 1. Blocks C1 and every reviewer's first question |
 | D6 | Compute-donor consent (G14), author list + contribution statement (G15), AI-drafting scope | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** — these three are tracked there, not here, and they gate four of the eight `\OPEN{}` blocks |
 | D7 | Co-author coordination: draft send, the outstanding contribution question, the #150 refresh (D8), PR #151 (#149 was closed unmerged) | team | 🔒 **Named detail in `NEXT_STEPS_PRIVATE.md`** — who owes what stays off the remote, per the `paper/` gitignore policy |
-| D8 | **Issue #150 refresh — priority, and whether to send it now.** Verified 2026-08-15: all five open items and all three nice-to-haves unstarted, no ticket activity since 2026-08-11, neither target CSV exists. Four things changed underneath the ticket, one of which would waste the work for whoever picks it up (the human anchor must sample **chain-yielding** documents, not the judged 100) | team; change 3 of it waits on D2 | 🔒 **Full write-up and a ready-to-send draft comment in `paper/TICKET_150_UPDATE_LOCAL.md`** (local, gitignored). Nothing has been posted to the ticket |
+| D8 **LARGELY DISSOLVED 2026-08-16** | Issue #150: what is left of it | — | Of its five open items, three are gone and one is done. The human-anchored spot-check is now "do nothing" (S4); the manual 50-instance taxonomy is dropped (S5); the re-run-Gemini nice-to-have dies with D2; and the edge-coverage item was executed here (#156 / PR #158). **What remains is two things, both minutes rather than weeks**: a co-author read of `sec:m-validation` and `sec:r-judge` in `paperA_altstyle.tex` (the ticket still points at the retired `paperA_draft_v2.tex`), and confirming the third meta-grader's model id, printed in the manuscript as `gpt-5.1`. Close #150 and reopen those two as a comment, or retitle it. The draft in `paper/TICKET_150_UPDATE_LOCAL.md` assumes the old scope and needs rewriting before sending |
 
 ---
 
