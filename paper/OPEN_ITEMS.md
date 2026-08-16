@@ -733,6 +733,21 @@ material the reviewers wanted **kept** — which makes it an author's call, not 
 one. The realistic options are the four in the ordered list below, and the first is the
 only one that yields a page on its own.
 
+🔴 **The 2026-08-16 PM pass made the gate worse, deliberately, and the number is measured.**
+Non-comment characters from `dbf88fd` to `ef5c23f`: **+3,686 characters, +60 lines**, about
++2.8%, call it three quarters of a page. What bought it: the ablation paragraph and
+`app:ablation` (#165), the Related Work measurement (#166), the undirected-traversal
+sentence and `tab:cuts` row. The language pass (L3/L10/L12) gave back roughly a fifth of
+that; the rest is new evidence.
+
+**This is the right trade and it still has to be paid for.** Every one of the four reviewer
+rounds asked for a baseline and a fidelity control, and the paper now has both. But it is
+now ~13 pages against a 10-page ceiling, so the page budget is the single largest unclosed
+item on this list and it is now an author's call. The candidates, in the order I would take
+them: the three artifact use cases to an appendix (item 1 below, ~110 lines), `sec:r-selection`
+compressed to its control paragraph, and `app:race` cut to its two-line prevalence. None of
+those touches the new evidence.
+
 Where the remaining ~3 pages would have to come from, in the order I would take them:
 
 1. **The three artifact use cases** (clustering, centrality, co-occurrence) — roughly 110
