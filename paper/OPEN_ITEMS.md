@@ -79,28 +79,20 @@ closes a rendered gap in Limitations either way.
 artifact downloads. Answers "why is this needed at all" rather than "why is this design
 needed", which is the question the Introduction raises and never tests.
 
-**R7. Promote the two gate thresholds to command-line flags.** D3 makes re-gateability a
-selling point of the release, and it is already true of the artifact: the dump carries
-intervention maturity on every node and confidence on every structural edge, which
-`experiment_review_release_integrity.py` verifies. What is not true is that a reuser can
-*act* on it conveniently -- `EDGE_CONFIDENCE_MIN` and `INTERVENTION_MATURITY_MIN` are module
-constants at `phase2_step4_F2v4_hopwise_falkordb.py:70-71`, so changing them means editing
-the source. Add `--edge-confidence-min` and `--intervention-maturity-min`, defaulting to 3
-and 3 so nothing about the released files changes. Class B, minutes. Verify by re-running at
-the defaults and checking the output reproduces the released 8,954-chain file exactly.
-Optionally also ship the fully-open enumeration (31,740 chains over 11,709 documents) as a
-convenience file; the paper does not promise one, so this is a nice-to-have, not a gate.
+**R7. — RETIRED 2026-08-16, do not reinstate.** It asked first for a 31,740-chain file and
+then for CLI flags on the two gate thresholds. Neither is needed. D3 dissolved (see below):
+the primary delivery is the raw graph, the gates belong to one analysis on top of it, and
+the manuscript promises no derived file it does not ship. A reuser changing thresholds edits
+two constants in `phase2_step4_F2v4_hopwise_falkordb.py`, which is ordinary for research
+code and buys the paper nothing.
 
-🔴 **What "un-gated" does and does not mean here**, because the earlier wording in this file
-confused two different things. It does **not** mean the raw graph -- that is the dump, it is
-already the primary released unit, and it has no gates on it at all. It does **not** mean
-unconstrained enumeration either: even at fully-open thresholds the enumerator still applies
-five *structural* constraints (simple paths, first hop on an intermediate subtype, stop at
-the first qualifying intervention, a three-hop floor, a thirty-hop ceiling) which are part of
-what a chain *is* and are not quality judgements. "Un-gated" refers only to the two
-model-assigned *quality* attributes, edge confidence and intervention maturity, relaxed from
-$\geq 3$ to $\geq 1$. Those two are the ones reviewers called unvalidated, and those two are
-the ones a reuser can now set.
+🔴 **What "gated" means, since the wording here caused a real misreading.** It is NOT the
+raw graph, which has no gates at all and is the primary release. It is NOT unconstrained
+enumeration either: five *structural* constraints (simple paths, first hop on an intermediate
+subtype, stop at the first qualifying intervention, a three-hop floor, a thirty-hop ceiling)
+always apply and are part of what a chain *is*. "Gated" refers only to the two model-assigned
+*quality* attributes, edge confidence and intervention maturity, at $\geq 3$ rather than
+$\geq 1$ — the two reviewers called unvalidated.
 
 **R4. Finish L3.** 44 "rather than" constructions survive outside comments plus 13 ", not X"
 and 8 "never as". Keep the ones where a plausible misreading exists *and* the paper has
@@ -654,7 +646,7 @@ number in the paper and is discussed nowhere beyond the source-type mix.
 |---|---|---|---|
 | D1 | **Venue.** Nothing committed. The draft is venue-neutral two-column `article`, so switching is a preamble-only change | team | The external round prices the choice: conference 3 / 2 / 3 across the three models (all reject or borderline reject), workshop 4 / 3 / 5 (split). On this evidence a main-track submission is not currently viable and a workshop is borderline-to-positive. Re-check the AI-disclosure wording against the choice: ICLR 2026 desk-rejects undisclosed LLM use; ICML 2026 permits assistance but forbids crediting an LLM |
 | D2 **RESOLVED 2026-08-16: cut** | Cut vs run S1 | — | 3/3 reviewers, and two of the three graders are unreachable on subscription auth. Nothing replaces the stage and nothing needs to: the judge is a diagnostic pass, not a validated instrument. See S1 |
-| D3 **RESOLVED 2026-08-16: un-gated, provisional until team review** | Ungated vs gated release as the primary unit | — | The release's primary units are the code, the un-merged dump and the **un-gated enumeration** (31,740 chains, 11,709 documents), with the two gates shipped as a filter over it. Our setting travels alongside for reproducibility. This answers "the reporting unit is selected by two unvalidated attributes" structurally rather than by measurement, which is why it also lowers the value of S2 and S4. Written into `sec:m-repro` and Limitations, manuscript `1638834`. 🔴 **The file does not exist yet — runbook R7.** |
+| D3 **DISSOLVED 2026-08-16 — there was no decision to make** | Ungated vs gated release as the primary unit | — | The primary delivery is the **raw graph**; every chain set is an exemplary analysis on top of it. The quality gates were therefore never a property of the release to choose between, and the question was malformed rather than open. `sec:m-repro` now states what ships and argues nothing: the dump carries maturity on every node and confidence on every edge, so any gate setting is reproducible from it. No convenience file and no CLI flag are promised or needed (R7 retired). Manuscript `541b022` |
 | D4 **RESOLVED 2026-08-16: MIT + CC-BY-4.0** | Our own licence pair | — | = C1 row 2. **Narrowed 2026-08-16**: ARD is published under MIT (dataset card, verified; now cited as `stampyai2023ardataset`), so our use of the collection is unambiguously permitted and the manuscript says so. The card is silent on the terms of the individual documents ARD aggregates, which is why we release derived structure and not source text. What is left is picking our pair -- MIT for code, CC-BY-4.0 for the derived data is the natural one -- which is a decision, not a question of fact. **Taken 2026-08-16**: MIT for code, CC-BY-4.0 for the derived data, so anyone may reuse the framework subject only to the terms their own sources impose. Written into `sec:m-repro`; one rendered gap closed |
 | D5 | **Release hosting + URL** | team | = C1 row 1. Blocks C1 and every reviewer's first question |
 | D6 | Compute-donor consent (G14), author list + contribution statement (G15), AI-drafting scope | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** — these three are tracked there, not here, and they gate four of the eight `\OPEN{}` blocks |

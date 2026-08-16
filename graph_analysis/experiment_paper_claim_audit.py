@@ -354,10 +354,16 @@ def main():
     # ever run and the stage becomes a result, restore these checks with it.
     # A check for a number the paper does not print is not a regression test.
     mg = receipt("experiment_judge_full_report.json")["item2_meta_graders"]
+    # The third grader is keyed by whichever name the receipt on disk carries. The shipped
+    # receipt still says "third_grader_gpt-5.1"; experiment_judge_full_receipt.py now writes
+    # "third_grader_model_not_recorded", because no artifact records that grader's model and
+    # the old key was an assumption the manuscript then repeated. Regenerating the receipt
+    # needs the Drive archives, so both spellings are accepted rather than hand-editing it.
+    third_key = next(k for k in mg if k.startswith("third_grader"))
     for key, n in [
         ("claude-opus-4-5", 95),
         ("gemini-3-pro", 13),
-        ("third_grader_gpt-5.1", 95),
+        (third_key, 95),
     ]:
         check(
             f"grader {key}: paired pre/post rows",
