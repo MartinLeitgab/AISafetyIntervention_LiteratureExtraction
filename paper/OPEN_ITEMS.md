@@ -21,18 +21,29 @@ of novel scientific insight about the literature. Stated that way, the "verified
 is not the analysed population" objection loses most of its force, because the stage we
 audit is the stage we release and the chain work sits on top of it as a worked example.
 
-Two things follow, and both are load-bearing:
-- The paper must state this **positively, in the Introduction and again in §5**, not as a
-  concession buried in Limitations. A reviewer who reads it as a retreat will price it as
-  one. It is not yet written; that is the first manuscript job.
-- Any sentence that treats a chain-set descriptive as a finding about the literature has to
-  be re-read against it. 87.4% five-stage completeness, the maturity profile and the
-  one-document-in-six yield are properties of a worked example under our gates, and the
-  draft mostly says so already.
-🔴 The counter-argument, recorded so nobody has to re-derive it: **S2 is cheap and now
-unblocked** (ARD downloads from HuggingFace without credentials, ~USD 5-10 on the batch
-API), and running it would let the paper keep the stronger claim instead of scoping down to
-the weaker one. If budget appears, prefer measuring over reframing.
+✅ **EXECUTED in manuscript commit `e620d71`.** Six passages carried the old framing, each
+phrased as a deficiency ("does not constitute an audit of", "very little about", "nothing in
+this subsection is"). All six now state what the design *is*: the Introduction (both halves,
+before any number), Methods `sec:m-validation`, the `sec:r-judge` opener, the `sec:usecases`
+opener, Limitations, and the Conclusion sentence that used to say the corpus "profiles a
+literature", which was the one line contradicting all the others. No number moved.
+
+🔴 **Correction to earlier advice in this file: S2 is NOT better than the reframe, and the
+line saying "prefer measuring over reframing" was wrong.** S2 would buy a fidelity
+measurement for the gate-selected chain set. Under this framing the paper does not claim
+scientific validity for that set, so S2 measures something the paper deliberately does not
+assert — it is evidence for a claim we are not making. It stays on the list as optional and
+genuinely cheap, and it is the right purchase only if the team later decides to promote the
+chain analysis from demonstration to finding. **Do not run it to pre-empt a reviewer
+objection the framing already answers.**
+
+What still follows from the framing, for a session working the list:
+- Any sentence treating a chain-set descriptive as a finding about the literature must be
+  re-read against it. 87.4% completeness, the maturity profile and the one-in-six yield are
+  properties of a worked example under our gates. The draft now says so in all six places,
+  but a fresh pass over `sec:r-stages` and `sec:r-corpus` is worth doing once.
+- This is also why S4 shrank to "do nothing" and S5 was dropped: a human anchor on an
+  explicitly exemplary analysis is not load-bearing evidence.
 
 ## 🔴 RUNBOOK — what a fresh session can execute alone
 
@@ -44,6 +55,15 @@ same session, keep the `.tex` pure ASCII, and after any manuscript edit run
 (expect **257/257**; if a number leaves the manuscript, delete its `check(...)` line, and if
 one arrives, add one). Every study gets a GitHub issue and a PR.
 
+**R0. Credentials that exist on this machine.** An OpenAI key is at
+`~/0_project_work/ExistentialRiskBenchmark/.env` (`OPENAI_API_KEY`, alongside `GOOGLE_API_KEY`
+and `ANTHROPIC_API_KEY`). It is NOT in this repo and must never be copied into it — read it
+from that path at run time and keep it out of logs, receipts and commit messages. This
+changes what is possible: arm C of the merged ablation becomes a real reasoning-vs-non-
+reasoning comparison on the corpus extractor rather than a Claude-tier proxy, and S2, S7 and
+S11 become runnable as specified rather than in caveated form. Metered spend applies, so
+estimate and confirm before using it.
+
 **R1. Download ARD and unblock the extraction studies.** `data/raw/ard_json_full/` does not
 exist on this machine, which is what blocked S2, S6 and S8. ARD is a public HuggingFace
 dataset (`StampyAI/alignment-research-dataset`, MIT) and downloads without credentials. Do
@@ -54,6 +74,10 @@ person. Budget and arms are scoped in S6/S8. Start with arms E/F/G at n=30.
 
 **R3. S11, multi-model extraction consistency (see below).** Replaces the lost n=20 data and
 closes a rendered gap in Limitations either way.
+
+**R3b. S12, comparison against existing artifacts (see below).** Class B if the comparison
+artifact downloads. Answers "why is this needed at all" rather than "why is this design
+needed", which is the question the Introduction raises and never tests.
 
 **R4. Finish L3.** 44 "rather than" constructions survive outside comments plus 13 ", not X"
 and 8 "never as". Keep the ones where a plausible misreading exists *and* the paper has
@@ -146,7 +170,7 @@ project rule, so the experiment trail stays auditable.
 
 ## Tier 1 — highest reviewer value per dollar
 
-### S1. Null-repair grader arm — DECIDED 2026-08-16: CUT, do not run
+### S1. Null-repair grader arm — CUT 2026-08-16; preserved in issue #163 / PR #164
 **Answers** NeurIPS W3/Q2, workshop V4 — the single item both *internal* reviews ranked first.
 The meta-grader pre/post comparison is confounded: graders saw the repairs they were asked
 to score. The paper now reports that stage as a design lesson and draws nothing from it.
@@ -190,7 +214,7 @@ judge, and it failed by construction. Validating the validator is a second-order
 hole: if human time is ever spent, it belongs on the extraction, not on the judge's opinion
 of the extraction. The manuscript already carries the one paragraph this leaves behind.
 
-### S2. Second judge run, stratified on chain-yielding papers
+### S2. Second judge run, stratified on chain-yielding papers - OPTIONAL under the framing decision
 **Answers** W1/Q1 — the paper's largest single gap. The judge covers 0.6% of the reported
 chain set, so no fidelity number in the paper applies to the unit it reports on. The
 Limitations section says so; a stratified run closes it.
@@ -289,7 +313,7 @@ stated rather than implied, and "implied coverage of 99.4%" deleted.
 
 ## Tier 2 — needs a person, not a budget
 
-### S4. Human-anchored spot-check, 20 papers
+### S4. Human-anchored spot-check - DECIDED 2026-08-16: do nothing; use the six graphs as illustration
 **Answers** W2/Q3. The judge says extractions omit 0.6% of what they should contain; the
 Opus grader says 28.8%. The paper reports both, reconciles neither, and calls this the
 clearest reason the protocol needs a human anchor.
@@ -320,16 +344,25 @@ retracted.
 2. **n=3 to 5, one author, as an existence check** rather than a rate. Enough to say whether
    the extraction is recognisable to a domain reader; not enough for a fidelity number, and
    it must be reported as an illustration, never as a rate.
-3. **The six manually reviewed graphs the EleutherAI team produced** (Drive folder
-   `15HQtkJuYNO96a15GM96qEzg9Zf1uZ_yu`). 🔴 Provenance first, before any use: the earliest
-   files date to 08-29 and may predate the prompt that produced the released corpus, and the
-   review quality was never asserted. **Usable for**: a qualitative appendix example, or a
-   sanity check that a human reading the same paper recovers a similar chain shape.
-   **Not usable for**: any agreement rate, any fidelity claim, or anything the claim audit
-   would have to check -- a rate computed over six graphs of unverified provenance against a
-   possibly-different prompt is worse than no rate, because it looks like evidence. If they
-   are used at all, the first job is to establish which prompt version each was reviewed
-   against, and the honest outcome may be that they are unusable.
+3. ✅ **DECIDED 2026-08-16: do nothing on S4, and use the six team-reviewed graphs as an
+   illustration only.** Drive folder `15HQtkJuYNO96a15GM96qEzg9Zf1uZ_yu`.
+
+   🔴 **The provenance question is now answered, and it constrains the use.** From
+   `git log --follow` on `intervention_graph_creation/src/prompt/final_primary_prompt.py`:
+   the extraction prompt's content **froze on 2025-09-30** (`7526bc0`, `302291e`, `8227d33`,
+   then `b9e4bbb` aligning the extractor to the new schema). The only later commit touching
+   the file, `b50ef5d` on 2025-10-26, comments out `PROMPT_RESPONSE_EVAL` and does not change
+   `PROMPT_EXTRACT`. The team's reviews begin **2025-08-29**, one month and at least four
+   revisions earlier — and one of those revisions, `302291e`, changed a structural rule
+   ("inhibiting direct risk-intervention connections"). **The reviewers were therefore
+   looking at output from a materially different schema than the released corpus.**
+
+   **Usable for:** a qualitative appendix example showing that domain readers trace chains
+   this way, with the 2025-08-29 date and the schema difference stated in the caption.
+   **Not usable for:** any agreement rate, any fidelity claim, or any number the claim audit
+   would check. A rate computed over six graphs reviewed against a superseded schema is worse
+   than no rate, because it looks like evidence. Do not compute one, and do not let a future
+   session be tempted to.
 
 **Where it is tracked.** This is issue #150's centre of gravity. The ticket is open to
 whoever on the team picks it up and is unstarted as of 2026-08-15. It does **not** carry the
@@ -377,13 +410,15 @@ complete chain still appears and whether the emergent stages map onto the five. 
 the judge for a quality comparison. Run the structural arms first — they are the cheaper
 half and they carry the more interesting claim.
 
-🔴 **In-session feasible, with one caveat that must be stated in the paper.** No OpenAI key
-exists on this machine, so the arms would run on Claude through the subscription CLI, not on
-`o3`. That is fine for D/E/F/G, which are claims about the *schema and the inputs* and are
-internally controlled — every arm uses the same extractor. It is **not** fine for arm C,
-which stops being "reasoning vs non-reasoning `o3`" and becomes a Claude-tier comparison;
-scope it that way or drop it. Any arm run this way must say in the caption that the ablation
-extractor is not the corpus extractor.
+🔴 **In-session feasible, and the caveat is now smaller than it was.** An OpenAI key exists
+at `~/0_project_work/ExistentialRiskBenchmark/.env` (runbook R0), so the arms **can** run on
+`o3` — the corpus extractor — making arm C a real reasoning-vs-non-reasoning comparison and
+every other arm a true ablation of the released pipeline. That is the preferred way to run
+it, and it costs metered dollars, so estimate before booking. The subscription-CLI fallback
+remains available for D/E/F/G, which are internally controlled claims about the *schema and
+the inputs* where every arm shares one extractor; if that fallback is used, the caption must
+say the ablation extractor is not the corpus extractor. Arm C cannot be run that way at all
+— on Claude it stops being the comparison it is for.
 
 **Budget, computed rather than guessed.** Per document: full text ~5.6k input, abstract-only
 ~0.6k, reference-list-only ~1.0k, shuffled and schema-blind ~5.6k each. At **n = 30
@@ -455,10 +490,11 @@ agreement, and whether the same risk-to-intervention endpoints appear. This is t
 "single extractor, single run" limitation turned into a measurement, and unlike the original
 it will be reproducible.
 
-**Cost.** 20 documents x ~5.6k input x 3 models ≈ 340k input, plus output. **In-session on
-subscription auth**, same harness as S3. Same caveat as S6/S8: without an OpenAI key the
-arms are Claude-tier, so this measures *prompt* stability across models available here, not
-`o3` against GPT-5. Say so.
+**Cost.** 20 documents x ~5.6k input x 3 models ≈ 340k input, plus output. Runnable on the
+subscription CLI, but **prefer the OpenAI key at `~/0_project_work/ExistentialRiskBenchmark/.env`
+(runbook R0)** so one arm is the corpus extractor itself — cross-model stability measured
+against `o3` is the claim Limitations needs, and a Claude-only version measures prompt
+stability across models that never produced the corpus. Say which was run either way.
 
 **Either outcome closes the gap.** Numbers replace the `\OPEN{}` block; a failed run means
 deleting it and keeping the limitation as stated.
@@ -482,7 +518,7 @@ B if the other artifact is downloadable.
 rather than "why is this design needed", and it is the only item on the list that engages
 the Related Work stack the Introduction leans on.
 
-### S9. Retrieval evaluation
+### S9. Retrieval evaluation - needs human relevance labels, lowest priority
 **Answers** W7/S-W1. The retrieval use case rests on two worked queries. A 50-query set
 with three-way relevance labels, compared against embedding search over abstracts and a
 retrieve-then-read baseline, would convert a demonstration into a result.
