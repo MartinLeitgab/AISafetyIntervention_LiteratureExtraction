@@ -79,16 +79,28 @@ closes a rendered gap in Limitations either way.
 artifact downloads. Answers "why is this needed at all" rather than "why is this design
 needed", which is the question the Introduction raises and never tests.
 
-**R7. Produce the un-gated enumeration, before the release URL is filled in.** D3 makes it
-the release's primary unit and `sec:m-repro` now describes it, but it does not exist:
-`experiment_review_gate_sensitivity.py` enumerates every grid cell in memory and writes
-counts, not paths. Add a `--dump-paths` mode that writes the conf$\geq$1 / maturity$\geq$1
-cell (31,740 chains over 11,709 documents) as JSON lines in the same format as the two
-released path files, and ship the gate thresholds as a config a reuser can change. Class B,
-no LLM call. **Until this lands the manuscript describes an artifact we do not ship**, which
-is the one kind of error the receipt discipline exists to prevent. Verify by re-filtering the
-new file at conf$\geq$3 / maturity$\geq$3 and checking it reproduces the released
-8,954-chain file exactly.
+**R7. Promote the two gate thresholds to command-line flags.** D3 makes re-gateability a
+selling point of the release, and it is already true of the artifact: the dump carries
+intervention maturity on every node and confidence on every structural edge, which
+`experiment_review_release_integrity.py` verifies. What is not true is that a reuser can
+*act* on it conveniently -- `EDGE_CONFIDENCE_MIN` and `INTERVENTION_MATURITY_MIN` are module
+constants at `phase2_step4_F2v4_hopwise_falkordb.py:70-71`, so changing them means editing
+the source. Add `--edge-confidence-min` and `--intervention-maturity-min`, defaulting to 3
+and 3 so nothing about the released files changes. Class B, minutes. Verify by re-running at
+the defaults and checking the output reproduces the released 8,954-chain file exactly.
+Optionally also ship the fully-open enumeration (31,740 chains over 11,709 documents) as a
+convenience file; the paper does not promise one, so this is a nice-to-have, not a gate.
+
+🔴 **What "un-gated" does and does not mean here**, because the earlier wording in this file
+confused two different things. It does **not** mean the raw graph -- that is the dump, it is
+already the primary released unit, and it has no gates on it at all. It does **not** mean
+unconstrained enumeration either: even at fully-open thresholds the enumerator still applies
+five *structural* constraints (simple paths, first hop on an intermediate subtype, stop at
+the first qualifying intervention, a three-hop floor, a thirty-hop ceiling) which are part of
+what a chain *is* and are not quality judgements. "Un-gated" refers only to the two
+model-assigned *quality* attributes, edge confidence and intervention maturity, relaxed from
+$\geq 3$ to $\geq 1$. Those two are the ones reviewers called unvalidated, and those two are
+the ones a reuser can now set.
 
 **R4. Finish L3.** 44 "rather than" constructions survive outside comments plus 13 ", not X"
 and 8 "never as". Keep the ones where a plausible misreading exists *and* the paper has
@@ -647,7 +659,7 @@ number in the paper and is discussed nowhere beyond the source-type mix.
 | D5 | **Release hosting + URL** | team | = C1 row 1. Blocks C1 and every reviewer's first question |
 | D6 | Compute-donor consent (G14), author list + contribution statement (G15), AI-drafting scope | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** — these three are tracked there, not here, and they gate four of the eight `\OPEN{}` blocks |
 | D7 | Co-author coordination: draft send, the outstanding contribution question, the #150 refresh (D8), PR #151 (#149 was closed unmerged) | team | 🔒 **Named detail in `NEXT_STEPS_PRIVATE.md`** — who owes what stays off the remote, per the `paper/` gitignore policy |
-| D8 **LARGELY DISSOLVED 2026-08-16** | Issue #150: what is left of it | — | Of its five open items, three are gone and one is done. The human-anchored spot-check is now "do nothing" (S4); the manual 50-instance taxonomy is dropped (S5); the re-run-Gemini nice-to-have dies with D2; and the edge-coverage item was executed here (#156 / PR #158). **What remains is two things, both minutes rather than weeks**: a co-author read of `sec:m-validation` and `sec:r-judge` in `paperA_altstyle.tex` (the ticket still points at the retired `paperA_draft_v2.tex`), and confirming the third meta-grader's model id, printed in the manuscript as `gpt-5.1`. Close #150 and reopen those two as a comment, or retitle it. The draft in `paper/TICKET_150_UPDATE_LOCAL.md` assumes the old scope and needs rewriting before sending |
+| D8 **CLOSEABLE 2026-08-16** | Issue #150 | — | All five open items are resolved or retired. Human-anchored spot-check → S4 "do nothing". Manual 50-instance taxonomy → S5 dropped. Re-run Gemini over all 100 → dies with D2. Edge-coverage reconciliation → done (#156 / PR #158). Confirm the third meta-grader's model id → **resolved without a human**: its output records no model, so the manuscript no longer asserts one (`ed016c9`). The remaining co-author read of `sec:m-validation` / `sec:r-judge` is not tracked as a ticket item by decision. **Action: post the dispositions as a closing comment and close #150.** The draft in `paper/TICKET_150_UPDATE_LOCAL.md` predates all of this and should be replaced by that comment, not sent |
 
 ---
 
