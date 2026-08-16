@@ -22,9 +22,9 @@
 # def merge_local_graphs_to_gexf(input_dir, output_file):
 #     #  MultiDiGraph so we don't lose parallel edges with different relations/descriptions
 #     G = nx.MultiDiGraph()
-    
+
 #     total_files = 0
-#     # Goes through each json in each subfolder in processed directory 
+#     # Goes through each json in each subfolder in processed directory
 #     for root, _, files in os.walk(input_dir):
 #         for fname in files:
 #             if not fname.lower().endswith(".json"):
@@ -38,7 +38,7 @@
 #                 print(f"Skipping {json_path} (read error: {e})")
 #                 continue
 
-#             # Nodes 
+#             # Nodes
 #             for node in data.get("nodes", []):
 #                 node_id = sanitize(node.get("name"))
 #                 if not node_id:
@@ -46,7 +46,7 @@
 
 #                 attrs = {
 #                     "aliases": sanitize(", ".join(node.get("aliases", []))),
-#                     "type": sanitize(node.get("type")),  
+#                     "type": sanitize(node.get("type")),
 #                     "description": sanitize(node.get("description")),
 #                     "concept_category": sanitize(node.get("concept_category")),
 #                     "intervention_lifecycle": sanitize(node.get("intervention_lifecycle")),
@@ -63,7 +63,7 @@
 #                 else:
 #                     G.add_node(node_id, **attrs)
 
-#             # Edges from logical_chains 
+#             # Edges from logical_chains
 #             for chain in data.get("logical_chains", []):
 #                 for edge in chain.get("edges", []):
 #                     src = sanitize(edge.get("source_node"))

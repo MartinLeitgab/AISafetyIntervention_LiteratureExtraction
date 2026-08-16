@@ -9,7 +9,7 @@
 #     if value is None:
 #         return ""
 #     if isinstance(value, (list, dict)):
-#         return json.dumps(value, ensure_ascii=False)  
+#         return json.dumps(value, ensure_ascii=False)
 #     return str(value)
 
 # def convert_single_json_to_gexf(json_file, output_file):
@@ -17,17 +17,17 @@
 #     with open(json_file, "r", encoding="utf-8") as f:
 #         data = json.load(f)
 
-  
+
 #     G = nx.MultiDiGraph()
 
-#     #  Graph-level metadata (from "meta") 
+#     #  Graph-level metadata (from "meta")
 #     for meta in data.get("meta", []):
 #         key = sanitize(meta.get("key"))
 #         value = sanitize(meta.get("value"))
 #         if key:
 #             G.graph[key] = value
 
-#     #  Nodes 
+#     #  Nodes
 #     for node in data.get("nodes", []):
 #         node_id = sanitize(node.get("name"))
 #         if not node_id:
@@ -42,7 +42,7 @@
 #             intervention_maturity=sanitize(node.get("intervention_maturity")),
 #         )
 
-#     # Edges from logical_chains 
+#     # Edges from logical_chains
 #     for chain in data.get("logical_chains", []):
 #         for edge in chain.get("edges", []):
 #             src = sanitize(edge.get("source_node"))

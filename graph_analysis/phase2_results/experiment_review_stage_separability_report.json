@@ -1,0 +1,337 @@
+{
+ "experiment": "stage separability of the extraction schema (reviewer W20/Q6)",
+ "question": "Does the text the extractor wrote under each stage label carry a signal that identifies the label, under a document-disjoint split?",
+ "SCOPE_NOTE": "This measures separability of the extractor's OWN output, not agreement with a second annotator. A high score means the stage labels track something stable in the text the model wrote; it is not evidence that the stage assignment is correct, and it cannot be, since the same model wrote both the text and the label. Cross-annotator agreement remains unmeasured.",
+ "inputs": {
+  "node_attributes": "C:\\Users\\malei\\0_project_work\\eleutherAI_SOAR_step1knowledgegraphcreation\\AISafetyIntervention_LiteratureExtraction\\graph_analysis\\phase2_results\\step1_load_and_parse_umapwithoutlocalsatellites\\graph_node_attributes.pkl"
+ },
+ "sampling": {
+  "per_class_cap": 6000,
+  "seed": 42,
+  "test_document_fraction": 0.3,
+  "split_unit": "source document (URL), so no test node shares a paper with a train node",
+  "features": "released node embedding (text-embedding-3-small, 1536d) over name + aliases + description; no graph structure of any kind",
+  "n_nodes_sampled": 42000,
+  "n_documents": 11210,
+  "class_counts": {
+   "risk": 6000,
+   "problem analysis": 6000,
+   "theoretical insight": 6000,
+   "design rationale": 6000,
+   "implementation mechanism": 6000,
+   "validation evidence": 6000,
+   "intervention": 6000
+  }
+ },
+ "five_intermediate_stages": {
+  "n_classes": 5,
+  "classes_in_logical_chain_order": [
+   "problem analysis",
+   "theoretical insight",
+   "design rationale",
+   "implementation mechanism",
+   "validation evidence"
+  ],
+  "n_train_nodes": 20885,
+  "n_test_nodes": 9115,
+  "n_train_documents": 7312,
+  "n_test_documents": 3134,
+  "accuracy": 0.9876,
+  "macro_f1": 0.9876,
+  "per_class_f1": {
+   "problem analysis": 0.9851,
+   "theoretical insight": 0.9802,
+   "design rationale": 0.99,
+   "implementation mechanism": 0.9891,
+   "validation evidence": 0.9936
+  },
+  "baseline_uniform_chance_accuracy": 0.2,
+  "baseline_majority_class_accuracy": 0.1962,
+  "confusion_matrix_rows_true_cols_pred": [
+   [
+    1847,
+    12,
+    3,
+    3,
+    6
+   ],
+   [
+    25,
+    1756,
+    8,
+    6,
+    7
+   ],
+   [
+    2,
+    4,
+    1782,
+    4,
+    2
+   ],
+   [
+    3,
+    6,
+    13,
+    1764,
+    2
+   ],
+   [
+    2,
+    3,
+    0,
+    2,
+    1853
+   ]
+  ],
+  "centroid_separation": {
+   "problem analysis": {
+    "mean_cosine_to_own_centroid": 0.6153,
+    "mean_cosine_to_other_centroids": 0.5437,
+    "margin": 0.0716
+   },
+   "theoretical insight": {
+    "mean_cosine_to_own_centroid": 0.5955,
+    "mean_cosine_to_other_centroids": 0.5414,
+    "margin": 0.0541
+   },
+   "design rationale": {
+    "mean_cosine_to_own_centroid": 0.6222,
+    "mean_cosine_to_other_centroids": 0.5524,
+    "margin": 0.0698
+   },
+   "implementation mechanism": {
+    "mean_cosine_to_own_centroid": 0.5603,
+    "mean_cosine_to_other_centroids": 0.4963,
+    "margin": 0.0641
+   },
+   "validation evidence": {
+    "mean_cosine_to_own_centroid": 0.5861,
+    "mean_cosine_to_other_centroids": 0.5013,
+    "margin": 0.0847
+   }
+  },
+  "lexical_ablation": {
+   "WHY": "The prompt prescribes a naming template per stage. If the node NAME alone recovers the label, the probe is reading that template and not a distinction between the stages.",
+   "name_only": {
+    "field": "name",
+    "n_features": 5948,
+    "accuracy": 0.6943,
+    "macro_f1": 0.6937,
+    "per_class_f1": {
+     "problem analysis": 0.7411,
+     "theoretical insight": 0.653,
+     "design rationale": 0.6318,
+     "implementation mechanism": 0.6339,
+     "validation evidence": 0.8087
+    }
+   },
+   "description_only": {
+    "field": "description",
+    "n_features": 9010,
+    "accuracy": 0.7133,
+    "macro_f1": 0.7122,
+    "per_class_f1": {
+     "problem analysis": 0.7114,
+     "theoretical insight": 0.5997,
+     "design rationale": 0.6736,
+     "implementation mechanism": 0.736,
+     "validation evidence": 0.8404
+    }
+   },
+   "name_and_description": {
+    "field": "name+description",
+    "n_features": 10455,
+    "accuracy": 0.7864,
+    "macro_f1": 0.7851,
+    "per_class_f1": {
+     "problem analysis": 0.805,
+     "theoretical insight": 0.7004,
+     "design rationale": 0.7346,
+     "implementation mechanism": 0.7833,
+     "validation evidence": 0.902
+    }
+   }
+  }
+ },
+ "all_seven_stages": {
+  "n_classes": 7,
+  "classes_in_logical_chain_order": [
+   "risk",
+   "problem analysis",
+   "theoretical insight",
+   "design rationale",
+   "implementation mechanism",
+   "validation evidence",
+   "intervention"
+  ],
+  "n_train_nodes": 29405,
+  "n_test_nodes": 12595,
+  "n_train_documents": 7847,
+  "n_test_documents": 3363,
+  "accuracy": 0.9856,
+  "macro_f1": 0.9857,
+  "per_class_f1": {
+   "risk": 0.9922,
+   "problem analysis": 0.978,
+   "theoretical insight": 0.9784,
+   "design rationale": 0.9901,
+   "implementation mechanism": 0.982,
+   "validation evidence": 0.9878,
+   "intervention": 0.9912
+  },
+  "baseline_uniform_chance_accuracy": 0.1429,
+  "baseline_majority_class_accuracy": 0.1403,
+  "confusion_matrix_rows_true_cols_pred": [
+   [
+    1776,
+    13,
+    2,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    9,
+    1776,
+    14,
+    0,
+    6,
+    5,
+    1
+   ],
+   [
+    3,
+    23,
+    1785,
+    3,
+    8,
+    13,
+    2
+   ],
+   [
+    0,
+    1,
+    1,
+    1755,
+    5,
+    2,
+    3
+   ],
+   [
+    0,
+    2,
+    6,
+    10,
+    1748,
+    9,
+    8
+   ],
+   [
+    1,
+    4,
+    3,
+    1,
+    5,
+    1782,
+    0
+   ],
+   [
+    0,
+    2,
+    1,
+    9,
+    5,
+    1,
+    1792
+   ]
+  ],
+  "centroid_separation": {
+   "risk": {
+    "mean_cosine_to_own_centroid": 0.6879,
+    "mean_cosine_to_other_centroids": 0.5669,
+    "margin": 0.121
+   },
+   "problem analysis": {
+    "mean_cosine_to_own_centroid": 0.6153,
+    "mean_cosine_to_other_centroids": 0.5449,
+    "margin": 0.0705
+   },
+   "theoretical insight": {
+    "mean_cosine_to_own_centroid": 0.5955,
+    "mean_cosine_to_other_centroids": 0.5308,
+    "margin": 0.0647
+   },
+   "design rationale": {
+    "mean_cosine_to_own_centroid": 0.6222,
+    "mean_cosine_to_other_centroids": 0.5476,
+    "margin": 0.0745
+   },
+   "implementation mechanism": {
+    "mean_cosine_to_own_centroid": 0.5603,
+    "mean_cosine_to_other_centroids": 0.4932,
+    "margin": 0.0672
+   },
+   "validation evidence": {
+    "mean_cosine_to_own_centroid": 0.5861,
+    "mean_cosine_to_other_centroids": 0.488,
+    "margin": 0.098
+   },
+   "intervention": {
+    "mean_cosine_to_own_centroid": 0.5985,
+    "mean_cosine_to_other_centroids": 0.5201,
+    "margin": 0.0784
+   }
+  },
+  "lexical_ablation": {
+   "WHY": "The prompt prescribes a naming template per stage. If the node NAME alone recovers the label, the probe is reading that template and not a distinction between the stages.",
+   "name_only": {
+    "field": "name",
+    "n_features": 6799,
+    "accuracy": 0.6757,
+    "macro_f1": 0.6748,
+    "per_class_f1": {
+     "risk": 0.7875,
+     "problem analysis": 0.6042,
+     "theoretical insight": 0.6516,
+     "design rationale": 0.5026,
+     "implementation mechanism": 0.6066,
+     "validation evidence": 0.7989,
+     "intervention": 0.772
+    }
+   },
+   "description_only": {
+    "field": "description",
+    "n_features": 10371,
+    "accuracy": 0.6876,
+    "macro_f1": 0.6868,
+    "per_class_f1": {
+     "risk": 0.772,
+     "problem analysis": 0.5829,
+     "theoretical insight": 0.5806,
+     "design rationale": 0.6287,
+     "implementation mechanism": 0.6531,
+     "validation evidence": 0.8318,
+     "intervention": 0.7588
+    }
+   },
+   "name_and_description": {
+    "field": "name+description",
+    "n_features": 11955,
+    "accuracy": 0.7659,
+    "macro_f1": 0.7654,
+    "per_class_f1": {
+     "risk": 0.8275,
+     "problem analysis": 0.673,
+     "theoretical insight": 0.6881,
+     "design rationale": 0.6813,
+     "implementation mechanism": 0.7429,
+     "validation evidence": 0.8947,
+     "intervention": 0.8504
+    }
+   }
+  }
+ },
+ "wall_clock_sec": 40.9
+}
