@@ -498,6 +498,52 @@ def main() -> None:
                 }
             pairs[f"{a} vs {b}"] = row
 
+        # Which gate moves between runs, stated as counts rather than left in
+        # per_document. The sample is conditioned on the shipped run yielding a chain, so
+        # the released column is 20 of 20 by construction and these are upper bounds on
+        # what a re-run loses, never symmetric stability rates.
+        gate = {}
+        for key in [k for k in per_model if k != "released"]:
+            shared = [
+                u
+                for u in urls
+                if u in per_model[key] and not per_model[key][u].get("parse_failure")
+            ]
+            gate[key] = {
+                "documents_compared": len(shared),
+                "released_with_a_mature_intervention": sum(
+                    1
+                    for u in shared
+                    if per_model["released"][u]["score"]["n_interventions_mature"]
+                ),
+                "arm_with_a_mature_intervention": sum(
+                    1
+                    for u in shared
+                    if per_model[key][u]["score"]["n_interventions_mature"]
+                ),
+                "released_with_a_chain": sum(
+                    1 for u in shared if per_model["released"][u]["score"]["has_chain"]
+                ),
+                "arm_with_a_chain": sum(
+                    1 for u in shared if per_model[key][u]["score"]["has_chain"]
+                ),
+                "released_mean_edges_conf_ge3": round(
+                    statistics.mean(
+                        [
+                            per_model["released"][u]["score"]["n_edges_conf_ge3"]
+                            for u in shared
+                        ]
+                    ),
+                    2,
+                ),
+                "arm_mean_edges_conf_ge3": round(
+                    statistics.mean(
+                        [per_model[key][u]["score"]["n_edges_conf_ge3"] for u in shared]
+                    ),
+                    2,
+                ),
+            }
+        receipt["gate_stability_against_the_shipped_extraction"] = gate
         receipt["headline"] = {k: agg(v) for k, v in per_model.items()}
         receipt["pairwise_endpoint_agreement"] = pairs
         receipt["match_threshold_used_in_prose"] = MATCH_AT

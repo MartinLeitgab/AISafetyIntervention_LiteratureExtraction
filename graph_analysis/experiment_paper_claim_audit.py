@@ -747,6 +747,61 @@ def main():
         note="sec:related reports this beside our zero cross-document structural edges",
     )
 
+    # ---- multi-model extraction consistency (S11, issue #168) ------------------------
+    # Receipt-sourced, like every Class A study. The arm-C figures are deliberately NOT
+    # checked here: that arm was still running when these numbers went into the paper.
+    mm = receipt("experiment_review_multimodel_consistency_report.json")
+    mh = mm["headline"]
+    check("multimodel: released mean nodes", 21, mh["released"]["mean_nodes"])
+    check("multimodel: released mean edges", 20.1, mh["released"]["mean_edges"])
+    check("multimodel: o3 re-run mean nodes", 21.1, mh["A_o3"]["mean_nodes"])
+    check("multimodel: o3 re-run mean edges", 21, mh["A_o3"]["mean_edges"])
+    check(
+        "multimodel: o3 re-run chain rate",
+        50.0,
+        mh["A_o3"]["pct_with_chain"],
+        note="against 100% for the shipped extraction on the same documents; the sample is "
+        "conditioned on the shipped run, so this is an upper bound on what a re-run loses",
+    )
+    check(
+        "multimodel: o3 re-run unparseable responses", 2, mh["A_o3"]["parse_failures"]
+    )
+    check("multimodel: gpt-5 mean nodes", 38.1, mh["B_gpt5"]["mean_nodes"])
+    check("multimodel: gpt-5 mean edges", 41.3, mh["B_gpt5"]["mean_edges"])
+    check("multimodel: gpt-5 chain rate", 76.5, mh["B_gpt5"]["pct_with_chain"])
+    check("multimodel: gpt-5 unparseable responses", 3, mh["B_gpt5"]["parse_failures"])
+    pa = mm["pairwise_endpoint_agreement"]["released vs A_o3"]
+    check(
+        "multimodel: risk-name agreement at cosine 0.80",
+        46.5,
+        pa["cosine_0.8"]["pct_risks_of_A_matched_in_B"],
+    )
+    check(
+        "multimodel: risk-name agreement at cosine 0.85",
+        27.8,
+        pa["cosine_0.85"]["pct_risks_of_A_matched_in_B"],
+    )
+    check(
+        "multimodel: risk-name agreement, token-set",
+        19.0,
+        pa["jaccard_0.6"]["pct_risks_of_B_matched_in_A"],
+        note="the lexical figure the semantic one is reported against",
+    )
+    gs = mm["gate_stability_against_the_shipped_extraction"]["A_o3"]
+    check("multimodel: documents compared", 18, gs["documents_compared"])
+    check(
+        "multimodel: shipped documents with a mature intervention",
+        18,
+        gs["released_with_a_mature_intervention"],
+    )
+    check(
+        "multimodel: re-run documents with a mature intervention",
+        11,
+        gs["arm_with_a_mature_intervention"],
+        note="the maturity gate is what moves between runs; edge confidence does not",
+    )
+    check("multimodel: re-run documents with a chain", 9, gs["arm_with_a_chain"])
+
     # ---- extraction-failure recovery, now printed in the body (C6) -------------------
     rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
         "population_A_extraction_error_candidates"
