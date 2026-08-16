@@ -345,40 +345,26 @@ def main():
         loss["n_papers_with_at_least_one_lost_node"],
     )
 
-    ga = receipt("experiment_review_grader_agreement_report.json")[
-        "raw_score_agreement"
-    ]
-    check("grader ICC(2,1) pre-repair", 0.921, ga["pre_repair"]["ICC_2_1"])
-    check("grader ICC(2,1) post-repair", 0.151, ga["post_repair"]["ICC_2_1"])
-    check("grader ICC(2,k) pre-repair", 0.972, ga["pre_repair"]["ICC_2_k"])
-    check("grader ICC(2,k) post-repair", 0.348, ga["post_repair"]["ICC_2_k"])
-    check(
-        "grader Krippendorff alpha pre-repair",
-        0.917,
-        ga["pre_repair"]["krippendorff_alpha_interval"],
-    )
-    check(
-        "grader Krippendorff alpha post-repair",
-        0.043,
-        ga["post_repair"]["krippendorff_alpha_interval"],
-    )
-
-    # ---- grader session diagnostics (tab:graders caption, sec:m-repro) --------------
+    # REMOVED 2026-08-16: six checks on the grader agreement instruments (ICC(2,1),
+    # ICC(2,k), Krippendorff alpha, pre and post) and the per-grader files-seen and
+    # JSON-shape diagnostics. None of those numbers is printed in the manuscript any more
+    # -- the pre/post repair-scoring stage was compressed to a design lesson with no
+    # statistics, unanimously across six external reviews. The receipts still ship and
+    # experiment_review_grader_agreement.py still produces them; if the null-repair arm is
+    # ever run and the stage becomes a result, restore these checks with it.
+    # A check for a number the paper does not print is not a regression test.
     mg = receipt("experiment_judge_full_report.json")["item2_meta_graders"]
-    for key, n, files, shapes in [
-        ("claude-opus-4-5", 95, 101, 13),
-        ("gemini-3-pro", 13, 100, 12),
-        ("third_grader_gpt-5.1", 95, 95, 1),
+    for key, n in [
+        ("claude-opus-4-5", 95),
+        ("gemini-3-pro", 13),
+        ("third_grader_gpt-5.1", 95),
     ]:
-        cd = mg[key]["coverage_diagnostics"]
-        check(f"grader {key}: paired pre/post rows", n, mg[key]["n"])
-        check(f"grader {key}: files seen", files, cd["files_seen"])
         check(
-            f"grader {key}: distinct JSON shapes",
-            shapes,
-            cd["n_distinct_json_shapes"],
-            note="the agent-session design of app:judgeprompt is why the shape drifts "
-            "within one grader's output; 1 shape -> a paired score on every file",
+            f"grader {key}: paired pre/post rows",
+            n,
+            mg[key]["n"],
+            note="printed in tab:populations-master as the 95/95/13 row; the per-grader "
+            "session diagnostics behind those denominators left the paper 2026-08-16",
         )
 
     om = receipt("experiment_review_omission_relative_report.json")
@@ -390,15 +376,170 @@ def main():
         0.6,
         j["omissions_as_pct_of_extracted_nodes"],
     )
-    check("judge implied coverage pct", 99.4, j["implied_coverage_pct"])
     check("profiled papers: extracted nodes", 751, g["extracted_nodes_total"])
     check(
         "missed concepts as pct of extracted nodes",
         28.8,
         g["omissions_as_pct_of_extracted_nodes"],
     )
-    check("grader implied coverage pct", 77.7, g["implied_coverage_pct"])
     check("missed concepts total", 216, g["omissions_total"])
+    # REMOVED 2026-08-16: the two "implied coverage" checks (99.4% and 77.7%). The phrase
+    # is gone from the paper -- reviewers read it as an accuracy claim when it is one minus
+    # an unadjudicated flag rate, and the edge measurement below made the node-only version
+    # of it misleading as a headline.
+
+    # ---- edge-level coverage (S10, issue #156) --------------------------------------
+    ec = receipt("experiment_review_edge_coverage_report.json")
+    cl = ec["coverage_list"]
+    against = ec["against_the_extraction_it_is_measured_on"]
+    check("coverage list: rows over the 100 judged papers", 777, cl["rows_total"])
+    check("coverage list: covered", 328, cl["covered"])
+    check("coverage list: partially covered", 146, cl["partially_covered"])
+    check("coverage list: missing", 302, cl["missing"])
+    check("coverage list: missing per paper", 3.02, cl["missing_mean_per_paper"])
+    check(
+        "coverage list: papers with at least one missing",
+        90,
+        cl["papers_with_at_least_one_missing"],
+    )
+    check(
+        "judged papers: structural edges in the released graph",
+        1667,
+        against["released_edges_total"],
+    )
+    check(
+        "judged papers: released edges per paper",
+        16.7,
+        against["released_edges_mean_per_paper"],
+        note="app:judge prints this beside the judge's own final_graph mean of 10.8",
+    )
+    check(
+        "missing relationships as pct of extracted edges",
+        18.1,
+        against["missing_as_pct_of_released_edges"],
+        note="the abstract's third omission rate",
+    )
+    check(
+        "same count against the judge's own edge total",
+        28.1,
+        ec["which_denominator"]["missing_as_pct_of_judge_final_graph_edges"],
+    )
+    check(
+        "judge final_graph edges per paper",
+        10.76,
+        ec["which_denominator"]["judge_final_graph_edges_mean_per_paper"],
+    )
+    check(
+        "judge repair schema has no add_edges slot",
+        False,
+        ec["no_add_edges_slot"]["has_add_edges_key"],
+        note="app:judgeprompt and sec:r-judge give this absence as the explanation for the "
+        "gap between the node-addition count and the coverage list",
+    )
+    check(
+        "structural edges crossing two source papers",
+        0,
+        ec["released_graph_structural_edges"]["n_crossing_two_source_papers"],
+        note="single-source-by-design, sec:m-structural",
+    )
+
+    # ---- what the sub-path collapse drops (issue #157) -------------------------------
+    cs = receipt("experiment_review_containment_semantics_report.json")
+    check(
+        "collapse: dropped paths that are contiguous sub-paths of their container",
+        0.0,
+        cs["order_relation"]["pct_contiguous_sub_path"],
+        note="sec:m-reporting no longer describes the step as dropping sub-paths already "
+        "counted inside a longer path; this is why",
+    )
+    check(
+        "collapse: drops differing only by chords",
+        21.7,
+        cs["edge_identity"]["pct_chords_only"],
+    )
+    check(
+        "collapse: drops touching a node the container lacks",
+        78.3,
+        cs["edge_identity"]["pct_touching_a_node_the_container_lacks"],
+    )
+    check(
+        "collapse: drops ending at an intervention the container lacks",
+        28.0,
+        cs["does_the_drop_remove_a_distinct_remedy"][
+            "pct_ending_at_an_intervention_the_container_lacks"
+        ],
+    )
+    check(
+        "collapse: distinct risk-to-intervention pairs lost",
+        579,
+        cs["does_the_drop_remove_a_distinct_remedy"][
+            "distinct_pairs_lost_to_the_collapse"
+        ],
+    )
+    check(
+        "collapse: pct of raw R-I pairs lost",
+        18.0,
+        cs["does_the_drop_remove_a_distinct_remedy"]["pct_of_raw_pairs_lost"],
+    )
+
+    # ---- what the release ships (issue #157) -----------------------------------------
+    ri = receipt("experiment_review_release_integrity_report.json")
+    defects = ri["does_the_release_ship_the_defect_classes_the_judge_found"]
+    for label, expected, key in [
+        ("orphan nodes", 0, "orphan_nodes_zero_structural_edges"),
+        ("dangling edges", 0, "dangling_edges_endpoint_not_in_node_table"),
+        ("self-loops", 0, "self_loops"),
+        ("duplicate edges", 1, "duplicate_edges_same_pair_same_relation_type"),
+        (
+            "exact-name duplicate groups",
+            448,
+            "exact_name_duplicate_groups_within_category",
+        ),
+        (
+            "exact-name duplicate nodes beyond one per group",
+            1140,
+            "exact_name_duplicate_nodes_beyond_one_per_group",
+        ),
+    ]:
+        check(f"released graph: {label}", expected, defects[key])
+    check(
+        "every gate attribute present on the released graph",
+        True,
+        ri["can_a_reuser_re_enumerate_at_any_gate"][
+            "verdict_all_gate_attributes_present"
+        ],
+        note="sec:m-repro claims a reuser can re-enumerate at any gate setting from the "
+        "dump alone, which is only true while this holds",
+    )
+    check(
+        "released nodes from a judged document",
+        1617,
+        ri["audited_vs_unaudited_content"]["nodes_from_judged_documents"],
+    )
+    check(
+        "released nodes from a judged document, pct",
+        0.81,
+        ri["audited_vs_unaudited_content"]["nodes_from_judged_documents_pct"],
+    )
+
+    # ---- extraction-failure recovery, now printed in the body (C6) -------------------
+    rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
+        "population_A_extraction_error_candidates"
+    ]
+    check("recovery: judgeable failed extractions", 441, rec["n_judgeable_candidates"])
+    check(
+        "recovery: attempts producing a non-empty graph",
+        23,
+        rec["n_attempts_producing_nonempty_graph"],
+    )
+    check(
+        "recovery rate pct",
+        5.2,
+        rec["recovery_rate_pct"],
+        note="sec:m-recovery prints this from 2026-08-16; it used to say 'not at a useful "
+        "rate' with no number. The '~60 of ~400' in older project notes divides two "
+        "disjoint populations and is wrong",
+    )
 
     sil = receipt("experiment_review_silhouette_report.json")["headline"]
     check(

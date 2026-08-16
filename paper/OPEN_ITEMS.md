@@ -13,6 +13,12 @@ each so the two never drift apart.
 **Written 2026-08-15**, renamed from `STUDY_LIST_2026-08-15.md` and made canonical the same
 day. Every entry is scoped to the point where it could be started the same day.
 
+**Amended 2026-08-16** after an execution pass that closed S10, C2-C9, every
+unanimous cut-list row and the language items: manuscript commit `337d033` in
+`AISafetyIntervention_PaperA_shared`, analysis issues #156 / #157 with PRs #158 /
+#159. Claim audit **235/235**. What remains below needs money, a person, or a team
+decision -- nothing left on this list is blocked on writing.
+
 **Amended 2026-08-15 PM** after an independent three-model review round (Claude Opus 5,
 GPT-5.6 Sol, Gemini 3.1 Pro; conference and workshop bars; reviews and usage receipts in
 `paper/reviews_2026-08-15/`, script `paper/review_multi_model.py`). Each model received
@@ -35,7 +41,7 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
-| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **218/218**, not the 42/42 several docs still say — see C9 |
+| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **235/235** (2026-08-16). The stale 42/42 references are fixed; C9 is closed |
 
 ## 🔴 Locked decisions — do not revert
 
@@ -55,7 +61,10 @@ wrongly at least once.
 - **The reporting unit is the 2,772 de-duplicated chain set**, never the raw 8,954.
 - **Intervention maturity is LLM-assigned and un-adjudicated** — composition, never a
   measured rate.
-- **The extraction is one schema-constrained call per document. Not agentic.**
+- **The extraction is one schema-*prompted* request per document. Not agentic.** Conformance
+  is prompt-enforced with no structured-output constraint, so "schema-constrained" was an
+  overclaim and left the manuscript on 2026-08-16 (C2). A request may cost up to three API
+  attempts; that is a retry, not a second request, and never a conversation.
 - **The two non-reproducing quantities** (88% race framing, 51-of-100 isolation) come from
   this project's own earlier internal pass, not from published work. No citation exists and
   none can be manufactured.
@@ -147,7 +156,7 @@ boundaries, which is where the existing probe's errors already fall.
 **Human involvement: none for the model arm.** Adding one human annotator over the same
 50 documents (see S5) turns it into the full three-way study the reviewer asked for.
 
-### S10. Edge-coverage reconciliation — NEW 2026-08-15 PM, and the most consequential new finding
+### S10. Edge-coverage reconciliation — DONE 2026-08-16 (issue #156, PR #158)
 **Answers** a gap none of the earlier reviews caught. GPT-5.6 Sol raises it at both bars:
 the judge's coverage list flags **a mean of 7.8 missing relationships per paper** against a
 mean audited extraction of **10.8 edges** — i.e. a possible edge-level omission signal of
@@ -172,9 +181,15 @@ explanation and should be stated as one, not left implicit.
 released graph. **Human involvement: none** unless the team wants the flagged relationships
 manually inspected, which folds into S4/S5.
 
-**Why it is Tier 1 despite being bookkeeping.** It is free, it is the only item on this list
-that could move a headline number in the abstract, and leaving it unaddressed is the
-cheapest way to lose a reviewer who reads the appendices.
+**Result.** The 7.8 was never an omission count: it is `len(coverage list)` from
+`experiment_judge_item2_summary.py:144`, and 42.2% of its 777 rows are marked *covered*.
+By status: 328 covered / 146 partially / 302 missing = **3.02 missing per paper**, in 90
+of 100 papers. Against the 1,667 structural edges the released graph holds for those
+papers, **18.1%** — where node-level omission reads 0.6%. So the alarm rested on a
+mislabelled quantity **and** the corrected figure is still the paper's largest
+unreported coverage signal. In the manuscript: three omission rates in the abstract,
+a third row and a unit column in `tab:omission`, the no-`add_edges`-slot explanation
+stated rather than implied, and "implied coverage of 99.4%" deleted.
 
 ---
 
@@ -281,7 +296,7 @@ how badly a reviewer reacts to finding it.
 | # | Correction | Agreement | Verified |
 |---|---|---|---|
 | C1 | The eight rendered `\OPEN{[GAP: ...]}` blocks (enumerated below), four of which are notes addressed to co-authors ("Open for the team to decide", "Do not populate from git history alone"). Every model at both bars calls the submission unfinished on this basis alone, and two say nothing else matters until it is fixed | **3/3** | 8 blocks render |
-| C9 | **Five stale "42/42" claim-audit references** — `REPRODUCE.md:44`, `NEXT_STEPS_REWRITE_2026-08-14.md:17` and `:369`, `NEXT_STEPS_2026-08-11.md:20` and `:173` — against the manuscript's current 218/218. `REPRODUCE.md` is the file a reviewer actually runs, so the mismatch reads as a broken audit. Not raised by any model (they never saw the repo); found in-session 2026-08-15 | in-session | 5 references confirmed |
+| C9 **DONE** | **Five stale "42/42" claim-audit references** — `REPRODUCE.md:44`, `NEXT_STEPS_REWRITE_2026-08-14.md:17` and `:369`, `NEXT_STEPS_2026-08-11.md:20` and `:173` — against the manuscript's current 218/218. `REPRODUCE.md` is the file a reviewer actually runs, so the mismatch reads as a broken audit. Not raised by any model (they never saw the repo); found in-session 2026-08-15 | in-session | 5 references confirmed |
 
 **C1 in full — the eight blocks, and who can close each:**
 
@@ -295,13 +310,13 @@ how badly a reviewer reacts to finding it.
 | Acknowledgments | author list, affiliations, contribution statement (gate G15) | team |
 | Use of AI Assistance | scope of the drafting claim | settles with G15, same conversation |
 | `app:clusters` | publish 20 representative nodes per cluster | ships with the release, or moots itself if `app:clusters` is cut per the cut list |
-| C2 | "schema-constrained" (×4, incl. abstract and Fig. 1 caption) while `sec:m-extraction` concedes conformance is prompt-enforced with no structured-output constraint. Use "schema-prompted" | 1/3 | 4 occurrences, contradiction confirmed |
-| C3 | `sec:m-repro` "a re-run reproduces the same model generation" (L627) reads against `sec:m-extraction` "runs are not bit-reproducible" (L339). Both render; the first invites the wrong reading | 1/3 | both lines confirmed |
-| C4 | `tab:gates` marks the maturity-$\geq 3$ row "(deployed)" while the rubric reserves *deployed* for maturity 4. The intent is "the deployed setting"; relabel so it cannot be read as the maturity band | 1/3 | confirmed |
-| C5 | `refs.bib` carries 29 non-standard annotation fields, including "Verified 2026-08-15" and per-entry mini-summaries. Move to a source-verification file | 1/3 | 29 fields |
-| C6 | `sec:m-recovery` says the judge cannot recover failed extractions "at a useful rate" with no number in the body. The figure exists (23 of 441, 5.2%) — print it or cut the sentence to "failed extractions are corpus loss" | 2/3 | no number in body |
-| C7 | "One call per document" vs a client that retries up to three times — distinguish logical requests from API attempts | 1/3 | `max_retries=3` in Methods |
-| C8 | The release's defect status is undocumented: the judge found 108 referential-integrity findings, 42 orphans and 56 duplicate pairs, and no repaired graph was rebuilt. State whether the released dump carries them | 2/3 | consistent with `app:judge` |
+| C2 **DONE** | "schema-constrained" (×4, incl. abstract and Fig. 1 caption) while `sec:m-extraction` concedes conformance is prompt-enforced with no structured-output constraint. Use "schema-prompted" | 1/3 | 4 occurrences, contradiction confirmed |
+| C3 **DONE** | `sec:m-repro` "a re-run reproduces the same model generation" (L627) reads against `sec:m-extraction` "runs are not bit-reproducible" (L339). Both render; the first invites the wrong reading | 1/3 | both lines confirmed |
+| C4 **DONE** (now "as run") | `tab:gates` marks the maturity-$\geq 3$ row "(deployed)" while the rubric reserves *deployed* for maturity 4. The intent is "the deployed setting"; relabel so it cannot be read as the maturity band | 1/3 | confirmed |
+| C5 **DONE** (25 moved to `paper/refs_verification_notes.md`) | `refs.bib` carries 29 non-standard annotation fields, including "Verified 2026-08-15" and per-entry mini-summaries. Move to a source-verification file | 1/3 | 29 fields |
+| C6 **DONE** (23 of 441, 5.2% now printed) | `sec:m-recovery` says the judge cannot recover failed extractions "at a useful rate" with no number in the body. The figure exists (23 of 441, 5.2%) — print it or cut the sentence to "failed extractions are corpus loss" | 2/3 | no number in body |
+| C7 **DONE** | "One call per document" vs a client that retries up to three times — distinguish logical requests from API attempts | 1/3 | `max_retries=3` in Methods |
+| C8 **DONE** (PR #159: 0 orphans / 0 dangling / 0 self-loops / 1 duplicate edge; the judge's classes were pre-ingest and do not reach the dump) | The release's defect status is undocumented: the judge found 108 referential-integrity findings, 42 orphans and 56 duplicate pairs, and no repaired graph was rebuilt. State whether the released dump carries them | 2/3 | consistent with `app:judge` |
 
 ## Language, register and typography — the low-hanging fruit
 
@@ -312,20 +327,34 @@ None of this requires a decision; all of it is a prose pass.
 
 | # | Item | Agreement | Action |
 |---|---|---|---|
-| L1 | **`\author{Author List Placeholder}` (L102) renders on page 1** — a *ninth* visible placeholder, separate from the eight `\OPEN{}` blocks of C1 | 1/3 | goes with G15; until then it is the first thing a reviewer sees |
-| L2 | **Aphoristic paragraph-enders.** "We add the layer under it."; "A corpus of $N$ short chains is exactly $N$ components until something links them."; "A faithful extraction from a weak paper is a successful extraction."; "The objective above is what the step is for; the counts below are what this approximation to it produced."; "The counts require no control, being direct tallies." | **3/3** | the internal reviews counted eight and said keep two. Opus: "deployed forty times they read as generated polish and displace information" |
-| L3 | **Contrastive correction** — "X is not Y", "read this as A and never as B". ~30 instances by the internal count, "well over a dozen" by Opus's | **3/3** | keep where a plausible misreading exists *and* the paper has evidence about it; target under 8 |
-| L4 | **"honest" as editorial** — "the honest statement of yield", "the honest positive residue" | 2/3 | GPT-5.6 Sol: "implicitly characterizes alternative summaries as dishonest" |
-| L5 | **Promotional / advocacy** — "The corpus is a snapshot of one dataset and will date. The paired extract-and-verify design will not."; "would make research coordination ... tractable"; "the natural agentic use"; "The extension this work most needs"; "What makes a mechanism layer worth building" | 2/3 | "will not [date]" is unsupported and absolute — models, prompts and schemas date too. "tractable" → "could support" |
-| L6 | **Conversational / blog register** — "What the release contains. Five things:"; "A closing note: some statistics are true by design."; "All three duly record an improvement"; "the reader who takes the release and does something with it" | 2/3 | "duly" reads as sarcasm |
-| L7 | **Legalistic meta-formulations** — "what licenses reading the other rows"; "which is what settles it"; "A reader would otherwise misread a number" | 1/3 | state the assumption and its implication directly |
-| L8 | **Formulaic openers** — "Three things follow"; "Two properties bear on"; "What this does not show" | 1/3 | frequency is the tell, not any single instance |
-| L9 | **Over-attribution of importance** (the flag Martin asked reviewers for) — "The verification stage is half the contribution" (`app:judgeprompt`); "what makes the extraction checkable rather than merely large" (`sec:r-judge`); "This is the single licensing gate"; "That qualifier is essential" (`sec:r-corpus`); "The single most consequential row is the sixth" (`tab:populations-master` caption); "the choice of extractor moves the bill by about a factor of five — more than any other decision in the pipeline" (`sec:m-repro`); "The sharpest is a merge-manufactured centrality hub at 90x" (Conclusion); "218 of 218 numeric claims passing" as a quality badge; "fifty documents ... would settle it"; the two worked queries as "the precondition for the cross-paper analysis" | **3/3** | the verification-stage claims are the load-bearing ones: the stage ran on 0.85% of documents and 0.6% of the analysed chains. The 90x hub in the Conclusion is an artifact of a step **not applied** to the released substrate, elevated to a headline |
-| L10 | **Same three caveats repeated across 6–8 sections** (verified ≠ analysed; yield is a gate property; completeness is schema-filling) | 2/3 | one clear statement each plus cross-references |
-| L11 | **Acknowledgments carry project-management detail** (Discord stand-ups, working threads) | 1/3 | not scholarly acknowledgment |
-| L12 | **Terminology overstates the evidence** — "verification", "implied coverage", documents "argue a complete mechanism" | 1/3 | → "the extractor produced a chain judged to pass the model-assigned gates"; "auditable" or "subject to an LLM diagnostic pass" rather than "verified" |
-| L13 | **Mechanical sweeps** (from the internal reviews, not re-raised externally): mixed British/American spelling — "randomisation", "neighbourhood", "specialised", "favourable" against "normalization", "labeling", "colored"; number-words inconsistent — "Twelve of the 100" vs "12 of the 100"; `\emph{}` 40+ times, mostly on ordinary words | internal | one spelling variety, one number rule, `\emph{}` for term introductions only |
-| L14 | **Source-file editorial trail** — "REMOVED 2026-08-14", "Moved out of sec:r-hub", "the frozen Overleaf reported...", "the module docstring says 80%, the code uses 70%", the compute-donor gate block. Several disclose internal disagreement, an Overleaf workflow and a private donor | internal | strip or move to a NOTES file before any public posting. **Not** the same as C1: these are comments and never render |
+| L1 (team, G15) | **`\author{Author List Placeholder}` (L102) renders on page 1** — a *ninth* visible placeholder, separate from the eight `\OPEN{}` blocks of C1 | 1/3 | goes with G15; until then it is the first thing a reviewer sees |
+| L2 **DONE** | **Aphoristic paragraph-enders.** "We add the layer under it."; "A corpus of $N$ short chains is exactly $N$ components until something links them."; "A faithful extraction from a weak paper is a successful extraction."; "The objective above is what the step is for; the counts below are what this approximation to it produced."; "The counts require no control, being direct tallies." | **3/3** | the internal reviews counted eight and said keep two. Opus: "deployed forty times they read as generated polish and displace information" |
+| L3 **PARTIAL** | **Contrastive correction** — "X is not Y", "read this as A and never as B". ~30 instances by the internal count, "well over a dozen" by Opus's | **3/3** | keep where a plausible misreading exists *and* the paper has evidence about it; target under 8 |
+| L4 **DONE** | **"honest" as editorial** — "the honest statement of yield", "the honest positive residue" | 2/3 | GPT-5.6 Sol: "implicitly characterizes alternative summaries as dishonest" |
+| L5 **DONE** | **Promotional / advocacy** — "The corpus is a snapshot of one dataset and will date. The paired extract-and-verify design will not."; "would make research coordination ... tractable"; "the natural agentic use"; "The extension this work most needs"; "What makes a mechanism layer worth building" | 2/3 | "will not [date]" is unsupported and absolute — models, prompts and schemas date too. "tractable" → "could support" |
+| L6 **DONE** | **Conversational / blog register** — "What the release contains. Five things:"; "A closing note: some statistics are true by design."; "All three duly record an improvement"; "the reader who takes the release and does something with it" | 2/3 | "duly" reads as sarcasm |
+| L7 **PARTIAL** | **Legalistic meta-formulations** — "what licenses reading the other rows"; "which is what settles it"; "A reader would otherwise misread a number" | 1/3 | state the assumption and its implication directly |
+| L8 **not done** | **Formulaic openers** — "Three things follow"; "Two properties bear on"; "What this does not show" | 1/3 | frequency is the tell, not any single instance |
+| L9 **DONE** | **Over-attribution of importance** (the flag Martin asked reviewers for) — "The verification stage is half the contribution" (`app:judgeprompt`); "what makes the extraction checkable rather than merely large" (`sec:r-judge`); "This is the single licensing gate"; "That qualifier is essential" (`sec:r-corpus`); "The single most consequential row is the sixth" (`tab:populations-master` caption); "the choice of extractor moves the bill by about a factor of five — more than any other decision in the pipeline" (`sec:m-repro`); "The sharpest is a merge-manufactured centrality hub at 90x" (Conclusion); "218 of 218 numeric claims passing" as a quality badge; "fifty documents ... would settle it"; the two worked queries as "the precondition for the cross-paper analysis" | **3/3** | the verification-stage claims are the load-bearing ones: the stage ran on 0.85% of documents and 0.6% of the analysed chains. The 90x hub in the Conclusion is an artifact of a step **not applied** to the released substrate, elevated to a headline |
+| L10 **PARTIAL** | **Same three caveats repeated across 6–8 sections** (verified ≠ analysed; yield is a gate property; completeness is schema-filling) | 2/3 | one clear statement each plus cross-references |
+| L11 **DONE** | **Acknowledgments carry project-management detail** (Discord stand-ups, working threads) | 1/3 | not scholarly acknowledgment |
+| L12 **PARTIAL** | **Terminology overstates the evidence** — "verification", "implied coverage", documents "argue a complete mechanism" | 1/3 | → "the extractor produced a chain judged to pass the model-assigned gates"; "auditable" or "subject to an LLM diagnostic pass" rather than "verified" |
+| L13 **DONE** | **Mechanical sweeps** (from the internal reviews, not re-raised externally): mixed British/American spelling — "randomisation", "neighbourhood", "specialised", "favourable" against "normalization", "labeling", "colored"; number-words inconsistent — "Twelve of the 100" vs "12 of the 100"; `\emph{}` 40+ times, mostly on ordinary words | internal | one spelling variety, one number rule, `\emph{}` for term introductions only |
+| L14 **deliberately not done** | **Source-file editorial trail** — "REMOVED 2026-08-14", "Moved out of sec:r-hub", "the frozen Overleaf reported...", "the module docstring says 80%, the code uses 70%", the compute-donor gate block. Several disclose internal disagreement, an Overleaf workflow and a private donor | internal | strip or move to a NOTES file before any public posting. **Not** the same as C1: these are comments and never render |
+
+**Prose pass, 2026-08-16.** Seventeen targeted edits, listed in the manuscript's own
+source comments. Fully done: the three named aphoristic enders (L2), both "honest"-as-
+editorial instances (L4), the five promotional phrases including "will not date" (L5),
+the blog-register openers (L6), all ten over-attribution instances the reviewers named
+(L9), the Acknowledgments project-management sentence (L11), and one spelling variety
+with `\emph{}` left alone (L13). Partial: L3 contrastive corrections were reduced where
+the rewrite touched them but were not counted down to the under-8 target; L7 and L12
+were reduced at the instances the reviewers quoted, not swept; L10's repeated caveats
+are fewer after the cuts but not consolidated to one statement each. Not done: L8
+formulaic openers, and L14 **on purpose** -- the source-comment trail is what stops a
+future session re-deriving a corrected number wrongly, and it never renders. Strip it in
+one pass immediately before posting, not now.
+
 
 **Checked and clear:** GPT-5.6 Sol asked that future-dated bibliography entries be verified
 against the submission date. Checked 2026-08-15 — `refs.bib` years top out at 2025, so there
@@ -366,6 +395,16 @@ Estimated body after the 2026-08-15 pass: **~12.5–13 pages**, down from ~15–
 estimate is a character-count heuristic, not a build — **compile on Overleaf and read the
 real number before deciding what else to cut.**
 
+🔴 **The 2026-08-16 pass did not close this gate, and the arithmetic says why.** Measured on
+non-comment source lines at commit `337d033` against `06c3440`: the appendices lost **90
+lines** to the unanimous cuts, and the body **gained 17** because the three new findings
+(edge coverage, what the collapse drops, what the release ships) had to be stated. Net for
+the whole file: −73 lines, roughly −1.7% of body characters. Every cut on the list below
+that a reviewer agreed on has now been taken, so the remaining ~3 pages have to come from
+material the reviewers wanted **kept** — which makes it an author's call, not an editorial
+one. The realistic options are the four in the ordered list below, and the first is the
+only one that yields a page on its own.
+
 Where the remaining ~3 pages would have to come from, in the order I would take them:
 
 1. **The three artifact use cases** (clustering, centrality, co-occurrence) — roughly 110
@@ -389,13 +428,13 @@ load-bearing claim":
 
 | Cut | Agreement | Disposition |
 |---|---|---|
-| Pre/post repair scoring + the agreement-instrument appendix (ICC, Krippendorff, two Fleiss binnings, median split) | **3/3** | → two sentences in Limitations; delete the statistics (see S1) |
-| `sec:r-selection` race-framing non-reproduction + `app:race` (52-node classifier validation, odds-ratio table) | **3/3** | → one paragraph carrying the general control: selection-conditioned statistics are unstable under merge and threshold choices |
-| Everything quoted from the earlier internal substrate — `tab:clustering-methods`, the first four rows of `tab:dedup-thresholds`, `app:sensitivity` hop counts | **3/3** | → cut, or re-derive on the released graph. Opus additionally asks that the recurring "earlier pass on a merged 200,061-node graph with an 8.5× sparser similarity layer" thread be consolidated into one footnote |
-| `app:clusters` 40-cluster name list | 2/3 | → size range plus 3–4 examples; ship the list with the release |
-| `sec:m-recovery` + the 441-row of `tab:populations-master` | 2/3 | → one clause (see C6) |
-| Meta-grader agent-session operational detail (13 JSON shapes, folder-agent behaviour, uneven denominators) in `app:judgeprompt` | 1/3 | → cut, or re-run the graders on a fixed schema |
-| The "218 of 218 numeric claims" audit narrative | 1/3 | → mention the reproducibility scripts once; it demonstrates manuscript consistency, not empirical validity |
+| ~~Pre/post repair scoring + the agreement-instrument appendix~~ **CUT 2026-08-16** | **3/3** | done: `sec:r-judge` keeps one paragraph naming the confound and the null-repair control; ICC / ICC(2,k) / Krippendorff / two Fleiss binnings / median split all deleted, receipt still ships |
+| ~~`sec:r-selection` race-framing + `app:race` odds-ratio table~~ **CUT 2026-08-16** | **3/3** | done: three paragraphs to one, `tab:race` gone, the 2.7-5.2 OR range kept in a clause, classifier precision kept |
+| ~~Everything quoted from the earlier internal substrate~~ **CUT 2026-08-16** | **3/3** | done: `tab:clustering-methods` and `tab:dedup-thresholds` deleted, `app:sensitivity` hop counts reduced to the growth ratio. `sec:m-repro`'s carve-out now names only the merge sweep and that ratio |
+| ~~`app:clusters` 40-cluster name list~~ **CUT 2026-08-16** | 2/3 | done: size range plus four examples; the full list ships with the release, which also closed one `\OPEN{}` block |
+| `sec:m-recovery` + the 441-row of `tab:populations-master` | 2/3 | **partly done**: the number is printed (C6) rather than the section cut. Cutting to one clause is still available if the page budget needs it |
+| ~~Meta-grader agent-session operational detail~~ **CUT 2026-08-16** | 1/3 | done: the consequence for the denominators is kept, the JSON-shape counts are gone |
+| ~~The "218 of 218 numeric claims" audit narrative~~ **CUT 2026-08-16** | 1/3 | done: the body prints no count; the audit is at 235/235 and says so only in source comments and `REPRODUCE.md` |
 
 **Explicitly keep**, named by every model that raised the topic: the merge/centrality
 artifact (`sec:r-hub`), `tab:gates`, `tab:populations-master`, the source-type skew table,
