@@ -405,6 +405,189 @@ numbers labelled "not evidence of anything wider", it becomes hard for a reader 
 the paper *does* establish, and a draft stating two or three defensible claims and cutting
 the rest would be stronger, not less honest.
 
+## Reviewer-comment register — every fixable comment, one row each
+
+Built 2026-08-15 PM by stepping through all six external review files line by line. **This
+is the master; the S / C / L / cut entries above are the scoped subset.** Every row is one
+distinct comment. Rows already scoped elsewhere carry a cross-reference; rows marked **NEW**
+were not captured anywhere until this pass. Source codes: **OC/OW** = Opus 5
+conference/workshop, **GC/GW** = GPT-5.6 Sol, **MC/MW** = Gemini 3.1 Pro.
+
+Work them down by editing this table's Status column. Strengths and praise are not
+registered — only things that change the paper.
+
+### A. Submission-blocking
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R1 | Eight `\OPEN{[GAP:]}` blocks render in the PDF | all 6 | C1 |
+| R2 | `\author{Author List Placeholder}` renders on page 1 | GW | L1 |
+| R3 | Release URL absent — the central contribution cannot be assessed at review time | all 6 | C1, D5 |
+| R4 | Licence unnamed; ARD redistribution terms unresolved | all 6 | C1, D4 |
+| R5 | Four GAP blocks are notes addressed to co-authors, not manuscript content | OC OW GC GW | C1 |
+| R6 | Appendix K's GAP asks to publish cluster representatives "so reviewers can audit the cluster naming" — i.e. the audit the authors themselves consider necessary was not enabled | OC | **NEW** |
+| R7 | Provide an anonymised artifact URL during review, not just at camera-ready | GC | **NEW** |
+| R8 | Ship the artifacts needed to reproduce the intake counts (the failure directories are not in the release) | GC | **NEW** |
+
+### B. Evidence gaps
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R9 | No human validates any node, edge, chain, maturity label, confidence label or judge verdict | all 6 | S4 |
+| R10 | Human anchor should cover node-level precision *and* recall against human annotation | OC | S4 |
+| R11 | Human anchor needs inter-annotator agreement or it is one person's opinion | OC GC | S4 |
+| R12 | Human anchor should capture source spans / edge-level grounding | GC GW | S4 |
+| R13 | Prefer 50–100 chain-yielding documents over 20 | GC | S4 |
+| R14 | Verified population ≈ disjoint from analysed population (12/100, 17/2,772) | all 6 | S2 |
+| R15 | Second judge run stratified on chain-yielding papers — needs no new method | OC OW GC | S2 |
+| R16 | 0.6% vs 28.8% omission discrepancy unreconciled; paper reports no usable fidelity number | all 6 | S4, S10 |
+| R17 | **Judge flags a mean 7.8 missing relationships/paper against a mean 10.8 extracted edges — edge recall may be poor while node recall looks high** | GC GW | S10 |
+| R18 | Report the coverage list as covered / partially covered / missing, and say whether those were manually inspected | GW | S10 |
+| R19 | Explain why the abstract emphasises 9 added nodes rather than the edge-coverage findings | GW | S10 |
+| R20 | The repair schema had no add-edge slot — state that as the explanation rather than leaving it implicit | GC | S10 |
+| R21 | Both gates (edge confidence, intervention maturity) are unvalidated model self-assessments; sensitivity is not validation | all 6 | S4, D3 |
+| R22 | The 70% containment rule ignores edge identity, order and semantics; no annotation study shows retained paths are distinct arguments | GC GW | **NEW** |
+| R23 | Validate the gates and the collapse rule on a small hand-checked sample | GW | **NEW** |
+| R24 | Report sensitivity of the substantive retrieval examples to the gates, not only aggregate counts | GW | **NEW** |
+| R25 | Stage probe is circular — one call wrote both text and label; TF-IDF on the name alone reaches 69.4% | OC OW GC GW | S3 |
+| R26 | No baseline: flat triples, abstract-only, non-reasoning model, sentence-level argument mining, retrieval over chunks | all 6 | S6 |
+| R27 | Baselines should demonstrate *why a reasoning model is necessary* for this schema | MC | S6 |
+| R28 | Retrieval use case rests on two hand-picked arXiv examples; no query set, relevance judgements or faithfulness evaluation | all 6 | S9 |
+| R29 | Schema ablation (prompt without the five stages) not run | OC OW GC GW | S8 |
+| R30 | Degraded-source control (sentence-shuffled / abstract-only / reference-list-only) not run | OC OW GC GW | S8 |
+| R31 | Add an out-of-scope-documents arm (problem/solution structure, non-safety) to the ablation | GC | S8 |
+| R32 | No repeat-extraction run; descriptives sit on an unmeasured noise floor | OC OW GW | S7 |
+| R33 | Meta-grader denominators are run artifacts (95/95/13; taxonomy 43/100) — re-run on one fixed schema or drop the taxonomy | GC GW | S1 note, #150 change 3 |
+| R34 | Prime-number chain passes every filter *including* confidence ≥3 and maturity 4 — the gates do not reject a clear negative | GC GW | **NEW** |
+| R35 | How prevalent is the Euclid-style invented framing in the corpus at large? | MC | S8 |
+| R36 | Consider a safety-relevance pre-filter classifier to stop the schema hallucinating relevance | MC | **NEW** |
+| R37 | Does the similarity layer have any use case that is not confounded, or should downstream users be told structural-edges-only? | MW | **NEW** |
+
+### C. Factual and internal-consistency corrections
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R38 | "schema-constrained" vs the paper's own "prompt-enforced, no structured-output constraint" | GC GW | C2 |
+| R39 | "a re-run reproduces the same model generation" vs "not bit-reproducible" | GC GW | C3 |
+| R40 | `tab:gates` labels the maturity-≥3 row "(deployed)" though the rubric reserves that for maturity 4 | GC GW | C4 |
+| R41 | `refs.bib` carries non-standard annotations, mini-summaries and "Verified" notes | GC GW | C5 |
+| R42 | Check for future-dated publication/retrieval entries | GC | **checked, clear** |
+| R43 | "One call per document" vs a client that retries three times | GC | C7 |
+| R44 | Recovery result quoted as "cannot at a useful rate" with no number in the body | OC OW GC GW | C6 |
+| R45 | Judge found 108 referential-integrity findings, 42 orphans, 56 duplicate pairs; no repaired graph was rebuilt — does the release ship them? | GC GW | C8 |
+| R46 | Users need a way to distinguish audited from unaudited content in the release | GW | **NEW** |
+| R47 | Output-token and cost figures extrapolated from a single surviving response, reasoning tokens assumed — label as estimate and move to appendix, or give actual invoices | GC | **NEW** |
+| R48 | Several failure counts come from an earlier substrate or unreleased directories | GC | cut list row 3 |
+| R49 | Appendix tables from the earlier substrate are mixed with released-substrate tables, the distinction relegated to captions | OC | cut list row 3 |
+
+### D. Overstated claims to soften
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R50 | "The verification stage is half the contribution" | OC OW | L9 |
+| R51 | "what makes the extraction checkable rather than merely large" | OC OW GC GW | L9 |
+| R52 | "builds and verifies this missing layer" — it is an audit/diagnostic stage, not a verified corpus | GC | L12 |
+| R53 | Use "auditable" / "subject to an LLM diagnostic pass" rather than "verified" | GC | L12 |
+| R54 | "implied coverage of 99.4%" should go if the edge findings stand | GW | S10, L12 |
+| R55 | Documents "argue a complete mechanism" → "the extractor produced a chain judged to pass the model-assigned gates" | GC | L12 |
+| R56 | "This is the single licensing gate" | OC OW GC | L9 |
+| R57 | "That qualifier is essential" | OC | L9 |
+| R58 | "The single most consequential row is the sixth" (table caption) | OC OW GW | L9 |
+| R59 | "Two constraints deserve naming here rather than only in the table" | OC OW | L9 |
+| R60 | "the choice of extractor moves the bill by about a factor of five — more than any other decision in the pipeline" | OC GC GW | L9 |
+| R61 | "The sharpest is a merge-manufactured centrality hub at 90×" in the Conclusion — an artifact of a step not applied to the released substrate | OC OW GC GW | L9 |
+| R62 | "218 of 218 numeric claims passing" reads as a quality badge; it shows manuscript consistency, not validity | GC GW | L9, cut list |
+| R63 | "fifty documents would settle it" — would inform, not settle | GW | L9 |
+| R64 | The two worked queries called "the precondition for the cross-paper analysis of §6.2" — frames an unevaluated demo as foundational | OW | L9 |
+| R65 | "would make research coordination and the search for under-addressed pairs tractable" → "could support" | GW | L9 |
+| R66 | "The corpus will date. The paired extract-and-verify design will not." — unsupported and absolute | GC GW | L5 |
+| R67 | "the weakest point in the evidence" / "the clearest reason the protocol requires a human anchor" | OC | L9 |
+| R68 | Structural completeness (87.4%) and the stage probe (98.8%) are near-vacuous yet carry the abstract, §1.1, §3.1 and the Conclusion — remove from the abstract | OW | **NEW** |
+| R69 | §4.4/§4.5 give outsized prominence to debunking an internal artifact, with deep statistical tables | MC MW | cut list |
+| R70 | "Two controls are needed and their order matters" — pedantry about a manufactured artifact | MW | L9 |
+| R71 | Compress the merge artifact substantially unless graph-analysis controls are elevated to a stated secondary contribution | GW | **NEW** |
+
+### E. Cuts
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R72 | Pre/post repair scoring → two sentences in Limitations | all 6 | cut list 1, S1 |
+| R73 | Delete the ICC / ICC(2,k) / Krippendorff / two-binning Fleiss / median-split paragraph | OC OW GC | cut list 1 |
+| R74 | Race-framing §4.5 → one paragraph carrying the general control | all 6 | cut list 2 |
+| R75 | Cut `app:race` except the two-line corpus prevalence | OC OW GC GW | cut list 2 |
+| R76 | Table 15 odds ratios belong in the release, not the paper | OC | cut list 2 |
+| R77 | Delete `tab:clustering-methods` (Table 13); keep the same-space table | OC OW GC | cut list 3 |
+| R78 | Cut the first four rows of `tab:dedup-thresholds` (Table 11) or re-derive them | OW | cut list 3 |
+| R79 | Cut `app:sensitivity` similarity-hop counts | OC OW GC | cut list 3 |
+| R80 | Consolidate the recurring "earlier internal pass / 8.5× sparser layer" thread into one footnote | OW | cut list 3 |
+| R81 | Cut `app:clusters` 40-name list to the size range plus 3–4 examples | OW GC GW | cut list 4 |
+| R82 | Cut §2.2.2 recovery experiment and the 441-row of the populations table to one clause | OC OW GC GW | cut list 5, C6 |
+| R83 | Cut the meta-grader agent-session operational detail (13 JSON shapes, folder-agent behaviour, uneven denominators) | GC GW | cut list 6 |
+| R84 | Cut the "218 of 218" audit narrative from the main text | GC GW | cut list 7 |
+| R85 | **Cut the §2.5 non-monotonicity aside** ("0.90 keeps 5,460 where 1.00 keeps 5,427") — an artifact of a greedy heuristic that changes no reported number; keep the 0.60/0.70/0.90 row | OC | **NEW** |
+| R86 | **Cut the narration of how the deployed pipeline came to compute an unsound silhouette** — state the correct comparison and the conclusion only | OC | **NEW** |
+| R86b | **Cut the debug-history narrative from §4.4 too** (what the pipeline *used* to do), keeping the finding. Suggested replacement, verbatim: "Naive node deduplication using transitive closure over similarity thresholds manufactures artificial centrality hubs (see App H). Therefore, our released dataset and primary analyses avoid this by..." — then present the correct results. Note the tension with R121: keep the artifact, cut the story of how we hit it | MW | **NEW** |
+| R87 | Move the speculative output-token/cost reconstruction to an appendix or label it explicitly as an estimate | GC | R47 |
+
+### F. Language and register
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R88 | Aphoristic paragraph-enders, ~8 instances | OC OW | L2 |
+| R89 | Contrastive "X is not Y" / "read as A never B", ~30 instances | OC OW GC GW | L3 |
+| R90 | "the honest statement of yield" / "the honest positive residue" | GC GW MW | L4 |
+| R91 | "All three duly record an improvement" — "duly" reads sarcastic | GC GW | L6 |
+| R92 | "We add the layer under it." | OW GW | L2 |
+| R93 | "What the release contains. Five things:" — blog register | MW | L6 |
+| R94 | "A closing note: some statistics are true by design." | MW | L6 |
+| R95 | Second-person / instructional register ("A reader reusing the release then knows...") | OC | L6 |
+| R96 | Confessional first-person process narration ("we abandoned the attempt", "we draw nothing from that", "we did not run it") | OC | L6 |
+| R97 | Internal-memo tone in §3.2 ("Scoring the repairs is a design lesson, not a result...") | MC | L6 |
+| R98 | Legalistic meta-formulations ("what licenses reading the other rows", "which is what settles it", "a reader would otherwise misread a number") | GC | L7 |
+| R99 | Advocacy phrasing ("The extension this work most needs", "What makes a mechanism layer worth building", "the natural agentic use") | GC | L5 |
+| R100 | Formulaic openers ("Three things follow", "Two properties bear on", "What this does not show") | GC | L8 |
+| R101 | The same three caveats repeated across six to eight sections | OW GC GW | L10 |
+| R102 | The "Use of AI Assistance" section is itself imprecise about its own scope | OW | C1, L12 |
+| R103 | Appendix K ends in a bracketed instruction printed to the reader | OW | C1 |
+| R104 | Acknowledgments carry Discord/stand-up project-management detail | OC | L11 |
+| R105 | Mixed British/American spelling; inconsistent number-words; `\emph{}` on ordinary words 40+ times | internal | L13 |
+| R106 | Source-file editorial trail (REMOVED/Moved-out comments, frozen-Overleaf notes, donor gate block) | internal | L14 |
+| R107 | Reads as an internal audit log rather than a finished article | GC GW | L6, cut list |
+
+### G. Release, licensing and ethics
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R108 | Name the licence pair and document the legal basis per source type | GC GW | C1, D4 |
+| R109 | The unresolved licence is a limitation with legal exposure — state a fallback position rather than deferring | OW | D4 |
+| R110 | Provide a documented correction/removal procedure | GC | Impact Statement (present; confirm it is in the release docs too) |
+| R111 | Distinguish unverified model assertions from source quotations in the documentation **and in any user interface** | GC | **NEW** |
+| R112 | Misattribution rate to named authors is unknown because no human validates extractions | GW | S4 |
+| R113 | ARD's own selection bias (who curates, what it excludes, English-only) is inherited by every number and is not discussed | OW | D-note |
+| R114 | Does the release let a reuser re-enumerate at any gate setting from the dump, or only consume the two path files? | OW | **NEW** |
+
+### H. Structure, length, framing
+
+| # | Comment | Src | Maps to |
+|---|---|---|---|
+| R115 | Body is far too long and repetitive for its central contribution | GC GW | page budget |
+| R116 | Eleven shifting denominators load the reader | GC | `tab:populations-master` (done) |
+| R117 | Main text is not readable standalone — 30+ forward references, several carrying the actual evidence | internal | page budget |
+| R118 | Make the ungated chain set the primary release unit, gates as a user-side filter | OC OW | D3 |
+| R119 | Over-hedging makes it hard to say what the paper *does* establish; state two or three defensible claims and cut the rest | OW | page budget note |
+| R120 | Corpus stops at 2023 — caps significance; a 2024–2026 slice would change it | all 6 | "deliberately not on this list" |
+
+### I. Explicit keeps — do not cut these while working the list
+
+| # | Item | Src |
+|---|---|---|
+| R121 | The merge/centrality artifact and its EC table (compress, do not remove) | OC OW GC GW |
+| R122 | The gate-sensitivity grid `tab:gates` | OC OW GC |
+| R123 | The populations table `tab:populations-master` | OC OW GC |
+| R124 | The source-type skew table | OC |
+| R125 | The Euclid/prime-number failure case `app:failure` — "worth a slide by itself" | OC OW GC GW MC |
+| R126 | The same-space silhouette comparison (one clean version) | OC GC |
+
 ## What is deliberately not on this list
 
 - **Extending the corpus past 2023.** Both reviews note ARD stops at 2023. Running the
