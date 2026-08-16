@@ -572,6 +572,85 @@ def main():
         note="653 of 653 nodes came back with a label inside the five-stage vocabulary",
     )
 
+    # ---- schema ablation and degraded source (S6+S8, issue #165) ---------------------
+    # Read from the receipt, as the other Class A studies are: re-deriving would mean
+    # re-buying 85 o3 calls. The receipt is computed from raw responses committed beside
+    # it, so a reader can re-score without re-running the extraction.
+    ab = receipt("experiment_review_schema_ablation_report.json")["results"]
+    hl = ab["headline"]
+    pair = ab["paired_against_the_released_extraction"]
+    check(
+        "ablation: arm A chain rate, EF sample",
+        100.0,
+        hl["A_released_on_the_EF_sample"]["pct_with_chain"],
+        note="the instrument check: this scorer reproduces the released enumerator on "
+        "every document of the sample",
+    )
+    check(
+        "ablation: arm A all-five share, EF sample",
+        65.0,
+        hl["A_released_on_the_EF_sample"]["pct_chains_all_five"],
+    )
+    check(
+        "ablation: arm A chain rate, G sample",
+        100.0,
+        hl["A_released_on_the_G_sample"]["pct_with_chain"],
+    )
+    check(
+        "ablation: arm A all-five share, G sample",
+        93.3,
+        hl["A_released_on_the_G_sample"]["pct_chains_all_five"],
+    )
+    check("ablation: arm E documents returning parseable JSON", 28, hl["E"]["n"])
+    check(
+        "ablation: arm E chain yield pct of attempted",
+        36.7,
+        hl["E"]["pct_of_attempted_yielding_a_chain"],
+    )
+    check(
+        "ablation: arm E chains carrying all five stages",
+        0.0,
+        hl["E"]["pct_chains_all_five"],
+        note="the ablation headline: un-prompted, the five-stage chain does not appear",
+    )
+    check(
+        "ablation: arm E documents with a chain",
+        11,
+        pair["E"]["of_those_also_yielding_a_chain_in_this_arm"],
+    )
+    check(
+        "ablation: arm F chain yield pct",
+        30.0,
+        hl["F"]["pct_of_attempted_yielding_a_chain"],
+        note="confabulation rate from sentence-shuffled sources",
+    )
+    check("ablation: arm F all-five share", 46.3, hl["F"]["pct_chains_all_five"])
+    check(
+        "ablation: arm G chain yield pct",
+        8.0,
+        hl["G"]["pct_of_attempted_yielding_a_chain"],
+    )
+    check(
+        "ablation: arm G documents with a chain",
+        2,
+        pair["G"]["of_those_also_yielding_a_chain_in_this_arm"],
+    )
+    check(
+        "ablation: arm G declined to emit a graph",
+        6,
+        hl["G"]["no_graph_returned"]["declined_no_json_block"],
+    )
+    lm = ab["arm_E_label_mapping_summary"]
+    check("ablation: arm E distinct emergent labels", 144, sum(lm.values()))
+    check("ablation: arm E labels mapping onto no stage", 5, lm["unmappable"])
+    check(
+        "ablation: arm E labels mapping onto one of the five",
+        138,
+        sum(v for k, v in lm.items() if k not in ("unmappable", "risk")),
+        note="the split the paper reports: the vocabulary is recoverable un-prompted, the "
+        "seven-node chain is not",
+    )
+
     # ---- comparison against an existing topical index (S12, issue #166) -------------
     # Re-derived here from the VENDORED categories.json plus the released graph, not read
     # back from the comparison receipt. The receipt supplies only the title-to-URL map,
