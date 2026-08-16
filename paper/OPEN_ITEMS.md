@@ -51,8 +51,7 @@ Worked top to bottom on **2026-08-16 PM**. Each row names the issue, the PR, wha
 and where it landed in `paperA_altstyle.tex`. Rules that govern all of it: `git pull
 --ff-only` the manuscript repo **before you Read**, push the same session, keep the `.tex`
 pure ASCII, and after any manuscript edit run `asciify_tex.py` → `texlint.py` →
-`graph_analysis/experiment_paper_claim_audit.py` (**285/285** as of the artifact-comparison
-merge; if a number leaves the manuscript, delete its `check(...)` line, and if one arrives,
+`graph_analysis/experiment_paper_claim_audit.py` (**302/302** on the tip branch; if a number leaves the manuscript, delete its `check(...)` line, and if one arrives,
 add one). Every study gets a GitHub issue and a PR.
 
 | | Item | State | Issue / PR | Landed in the manuscript |
@@ -60,7 +59,7 @@ add one). Every study gets a GitHub issue and a PR.
 | R0 | OpenAI key on this machine | ✅ used | — | not a manuscript item |
 | R1 | Download ARD | ✅ **was never needed** | — | — |
 | R2 | S6+S8 schema ablation + degraded source | ✅ done | #165 / PR #169 | `sec:r-stages`, `sec:limitations`, `app:failure`, new `app:ablation` |
-| R3 | S11 multi-model consistency, n=20 | 🔄 running | #168 / PR pending | `sec:limitations` "Single extractor, single run" |
+| R3 | S11 multi-model consistency, n=20 | ✅ arms A/B done, C running | #168 / PR #170 | `sec:limitations`, rewritten around the run-to-run floor |
 | R3b | S12 comparison against an existing artifact | ✅ done | #166 / PR #167 | `sec:related`, first paragraph |
 | R4 | L3 contrastive corrections | ✅ done, target missed | — | throughout; manuscript `99a20ec` |
 | R5 | L10 repeated caveats, L12 verification→audit | ✅ done | — | throughout; manuscript `99a20ec` |
@@ -546,7 +545,7 @@ the only study that would let the paper make a fidelity claim about the schema i
 rather than about the extractor's consistency. If budget appears for exactly one Tier 3
 study, this is the one with the most upside — and the most risk.
 
-### S11. Multi-model extraction consistency — 🔄 **RUNNING 2026-08-16 (issue #168)**
+### S11. Multi-model extraction consistency — ✅ **ARMS A/B DONE 2026-08-16 (issue #168, PR #170)**
 
 **Answers** the rendered gap in Limitations that currently asks a co-author to recover an
 n=20 o3 / GPT-5 / Claude-4 check run earlier in the project. That data was produced manually,
@@ -566,6 +565,24 @@ stability across models that never produced the corpus. Say which was run either
 
 **Either outcome closes the gap.** Numbers replace the `\OPEN{}` block; a failed run means
 deleting it and keeping the limitation as stated.
+
+✅ **Result: the counts survive a re-run and the gate does not.** `o3` re-extracting
+documents it already extracted gives 21.1 nodes and 21.0 edges against the shipped 21.0 and
+20.9, with the five stages within two points — but a chain for **9 of 18** where the shipped
+run has 18 of 18, because maturity >= 3 lands on an intervention in 11 documents rather than
+18. Edge confidence is stable. **The attribute that selects the reporting unit is the
+unstable one**, which is the sharpest form of reviewer R21 anywhere in this file.
+
+🔴 **Read it as an upper bound.** The sample is #165's chain-yielding sample, so the shipped
+side is 18 of 18 by construction and a re-run can only lose. **The next study on this list
+should be the unconditioned arm: 20 documents drawn from the corpus rather than from the
+chain-yielding subset, ~USD 2, and it turns this into a symmetric rate.**
+
+Also measured: node *identity* is unstable where counts are not — a shipped risk node has a
+counterpart in the re-run 46.5% of the time at cosine 0.80 over name embeddings, 27.8% at
+0.85, 19.0% lexically. And `gpt-5` under the identical prompt extracts 1.8x the nodes, 2x
+the edges and yields a mean of 97.8 chains per document against `o3`'s 1.4, which is what
+denser graphs do to a path enumerator.
 
 ### S12. Comparison against existing artifacts — ✅ **DONE 2026-08-16 (issue #166, PR #167)**
 
