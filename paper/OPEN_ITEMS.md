@@ -200,9 +200,10 @@ which the anchor is one person's opinion.
 **Cost.** Zero dollars. **~2–4 hours of one author's time**, plus ~1 hour for the second
 annotator's subset.
 
-**Owner.** This is issue #150's centre of gravity, assigned to Sai and untouched since
-2026-08-11. The ticket as written does not carry the chain-yielding sampling change above —
-see D8 and `paper/TICKET_150_UPDATE_LOCAL.md` before anyone starts. I can generate the annotation packet — the 20 papers, their
+**Where it is tracked.** This is issue #150's centre of gravity. The ticket is open to
+whoever on the team picks it up and is unstarted as of 2026-08-15. It does **not** carry the
+chain-yielding sampling change above — read D8 and `paper/TICKET_150_UPDATE_LOCAL.md` before
+anyone starts, or the sample lands on the wrong population. I can generate the annotation packet — the 20 papers, their
 extractions, a blank verdict sheet and the rubric — so the time spent is judgment only.
 
 ### S5. Manual 50-instance error taxonomy
@@ -302,6 +303,34 @@ how badly a reviewer reacts to finding it.
 | C7 | "One call per document" vs a client that retries up to three times — distinguish logical requests from API attempts | 1/3 | `max_retries=3` in Methods |
 | C8 | The release's defect status is undocumented: the judge found 108 referential-integrity findings, 42 orphans and 56 duplicate pairs, and no repaired graph was rebuilt. State whether the released dump carries them | 2/3 | consistent with `app:judge` |
 
+## Language, register and typography — the low-hanging fruit
+
+Every reviewer at both bars flagged writing style, and until 2026-08-15 PM none of it was
+recorded here — it lived only in the review files. Collected below so it can be worked down
+rather than re-read. Instances are quoted so they are greppable in `paperA_altstyle.tex`.
+None of this requires a decision; all of it is a prose pass.
+
+| # | Item | Agreement | Action |
+|---|---|---|---|
+| L1 | **`\author{Author List Placeholder}` (L102) renders on page 1** — a *ninth* visible placeholder, separate from the eight `\OPEN{}` blocks of C1 | 1/3 | goes with G15; until then it is the first thing a reviewer sees |
+| L2 | **Aphoristic paragraph-enders.** "We add the layer under it."; "A corpus of $N$ short chains is exactly $N$ components until something links them."; "A faithful extraction from a weak paper is a successful extraction."; "The objective above is what the step is for; the counts below are what this approximation to it produced."; "The counts require no control, being direct tallies." | **3/3** | the internal reviews counted eight and said keep two. Opus: "deployed forty times they read as generated polish and displace information" |
+| L3 | **Contrastive correction** — "X is not Y", "read this as A and never as B". ~30 instances by the internal count, "well over a dozen" by Opus's | **3/3** | keep where a plausible misreading exists *and* the paper has evidence about it; target under 8 |
+| L4 | **"honest" as editorial** — "the honest statement of yield", "the honest positive residue" | 2/3 | GPT-5.6 Sol: "implicitly characterizes alternative summaries as dishonest" |
+| L5 | **Promotional / advocacy** — "The corpus is a snapshot of one dataset and will date. The paired extract-and-verify design will not."; "would make research coordination ... tractable"; "the natural agentic use"; "The extension this work most needs"; "What makes a mechanism layer worth building" | 2/3 | "will not [date]" is unsupported and absolute — models, prompts and schemas date too. "tractable" → "could support" |
+| L6 | **Conversational / blog register** — "What the release contains. Five things:"; "A closing note: some statistics are true by design."; "All three duly record an improvement"; "the reader who takes the release and does something with it" | 2/3 | "duly" reads as sarcasm |
+| L7 | **Legalistic meta-formulations** — "what licenses reading the other rows"; "which is what settles it"; "A reader would otherwise misread a number" | 1/3 | state the assumption and its implication directly |
+| L8 | **Formulaic openers** — "Three things follow"; "Two properties bear on"; "What this does not show" | 1/3 | frequency is the tell, not any single instance |
+| L9 | **Over-attribution of importance** (the flag Martin asked reviewers for) — "The verification stage is half the contribution" (`app:judgeprompt`); "what makes the extraction checkable rather than merely large" (`sec:r-judge`); "This is the single licensing gate"; "That qualifier is essential" (`sec:r-corpus`); "The single most consequential row is the sixth" (`tab:populations-master` caption); "the choice of extractor moves the bill by about a factor of five — more than any other decision in the pipeline" (`sec:m-repro`); "The sharpest is a merge-manufactured centrality hub at 90x" (Conclusion); "218 of 218 numeric claims passing" as a quality badge; "fifty documents ... would settle it"; the two worked queries as "the precondition for the cross-paper analysis" | **3/3** | the verification-stage claims are the load-bearing ones: the stage ran on 0.85% of documents and 0.6% of the analysed chains. The 90x hub in the Conclusion is an artifact of a step **not applied** to the released substrate, elevated to a headline |
+| L10 | **Same three caveats repeated across 6–8 sections** (verified ≠ analysed; yield is a gate property; completeness is schema-filling) | 2/3 | one clear statement each plus cross-references |
+| L11 | **Acknowledgments carry project-management detail** (Discord stand-ups, working threads) | 1/3 | not scholarly acknowledgment |
+| L12 | **Terminology overstates the evidence** — "verification", "implied coverage", documents "argue a complete mechanism" | 1/3 | → "the extractor produced a chain judged to pass the model-assigned gates"; "auditable" or "subject to an LLM diagnostic pass" rather than "verified" |
+| L13 | **Mechanical sweeps** (from the internal reviews, not re-raised externally): mixed British/American spelling — "randomisation", "neighbourhood", "specialised", "favourable" against "normalization", "labeling", "colored"; number-words inconsistent — "Twelve of the 100" vs "12 of the 100"; `\emph{}` 40+ times, mostly on ordinary words | internal | one spelling variety, one number rule, `\emph{}` for term introductions only |
+| L14 | **Source-file editorial trail** — "REMOVED 2026-08-14", "Moved out of sec:r-hub", "the frozen Overleaf reported...", "the module docstring says 80%, the code uses 70%", the compute-donor gate block. Several disclose internal disagreement, an Overleaf workflow and a private donor | internal | strip or move to a NOTES file before any public posting. **Not** the same as C1: these are comments and never render |
+
+**Checked and clear:** GPT-5.6 Sol asked that future-dated bibliography entries be verified
+against the submission date. Checked 2026-08-15 — `refs.bib` years top out at 2025, so there
+is nothing to fix. The four `urldate` / "Verified" annotations are C5's business.
+
 Two further items are judgement calls for the team rather than corrections. **Ungated
 release (Opus, both bars):** make the ungated chain set the primary released unit with the
 gates exposed as a user-side filter — this defuses "the reporting unit is selected by two
@@ -322,8 +351,8 @@ number in the paper and is discussed nowhere beyond the source-type mix.
 | D4 | **Licence pair + ARD redistribution position** | team, possibly legal | = C1 row 2; Opus asks for a stated fallback rather than a deferral |
 | D5 | **Release hosting + URL** | team | = C1 row 1. Blocks C1 and every reviewer's first question |
 | D6 | Compute-donor consent (G14), author list + contribution statement (G15), AI-drafting scope | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** — these three are tracked there, not here, and they gate four of the eight `\OPEN{}` blocks |
-| D7 | Co-author coordination: Gleb draft send, Axel's `--local` question, Sai on issue #150, PR #151 (#149 was closed unmerged) | team | 🔒 **Detail in `NEXT_STEPS_PRIVATE.md`** |
-| D8 | **Issue #150 refresh — priority, and whether to send it now.** Verified 2026-08-15: all five open items and all three nice-to-haves untouched, no comments or commits since 2026-08-11, neither target CSV exists. Four things changed underneath the ticket, one of which would waste the work if he starts from it as written (the human anchor must sample **chain-yielding** documents, not the judged 100) | team; change 3 of it waits on D2 | 🔒 **Full write-up and a ready-to-send draft comment in `paper/TICKET_150_UPDATE_LOCAL.md`** (local, gitignored). Nothing has been posted to the ticket |
+| D7 | Co-author coordination: draft send, the outstanding contribution question, the #150 refresh (D8), PR #151 (#149 was closed unmerged) | team | 🔒 **Named detail in `NEXT_STEPS_PRIVATE.md`** — who owes what stays off the remote, per the `paper/` gitignore policy |
+| D8 | **Issue #150 refresh — priority, and whether to send it now.** Verified 2026-08-15: all five open items and all three nice-to-haves unstarted, no ticket activity since 2026-08-11, neither target CSV exists. Four things changed underneath the ticket, one of which would waste the work for whoever picks it up (the human anchor must sample **chain-yielding** documents, not the judged 100) | team; change 3 of it waits on D2 | 🔒 **Full write-up and a ready-to-send draft comment in `paper/TICKET_150_UPDATE_LOCAL.md`** (local, gitignored). Nothing has been posted to the ticket |
 
 ---
 
