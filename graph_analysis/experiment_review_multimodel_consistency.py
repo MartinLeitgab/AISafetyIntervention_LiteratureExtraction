@@ -86,6 +86,14 @@ RATES = {"o3": (2.00, 8.00), "gpt-5": (1.25, 10.00), "claude-opus-5": (0.0, 0.0)
 JACCARD_THRESHOLDS = [0.5, 0.6, 0.7]
 MATCH_AT = 0.6
 
+# A token-set criterion cannot separate "same concept, other words" from "different
+# concept", and the o3 re-run scores only 19% against its own released extraction under it,
+# so the lexical measure needs a semantic one beside it or every arm reads as disagreeing.
+# The embedding model is the one the pipeline itself uses on node text.
+EMBED_MODEL = "text-embedding-3-small"
+EMBED_CACHE = ROOT / "phase2_results/multimodel_raw/name_embeddings.json"
+COSINE_THRESHOLDS = [0.80, 0.85, 0.90]
+
 _print_lock = threading.Lock()
 _STOP = re.compile(r"\b(the|a|an|of|in|to|for|and|or|by|with|on|from|as|at|is|are)\b")
 
@@ -111,6 +119,44 @@ def best_match_rate(left: list[frozenset], right: list[frozenset], thr: float) -
         / len(left),
         1,
     )
+
+
+def embed_names(client, names: list[str]) -> dict:
+    """One embedding per distinct name, cached on disk so re-scoring costs nothing."""
+    cache = (
+        json.loads(EMBED_CACHE.read_text(encoding="utf-8"))
+        if EMBED_CACHE.exists()
+        else {}
+    )
+    todo = sorted({n for n in names if n and n not in cache})
+    for i in range(0, len(todo), 256):
+        chunk = todo[i : i + 256]
+        r = client.embeddings.create(model=EMBED_MODEL, input=chunk)
+        for name, item in zip(chunk, r.data):
+            cache[name] = item.embedding
+        print(f"  embedded {min(i + 256, len(todo))}/{len(todo)}", flush=True)
+    if todo:
+        EMBED_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        EMBED_CACHE.write_text(json.dumps(cache), encoding="utf-8")
+    return cache
+
+
+def cosine(a: list, b: list) -> float:
+    num = sum(x * y for x, y in zip(a, b))
+    na = sum(x * x for x in a) ** 0.5
+    nb = sum(x * x for x in b) ** 0.5
+    return num / (na * nb) if na and nb else 0.0
+
+
+def best_cosine_rate(left: list, right: list, emb: dict, thr: float) -> float:
+    if not left:
+        return 0.0
+    hit = 0
+    for a in left:
+        va = emb.get(a)
+        if va and any(cosine(va, emb[b]) >= thr for b in right if b in emb):
+            hit += 1
+    return round(100 * hit / len(left), 1)
 
 
 def child_env() -> dict:
@@ -201,17 +247,22 @@ def call_openai(client, prompt: str, document: str, model: str, effort: str) -> 
     }
 
 
-def endpoints(nodes: dict) -> tuple[list, list, list]:
+def endpoint_names(nodes: dict) -> tuple[list, list]:
     risks = [
-        norm_tokens(v["name"])
+        v["name"]
         for v in nodes.values()
         if v["type"] == "concept"
         and (v.get("category") or "").strip().lower() == "risk"
     ]
-    intvs = [
-        norm_tokens(v["name"]) for v in nodes.values() if v["type"] == "intervention"
-    ]
-    return risks, intvs, [r | i for r in risks for i in intvs][:400]
+    intvs = [v["name"] for v in nodes.values() if v["type"] == "intervention"]
+    return risks, intvs
+
+
+def endpoints(nodes: dict) -> tuple[list, list, list]:
+    r, i = endpoint_names(nodes)
+    risks = [norm_tokens(x) for x in r]
+    intvs = [norm_tokens(x) for x in i]
+    return risks, intvs, [a | b for a in risks for b in intvs][:400]
 
 
 def main() -> None:
@@ -337,6 +388,7 @@ def main() -> None:
             per_model["released"][u] = {
                 "score": ABL.score_graph(g["nodes"], g["edges"]),
                 "endpoints": endpoints(g["nodes"]),
+                "names": endpoint_names(g["nodes"]),
             }
         for key in ARMS:
             d = RAW_DIR / key
@@ -353,6 +405,7 @@ def main() -> None:
                 per_model[key][rec["url"]] = {
                     "score": ABL.score_graph(nodes, edges),
                     "endpoints": endpoints(nodes),
+                    "names": endpoint_names(nodes),
                     "usage": rec.get("usage"),
                 }
 
@@ -380,6 +433,17 @@ def main() -> None:
                 "mean_chains": round(statistics.mean([x["n_chains"] for x in s]), 2),
                 "stage_mix_pct": stage_mix(s),
             }
+
+        all_names = [
+            n
+            for rows in per_model.values()
+            for r in rows.values()
+            if not r.get("parse_failure")
+            for half in r["names"]
+            for n in half
+        ]
+        print(f"embedding {len(set(all_names))} distinct endpoint names", flush=True)
+        emb = embed_names(ABL.openai_client(), all_names)
 
         pairs = {}
         for a, b in combinations(list(per_model), 2):
@@ -413,6 +477,25 @@ def main() -> None:
                         statistics.mean(i_ba), 1
                     ),
                 }
+            for thr in COSINE_THRESHOLDS:
+                r_ab, r_ba, i_ab, i_ba = [], [], [], []
+                for u in shared:
+                    ra, ia = per_model[a][u]["names"]
+                    rb, ib = per_model[b][u]["names"]
+                    r_ab.append(best_cosine_rate(ra, rb, emb, thr))
+                    r_ba.append(best_cosine_rate(rb, ra, emb, thr))
+                    i_ab.append(best_cosine_rate(ia, ib, emb, thr))
+                    i_ba.append(best_cosine_rate(ib, ia, emb, thr))
+                row[f"cosine_{thr}"] = {
+                    "pct_risks_of_A_matched_in_B": round(statistics.mean(r_ab), 1),
+                    "pct_risks_of_B_matched_in_A": round(statistics.mean(r_ba), 1),
+                    "pct_interventions_of_A_matched_in_B": round(
+                        statistics.mean(i_ab), 1
+                    ),
+                    "pct_interventions_of_B_matched_in_A": round(
+                        statistics.mean(i_ba), 1
+                    ),
+                }
             pairs[f"{a} vs {b}"] = row
 
         receipt["headline"] = {k: agg(v) for k, v in per_model.items()}
@@ -420,7 +503,7 @@ def main() -> None:
         receipt["match_threshold_used_in_prose"] = MATCH_AT
         receipt["per_document"] = {
             k: {
-                u: {kk: vv for kk, vv in r.items() if kk != "endpoints"}
+                u: {kk: vv for kk, vv in r.items() if kk not in ("endpoints", "names")}
                 for u, r in v.items()
             }
             for k, v in per_model.items()
