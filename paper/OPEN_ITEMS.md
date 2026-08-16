@@ -66,6 +66,17 @@ add one). Every study gets a GitHub issue and a PR.
 | R6 | Strip L14 before posting | ⏸ deliberately not now | — | source comments only |
 | R7 | Ungated chain file + CLI flags | ⛔ retired | — | — |
 
+🔴 **The Claude Code CLI is NOT a free execution path, and every note in this file that
+said so was wrong (corrected 2026-08-16 PM).** `claude -p` bills the interactive session's
+usage allowance, which is shared with everything else this project does and is exhaustible.
+Arm C of #168 consumed it at roughly **one percent per minute** while emitting 43k output
+tokens per document, and it had to be killed mid-run. **Use a vendor API and spend dollars**
+-- `paper/review_multi_model.py` has always done this and is the pattern to copy: three
+vendors, three SDKs, keys from `.env` files. Metered Opus 5 on the same work costs **USD
+0.70 per document**, which is cheaper than the session time it would otherwise eat. S3
+(#161/#162) also ran on the CLI and its "USD 0" is wrong in the same way; the study is done
+and does not need re-running, but do not cite it as evidence that the CLI is free.
+
 **R0. Credentials that exist on this machine.** An OpenAI key is at
 `~/0_project_work/ExistentialRiskBenchmark/.env` (`OPENAI_API_KEY`, alongside `GOOGLE_API_KEY`
 and `ANTHROPIC_API_KEY`). It is NOT in this repo and must never be copied into it — read it

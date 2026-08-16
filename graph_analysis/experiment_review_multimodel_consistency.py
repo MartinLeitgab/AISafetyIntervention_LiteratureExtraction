@@ -14,7 +14,12 @@ schema ablation (#165) draws, so the two studies share a baseline:
     released   o3 as shipped, batch API, 2025      already paid for; read from the graph
     A          o3, synchronous /v1/responses       metered
     B          gpt-5, synchronous /v1/responses    metered
-    C          claude-opus-5, Claude Code CLI      subscription auth, USD 0
+    C          claude-opus-5, Anthropic messages   metered
+
+Arm C ran through the Claude Code CLI until 2026-08-16 and was described as free. It is
+not: the CLI bills the interactive session's usage allowance, which is shared with every
+other thing this project does and was being consumed at about one percent per minute at 43k
+output tokens per document. It is an API call now, like the other two arms.
 
 Identical prompt (the released PROMPT_EXTRACT), identical request shape, reasoning effort
 medium where the model takes it. gpt-5.6-sol, the id in OPEN_ITEMS.md, is not in this
@@ -52,10 +57,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import statistics
-import subprocess
 import sys
 import threading
 import time
@@ -77,9 +80,12 @@ MAX_WORKERS = 4
 ARMS = {
     "A_o3": {"provider": "openai", "model": "o3", "effort": "medium"},
     "B_gpt5": {"provider": "openai", "model": "gpt-5", "effort": "medium"},
-    "C_opus5": {"provider": "claude_cli", "model": "claude-opus-5", "effort": None},
+    "C_opus5": {"provider": "anthropic", "model": "claude-opus-5", "effort": None},
 }
-AUTH_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL")
+# Opus emits ~43k output tokens on this prompt, so the ceiling has to clear that with room.
+ANTHROPIC_MAX_TOKENS = 64000
+# Same key file as the OpenAI arms; read at run time, never copied into this repo.
+ENV_PATH = ABL.ENV_PATH
 
 # USD per million tokens, SYNCHRONOUS. Inputs to this script, printed with the result.
 RATES = {"o3": (2.00, 8.00), "gpt-5": (1.25, 10.00), "claude-opus-5": (0.0, 0.0)}
@@ -159,60 +165,59 @@ def best_cosine_rate(left: list, right: list, emb: dict, thr: float) -> float:
     return round(100 * hit / len(left), 1)
 
 
-def child_env() -> dict:
-    """Strip auth vars so arm C bills to the subscription, not the metered API."""
-    return {
-        k: v
-        for k, v in os.environ.items()
-        if k not in AUTH_VARS
-        and k not in ("CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX")
-    }
+def call_anthropic(prompt: str, document: str, model: str) -> dict:
+    """Metered Anthropic API, in the shape paper/review_multi_model.py uses.
 
+    This arm used to shell out to the Claude Code CLI on subscription auth, described in an
+    earlier version of this file as costing USD 0. That was wrong in the way that matters:
+    the CLI bills the interactive session's usage allowance, a shared and exhaustible
+    resource, and it consumed it at about one percent per minute here. Dollars are the
+    cheaper currency, and an API call is also the same kind of object as the other two arms
+    rather than a subprocess with its own harness prompt.
+    """
+    import anthropic
+    from dotenv import dotenv_values
 
-def call_claude(prompt: str, document: str, model: str) -> dict:
-    cmd = [
-        "claude",
-        "-p",
-        "--safe-mode",
-        "--strict-mcp-config",
-        "--no-session-persistence",
-        "--system-prompt",
-        "You are a careful extraction system. Follow the output format exactly.",
-        "--tools",
-        "",
-        "--model",
-        model,
-        "--output-format",
-        "json",
-    ]
-    if os.name == "nt":
-        cmd = ["cmd.exe", "/c"] + cmd
+    if not ENV_PATH.exists():
+        fail_env()
+    key = (dotenv_values(ENV_PATH) or {}).get("ANTHROPIC_API_KEY") or ""
+    if not key.strip():
+        fail_env()
+    client = anthropic.Anthropic(api_key=key.strip(), timeout=1800.0, max_retries=3)
     t0 = time.time()
-    # stdin, not argv: the prompt plus a document is far past the Windows command-line limit.
-    p = subprocess.run(
-        cmd,
-        input=f"{prompt}\n\nHere is the paper for analysis:\n\n{document}",
-        capture_output=True,
-        text=True,
-        timeout=1800,
-        env=child_env(),
-        encoding="utf-8",
+    r = client.messages.create(
+        model=model,
+        max_tokens=ANTHROPIC_MAX_TOKENS,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"{prompt}\n\nHere is the paper for analysis:\n\n{document}"
+                ),
+            }
+        ],
     )
-    if p.returncode != 0:
-        raise RuntimeError(f"claude exited {p.returncode}: {(p.stderr or '')[:400]}")
-    env = json.loads(p.stdout)
-    if env.get("subtype") != "success":
-        raise RuntimeError(f"claude returned subtype={env.get('subtype')}")
-    u = env.get("usage", {}) or {}
+    text = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
     return {
-        "text": env["result"],
+        "text": text,
         "wall_clock_s": round(time.time() - t0, 1),
+        "stop_reason": r.stop_reason,
         "usage": {
-            "input_tokens": u.get("input_tokens"),
-            "output_tokens": u.get("output_tokens"),
+            "input_tokens": r.usage.input_tokens,
+            "output_tokens": r.usage.output_tokens,
             "reasoning_tokens": None,
         },
     }
+
+
+def fail_env() -> None:
+    raise SystemExit(
+        "FATAL: ANTHROPIC_API_KEY not found\n"
+        f"  expected artifact: {ENV_PATH}\n"
+        "  produced by: runbook R0 in paper/OPEN_ITEMS.md\n"
+        "  this script does NOT fall back to the Claude Code CLI: that path bills the "
+        "interactive session's usage allowance rather than dollars."
+    )
 
 
 def call_openai(client, prompt: str, document: str, model: str, effort: str) -> dict:
@@ -343,7 +348,7 @@ def main() -> None:
                     client, prompt, texts[u], spec["model"], spec["effort"]
                 )
             else:
-                res = call_claude(prompt, texts[u], spec["model"])
+                res = call_anthropic(prompt, texts[u], spec["model"])
             dest.write_text(
                 json.dumps(
                     {"arm": key, "url": u, "model": spec["model"], **res},
@@ -353,8 +358,8 @@ def main() -> None:
             )
             return key, u, res
 
-        # Arm C is a subprocess per document and is deliberately NOT parallelised with the
-        # API arms: one CLI process at a time keeps the subscription run serial and legible.
+        # Anthropic jobs run after the OpenAI ones rather than interleaved, so a rate limit
+        # on one vendor cannot be mistaken for a failure on the other.
         api_jobs = [j for j in jobs if ARMS[j[0]]["provider"] == "openai"]
         cli_jobs = [j for j in jobs if ARMS[j[0]]["provider"] != "openai"]
         done = 0
