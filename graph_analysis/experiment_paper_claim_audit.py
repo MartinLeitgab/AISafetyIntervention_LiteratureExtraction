@@ -363,6 +363,24 @@ def main():
         ga["post_repair"]["krippendorff_alpha_interval"],
     )
 
+    # ---- grader session diagnostics (tab:graders caption, sec:m-repro) --------------
+    mg = receipt("experiment_judge_full_report.json")["item2_meta_graders"]
+    for key, n, files, shapes in [
+        ("claude-opus-4-5", 95, 101, 13),
+        ("gemini-3-pro", 13, 100, 12),
+        ("third_grader_gpt-5.1", 95, 95, 1),
+    ]:
+        cd = mg[key]["coverage_diagnostics"]
+        check(f"grader {key}: paired pre/post rows", n, mg[key]["n"])
+        check(f"grader {key}: files seen", files, cd["files_seen"])
+        check(
+            f"grader {key}: distinct JSON shapes",
+            shapes,
+            cd["n_distinct_json_shapes"],
+            note="the agent-session design of app:judgeprompt is why the shape drifts "
+            "within one grader's output; 1 shape -> a paired score on every file",
+        )
+
     om = receipt("experiment_review_omission_relative_report.json")
     j = om["judge_proposed_additions_over_the_100_audited"]
     g = om["grader_missed_concepts_over_the_43_profiled"]
@@ -413,6 +431,103 @@ def main():
     check("median publication year", 2021, rec["median_year"])
     check("documents carrying a year", 11761, rec["n_documents_with_a_year"])
     check("mean nodes per document", 17.02, ir["nodes_per_document"]["mean"])
+
+    # ---- every quality cut the enumerator applies, verified on the released file ----
+    # Added 2026-08-15. The manuscript previously named four cuts; the builder applies
+    # ten. Each row below checks one of them against the emitted paths, so the Methods
+    # list and app:cuts cannot drift from what actually ran.
+    raw_rows = [json.loads(line) for line in open(RAW, encoding="utf-8")]
+
+    def node_cat(nid):
+        a = na.get(nid, {})
+        if (a.get("type") or "").lower() == "intervention":
+            return "intervention"
+        return (a.get("concept_category") or "").lower()
+
+    hops = [len(r["path"]) - 1 for r in raw_rows]
+    check("cut: minimum path length in hops", 3, min(hops))
+    check("cut: maximum path length in hops observed", 15, max(hops))
+    check("cut: shortest chain in nodes", 4, min(hops) + 1)
+    check("cut: longest chain in nodes", 16, max(hops) + 1)
+    check(
+        "cut: 30-hop ceiling never binds",
+        True,
+        max(hops) < 30,
+        note="the cap is a safeguard, not a shaping cut; the floor of 3 hops IS a cut",
+    )
+    check(
+        "cut: 50M global path cap never binds",
+        True,
+        len(raw_rows) < 50_000_000,
+    )
+    check(
+        "cut: every path roots at a risk node",
+        True,
+        all(node_cat(r["path"][0]) == "risk" for r in raw_rows),
+    )
+    check(
+        "cut: no risk node after position 0",
+        True,
+        all(not any(node_cat(n) == "risk" for n in r["path"][1:]) for r in raw_rows),
+    )
+    check(
+        "cut: first hop always lands on an intermediate subtype",
+        True,
+        all(node_cat(r["path"][1]) in set(BODY) for r in raw_rows),
+        note="no risk-to-intervention shortcut is enumerable",
+    )
+    check(
+        "cut: every endpoint is an intervention",
+        True,
+        all(node_cat(r["path"][-1]) == "intervention" for r in raw_rows),
+    )
+    check(
+        "cut: every path is simple (no repeated node)",
+        True,
+        all(len(set(r["path"])) == len(r["path"]) for r in raw_rows),
+    )
+    check(
+        "cut: paths passing through a sub-threshold intervention",
+        540,
+        sum(
+            1
+            for r in raw_rows
+            if any(node_cat(n) == "intervention" for n in r["path"][1:-1])
+        ),
+        note="enumeration stops at the first maturity>=3 intervention, so a lower-maturity "
+        "one can sit mid-chain; disclosed in sec:m-paths",
+    )
+    check(
+        "cut: interventions clearing the maturity gate, pct",
+        15.1,
+        round(
+            100
+            * sum(
+                1
+                for a in na.values()
+                if (a.get("type") or "").lower() == "intervention"
+                and (a.get("intervention_maturity") or 0) >= 3
+            )
+            / by_type.get("intervention", 1),
+            1,
+        ),
+        note="the marginal; the joint with the confidence gate is 11.4% (gate corner)",
+    )
+    check(
+        "cut: sub-path collapse preserves the length range",
+        (3, 15),
+        (
+            min(
+                len(json.loads(line)["path"]) - 1
+                for line in open(DEDUP, encoding="utf-8")
+            ),
+            max(
+                len(json.loads(line)["path"]) - 1
+                for line in open(DEDUP, encoding="utf-8")
+            ),
+        ),
+    )
+    del raw_rows
 
     # ---- the two chains printed in tab:query (added 2026-08-15) ---------------------
     # experiment_query_demo.py emits two DIFFERENT chains, so the table had no receipt.
@@ -604,6 +719,90 @@ def main():
     ]:
         got = next(c for c in ec["conditions"] if c["label"] == label)["xrisk_in_top10"]
         check(f"xrisk in EC top-10, {label}", expected, got)
+
+    # ---- extraction cost (sec:m-repro, Compute) -------------------------------------
+    cost = receipt("experiment_review_extraction_cost_report.json")
+    check("cost: prompt tokens per call", 3706, cost["prompt"]["tokens"])
+    check(
+        "cost: documents matched to an ARD record",
+        11779,
+        cost["coverage"]["matched_to_an_ARD_record_by_url"],
+    )
+    check("cost: match rate pct", 100.0, cost["coverage"]["match_rate_pct"])
+    ci = cost["input_tokens_per_document_EXACT"]
+    check("cost: mean input tokens per document", 10389, round(ci["mean"]))
+    check("cost: median input tokens per document", 6952, round(ci["median"]))
+    check("cost: p90 input tokens per document", 18757, round(ci["p90"]))
+    check("cost: total input tokens (millions)", 122.4, round(ci["total"] / 1e6, 1))
+    cal = cost["output_calibration"]
+    check("cost: calibration response tokens", 8155, cal["visible_output_tokens"])
+    check(
+        "cost: calibration emitted elements",
+        52,
+        cal["emitted_elements_nodes_plus_edges"],
+    )
+    check("cost: tokens per emitted element", 157, round(cal["tokens_per_element"]))
+    co = cost["visible_output_tokens_per_document_CALIBRATED"]
+    check("cost: mean visible output per document", 5361, round(co["mean"]))
+    check("cost: total visible output (millions)", 63.2, round(co["total"] / 1e6, 1))
+    pricing = cost["pricing_ASSUMED_not_measured"]
+    check("cost: batch discount applied", 0.5, pricing["batch_discount_applied"])
+    o3 = pricing["bill_by_model"]["o3 (as run)"]["by_reasoning_ratio"]
+    lo = o3["reasoning_x0_visible_output"]
+    hi = o3["reasoning_x4_visible_output"]
+    check(
+        "cost: low end of the assumed band, USD",
+        375,
+        round(lo["usd_over_matched_documents"]),
+    )
+    check(
+        "cost: high end of the assumed band, USD",
+        1385,
+        round(hi["usd_over_matched_documents"]),
+    )
+    check("cost: USD per 1,000 documents, low", 32, round(lo["usd_per_1000_documents"]))
+    check(
+        "cost: USD per 1,000 documents, high", 118, round(hi["usd_per_1000_documents"])
+    )
+    check(
+        "cost: mean document text tokens (prompt subtracted)",
+        6683,
+        round(ci["mean"] - cost["prompt"]["tokens"]),
+    )
+    # The same token volume repriced on current models at batch rates, no reasoning
+    # premium. Cross-vendor rows reprice o200k_base counts; see the receipt's caveat.
+    for model, per_k in [
+        ("Claude Opus 5", 93),
+        ("Claude Sonnet 5", 56),
+        ("Claude Sonnet 4.6", 56),
+        ("Claude Haiku 4.5", 19),
+    ]:
+        row = pricing["bill_by_model"][model]["by_reasoning_ratio"][
+            "reasoning_x0_visible_output"
+        ]
+        check(
+            f"cost: USD per 1,000 documents on {model}, no reasoning premium",
+            per_k,
+            round(row["usd_per_1000_documents"]),
+        )
+
+    # ---- gate corner, figure 1 panel B ----------------------------------------------
+    gc = receipt("experiment_review_gate_corner_report.json")
+    check(
+        "gate corner: interventions",
+        4228,
+        gc["gate_corner_maturity_ge3_and_best_conf_ge3"]["n"],
+    )
+    check(
+        "gate corner: pct of extracted interventions",
+        11.4,
+        round(gc["gate_corner_maturity_ge3_and_best_conf_ge3"]["pct_of_placed"], 1),
+    )
+    check(
+        "gate corner: interventions placed",
+        36959,
+        gc["n_with_at_least_one_structural_edge"],
+    )
 
     # ---- stage separability probe (sec:r-stages, app:stages) ------------------------
     sep = receipt("experiment_review_stage_separability_report.json")
