@@ -216,9 +216,14 @@ def call_claude(prompt: str, document: str, model: str) -> dict:
 
 
 def call_openai(client, prompt: str, document: str, model: str, effort: str) -> dict:
+    """One request in extractor.py's shape. `reasoning` is omitted entirely when the model
+    has no reasoning parameter -- gpt-4.1 rejects it, and that arm exists precisely to be a
+    non-reasoning comparison."""
     t0 = time.time()
+    kwargs = {"reasoning": {"effort": effort}} if effort else {}
     r = client.responses.create(
         model=model,
+        **kwargs,
         input=[
             {
                 "role": "user",
@@ -231,7 +236,6 @@ def call_openai(client, prompt: str, document: str, model: str, effort: str) -> 
                 ],
             }
         ],
-        reasoning={"effort": effort},
     )
     usage = getattr(r, "usage", None)
     return {
