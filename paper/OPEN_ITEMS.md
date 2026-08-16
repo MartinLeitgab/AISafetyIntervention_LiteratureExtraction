@@ -114,9 +114,17 @@ their blockers.
 **Amended 2026-08-16** after an execution pass that closed S3, S10, C2-C9, every
 unanimous cut-list row and the language items: manuscript commit `337d033` in
 `AISafetyIntervention_PaperA_shared`, analysis issues #156 / #157 with PRs #158 /
-#159, and S3 as #161 / #162. Claim audit **257/257**. **Six** `\OPEN{}` blocks render, not
-the eight or nine quoted earlier -- `grep -c 'OPEN{'` counts three source comments that
-discuss the mechanism, so count `\OPEN{[GAP:` instead.
+#159, and S3 as #161 / #162. Claim audit **257/257**.
+
+🔴 **Rendered open blocks: FOUR, counted 2026-08-16 PM** (`grep -c 'OPEN{\[GAP:'` on
+`paperA_altstyle.tex`). Earlier counts of eight, nine or six are all stale, and the
+difference is not bookkeeping -- five of the eight closed as work landed. What renders now:
+the release URL (abstract, D5), the compute acknowledgment (D6/G14), the author list
+(D6/G15) and the AI-drafting scope (D6/G15). **Every one is a team decision; none is a
+writing task.** Do not count with `grep -c 'OPEN{'` -- that also matches three source
+comments discussing the mechanism. `\author{Author List Placeholder}` (L1) still renders on
+page 1 and is a fifth visible placeholder that is not an `\OPEN{}` block; it closes with
+G15.
 
 **Amended 2026-08-15 PM** after an independent three-model review round (Claude Opus 5,
 GPT-5.6 Sol, Gemini 3.1 Pro; conference and workshop bars; reviews and usage receipts in
