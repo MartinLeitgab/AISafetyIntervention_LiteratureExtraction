@@ -802,6 +802,59 @@ def main():
     )
     check("multimodel: re-run documents with a chain", 9, gs["arm_with_a_chain"])
 
+    # ---- baselines B/C/D and the unconditioned repeat arm (S6 remainder, S7; #171) ---
+    bl = receipt("experiment_review_baselines_report.json")["results"]["headline"]
+    for arm, nodes, yield_pct in [
+        ("B_abstract", 11.4, 16.0),
+        ("C_gpt41", 16.4, 56.7),
+        ("D_triples", 24.5, 0.0),
+        ("U_unconditioned", 18.4, 15.0),
+    ]:
+        check(f"baseline {arm}: mean nodes", nodes, bl[arm]["mean_nodes"])
+        check(
+            f"baseline {arm}: chain yield pct",
+            yield_pct,
+            bl[arm]["pct_of_attempted_yielding_a_chain"],
+        )
+    check(
+        "baseline: shipped nodes on the abstract sample",
+        20.6,
+        bl["released_on_the_B_abstract_sample"]["mean_nodes"],
+    )
+    check(
+        "baseline: shipped chain yield on the unconditioned sample",
+        15.0,
+        bl["released_on_the_U_unconditioned_sample"][
+            "pct_of_attempted_yielding_a_chain"
+        ],
+        note="identical to the re-run's 15.0% on the same 20 documents, and on the same "
+        "three of them; with n=3 chain-yielding it bounds the corpus rate only",
+    )
+    for arm, risks in [("B_abstract", 18.8), ("C_gpt41", 19.5), ("D_triples", 5.2)]:
+        check(
+            f"baseline {arm}: released risks recovered pct",
+            risks,
+            bl[arm]["endpoint_recovery_pct"]["released_risks_found"],
+        )
+    check(
+        "baseline: endpoint-recovery ceiling",
+        46.5,
+        bl["D_triples"]["endpoint_recovery_pct"]["ceiling_from_issue_168"],
+        note="what an o3 re-run recovers of its own shipped output; the flat-triple arm is "
+        "read against this, never against 100%",
+    )
+    check(
+        "baseline C: all-five share",
+        40.0,
+        bl["C_gpt41"]["pct_chains_all_five"],
+    )
+    check(
+        "baseline U: all-five share",
+        88.9,
+        bl["U_unconditioned"]["pct_chains_all_five"],
+    )
+    check("baseline B: all-five share", 100.0, bl["B_abstract"]["pct_chains_all_five"])
+
     # ---- extraction-failure recovery, now printed in the body (C6) -------------------
     rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
         "population_A_extraction_error_candidates"
