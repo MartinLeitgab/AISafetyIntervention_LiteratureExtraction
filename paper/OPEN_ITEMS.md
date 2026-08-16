@@ -13,10 +13,10 @@ each so the two never drift apart.
 **Written 2026-08-15**, renamed from `STUDY_LIST_2026-08-15.md` and made canonical the same
 day. Every entry is scoped to the point where it could be started the same day.
 
-**Amended 2026-08-16** after an execution pass that closed S10, C2-C9, every
+**Amended 2026-08-16** after an execution pass that closed S3, S10, C2-C9, every
 unanimous cut-list row and the language items: manuscript commit `337d033` in
 `AISafetyIntervention_PaperA_shared`, analysis issues #156 / #157 with PRs #158 /
-#159. Claim audit **235/235**. What remains below needs money, a person, or a team
+#159, and S3 as #161 / #162. Claim audit **257/257**. What remains below needs money, a person, or a team
 decision -- nothing left on this list is blocked on writing.
 
 **Amended 2026-08-15 PM** after an independent three-model review round (Claude Opus 5,
@@ -41,7 +41,7 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
-| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **235/235** (2026-08-16). The stale 42/42 references are fixed; C9 is closed |
+| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **257/257** (2026-08-16, after S3). The stale 42/42 references are fixed; C9 is closed |
 
 ## 🔴 Locked decisions — do not revert
 
@@ -140,7 +140,7 @@ the analysed population" sentence into a measured statement, and both reviews pr
 item** (S1 having been demoted): Opus calls it "the single change most likely to raise my
 score," and all three note it needs no new method.
 
-### S3. Stage-assignment agreement, second model
+### S3. Stage-assignment agreement, second model — DONE 2026-08-16 (issue #161, PR #162)
 **Answers** W20/Q6, and completes the study already in the paper. The probe in
 `sec:r-stages` shows the extractor applies the stage vocabulary at 98.8% internal
 consistency; it cannot show a second annotator would agree, because one call wrote both
@@ -152,9 +152,26 @@ Cohen's kappa against the extractor's assignment, and a confusion matrix — the
 worth registering in advance is that disagreement concentrates on the pa/ti and dr/im
 boundaries, which is where the existing probe's errors already fall.
 
-**Cost.** ~5.3k input per document over 50 ≈ 265k input, ~50k output ≈ **USD 1–3**.
-**Human involvement: none for the model arm.** Adding one human annotator over the same
-50 documents (see S5) turns it into the full three-way study the reviewer asked for.
+**Result.** Cohen's kappa **0.838**, raw agreement 87.1% against a 20.4% chance rate, over
+653 intermediate-stage nodes from 50 documents (25 chain-yielding, 25 not; kappa 0.835 vs
+0.844 by stratum, so no population effect). 0 unusable responses.
+
+**The pre-registered prediction was half right and the paper says so.** Predicted: pa/ti
+and dr/im dominate. Actual: dr/im is the largest single confusion (26 of 84), pa/ti is only
+7, and the *unpredicted* ti/dr pair is 19. The two predicted boundaries carry 39.3% of
+disagreements. The disagreement is concentrated in one stage rather than spread along the
+chain: **theoretical insight** is the weakest class (F1 0.756, recall 0.707), bleeding
+mostly into design rationale. That is the boundary to reword in any reuse of this schema,
+and it is a more useful output than the kappa.
+
+**Cost.** ~98k tokens on subscription auth via the Claude Code CLI (`--safe-mode`, explicit
+`--system-prompt`, `ANTHROPIC_API_KEY` stripped from the child environment). **USD 0** —
+the projected USD 1–3 assumed metered API, which was not used.
+
+**Still open, and unchanged by this:** two model assignments are not a human anchor. Adding
+one human annotator over the same 50 documents (S4/S5) turns it into the three-way study
+the reviewer asked for, and only that arm can say whether the five stages are the right
+five rather than merely reproducible.
 
 ### S10. Edge-coverage reconciliation — DONE 2026-08-16 (issue #156, PR #158)
 **Answers** a gap none of the earlier reviews caught. GPT-5.6 Sol raises it at both bars:
@@ -488,7 +505,7 @@ registered — only things that change the paper.
 | R22 | The 70% containment rule ignores edge identity, order and semantics; no annotation study shows retained paths are distinct arguments | GC GW | **NEW** |
 | R23 | Validate the gates and the collapse rule on a small hand-checked sample | GW | **NEW** |
 | R24 | Report sensitivity of the substantive retrieval examples to the gates, not only aggregate counts | GW | **NEW** |
-| R25 | Stage probe is circular — one call wrote both text and label; TF-IDF on the name alone reaches 69.4% | OC OW GC GW | S3 |
+| R25 **CLOSED** | Stage probe is circular — one call wrote both text and label; TF-IDF on the name alone reaches 69.4% | OC OW GC GW | S3 done: kappa 0.838 across providers |
 | R26 | No baseline: flat triples, abstract-only, non-reasoning model, sentence-level argument mining, retrieval over chunks | all 6 | S6 |
 | R27 | Baselines should demonstrate *why a reasoning model is necessary* for this schema | MC | S6 |
 | R28 | Retrieval use case rests on two hand-picked arXiv examples; no query set, relevance judgements or faithfulness evaluation | all 6 | S9 |

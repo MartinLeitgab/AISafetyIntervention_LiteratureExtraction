@@ -522,6 +522,50 @@ def main():
         ri["audited_vs_unaudited_content"]["nodes_from_judged_documents_pct"],
     )
 
+    # ---- second-model stage agreement (S3, issue #161) -------------------------------
+    sa = receipt("experiment_review_stage_agreement_report.json")
+    head = sa["headline"]
+    check("stage agreement: Cohen kappa", 0.838, head["cohen_kappa"])
+    check("stage agreement: raw agreement", 0.871, head["raw_agreement"])
+    check("stage agreement: chance agreement", 0.204, head["chance_agreement"])
+    check("stage agreement: disagreements", 84, head["n_disagreements"])
+    check("stage agreement: nodes scored", 653, sa["design"]["n_label_pairs_scored"])
+    check(
+        "stage agreement: kappa on chain-yielding documents",
+        0.835,
+        sa["by_stratum"]["chain_yielding"]["cohen_kappa"],
+    )
+    check(
+        "stage agreement: kappa on non-chain-yielding documents",
+        0.844,
+        sa["by_stratum"]["other"]["cohen_kappa"],
+    )
+    for stage, f1, rec in [
+        ("problem analysis", 0.955, 0.983),
+        ("theoretical insight", 0.756, 0.707),
+        ("design rationale", 0.815, 0.818),
+        ("implementation mechanism", 0.889, 0.923),
+        ("validation evidence", 0.916, 0.900),
+    ]:
+        check(f"stage agreement F1: {stage}", f1, sa["per_class"][stage]["f1"])
+        check(f"stage agreement recall: {stage}", rec, sa["per_class"][stage]["recall"])
+    adj = sa["adjacent_stage_confusions"]
+    for pair, n in [("dr_vs_im", 26), ("ti_vs_dr", 19), ("pa_vs_ti", 7)]:
+        check(f"stage agreement confusion {pair}", n, adj[pair])
+    check(
+        "stage agreement: predicted-pair share of disagreements",
+        39.3,
+        adj["pa_ti_plus_dr_im_share_of_disagreements"],
+        note="the paper reports the pre-registered prediction as half right; this is the "
+        "number that makes it half rather than wholly right",
+    )
+    check(
+        "stage agreement: unusable responses",
+        0,
+        sum(sa["unusable_responses"].values()),
+        note="653 of 653 nodes came back with a label inside the five-stage vocabulary",
+    )
+
     # ---- extraction-failure recovery, now printed in the body (C6) -------------------
     rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
         "population_A_extraction_error_candidates"
