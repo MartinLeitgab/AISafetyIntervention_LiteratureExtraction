@@ -75,11 +75,84 @@ FINDINGS = {
         ("lexical agreement", "19.0"),
         ("second model node count", "38.1"),
     ],
+    "#171 baselines + unconditioned arm": [
+        ("abstract-only nodes", "11.4"),
+        ("non-reasoning model yield", "56.7"),
+        ("flat triples yield more nodes", "24.5"),
+        ("endpoint recovery of the triple arm", "5.2"),
+        ("unconditioned repeat reproduces the yield", "15.0"),
+    ],
+    "#172 second judge run": [
+        ("node-level omission on the analysed unit", "26.4"),
+        ("edge-level omission on the analysed unit", "21.7"),
+        ("length confound stated", "twice the corpus mean length"),
+        ("rationale-field confound stated", "rationale"),
+    ],
+    "#168 follow-up: what a chain count is": [
+        ("collapse tames the cross-model counts", "0.5, 2 and 4"),
+        ("worst document after the collapse", "to 44"),
+        ("degree is the driver", "2.32"),
+        ("prompt was tuned for one model", "tuned against"),
+    ],
     "language + terminology (R4/R5)": [
-        ("audit, not verification, in the abstract", "The audit ran on a"),
+        ("audit, not verification, in the abstract", "The audit ran twice"),
         ("audit stage in the Limitations heading", "The audit covers 100 documents"),
     ],
 }
+
+
+# A number that was superseded is worse than a number that was never there: a reader who
+# finds both cannot tell which one the paper means. Each entry is a phrasing that MUST NOT
+# appear in rendered text, with the reason it left.
+RETIRED = [
+    (
+        "verification stage",
+        "renamed to audit stage (L12); the stage is a diagnostic pass",
+    ),
+    ("schema-constrained", "conformance is prompt-enforced, not constrained (C2)"),
+    ("implied coverage", "withdrawn with the edge-coverage study (#156)"),
+    ("chain-level examples are unaudited", "the second judge run audits them (#172)"),
+    ("Eleven populations", "twelve, since the second judge run (#172)"),
+    ("97.8", "an interim gpt-5 chain figure computed at n=16"),
+    ("4{,}462.9", "a mean dominated by one 57,007-path document"),
+    ("139 of them", "138 map onto the five stages; one maps to risk"),
+    ("235/235", "the claim audit has moved well past this"),
+    ("more than five thousand", "their released clustering covers 554 papers"),
+]
+
+# Two numbers that mean different things must not float free of what distinguishes them.
+# Each entry: (number, one of these qualifiers must appear within `window` characters).
+QUALIFIED = [
+    ("26.4\\%", ["chain-yielding", "second run", "narrower population"], 600),
+    ("21.7\\% of the 2{,}192", ["chain-yielding", "second run"], 600),
+    ("594", ["raw", "collapse", "density", "median"], 400),
+    ("57{,}007", ["raw", "collapse", "44"], 400),
+    ("0.6\\% of the nodes", ["released", "100 documents", "first"], 600),
+]
+
+
+def consistency(rendered: str) -> int:
+    bad = 0
+    print("\n--- retired phrasings that must not appear ---")
+    for phrase, why in RETIRED:
+        n = rendered.count(phrase)
+        if n:
+            bad += 1
+            print(f"[MISS] {phrase!r} appears {n}x -- {why}")
+    print(f"  {sum(1 for p, _ in RETIRED if p not in rendered)}/{len(RETIRED)} clear")
+
+    print("--- numbers that need their qualifier nearby ---")
+    for num, quals, window in QUALIFIED:
+        i = rendered.find(num)
+        if i < 0:
+            print(f"[note] {num!r} not present")
+            continue
+        ctx = rendered[max(0, i - window) : i + window]
+        if not any(q in ctx for q in quals):
+            bad += 1
+            print(f"[MISS] {num!r} has none of {quals} within {window} chars")
+    print(f"  {len(QUALIFIED)} pairs checked")
+    return bad
 
 
 def main() -> None:
@@ -98,7 +171,9 @@ def main() -> None:
         for what, tok in misses:
             print(f"        NOT IN RENDERED TEXT: {what}  (looked for {tok!r})")
         missing_total += len(misses)
+    bad = consistency(rendered)
     print(f"\n{missing_total} finding(s) not found in rendered text")
+    print(f"{bad} self-consistency problem(s)")
 
 
 if __name__ == "__main__":
