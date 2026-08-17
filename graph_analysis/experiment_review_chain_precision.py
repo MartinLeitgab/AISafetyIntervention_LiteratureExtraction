@@ -704,14 +704,11 @@ def collect(batch_id: str, sample_file: Path, results_name: str) -> int:
                 "input_tokens": res.result.message.usage.input_tokens,
                 "output_tokens": res.result.message.usage.output_tokens,
             }
-            m = re.search(r"\{.*\}", body, re.S)
-            if m:
-                try:
-                    rec["verdict"] = json.loads(m.group(0))
-                except json.JSONDecodeError:
-                    rec["parse_error"] = True
-            else:
+            v = parse_verdict(body)
+            if v is None:
                 rec["parse_error"] = True
+            else:
+                rec["verdict"] = v
         rows.append(rec)
 
     (RAW_OUT / results_name).write_text(
@@ -726,48 +723,68 @@ def collect(batch_id: str, sample_file: Path, results_name: str) -> int:
         if fp.is_file():
             rows.extend(json.loads(x) for x in fp.read_text().splitlines() if x.strip())
 
-    def tally(arm: str) -> dict:
-        sub = [r for r in rows if r.get("arm") == arm and "verdict" in r]
-        n = len(sub)
-        fair = sum(
-            1
-            for r in sub
-            if r["verdict"].get(
-                "chain_is_a_fair_summary_of_an_argument_the_document_makes"
-            )
-            is True
-        )
-        codes = Counter(r["verdict"].get("reason_code") for r in sub)
-        risk_unsup = sum(
-            1
-            for r in sub
-            if r["verdict"].get("risk_framing", {}).get("verdict") == "unsupported"
-        )
-        intv_unsup = sum(
-            1
-            for r in sub
-            if r["verdict"].get("intervention", {}).get("verdict") == "unsupported"
-        )
-        quoted = sum(
-            1
-            for r in sub
-            if r["verdict"].get("risk_framing", {}).get("verdict") == "supported"
-            and (r["verdict"].get("risk_framing", {}).get("quote") or "").strip()
-        )
-        return {
-            "n_parsed": n,
-            "judged_fair_summary": fair,
-            "judged_fair_summary_pct": round(100.0 * fair / n, 1) if n else None,
-            "judged_not_fair": n - fair,
-            "judged_not_fair_pct": round(100.0 * (n - fair) / n, 1) if n else None,
-            "risk_framing_unsupported": risk_unsup,
-            "intervention_unsupported": intv_unsup,
-            "supported_risk_verdicts_carrying_a_quote": quoted,
-            "reason_codes": dict(codes.most_common()),
-        }
+    return write_receipt(rows, batch_id)
 
-    real, null = tally("real"), tally("null_mismatched_pair")
-    rej = tally("gate_rejected")
+
+def parse_verdict(body: str) -> dict | None:
+    """Pull the verdict object out of one response, or None if there is not one.
+
+    Module-level, and deliberately separate from anything that makes a network call: this is
+    the code that runs AFTER the money is spent, so it is the part that has to be provable
+    without spending any. Exercised by tests/test_chain_precision_collect.py against the
+    real dry-run responses on disk, including a deliberately malformed one.
+    """
+    m = re.search(r"\{.*\}", body, re.S)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return None
+
+
+def tally(rows: list[dict], arm: str) -> dict:
+    sub = [r for r in rows if r.get("arm") == arm and "verdict" in r]
+    n = len(sub)
+    fair = sum(
+        1
+        for r in sub
+        if r["verdict"].get("chain_is_a_fair_summary_of_an_argument_the_document_makes")
+        is True
+    )
+    codes = Counter(r["verdict"].get("reason_code") for r in sub)
+    risk_unsup = sum(
+        1
+        for r in sub
+        if r["verdict"].get("risk_framing", {}).get("verdict") == "unsupported"
+    )
+    intv_unsup = sum(
+        1
+        for r in sub
+        if r["verdict"].get("intervention", {}).get("verdict") == "unsupported"
+    )
+    quoted = sum(
+        1
+        for r in sub
+        if r["verdict"].get("risk_framing", {}).get("verdict") == "supported"
+        and (r["verdict"].get("risk_framing", {}).get("quote") or "").strip()
+    )
+    return {
+        "n_parsed": n,
+        "judged_fair_summary": fair,
+        "judged_fair_summary_pct": round(100.0 * fair / n, 1) if n else None,
+        "judged_not_fair": n - fair,
+        "judged_not_fair_pct": round(100.0 * (n - fair) / n, 1) if n else None,
+        "risk_framing_unsupported": risk_unsup,
+        "intervention_unsupported": intv_unsup,
+        "supported_risk_verdicts_carrying_a_quote": quoted,
+        "reason_codes": dict(codes.most_common()),
+    }
+
+
+def write_receipt(rows: list[dict], batch_id: str) -> int:
+    real, null = tally(rows, "real"), tally(rows, "null_mismatched_pair")
+    rej = tally(rows, "gate_rejected")
     gate_delta = None
     if rej["n_parsed"] and real["n_parsed"]:
         gate_delta = {
