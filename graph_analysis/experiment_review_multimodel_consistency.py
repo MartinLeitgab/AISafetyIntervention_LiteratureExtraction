@@ -360,8 +360,10 @@ def main() -> None:
 
         # Anthropic jobs run after the OpenAI ones rather than interleaved, so a rate limit
         # on one vendor cannot be mistaken for a failure on the other.
-        api_jobs = [j for j in jobs if ARMS[j[0]]["provider"] == "openai"]
-        cli_jobs = [j for j in jobs if ARMS[j[0]]["provider"] != "openai"]
+        # Both providers are plain API calls now, so both go through the pool. The old
+        # split existed because arm C was a CLI subprocess and had to stay serial.
+        api_jobs = list(jobs)
+        cli_jobs = []
         done = 0
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
             futs = {ex.submit(work, j): j for j in api_jobs}

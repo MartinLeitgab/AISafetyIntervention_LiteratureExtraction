@@ -767,6 +767,16 @@ def main():
         "multimodel: o3 re-run unparseable responses", 2, mh["A_o3"]["parse_failures"]
     )
     check("multimodel: gpt-5 mean nodes", 38.1, mh["B_gpt5"]["mean_nodes"])
+    check("multimodel: opus-5 mean nodes", 41.2, mh["C_opus5"]["mean_nodes"])
+    check("multimodel: opus-5 mean edges", 56, mh["C_opus5"]["mean_edges"])
+    check("multimodel: opus-5 chain rate", 82.4, mh["C_opus5"]["pct_with_chain"])
+    for arm, chains in [("released", 2.8), ("B_gpt5", 92.06), ("C_opus5", 4462.88)]:
+        check(
+            f"multimodel: mean chains per document, {arm}",
+            chains,
+            mh[arm]["mean_chains"],
+            note="chain count is a function of graph density, not of extraction quality",
+        )
     check("multimodel: gpt-5 mean edges", 41.3, mh["B_gpt5"]["mean_edges"])
     check("multimodel: gpt-5 chain rate", 76.5, mh["B_gpt5"]["pct_with_chain"])
     check("multimodel: gpt-5 unparseable responses", 3, mh["B_gpt5"]["parse_failures"])
