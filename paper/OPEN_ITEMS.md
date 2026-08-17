@@ -65,6 +65,24 @@ add one). Every study gets a GitHub issue and a PR.
 | R5 | L10 repeated caveats, L12 verification→audit | ✅ done | — | throughout; manuscript `99a20ec` |
 | R6 | Strip L14 before posting | ⏸ deliberately not now | — | source comments only |
 | R7 | Ungated chain file + CLI flags | ⛔ retired | — | — |
+| + | S6 remainder: baselines B/C/D + unconditioned repeat arm | ✅ done | #171 / PR #170 | `sec:r-stages`, `sec:limitations`, `app:ablation` |
+| + | S2: judge the chain-yielding population | ✅ done | #172 / PR #170 | `sec:r-judge`, `sec:limitations`, abstract, conclusion |
+| + | What a chain count is a function of | ✅ done | #168 follow-up | `sec:limitations` |
+
+🔴 **S2 changed a claim rather than confirming one.** Node-level omission on the
+chain-yielding population is **26.4%** against the corpus-sampled run's 0.6%, edge-level
+21.7% against 18.1%. Eight passages described that population as unaudited and have been
+reconciled (manuscript `b745108`). Two confounds ride with the population and the paper
+states both: those documents are about twice the corpus mean length, and their extractions
+were rebuilt from the released graph without the four rationale fields.
+
+🔴 **"594 chains per document" was raw enumeration, not the reporting unit.** After the 70%
+sub-path collapse the three models read 0.5, 2 and 4 chains per document and the worst
+document falls from 57,007 paths to 44. Never compare pre-collapse counts across
+extractors; the driver is mean degree crossing 2, not extraction quality.
+
+🔴 **The evidence program is complete.** What remains needs a person (S4 human anchor, S9
+relevance labels) or a decision (venue, release URL, authorship, and the page cut).
 
 🔴 **The Claude Code CLI is NOT a free execution path, and every note in this file that
 said so was wrong (corrected 2026-08-16 PM).** `claude -p` bills the interactive session's
