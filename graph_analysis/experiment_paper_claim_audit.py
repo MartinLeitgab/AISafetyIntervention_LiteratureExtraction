@@ -770,6 +770,31 @@ def main():
     check("multimodel: opus-5 mean nodes", 41.3, mh["C_opus5"]["mean_nodes"])
     check("multimodel: opus-5 mean edges", 56.2, mh["C_opus5"]["mean_edges"])
     check("multimodel: opus-5 chain rate", 82.4, mh["C_opus5"]["pct_with_chain"])
+    # What the enumerated chain count is a function of (issue #168 follow-up). A chain is
+    # a simple path THIS PROJECT walks, never something a model emits, and the count is
+    # driven by roots, terminals and degree rather than by extraction quality.
+    cd = receipt("experiment_review_chain_density_report.json")["arms"]
+    for arm, roots, mature, degree in [
+        ("A_o3", 1, 1, 1.71),
+        ("B_gpt5", 3, 3, 2.04),
+        ("C_opus5", 3, 3, 2.32),
+    ]:
+        check(
+            f"density {arm}: median risk roots", roots, cd[arm]["median"]["risk_roots"]
+        )
+        check(
+            f"density {arm}: median mature interventions",
+            mature,
+            cd[arm]["median"]["mature_interventions"],
+        )
+        check(
+            f"density {arm}: median degree on the gated subgraph",
+            degree,
+            cd[arm]["median"]["mean_degree_conf_ge3"],
+            note="below 2 the extracted graph is nearly a path; above it, simple-path "
+            "counts grow exponentially in the number of independent cycles",
+        )
+
     for arm, med, mx in [
         ("released", 2, 19),
         ("B_gpt5", 6, 886),
