@@ -866,11 +866,17 @@ def write_receipt(rows: list[dict], batch_id: str) -> int:
         print(f"=== gate-rejected arm (n={rej['n_parsed']}) ===")
         print(f"  judged NOT a fair summary : {rej['judged_not_fair_pct']}%")
         print(f"  reason codes: {rej['reason_codes']}")
+    # gate_delta needs BOTH arms. Whichever batch ends first collects alone, so this must
+    # survive a receipt that has arm B and not arm A -- which is exactly what happened on
+    # 2026-08-17 and crashed the first collect after arm B landed five minutes early.
+    if gate_delta:
         print(
             f"  GATE DISCRIMINATION: arm A {gate_delta['arm_A_not_fair_pct']}% vs "
             f"arm B {gate_delta['arm_B_not_fair_pct']}% "
             f"= {gate_delta['difference_pp']} pp"
         )
+    elif rej["n_parsed"] or real["n_parsed"]:
+        print("  GATE DISCRIMINATION: not computable yet, one arm is still outstanding")
     print(f"\nusage: {usage}; errors: {receipt['errors']}")
     print(f"wrote {RECEIPT}")
     return 0

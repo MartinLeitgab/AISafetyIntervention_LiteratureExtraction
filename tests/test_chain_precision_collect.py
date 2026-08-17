@@ -41,6 +41,30 @@ def load_module():
     return mod
 
 
+def _write_receipt_survives(m, rows: list[dict]) -> bool:
+    """Call write_receipt for real, against a throwaway path, and see if it raises.
+
+    Redirects the module's RECEIPT constant so the committed receipt is never touched, and
+    swallows stdout because write_receipt prints its own summary.
+    """
+    import contextlib
+    import io
+    import tempfile
+
+    original = m.RECEIPT
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            m.RECEIPT = Path(d) / "throwaway_receipt.json"
+            with contextlib.redirect_stdout(io.StringIO()):
+                m.write_receipt(rows, "msgbatch_test_only")
+            return m.RECEIPT.is_file()
+    except Exception as exc:  # noqa: BLE001 - the point of the test is to report, not raise
+        print(f"        raised {type(exc).__name__}: {exc}")
+        return False
+    finally:
+        m.RECEIPT = original
+
+
 def main() -> int:
     m = load_module()
 
@@ -139,6 +163,27 @@ def main() -> int:
     tr = m.tally(rows, "gate_rejected")
     check(
         "gate-rejected arm tallies", tr["n_parsed"] == 2 and tr["judged_not_fair"] == 1
+    )
+
+    print("\n--- one arm outstanding: the case that actually crashed ---")
+    # 2026-08-17: arm B ended five minutes before arm A, so the first collect ran with a
+    # non-empty gate-rejected arm and an EMPTY real arm. gate_delta was None, the summary
+    # print subscripted it, and collect exited 1. The tally test below passed at the time
+    # and did not catch it, because the bug was in the print path, not the arithmetic.
+    b_only = [r for r in rows if r.get("arm") == "gate_rejected"]
+    ta, tb = m.tally(b_only, "real"), m.tally(b_only, "gate_rejected")
+    check(
+        "arm A empty while arm B has data", ta["n_parsed"] == 0 and tb["n_parsed"] == 2
+    )
+    check(
+        "no difference is computable from one arm",
+        ta["judged_not_fair_pct"] is None,
+        "so any consumer of it must guard, print paths included",
+    )
+    check(
+        "write_receipt survives a one-arm receipt",
+        _write_receipt_survives(m, b_only),
+        "regression for the crash above",
     )
 
     print("\n--- the difference the study actually reports ---")
