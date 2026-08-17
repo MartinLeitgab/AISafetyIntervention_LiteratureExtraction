@@ -765,9 +765,15 @@ number in the paper and is discussed nowhere beyond the source-type mix.
 excluding references is the ceiling at conferences as well as workshops, so there is no
 target under which the current draft fits.
 
-Estimated body after the 2026-08-15 pass: **~12.5–13 pages**, down from ~15–16. That
-estimate is a character-count heuristic, not a build — **compile on Overleaf and read the
-real number before deciding what else to cut.**
+🔴 **MEASURED 2026-08-17 on the compiled PDF, and the estimate below was optimistic by two
+pages.** `AISafetyIntervention_PaperA_shared_long.pdf` is 27 pages; the body runs pages 1 to
+15 with References beginning 89% down page 15, so the main body excluding references is
+**~14.9 pages and the gap is ~5 pages, not ~3.** The scoped, agreement-ranked cut package
+that closes it lives in `paper/section_cut_list.md`, built from the 2026-08-17 six-review
+round — work the cuts there, not here.
+
+Earlier estimate, superseded: body after the 2026-08-15 pass **~12.5–13 pages**, down from
+~15–16. That estimate was a character-count heuristic, not a build.
 
 🔴 **The 2026-08-16 pass did not close this gate, and the arithmetic says why.** Measured on
 non-comment source lines at commit `337d033` against `06c3440`: the appendices lost **90

@@ -1458,6 +1458,118 @@ def main():
     # by a reader at reasonable cost, so the claims they backed were withdrawn from
     # the manuscript. Reinstate only if that file ships with the release.
 
+    # ---- within-instrument coverage denominators (2026-08-17 external round) ----------
+    # Two reviewers objected that dividing flagged-missing relationships by released edges
+    # is not the rate the coverage list itself implies. The paper now prints both, so both
+    # are checked. The fourth status of the first run's list is what made 328+146+302 read
+    # as an arithmetic error against the stated 777.
+    cl2 = receipt("experiment_review_edge_coverage_report.json")["coverage_list"]
+    check(
+        "coverage list: fourth status row (covered abstractly)",
+        1,
+        cl2["unlabelled_or_other"],
+    )
+    check(
+        "coverage list: statuses sum to the row total",
+        777,
+        cl2["covered"]
+        + cl2["partially_covered"]
+        + cl2["missing"]
+        + cl2["unlabelled_or_other"],
+    )
+    check(
+        "coverage list: missing as a share of the list",
+        38.9,
+        round(100.0 * cl2["missing"] / cl2["rows_total"], 1),
+    )
+    cy = receipt("experiment_review_judge_chainyielding_report.json")
+    check(
+        "second judge run: coverage list rows", 627, cy["edge_level"]["coverage_rows"]
+    )
+    check(
+        "second judge run: missing as a share of its list",
+        75.9,
+        round(
+            100.0 * cy["edge_level"]["missing"] / cy["edge_level"]["coverage_rows"], 1
+        ),
+    )
+
+    # ---- chain order and edge orientation (2026-08-17, reviewers GC/GW) --------------
+    # The enumerator is undirected and imposes no monotonic stage order, so the reviewers
+    # asked what the released chains actually do. Every figure the manuscript prints for
+    # this is re-derived by experiment_review_chain_order_semantics.py from the released
+    # path files, the node table and the edge list.
+    co = receipt("experiment_review_chain_order_semantics_report.json")
+    ded_co, raw_co = co["deduped_2772"], co["raw_8954"]
+    so, ed = ded_co["stage_order"], ded_co["edge_direction"]
+    check(
+        "chain order: monotonic stage order, reporting unit", 84.6, so["monotonic_pct"]
+    )
+    check(
+        "chain order: strictly increasing, reporting unit",
+        72.0,
+        so["strictly_increasing_pct"],
+    )
+    check("chain order: chains with an inversion", 427, so["chains_with_an_inversion"])
+    check(
+        "chain order: chains inverting exactly once",
+        299,
+        so["inversions_per_chain_hist"]["1"],
+    )
+    inversion_pairs = dict(map(tuple, so["most_common_inversions_rank_pairs"]))
+    check(
+        "chain order: commonest inversion is va -> im, instances",
+        229,
+        inversion_pairs["5->4"],
+    )
+    check(
+        "chain order: monotonic on the raw set",
+        66.2,
+        raw_co["stage_order"]["monotonic_pct"],
+    )
+    check(
+        "edge orientation: chains with every hop stored forward",
+        80.6,
+        ed["chains_all_hops_forward_pct"],
+    )
+    check("edge orientation: hops in the reporting unit", 17829, ded_co["n_hops"])
+    check("edge orientation: hops walked backward", 800, ed["hops_backward"])
+    check("edge orientation: hops walked backward, pct", 4.5, ed["hops_backward_pct"])
+    check(
+        "edge orientation: backward hops against their type's majority",
+        799,
+        ed["hops_against_type_majority_orientation"],
+    )
+    check(
+        "edge orientation: all-forward chains on the raw set",
+        62.7,
+        raw_co["edge_direction"]["chains_all_hops_forward_pct"],
+    )
+    check(
+        "edge orientation: backward hops on the raw set, pct",
+        7.9,
+        raw_co["edge_direction"]["hops_backward_pct"],
+    )
+    check(
+        "edge orientation: no hop unresolved in either direction",
+        0,
+        ed["unresolved_hops"],
+    )
+    # The 98.9-99.7 band the manuscript quotes covers exactly the five relation types with
+    # more than 25,000 instances. Checked as a band so a future re-run cannot widen it
+    # silently to include enabled_by (90.8) or required_by (80.0).
+    orient = co["relation_type_orientation_over_the_whole_graph"]
+    big = {k: v for k, v in orient.items() if v["up"] + v["down"] > 25_000}
+    shares = sorted(v["majority_share_pct"] for v in big.values())
+    check("orientation band: number of types over 25,000 instances", 5, len(big))
+    check(
+        "orientation band: every one of them ascends the stage rank",
+        True,
+        all(v["majority"] == "up" for v in big.values()),
+    )
+    check("orientation band: low end", 98.9, shares[0])
+    check("orientation band: high end", 99.7, shares[-1])
+
     out = {
         "audit": "paperA_draft_v2.tex quantitative claims vs raw data",
         "n_claims_checked": len(results),
