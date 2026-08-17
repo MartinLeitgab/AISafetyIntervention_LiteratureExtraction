@@ -442,6 +442,10 @@ def main() -> None:
                     100 * sum(x["has_chain"] for x in s) / len(s), 1
                 ),
                 "mean_chains": round(statistics.mean([x["n_chains"] for x in s]), 2),
+                # The mean is dominated by single documents -- one Opus graph emits 57,007
+                # simple paths -- so the median and the maximum ship beside it.
+                "median_chains": statistics.median([x["n_chains"] for x in s]),
+                "max_chains": max(x["n_chains"] for x in s),
                 "stage_mix_pct": stage_mix(s),
             }
 

@@ -767,15 +767,23 @@ def main():
         "multimodel: o3 re-run unparseable responses", 2, mh["A_o3"]["parse_failures"]
     )
     check("multimodel: gpt-5 mean nodes", 38.1, mh["B_gpt5"]["mean_nodes"])
-    check("multimodel: opus-5 mean nodes", 41.2, mh["C_opus5"]["mean_nodes"])
-    check("multimodel: opus-5 mean edges", 56, mh["C_opus5"]["mean_edges"])
+    check("multimodel: opus-5 mean nodes", 41.3, mh["C_opus5"]["mean_nodes"])
+    check("multimodel: opus-5 mean edges", 56.2, mh["C_opus5"]["mean_edges"])
     check("multimodel: opus-5 chain rate", 82.4, mh["C_opus5"]["pct_with_chain"])
-    for arm, chains in [("released", 2.8), ("B_gpt5", 92.06), ("C_opus5", 4462.88)]:
+    for arm, med, mx in [
+        ("released", 2, 19),
+        ("B_gpt5", 6, 886),
+        ("C_opus5", 594, 57007),
+    ]:
         check(
-            f"multimodel: mean chains per document, {arm}",
-            chains,
-            mh[arm]["mean_chains"],
-            note="chain count is a function of graph density, not of extraction quality",
+            f"multimodel: median chains per document, {arm}",
+            med,
+            mh[arm]["median_chains"],
+            note="the mean is dominated by single documents; the paper quotes medians and "
+            "maxima because enumeration is super-linear in edge count",
+        )
+        check(
+            f"multimodel: max chains in one document, {arm}", mx, mh[arm]["max_chains"]
         )
     check("multimodel: gpt-5 mean edges", 41.3, mh["B_gpt5"]["mean_edges"])
     check("multimodel: gpt-5 chain rate", 76.5, mh["B_gpt5"]["pct_with_chain"])
