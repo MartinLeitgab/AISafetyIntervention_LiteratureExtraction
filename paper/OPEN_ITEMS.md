@@ -68,6 +68,8 @@ add one). Every study gets a GitHub issue and a PR.
 | + | S6 remainder: baselines B/C/D + unconditioned repeat arm | ✅ done | #171 / PR #170 | `sec:r-stages`, `sec:limitations`, `app:ablation` |
 | + | S2: judge the chain-yielding population | ✅ done | #172 / PR #170 | `sec:r-judge`, `sec:limitations`, abstract, conclusion |
 | + | What a chain count is a function of | ✅ done | #168 follow-up | `sec:limitations` |
+| + | Chain order + edge orientation: does an undirected enumerator yield a directed argument? | ✅ done | #173 / PR #174 | `sec:m-paths`, `tab:cuts` |
+| + | Third review round (3 models x 2 bars) + the cut list built from it | ✅ done | PR #174 | nine `\CUTNOTE{}` scaffold blocks; `paper/section_cut_list.md` |
 
 🔴 **S2 changed a claim rather than confirming one.** Node-level omission on the
 chain-yielding population is **26.4%** against the corpus-sampled run's 0.6%, edge-level
