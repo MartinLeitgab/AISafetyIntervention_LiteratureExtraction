@@ -1570,6 +1570,22 @@ def main():
     check("orientation band: low end", 98.9, shares[0])
     check("orientation band: high end", 99.7, shares[-1])
 
+    # ---- asymmetric first-hop gate, tab:gates sensitivity row (2026-08-17) -------------
+    # Reported as a price, never as a proposal: the threshold was picked on the sample that
+    # measured it. These check the corpus-level counts the row prints, nothing about fidelity.
+    fh = receipt("experiment_review_first_hop_gate_report.json")["row"]
+    check("first-hop >= 4 row: chains", 1148, fh["chains"])
+    check("first-hop >= 4 row: papers", 853, fh["papers"])
+    check("first-hop >= 4 row: corpus yield", 7.2, fh["corpus_yield_pct"])
+    check("first-hop >= 4 row: all five stages", 90.2, fh["all_five_pct"])
+    check("first-hop >= 4 row: length 7", 63.9, fh["length_7_pct"])
+    check("first-hop >= 4 row: arXiv share", 46.5, fh["arxiv_pct"])
+    check(
+        "first-hop >= 4 row: costs 59% of the chains",
+        58.6,
+        round(100.0 * (2772 - fh["chains"]) / 2772, 1),
+    )
+
     out = {
         "audit": "paperA_draft_v2.tex quantitative claims vs raw data",
         "n_claims_checked": len(results),
