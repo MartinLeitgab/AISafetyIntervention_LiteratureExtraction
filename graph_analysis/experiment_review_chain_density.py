@@ -36,6 +36,74 @@ from pathlib import Path
 
 import experiment_review_schema_ablation as ABL
 
+EDGE_CONFIDENCE_MIN = ABL.EDGE_CONFIDENCE_MIN
+INTERVENTION_MATURITY_MIN = ABL.INTERVENTION_MATURITY_MIN
+MIN_HOPS, MAX_HOPS = ABL.MIN_HOPS, ABL.MAX_HOPS
+CONTAINMENT = 0.70  # phase1_dedup_paths.py, the value that ran
+
+
+def enumerate_chains(nodes: dict, edges: list, directed: bool) -> list:
+    """The released enumerator, with edge direction optional.
+
+    The released run is undirected (`MATCH (n)-[e:EDGE]-(m)`); `directed=True` is the
+    counterfactual this script reports beside it.
+    """
+    adj = {}
+    for e in edges:
+        try:
+            conf = int(e.get("confidence") or 0)
+        except (TypeError, ValueError):
+            conf = 0
+        if conf < EDGE_CONFIDENCE_MIN:
+            continue
+        if e["source"] in nodes and e["target"] in nodes:
+            adj.setdefault(e["source"], []).append(e["target"])
+            if not directed:
+                adj.setdefault(e["target"], []).append(e["source"])
+
+    def is_risk(n):
+        return (
+            nodes[n]["type"] == "concept"
+            and (nodes[n].get("category") or "").lower() == "risk"
+        )
+
+    def is_intv(n):
+        return nodes[n]["type"] == "intervention"
+
+    chains = []
+    for root in [n for n in nodes if is_risk(n)]:
+        stack = [(root, [root], {root})]
+        while stack:
+            cur, path, seen = stack.pop()
+            for nb in adj.get(cur, ()):
+                if nb in seen or is_risk(nb):
+                    continue
+                if len(path) == 1 and is_intv(nb):
+                    continue
+                new = path + [nb]
+                if is_intv(nb):
+                    if (
+                        ABL._mat(nodes[nb]) >= INTERVENTION_MATURITY_MIN
+                        and MIN_HOPS <= len(new) - 1 <= MAX_HOPS
+                    ):
+                        chains.append(new)
+                    continue
+                if len(new) - 1 < MAX_HOPS:
+                    stack.append((nb, new, seen | {nb}))
+    return chains
+
+
+def collapse(chains: list) -> list:
+    """The released sub-path collapse: greedy, longest first, drop anything whose node set
+    is >=70% inside a chain already kept from the same document."""
+    kept = []
+    for c in sorted(chains, key=len, reverse=True):
+        s = set(c)
+        if not any(len(s & set(k)) / len(s) >= CONTAINMENT for k in kept):
+            kept.append(c)
+    return kept
+
+
 ROOT = Path(__file__).parent
 OUT = ROOT / "phase2_results/experiment_review_chain_density_report.json"
 ARMS = {
@@ -59,6 +127,8 @@ def profile(nodes: dict, edges: list) -> dict:
         if v["type"] == "concept" and (v.get("category") or "").lower() == "risk"
     ]
     intv = [k for k, v in nodes.items() if v["type"] == "intervention"]
+    und = enumerate_chains(nodes, edges, directed=False)
+    dir_ = enumerate_chains(nodes, edges, directed=True)
     return {
         "nodes": len(nodes),
         "edges": len(edges),
@@ -68,7 +138,10 @@ def profile(nodes: dict, edges: list) -> dict:
         "risk_roots": len(risks),
         "interventions": len(intv),
         "mature_interventions": sum(1 for k in intv if ABL._mat(nodes[k]) >= 3),
-        "chains_enumerated": len(ABL.enumerate_chains(nodes, edges)),
+        "chains_undirected_raw": len(und),
+        "chains_undirected_collapsed": len(collapse(und)),
+        "chains_directed_raw": len(dir_),
+        "chains_directed_collapsed": len(collapse(dir_)),
     }
 
 
@@ -95,7 +168,7 @@ def main() -> None:
             continue
         keys = [k for k in rows[0][1]]
         med = {k: statistics.median([r[1][k] for r in rows]) for k in keys}
-        worst = max(rows, key=lambda r: r[1]["chains_enumerated"])
+        worst = max(rows, key=lambda r: r[1]["chains_undirected_raw"])
         report["arms"][arm] = {
             "n_documents": len(rows),
             "median": med,
@@ -105,10 +178,14 @@ def main() -> None:
     for arm, a in report["arms"].items():
         m = a["median"]
         print(
-            f"{arm:9s} n={a['n_documents']:2d}  median degree {m['mean_degree_conf_ge3']:.2f}"
-            f"  roots {m['risk_roots']:.0f}  mature intv {m['mature_interventions']:.0f}"
-            f"  -> chains {m['chains_enumerated']:.0f}"
-            f"  (worst {a['worst_document']['chains_enumerated']})"
+            f"{arm:9s} n={a['n_documents']:2d} degree {m['mean_degree_conf_ge3']:.2f}"
+            f" roots {m['risk_roots']:.0f} mature {m['mature_interventions']:.0f}"
+            f" | median chains: undirected raw {m['chains_undirected_raw']:.0f},"
+            f" collapsed {m['chains_undirected_collapsed']:.0f};"
+            f" directed raw {m['chains_directed_raw']:.0f},"
+            f" collapsed {m['chains_directed_collapsed']:.0f}"
+            f" | worst doc raw {a['worst_document']['chains_undirected_raw']}"
+            f" -> collapsed {a['worst_document']['chains_undirected_collapsed']}"
         )
     print(f"\nwrote {OUT}")
 

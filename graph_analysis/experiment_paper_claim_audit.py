@@ -898,6 +898,69 @@ def main():
     )
     check("baseline B: all-five share", 100.0, bl["B_abstract"]["pct_chains_all_five"])
 
+    # ---- the collapse applied to the cross-model arms (#168 follow-up) ---------------
+    # NB: not `raw`/`ded` -- those name the path_block dicts this function already holds.
+    for arm, n_raw, n_coll in [
+        ("A_o3", 0.5, 0.5),
+        ("B_gpt5", 6, 2),
+        ("C_opus5", 594, 4),
+    ]:
+        check(
+            f"density {arm}: median chains before the collapse",
+            n_raw,
+            cd[arm]["median"]["chains_undirected_raw"],
+        )
+        check(
+            f"density {arm}: median chains after the collapse",
+            n_coll,
+            cd[arm]["median"]["chains_undirected_collapsed"],
+            note="the reporting unit; raw enumeration is not what the paper counts",
+        )
+    check(
+        "density: worst document after the collapse",
+        44,
+        cd["C_opus5"]["worst_document"]["chains_undirected_collapsed"],
+        note="57,007 raw paths in one Opus graph reduce to 44 kept chains",
+    )
+    check(
+        "density: Opus median under directed traversal",
+        23,
+        cd["C_opus5"]["median"]["chains_directed_raw"],
+        note="honouring stored edge direction also tames it, but the released enumerator "
+        "is undirected, so the collapse is the reduction that applies",
+    )
+
+    # ---- second judge run on the chain-yielding population (S2, issue #172) ----------
+    s2 = receipt("experiment_review_judge_chainyielding_report.json")
+    check("S2: requests", 100, s2["n_requests"])
+    check("S2: parseable reports", 97, s2["n_parsed"])
+    check(
+        "S2: papers with an added node",
+        95,
+        s2["node_level"]["papers_with_an_added_node"],
+    )
+    check("S2: added nodes", 557, s2["node_level"]["added_nodes"])
+    check(
+        "S2: nodes in those extractions",
+        2110,
+        s2["extraction_size_over_parsed"]["nodes"],
+    )
+    check(
+        "S2: node-level omission pct",
+        26.4,
+        s2["node_level"]["pct_of_nodes"],
+        note="against 0.6% on the corpus-sampled run; confounded by document length and by "
+        "extractions rebuilt without rationale fields, and the paper says so",
+    )
+    check("S2: coverage rows", 627, s2["edge_level"]["coverage_rows"])
+    check("S2: coverage rows marked missing", 476, s2["edge_level"]["missing"])
+    check(
+        "S2: edges in those extractions",
+        2192,
+        s2["extraction_size_over_parsed"]["edges"],
+    )
+    check("S2: edge-level omission pct", 21.7, s2["edge_level"]["pct_of_edges"])
+
     # ---- extraction-failure recovery, now printed in the body (C6) -------------------
     rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
         "population_A_extraction_error_candidates"
