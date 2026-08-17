@@ -23,7 +23,7 @@ can infer a stratum you have lost the property the packet is built to protect.
 
 ## Document lengths
 
-Median 35,039 characters, longest 150,520. The full
+Median 35,039 characters, longest 86,655. The full
 text ships for every chain because deciding a document does NOT assert something requires
 being able to search all of it. For the long ones the URL in each file is often easier to
 read than the plain-text dump.
@@ -43,11 +43,12 @@ You are deciding one thing: **does this document make this argument?** You are N
 whether the argument is correct, whether the intervention would work, or whether the document
 is good research. A faithful record of a weak argument is faithful.
 
-Fill in five fields per chain. Quote spans verbatim from the source; if you cannot find one,
+Fill in the fields below per chain. Quote spans verbatim from the source; if you cannot find one,
 that is itself the answer and the field is left empty.
 
 | Field | Question | Values |
 |---|---|---|
+| `risk_link_asserted` | **Does the document assert the link from the risk to the next node at all?** A plain yes or no, before any judgement of degree. | `yes` / `no` |
 | `risk_supported` | Does the source assert this risk, or something a domain reader would accept as it? | `yes` / `partial` / `no` |
 | `risk_quote` | The span that asserts it | verbatim, or empty |
 | `intervention_supported` | Does the source **propose** this intervention against that risk? Merely describing or citing the technique is **not** proposing it. | `yes` / `partial` / `no` |
@@ -73,6 +74,19 @@ that is itself the answer and the field is left empty.
 on. An automated judge cannot draw it, because it requires knowing what a reader of this
 literature would accept.
 
+## Why the first field is a plain yes/no
+
+Because the graded version of this question turned out to be the weak instrument. A second
+model applying the project's own five-point evidence rubric to these same links separated the
+good from the bad by 0.7 of a point, and marked 61% of the *good* ones below the project's own
+threshold -- its ordering was informative and its level was not. The same call answered the
+binary "does the document assert this link" and separated the two groups by a factor of three.
+So the binary is asked first, on its own, before any graded field can anchor it.
+
+It is also the one field that is worded identically to what the machine was asked, which is
+what makes it possible to compute how often the machine was right rather than merely how often
+it was confident.
+
 ## Two things to resist
 
 1. **Do not repair the chain.** If a node is nearly right, it is not right. Judge what is
@@ -80,5 +94,8 @@ literature would accept.
 2. **Do not calibrate to the other chains.** Each is judged against its own source only.
    Some of these were selected because a machine flagged them and some because it did not;
    you are not being asked to reproduce or to contradict any earlier verdict, and you will
-   not see one until you are done.
+   not see one until you are done. There is no target rate. Two machine annotators on this
+   exact task differed enormously in overall strictness while agreeing on the ranking, so a
+   verdict distribution that feels too harsh or too lenient is not evidence you are doing it
+   wrong.
 

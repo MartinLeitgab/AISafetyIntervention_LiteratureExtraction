@@ -32,7 +32,7 @@ import pickle
 import random
 import re
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -44,18 +44,79 @@ OUT = HERE / "phase2_results" / "human_review_packet"
 
 SEED = 42
 
-# (arm, reason_code, n). Sizes and their justification are in issue #176.
+# REVISED 2026-08-17 after #178/#179 re-labelled 66 of the same chains with a second, blind
+# instrument. Three things in that result change where an hour of human attention is worth
+# most, and the strata below are the response:
+#
+#   1. Two independent instruments now agree on the invented-risk class -- #175 called them
+#      invented, #179 says the document does not assert the link in 25 of 33. Agreement is
+#      not correctness (same model family), but the marginal value of a human label on a
+#      case both machines already call the same way is lower than it was.
+#   2. Nothing corroborates intervention_not_proposed, and nothing can: it turns on whether
+#      the schema's imperative rendering plus a development-stage maturity label amount to
+#      the source "proposing" the intervention. That is a question about what the schema
+#      means, and it governs 24% of the reporting unit. It goes UP.
+#   3. The two instruments DISAGREE on 15 chains -- 7 the precision judge called faithful
+#      where the re-labeller says the link is not asserted, 8 the reverse. These are the
+#      highest-information items in the study and did not exist as a stratum before, because
+#      the second instrument did not exist. They go in.
+#
+# Total stays 30: the constraint is the annotator's hours, not the sample frame.
 STRATA = [
-    ("real", "risk_framing_invented", 10),
-    ("real", "intervention_not_proposed", 8),
-    ("real", "faithful", 7),
-    ("real", "chain_belongs_to_a_different_document", 3),
-    ("gate_rejected", "risk_framing_invented", 2),
+    # (label, n, predicate over the joined record)
+    (
+        "intervention_not_proposed",
+        10,
+        lambda r: r["arm"] == "real" and r["code"] == "intervention_not_proposed",
+    ),
+    (
+        "model_disagreement_faithful_but_link_not_asserted",
+        3,
+        lambda r: r["disagree"] and r["code"] == "faithful",
+    ),
+    (
+        "model_disagreement_invented_but_link_asserted",
+        3,
+        lambda r: r["disagree"] and r["code"] == "risk_framing_invented",
+    ),
+    (
+        "risk_framing_invented_both_agree",
+        6,
+        lambda r: r["arm"] == "real"
+        and r["code"] == "risk_framing_invented"
+        and r["asserted"] is False,
+    ),
+    (
+        "faithful_both_agree",
+        5,
+        lambda r: r["arm"] == "real"
+        and r["code"] == "faithful"
+        and r["asserted"] is True,
+    ),
+    (
+        "known_judge_false_positive",
+        2,
+        lambda r: r["arm"] == "real"
+        and r["code"] == "chain_belongs_to_a_different_document",
+    ),
+    (
+        "gate_rejected_invented",
+        1,
+        lambda r: r["arm"] == "gate_rejected" and r["code"] == "risk_framing_invented",
+    ),
 ]
 
-# Double-coded for an inter-annotator figure. Without one the result is one person's opinion,
-# which three of the six external reviewers say in as many words.
+# Double-coded for an inter-annotator figure. #179 showed the strictness spread on this exact
+# judgement is enormous -- a second annotator put 60.6% of links the first called faithful
+# below the gate -- so an agreement figure computed on easy cases would flatter the protocol.
+# The 8 are therefore CONCENTRATED on the two hardest strata rather than spread at random,
+# which makes the resulting figure a lower bound on agreement and says so in the README.
 N_DOUBLE_CODED = 8
+DOUBLE_CODE_STRATA = {
+    "model_disagreement_faithful_but_link_not_asserted",
+    "model_disagreement_invented_but_link_asserted",
+    "intervention_not_proposed",
+}
 
 RUBRIC = """\
 # How to judge a chain
@@ -64,11 +125,12 @@ You are deciding one thing: **does this document make this argument?** You are N
 whether the argument is correct, whether the intervention would work, or whether the document
 is good research. A faithful record of a weak argument is faithful.
 
-Fill in five fields per chain. Quote spans verbatim from the source; if you cannot find one,
+Fill in the fields below per chain. Quote spans verbatim from the source; if you cannot find one,
 that is itself the answer and the field is left empty.
 
 | Field | Question | Values |
 |---|---|---|
+| `risk_link_asserted` | **Does the document assert the link from the risk to the next node at all?** A plain yes or no, before any judgement of degree. | `yes` / `no` |
 | `risk_supported` | Does the source assert this risk, or something a domain reader would accept as it? | `yes` / `partial` / `no` |
 | `risk_quote` | The span that asserts it | verbatim, or empty |
 | `intervention_supported` | Does the source **propose** this intervention against that risk? Merely describing or citing the technique is **not** proposing it. | `yes` / `partial` / `no` |
@@ -94,6 +156,19 @@ that is itself the answer and the field is left empty.
 on. An automated judge cannot draw it, because it requires knowing what a reader of this
 literature would accept.
 
+## Why the first field is a plain yes/no
+
+Because the graded version of this question turned out to be the weak instrument. A second
+model applying the project's own five-point evidence rubric to these same links separated the
+good from the bad by 0.7 of a point, and marked 61% of the *good* ones below the project's own
+threshold -- its ordering was informative and its level was not. The same call answered the
+binary "does the document assert this link" and separated the two groups by a factor of three.
+So the binary is asked first, on its own, before any graded field can anchor it.
+
+It is also the one field that is worded identically to what the machine was asked, which is
+what makes it possible to compute how often the machine was right rather than merely how often
+it was confident.
+
 ## Two things to resist
 
 1. **Do not repair the chain.** If a node is nearly right, it is not right. Judge what is
@@ -101,7 +176,10 @@ literature would accept.
 2. **Do not calibrate to the other chains.** Each is judged against its own source only.
    Some of these were selected because a machine flagged them and some because it did not;
    you are not being asked to reproduce or to contradict any earlier verdict, and you will
-   not see one until you are done.
+   not see one until you are done. There is no target rate. Two machine annotators on this
+   exact task differed enormously in overall strictness while agreeing on the ranking, so a
+   verdict distribution that feels too harsh or too lenient is not evidence you are doing it
+   wrong.
 """
 
 
@@ -167,23 +245,60 @@ def main() -> int:
         ]
     rows = [r for r in rows if "verdict" in r]
 
-    pool: dict[tuple, list] = defaultdict(list)
+    # Join the second instrument (#178/#179) where it exists. Only the 66 chains it
+    # re-labelled carry `asserted`; everything else is None, which the predicates treat as
+    # "no second opinion" rather than as disagreement.
+    relabel_fp = HERE / "phase2_results" / "confidence_relabel_raw" / "results.jsonl"
+    asserted_by_prec_id: dict[str, bool | None] = {}
+    if relabel_fp.is_file():
+        for x in relabel_fp.read_text(encoding="utf-8").splitlines():
+            if not x.strip():
+                continue
+            r = json.loads(x)
+            if "verdict" in r:
+                asserted_by_prec_id[r["precision_custom_id"]] = r["verdict"].get(
+                    "is_this_link_asserted_by_the_document"
+                )
+    else:
+        print("  NOTE: no #179 results on disk; disagreement strata will be unfillable")
+
+    joined = []
     for r in rows:
-        pool[(r["arm"], r["verdict"]["reason_code"])].append(r)
+        code = r["verdict"]["reason_code"]
+        asserted = asserted_by_prec_id.get(r["custom_id"])
+        joined.append(
+            {
+                "row": r,
+                "arm": r["arm"],
+                "code": code,
+                "asserted": asserted,
+                "disagree": (code == "faithful" and asserted is False)
+                or (code == "risk_framing_invented" and asserted is True),
+            }
+        )
 
     rng = random.Random(SEED)
-    picked = []
-    for arm, code, n in STRATA:
-        cands = sorted(pool.get((arm, code), []), key=lambda r: r["custom_id"])
+    picked, used = [], set()
+    for label, n, pred in STRATA:
+        cands = sorted(
+            (j for j in joined if j["row"]["custom_id"] not in used and pred(j)),
+            key=lambda j: j["row"]["custom_id"],
+        )
         if len(cands) < n:
             die(
-                f"stratum ({arm}, {code}) has {len(cands)} chains, needs {n}. "
-                "Adjust STRATA rather than silently taking fewer -- the sizes are argued "
-                "in #176 and a quiet shortfall would misreport the design."
+                f"stratum '{label}' has {len(cands)} chains, needs {n}. Adjust STRATA "
+                "rather than silently taking fewer -- the sizes are argued in #176 and a "
+                "quiet shortfall would misreport the design."
             )
         rng.shuffle(cands)
-        for r in cands[:n]:
-            picked.append({"row": r, "stratum_arm": arm, "stratum_code": code})
+        for j in cands[:n]:
+            used.add(j["row"]["custom_id"])
+            picked.append({"row": j["row"], "stratum_code": label, "arm": j["arm"]})
+
+    # Double-code the hardest strata, then top up in shuffle order if they run short.
+    hard = [p for p in picked if p["stratum_code"] in DOUBLE_CODE_STRATA]
+    rng.shuffle(hard)
+    double_ids = {p["row"]["custom_id"] for p in hard[:N_DOUBLE_CODED]}
 
     rng.shuffle(picked)  # so strata are not clustered in the reading order
 
@@ -191,7 +306,6 @@ def main() -> int:
     (OUT / "chains").mkdir(exist_ok=True)
 
     manifest, sheet, reveal = [], [], []
-    double = {f"C{i + 1:02d}" for i in range(N_DOUBLE_CODED)}
     lengths = []
 
     for i, item in enumerate(picked):
@@ -228,12 +342,13 @@ def main() -> int:
                 "source_url": r["source_url"],
                 "host": host_of(r["source_url"]),
                 "nodes": r["nodes"],
-                "double_coded": pid in double,
+                "double_coded": r["custom_id"] in double_ids,
             }
         )
         sheet.append(
             {
                 "packet_id": pid,
+                "risk_link_asserted": "",
                 "risk_supported": "",
                 "risk_quote": "",
                 "intervention_supported": "",
@@ -257,6 +372,8 @@ def main() -> int:
             f"| {(v.get('intermediate_stages', {}).get('note') or '')[:300]}\n"
         )
 
+    double_pids = {m["packet_id"] for m in manifest if m["double_coded"]}
+
     with (OUT / "verdict_sheet.csv").open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(sheet[0].keys()))
         w.writeheader()
@@ -267,7 +384,7 @@ def main() -> int:
     ) as fh:
         w = csv.DictWriter(fh, fieldnames=list(sheet[0].keys()))
         w.writeheader()
-        w.writerows([s for s in sheet if s["packet_id"] in double])
+        w.writerows([s for s in sheet if s["packet_id"] in double_pids])
 
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
 
