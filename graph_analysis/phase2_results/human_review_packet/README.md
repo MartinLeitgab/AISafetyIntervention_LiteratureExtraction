@@ -49,30 +49,51 @@ that is itself the answer and the field is left empty.
 | Field | Question | Values |
 |---|---|---|
 | `risk_link_asserted` | **Does the document assert the link from the risk to the next node at all?** A plain yes or no, before any judgement of degree. | `yes` / `no` |
-| `risk_supported` | Does the source assert this risk, or something a domain reader would accept as it? | `yes` / `partial` / `no` |
-| `risk_quote` | The span that asserts it | verbatim, or empty |
-| `intervention_supported` | Does the source **propose** this intervention against that risk? Merely describing or citing the technique is **not** proposing it. | `yes` / `partial` / `no` |
+| `risk_inference_level` | How far from the document is the risk at the head of the chain? | `0`-`3`, below |
+| `risk_quote` | The span that states or best supports it | verbatim, or empty |
+| `intervention_inference_level` | How far from the document is the intervention at the tail? Describing or citing a technique is not proposing it. | `0`-`3`, below |
 | `intervention_quote` | The span in which it is proposed | verbatim, or empty |
-| `body_supported` | Is each intermediate node's content present in the source? | `yes` / `partial` / `no` |
+| `body_inference_level` | The intermediate nodes together, scored at their worst step | `0`-`3`, below |
 | `verdict` | Overall | see below |
 | `notes` | Anything the fields above cannot carry | free text |
+| `minutes_spent` | How long this one took | a number |
+
+## The inference scale, and why it is not a five-point quality rating
+
+The extraction prompt **deliberately licenses inference** where the document does not supply a
+stage, and it ties each degree to a label the extractor was then required to store:
+
+| Level | Meaning | What the extraction prompt says |
+|---|---|---|
+| **0** | stated in the document | no inference applied |
+| **1** | light inference: a short step a domain reader takes without effort | "must be 2 if light inference applied" |
+| **2** | moderate inference: a real reading, but one this literature would accept | "must be 1 if moderate inference applied" |
+| **3** | beyond moderate: not reasonably inferrable from this document | **licensed nowhere. This is the defect** |
+
+A 1 or a 2 is **not a complaint**. It is the design working, and the extractor was supposed to
+record it by storing a low confidence on that edge. **Level 3 is the only value that says the
+extraction asserted something it had no licence to assert.**
+
+Four values anchored to the prompt's own words, rather than five points of "how much",
+because an earlier run of this project asked a model to place these same links on a
+five-point evidence scale: its ordering was informative and its absolute level was useless,
+and it put 61% of the links a different instrument called faithful below the project's own
+threshold. An anchored level is checkable against a rule; a five-point feel is not.
 
 ## The verdict values, and the one that matters most
 
-- **`faithful`** -- the document makes this argument. Quotes exist for the risk and the
-  intervention.
-- **`inferred_but_reasonable`** -- the document does not state part of the chain, but the
-  extraction's reading is one a domain reader would accept as a fair inference from what the
-  document does say. **This category exists because the extraction prompt deliberately
-  licenses moderate inference**, and it is the judgement no model can make for us. Use it
-  freely; it is not a failure verdict.
-- **`unsupported`** -- the document does not support this, and a domain reader would not get
-  here from it. This is the verdict that means the extraction asserted something about the
-  document that is not there.
+The verdict follows the levels; where it does not, say why in `notes`.
 
-`inferred_but_reasonable` versus `unsupported` is the distinction the whole exercise turns
-on. An automated judge cannot draw it, because it requires knowing what a reader of this
-literature would accept.
+- **`faithful`** -- level 0 on the risk and the intervention. The document makes this argument.
+- **`inferred_but_reasonable`** -- the worst level is 1 or 2. The document does not state part
+  of the chain, but the reading is one a domain reader would accept. **The design working, not
+  a failure**, and the judgement no model can make for us.
+- **`unsupported`** -- level 3 anywhere. The extraction asserted something the document does
+  not support and could not license.
+
+The 2-versus-3 boundary is what the whole exercise turns on, and it is exactly what an
+automated judge cannot draw, because it requires knowing what a reader of this literature
+would accept.
 
 ## Why the first field is a plain yes/no
 
