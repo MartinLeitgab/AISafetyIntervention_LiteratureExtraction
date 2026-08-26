@@ -62,12 +62,50 @@ SEED = 42
 #      the second instrument did not exist. They go in.
 #
 # Total stays 30: the constraint is the annotator's hours, not the sample frame.
+#
+# REVISED AGAIN 2026-08-26, and this revision is about what the study can RETURN rather
+# than about where attention is worth most. The 2026-08-17 frame was built to adjudicate
+# the classes #175 flagged. Reading it against what the reviewers actually ask for
+# exposed two holes, both of which freeze the moment the first verdict is written:
+#
+#   A. NO POPULATION RATE WAS REACHABLE. #175's real arm is 200 chains stratified by URL
+#      host PROPORTIONAL to the 2,772-chain reporting unit, so its reason-code shares are
+#      population estimates (faithful 48.0%, intervention_not_proposed 24.0%,
+#      risk_framing_invented 16.5%, intermediate_unsupported 7.5%, wrong-document 4.0%).
+#      That makes post-stratification the whole game: human verdicts per code, reweighted
+#      by those shares, give a human-anchored rate for the reporting unit rather than a
+#      rate for a hand-picked 30. But intermediate_unsupported had ZERO cells, so 7.5% of
+#      the population was blind and no reweighted rate could be quoted for it. It goes in.
+#   B. THE GATE ARM WAS n=1. The 17.8 pp gate discrimination (52.0% arm A against 69.8%
+#      arm B) is the finding OPEN_ITEMS calls the half most likely to survive #176 and the
+#      half a reviewer would find most useful, and one human observation cannot license
+#      it. Six can make it directional. The six are drawn across arm B's own top three
+#      reason codes (intervention_not_proposed 43.8%, faithful 30.2%, invented 15.6%),
+#      so arm B reweights the same way arm A does and the two rates are comparable.
+#      🔴 SIX IS A DIRECTION, NOT A CONFIRMATION. Do not print 17.8 pp as human-anchored.
+#
+# The two slots that paid for this, and why these two:
+#   - risk_framing_invented_both_agree 6 -> 3. This is the class the 2026-08-17 note
+#     itself argued DOWN: two instruments already call it the same way, so a human label
+#     on it is worth less than it was. Taking the note's own logic one step further.
+#   - known_judge_false_positive 2 -> 1. 4.0% of the population and both machines already
+#     know these are judge false positives; the human label confirms a known answer.
+#
+# Real-arm cells now cover 100.0% of the reporting unit's reason codes (was 92.5%).
 STRATA = [
     # (label, n, predicate over the joined record)
+    # --- arm A: the 2,772-chain reporting unit. Weights come from #175's real arm. ---
     (
         "intervention_not_proposed",
-        10,
+        7,
         lambda r: r["arm"] == "real" and r["code"] == "intervention_not_proposed",
+    ),
+    (
+        "faithful_both_agree",
+        4,
+        lambda r: r["arm"] == "real"
+        and r["code"] == "faithful"
+        and r["asserted"] is True,
     ),
     (
         "model_disagreement_faithful_but_link_not_asserted",
@@ -81,23 +119,36 @@ STRATA = [
     ),
     (
         "risk_framing_invented_both_agree",
-        6,
+        3,
         lambda r: r["arm"] == "real"
         and r["code"] == "risk_framing_invented"
         and r["asserted"] is False,
     ),
     (
-        "faithful_both_agree",
-        5,
-        lambda r: r["arm"] == "real"
-        and r["code"] == "faithful"
-        and r["asserted"] is True,
+        "intermediate_unsupported",
+        3,
+        lambda r: r["arm"] == "real" and r["code"] == "intermediate_unsupported",
     ),
     (
         "known_judge_false_positive",
-        2,
+        1,
         lambda r: r["arm"] == "real"
         and r["code"] == "chain_belongs_to_a_different_document",
+    ),
+    # --- arm B: chains the same enumerator emits that the two quality gates reject. ---
+    # Not part of the reporting unit. These exist only so gate discrimination has a human
+    # observation on both sides. Drawn across arm B's top three codes, which cover 89.6%
+    # of it; the two tail codes are left uncovered rather than filled with cells of one.
+    (
+        "gate_rejected_intervention_not_proposed",
+        3,
+        lambda r: r["arm"] == "gate_rejected"
+        and r["code"] == "intervention_not_proposed",
+    ),
+    (
+        "gate_rejected_faithful",
+        2,
+        lambda r: r["arm"] == "gate_rejected" and r["code"] == "faithful",
     ),
     (
         "gate_rejected_invented",
@@ -111,6 +162,16 @@ STRATA = [
 # below the gate -- so an agreement figure computed on easy cases would flatter the protocol.
 # The 8 are therefore CONCENTRATED on the two hardest strata rather than spread at random,
 # which makes the resulting figure a lower bound on agreement and says so in the README.
+#
+# 🔴 DECIDED 2026-08-26: THERE IS NO SECOND ANNOTATOR. One person judges all 30. The sheet
+# below is still emitted, pre-selected and ready, because recruiting one later costs 2-3
+# hours and nothing else -- but nothing in the study currently consumes it. The consequence
+# is not cosmetic and must be carried into the write-up: reviewer R11 (Opus 5 and GPT-5.6
+# Sol, both bars) says a human anchor without inter-annotator agreement is one person's
+# opinion, and that objection stays OPEN. Do not report an agreement figure, do not imply
+# one exists, and do not substitute the annotator re-judging their own rows -- that is
+# test-retest consistency, a different and weaker instrument, and calling it agreement
+# would be the kind of relabelled measurement this project has already been caught doing.
 N_DOUBLE_CODED = 8
 DOUBLE_CODE_STRATA = {
     "model_disagreement_faithful_but_link_not_asserted",
@@ -245,6 +306,45 @@ def render_chain(nodes: list[int], attrs: dict) -> str:
     return "\n".join(out)
 
 
+def preflight_outputs_are_writable() -> None:
+    """Refuse to start unless every output can be replaced.
+
+    Learned 2026-08-26 the expensive way. `verdict_sheet.csv` was open in Excel, which
+    holds an exclusive lock on Windows. The run rewrote all 30 `chains/*.md` with the new
+    sample, then died on the first sheet write -- leaving the packet INCONSISTENT: new
+    chain files against an old manifest, so every packet id pointed at a different chain
+    than the manifest claimed. That state is silently wrong rather than obviously broken,
+    which is the worst kind, and an annotator who started work in it would have produced
+    verdicts attached to the wrong chains.
+
+    Checking first costs nothing. Half-writing the packet costs a rebuild at best and
+    corrupt verdicts at worst.
+    """
+    blocked = []
+    for name in (
+        "verdict_sheet.csv",
+        "verdict_sheet_annotator2.csv",
+        "manifest.json",
+        "README.md",
+        "REVEAL_stage1_verdicts.md",
+    ):
+        p = OUT / name
+        if not p.exists():
+            continue
+        try:
+            with p.open("a", encoding="utf-8"):
+                pass
+        except OSError as e:
+            blocked.append(f"{name}: {e.strerror or e}")
+    if blocked:
+        die(
+            "output files are locked by another process, so the packet was NOT touched:\n  "
+            + "\n  ".join(blocked)
+            + "\n\n  On Windows this is almost always Excel holding the CSV. Close it and\n"
+            "  re-run. Nothing has been written, so the existing packet is still coherent."
+        )
+
+
 def main() -> int:
     for p in (NODE_ATTRS, RAW / "results.jsonl", RAW / "results_contrast.jsonl"):
         if not p.is_file():
@@ -253,6 +353,7 @@ def main() -> int:
                 "  results files come from experiment_review_chain_precision.py;\n"
                 "  node_attrs_slim.pkl from experiment_review_prep_slim_nodes.py."
             )
+    preflight_outputs_are_writable()
 
     attrs = pickle.load(NODE_ATTRS.open("rb"))
     sources = load_sources()
@@ -435,9 +536,22 @@ is worth as much as the verdicts.
 | `README.md` | this, including the rubric |
 | `chains/C01.md` ... `C30.md` | one chain plus its full source text |
 | `verdict_sheet.csv` | the sheet to fill in, one row per chain |
-| `verdict_sheet_annotator2.csv` | {N_DOUBLE_CODED} chains for a second annotator, for the inter-annotator figure |
+| `verdict_sheet_annotator2.csv` | {N_DOUBLE_CODED} chains pre-selected for a second annotator **if one is ever found**. None is planned -- see below |
 | `manifest.json` | which packet id maps to which chain -- for the analysis afterwards, not needed while judging |
 | `REVEAL_stage1_verdicts.md` | 🔴 **do not open until the sheet is filled in** |
+
+## One annotator, and what that costs
+
+Decided 2026-08-26: one person judges all 30. So this study reports **no inter-annotator
+agreement figure**, and the reviewer objection behind it -- that a human anchor without
+agreement is one person's opinion, raised by two of the three external models at both bars
+-- stays open. That is a known, accepted cost, not an oversight.
+
+Two things follow while you work. Re-judging your own rows later is *not* a substitute: it
+measures whether you are consistent, not whether the judgement is shared, and reporting it
+as agreement would be a relabelled measurement. And if a second annotator does turn up,
+they must not see your filled sheet -- keep it somewhere they will not open, because the
+{N_DOUBLE_CODED} rows in `verdict_sheet_annotator2.csv` are only worth anything blind.
 
 ## The order is shuffled and the ids are opaque, deliberately
 

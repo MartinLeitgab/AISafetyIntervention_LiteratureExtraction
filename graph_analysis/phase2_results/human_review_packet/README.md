@@ -11,9 +11,22 @@ is worth as much as the verdicts.
 | `README.md` | this, including the rubric |
 | `chains/C01.md` ... `C30.md` | one chain plus its full source text |
 | `verdict_sheet.csv` | the sheet to fill in, one row per chain |
-| `verdict_sheet_annotator2.csv` | 8 chains for a second annotator, for the inter-annotator figure |
+| `verdict_sheet_annotator2.csv` | 8 chains pre-selected for a second annotator **if one is ever found**. None is planned -- see below |
 | `manifest.json` | which packet id maps to which chain -- for the analysis afterwards, not needed while judging |
 | `REVEAL_stage1_verdicts.md` | 🔴 **do not open until the sheet is filled in** |
+
+## One annotator, and what that costs
+
+Decided 2026-08-26: one person judges all 30. So this study reports **no inter-annotator
+agreement figure**, and the reviewer objection behind it -- that a human anchor without
+agreement is one person's opinion, raised by two of the three external models at both bars
+-- stays open. That is a known, accepted cost, not an oversight.
+
+Two things follow while you work. Re-judging your own rows later is *not* a substitute: it
+measures whether you are consistent, not whether the judgement is shared, and reporting it
+as agreement would be a relabelled measurement. And if a second annotator does turn up,
+they must not see your filled sheet -- keep it somewhere they will not open, because the
+8 rows in `verdict_sheet_annotator2.csv` are only worth anything blind.
 
 ## The order is shuffled and the ids are opaque, deliberately
 
@@ -23,7 +36,7 @@ can infer a stratum you have lost the property the packet is built to protect.
 
 ## Document lengths
 
-Median 35,039 characters, longest 86,655. The full
+Median 35,618 characters, longest 101,342. The full
 text ships for every chain because deciding a document does NOT assert something requires
 being able to search all of it. For the long ones the URL in each file is often easier to
 read than the plain-text dump.
