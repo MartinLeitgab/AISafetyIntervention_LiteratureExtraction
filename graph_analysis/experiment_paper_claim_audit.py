@@ -1482,6 +1482,60 @@ def main():
         38.9,
         round(100.0 * cl2["missing"] / cl2["rows_total"], 1),
     )
+
+    # Chain-level impact of the flagged omissions. These arrived in the manuscript on
+    # 2026-08-26: the abstract and sec:limitations now say that granting the judge every
+    # missing relationship makes ONE further risk-to-intervention pair reachable, out of 86
+    # that were structurally available. 86 is the HEADROOM, not the pair count -- 86 of the
+    # 100 papers extract as a single connected component, so no edge could add a pair
+    # there. The last check guards exactly that confusion: if a future edit starts quoting
+    # the new pair against `before` (408) instead of against headroom, the ratio it would
+    # print is 0.2% and this file should be the thing that stops it.
+    ci = receipt("experiment_review_omission_chain_impact_report.json")
+    pairs = ci["risk_intervention_pairs"]
+    head = ci["headroom"]
+    check("chain impact: audited papers", 100, ci["papers"])
+    check(
+        "chain impact: missing relationships granted", 270, ci["missing_edges_granted"]
+    )
+    check("chain impact: pairs reachable before", 408, pairs["before"])
+    check("chain impact: new pairs after granting every omission", 1, pairs["new"])
+    check(
+        "chain impact: headroom, pairs unreachable before",
+        86,
+        head["pairs_unreachable_before"],
+    )
+    check(
+        "chain impact: papers with any headroom", 14, head["papers_with_any_headroom"]
+    )
+    check(
+        "chain impact: new pairs as a share of HEADROOM",
+        1.2,
+        head["new_as_pct_of_headroom"],
+    )
+    check(
+        "chain impact: headroom is possible minus before (the denominator is derived, not asserted)",
+        head["pairs_unreachable_before"],
+        pairs["possible"] - pairs["before"],
+    )
+
+    # The companion receipt: the flagged rows are not inert densification. Kept under audit
+    # because the manuscript comment in sec:limitations cites all four figures, and because
+    # the resolution gradient is what licenses the matcher at all -- if a future change to
+    # the matcher flattens it, these checks fail before anyone quotes the result again.
+    oi = receipt("experiment_review_omission_is_chain_level_report.json")
+    sh = oi["shares_of_usable_missing_rows"]
+    check("omission unit: inert share of missing rows", 3.7, sh["inert_pct"])
+    check(
+        "omission unit: rows naming a node the extraction lacks",
+        91.5,
+        sh["new_material_pct"],
+    )
+    check(
+        "omission unit: add_nodes proposed across 100 papers",
+        9,
+        oi["add_nodes_instrument"]["total_added_nodes"],
+    )
     cy = receipt("experiment_review_judge_chainyielding_report.json")
     check(
         "second judge run: coverage list rows", 627, cy["edge_level"]["coverage_rows"]

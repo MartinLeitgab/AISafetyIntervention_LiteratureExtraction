@@ -70,7 +70,7 @@ that is itself the answer and the field is left empty.
 | `intervention_quote` | The span in which it is proposed | verbatim, or empty |
 | `body_inference_level` | The intermediate nodes together, scored at their worst step | `0`-`3`, below |
 | `verdict` | Overall | see below |
-| `chain_recall_missed` | **Does this document argue a materially different risk-to-intervention chain that is NOT in the extraction?** See below -- this is the only recall question anyone asks in this project | `yes` / `no` / `unclear` |
+| `chain_recall_missed` | **Does this document argue a risk-to-intervention pair that appears NOWHERE in the list at the top of the file?** Additive only -- see below | `yes` / `no` / `unclear` |
 | `chain_recall_note` | If yes: name the risk and the intervention, in a few words each | free text, or empty |
 | `annotator_confidence` | How sure are you of the `verdict` on this chain? | `high` / `medium` / `low` |
 | `notes` | Anything the fields above cannot carry | free text |
@@ -126,31 +126,44 @@ It is also the one field that is worded identically to what the machine was aske
 what makes it possible to compute how often the machine was right rather than merely how often
 it was confident.
 
-## The recall question, and why it is worth the extra minutes
+## The recall question, and the list it is asked against
+
+🔴 **This question is ADDITIVE, not corrective.** It does not ask whether the chain in front
+of you is wrong -- `verdict` and the inference levels already record that, and a chain can
+be `unsupported` while this field is `no`. It asks a separate thing: **is there an argument
+in this document that the extraction did not capture at all?**
 
 Everything above judges a chain the extraction *produced*. That is precision. It cannot see
 what the extraction *missed*, and nothing else in this project can either -- so while the
 source is open in front of you, you are the only instrument that will ever answer it.
 
+**Ask it against the list at the top of the file, never against the chain alone.** Each
+chain file opens with *every* risk-to-intervention pair this document's extraction holds --
+typically six, sometimes seventeen, never just the one you are judging. That list is what
+"the extraction" means for this field. Without it the question would be unanswerable, since
+a pair absent from your chain is usually present in the document's other chains.
+
 Ask it at the chain level, never at the node level. **A concept the extraction did not name
 is not a miss.** A second pass over any document will always find more nameable concepts,
 and a denser middle does not change which risk is connected to which intervention. What
-counts as a miss is a materially different *argument*:
+counts as a miss is a risk-to-intervention pair that appears **nowhere in that list**:
 
 - a **different risk** the document argues against, with its own intervention;
-- the **same risk** routed to a **different intervention**;
-- the **same intervention** offered against a **different risk**.
+- the **same risk** routed to a **different intervention** than any listed;
+- the **same intervention** offered against a **different risk** than any listed.
 
-If the document argues one of those and the extraction does not carry it, that is `yes`,
-and `chain_recall_note` gets the risk and the intervention in a few words each. If the only
+If the document argues one of those and no listed pair covers it, that is `yes`, and
+`chain_recall_note` gets the risk and the intervention in a few words each. If the only
 thing you can point at is a stage the chain states thinly or skips, that is `no` -- the
 inference levels above already record it. `unclear` is a real answer for a long document
 you could not search exhaustively, and it is far better than a guessed `no`.
 
-Two warnings. This field will read low by construction, because you are looking at one
-chain and its source rather than at every chain the document produced -- so it is a **floor
-on recall failure, never a rate**. And it is the one field where being unsure is common:
-use `unclear` freely.
+Two warnings. The list is built by reachability over the document's extracted graph, so it
+is **generous**: it includes pairs that the quality gates later reject, which is deliberate,
+because a pair the extraction found and then gated out is not a recall failure. And this
+field will read low by construction -- you are reading one document's argument closely
+rather than auditing it exhaustively -- so it is a **floor on recall failure, never a
+rate**.
 
 ## Two things to resist
 

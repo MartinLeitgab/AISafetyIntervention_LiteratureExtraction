@@ -32,13 +32,19 @@ import pickle
 import random
 import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict, deque
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 RAW = HERE / "phase2_results" / "chain_precision_raw"
 NODE_ATTRS = HERE / "phase2_results" / "node_attrs_slim.pkl"
+GRAPH_EDGES = (
+    HERE
+    / "phase2_results"
+    / "step1_load_and_parse_umapwithoutlocalsatellites"
+    / "graph_edge_data.pkl"
+)
 ARD_DIR = ROOT / "intervention_graph_creation" / "data" / "raw" / "ard_json_full"
 OUT = HERE / "phase2_results" / "human_review_packet"
 
@@ -198,7 +204,7 @@ that is itself the answer and the field is left empty.
 | `intervention_quote` | The span in which it is proposed | verbatim, or empty |
 | `body_inference_level` | The intermediate nodes together, scored at their worst step | `0`-`3`, below |
 | `verdict` | Overall | see below |
-| `chain_recall_missed` | **Does this document argue a materially different risk-to-intervention chain that is NOT in the extraction?** See below -- this is the only recall question anyone asks in this project | `yes` / `no` / `unclear` |
+| `chain_recall_missed` | **Does this document argue a risk-to-intervention pair that appears NOWHERE in the list at the top of the file?** Additive only -- see below | `yes` / `no` / `unclear` |
 | `chain_recall_note` | If yes: name the risk and the intervention, in a few words each | free text, or empty |
 | `annotator_confidence` | How sure are you of the `verdict` on this chain? | `high` / `medium` / `low` |
 | `notes` | Anything the fields above cannot carry | free text |
@@ -254,31 +260,44 @@ It is also the one field that is worded identically to what the machine was aske
 what makes it possible to compute how often the machine was right rather than merely how often
 it was confident.
 
-## The recall question, and why it is worth the extra minutes
+## The recall question, and the list it is asked against
+
+🔴 **This question is ADDITIVE, not corrective.** It does not ask whether the chain in front
+of you is wrong -- `verdict` and the inference levels already record that, and a chain can
+be `unsupported` while this field is `no`. It asks a separate thing: **is there an argument
+in this document that the extraction did not capture at all?**
 
 Everything above judges a chain the extraction *produced*. That is precision. It cannot see
 what the extraction *missed*, and nothing else in this project can either -- so while the
 source is open in front of you, you are the only instrument that will ever answer it.
 
+**Ask it against the list at the top of the file, never against the chain alone.** Each
+chain file opens with *every* risk-to-intervention pair this document's extraction holds --
+typically six, sometimes seventeen, never just the one you are judging. That list is what
+"the extraction" means for this field. Without it the question would be unanswerable, since
+a pair absent from your chain is usually present in the document's other chains.
+
 Ask it at the chain level, never at the node level. **A concept the extraction did not name
 is not a miss.** A second pass over any document will always find more nameable concepts,
 and a denser middle does not change which risk is connected to which intervention. What
-counts as a miss is a materially different *argument*:
+counts as a miss is a risk-to-intervention pair that appears **nowhere in that list**:
 
 - a **different risk** the document argues against, with its own intervention;
-- the **same risk** routed to a **different intervention**;
-- the **same intervention** offered against a **different risk**.
+- the **same risk** routed to a **different intervention** than any listed;
+- the **same intervention** offered against a **different risk** than any listed.
 
-If the document argues one of those and the extraction does not carry it, that is `yes`,
-and `chain_recall_note` gets the risk and the intervention in a few words each. If the only
+If the document argues one of those and no listed pair covers it, that is `yes`, and
+`chain_recall_note` gets the risk and the intervention in a few words each. If the only
 thing you can point at is a stage the chain states thinly or skips, that is `no` -- the
 inference levels above already record it. `unclear` is a real answer for a long document
 you could not search exhaustively, and it is far better than a guessed `no`.
 
-Two warnings. This field will read low by construction, because you are looking at one
-chain and its source rather than at every chain the document produced -- so it is a **floor
-on recall failure, never a rate**. And it is the one field where being unsure is common:
-use `unclear` freely.
+Two warnings. The list is built by reachability over the document's extracted graph, so it
+is **generous**: it includes pairs that the quality gates later reject, which is deliberate,
+because a pair the extraction found and then gated out is not a recall failure. And this
+field will read low by construction -- you are reading one document's argument closely
+rather than auditing it exhaustively -- so it is a **floor on recall failure, never a
+rate**.
 
 ## Two things to resist
 
@@ -292,6 +311,42 @@ use `unclear` freely.
    verdict distribution that feels too harsh or too lenient is not evidence you are doing it
    wrong.
 """
+
+
+def pairs_for_document(nids, attrs, adj_all):
+    """Every risk-to-intervention pair this document's extraction supports.
+
+    Added 2026-08-26, and the recall field is unanswerable without it. An annotator sees ONE
+    chain, but every document in this packet yields more than one pair -- median six, one of
+    them seventeen. Asking "is there a pair the extraction does not have" while showing a
+    single chain would collect pairs the extraction DOES have, filed as recall failures.
+
+    Reachability, undirected, gate-free, matching the released enumerator's traversal
+    (sec:m-paths). Gate-free is deliberate: a pair the extraction found and the quality
+    gates then rejected is not a recall failure, so including it keeps the annotator from
+    reporting one.
+    """
+    inside = set(nids)
+    risks, ivs = [], []
+    for n in nids:
+        a = attrs.get(n, {})
+        if a.get("type") == "intervention":
+            ivs.append(n)
+        elif (a.get("concept_category") or "").lower() == "risk":
+            risks.append(n)
+    out = []
+    for r in risks:
+        seen, q = {r}, deque([r])
+        while q:
+            x = q.popleft()
+            for m in adj_all.get(x, ()):
+                if m in inside and m not in seen:
+                    seen.add(m)
+                    q.append(m)
+        for i in ivs:
+            if i in seen:
+                out.append((attrs.get(r, {}).get("name"), attrs.get(i, {}).get("name")))
+    return out
 
 
 def die(msg: str) -> None:
@@ -375,7 +430,12 @@ def preflight_outputs_are_writable() -> None:
 
 
 def main() -> int:
-    for p in (NODE_ATTRS, RAW / "results.jsonl", RAW / "results_contrast.jsonl"):
+    for p in (
+        NODE_ATTRS,
+        GRAPH_EDGES,
+        RAW / "results.jsonl",
+        RAW / "results_contrast.jsonl",
+    ):
         if not p.is_file():
             die(
                 f"missing input: {p}\n"
@@ -386,6 +446,17 @@ def main() -> int:
 
     attrs = pickle.load(NODE_ATTRS.open("rb"))
     sources = load_sources()
+
+    nodes_by_url = defaultdict(list)
+    for nid, rec in attrs.items():
+        if rec.get("url"):
+            nodes_by_url[rec["url"]].append(nid)
+    adj_all = defaultdict(set)
+    for e in pickle.load(GRAPH_EDGES.open("rb")):
+        if e.get("type") != "EDGE":
+            continue
+        adj_all[e["source"]].add(e["target"])
+        adj_all[e["target"]].add(e["source"])
 
     rows = []
     for fn in ("results.jsonl", "results_contrast.jsonl"):
@@ -468,6 +539,13 @@ def main() -> int:
         text = src["text"]
         lengths.append(len(text))
         chain_md = render_chain(r["nodes"], attrs)
+        prs = pairs_for_document(nodes_by_url.get(r["source_url"], []), attrs, adj_all)
+        pairs_md = "\n".join(
+            f"{k + 1}. **{a}**  ->  *{b}*" for k, (a, b) in enumerate(sorted(prs))
+        ) or (
+            "(none -- this document's extraction supports no complete "
+            "risk-to-intervention pair)"
+        )
 
         (OUT / "chains" / f"{pid}.md").write_text(
             f"# {pid}\n\n"
@@ -475,7 +553,15 @@ def main() -> int:
             f"**URL:** {r['source_url']}\n\n"
             f"**Document length:** {len(text):,} characters "
             f"(~{len(text) // 5:,} words)\n\n"
-            f"---\n\n## The extracted chain\n\n{chain_md}\n\n"
+            f"---\n\n## Every risk-to-intervention pair this document's extraction "
+            f"already holds\n\n"
+            f"Read this BEFORE the chain below. `chain_recall_missed` asks whether the "
+            f"document argues a pair that appears NOWHERE in this list. The chain you are "
+            f"judging is one of them; the others are here so that you do not report a pair "
+            f"the extraction already has. The list is gate-free on purpose -- a pair the "
+            f"extraction found and the quality gates then rejected is not a recall "
+            f"failure.\n\n{pairs_md}\n\n"
+            f"---\n\n## The chain you are judging\n\n{chain_md}\n\n"
             f"---\n\n## Your verdict\n\n"
             f"Fill the row for {pid} in `verdict_sheet.csv`. Read the rubric in "
             f"`README.md` first if you have not.\n\n"
