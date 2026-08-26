@@ -36,12 +36,20 @@ MATERIALITY, because not every uncaptured argument is a defect
 
 THE ABLATION ARM IS THE POINT, not a nicety
     A miss rate from an unvalidated judge is worth what the last five were worth. So for
-    N_ABLATE documents the pair list is shown with one pair DELETED, and we measure how
-    often the judge surfaces the pair we know we removed. That is a measured sensitivity:
-    if it recovers 8 of 10 deletions, an observed miss rate is a floor that can be corrected
-    by 1/0.8, and if it recovers 2 of 10 the rate means nothing and we say so instead of
-    publishing it. The meta-grader stage of this project had no such control and could
-    conclude nothing; do not repeat that.
+    N_ABLATE documents the list is shown with one INTERVENTION deleted -- every pair ending
+    at it -- and we measure how often the judge surfaces the endpoint we removed. That is a
+    measured sensitivity: recover 8 of 10 and an observed miss rate is a floor correctable
+    by 1/0.8; recover 2 of 10 and the rate means nothing and we say so instead of publishing
+    it. The meta-grader stage had no such control and could conclude nothing.
+
+    🔴 THE FIRST VERSION OF THIS ARM WAS VOID, and the failure is worth keeping in view.
+    It deleted a single (risk, intervention) CELL. But the pair list is a reachability
+    CROSS-PRODUCT -- 2 risks and 6 interventions give 12 pairs -- so removing one cell
+    almost never removes an endpoint. Measured over the 20: 8 deletions left BOTH endpoints
+    visible elsewhere, 11 left the risk visible, and exactly 1 removed an endpoint. It
+    returned 0/20 and that number said nothing whatever about the judge, because there was
+    nothing in the input to find. The control caught a bug in the control. Deleting an
+    endpoint is the only deletion this list shape can express.
 
 POPULATION, chosen so the human arm can check the machine
     The 100 audited documents, so this is directly comparable to the 0.6% and 18.1% it is
@@ -86,6 +94,7 @@ EDGES = (
 PACKET_MANIFEST = HERE / "phase2_results" / "human_review_packet" / "manifest.json"
 ARD_DIR = ROOT / "intervention_graph_creation" / "data" / "raw" / "ard_json_full"
 RAW = HERE / "phase2_results" / "chain_recall_raw"
+RAW_ABL = HERE / "phase2_results" / "chain_recall_ablation_raw"
 OUT = HERE / "phase2_results" / "experiment_review_chain_recall_report.json"
 
 KEY_ENV = Path.home() / "0_project_work" / "ExistentialRiskBenchmark" / ".env"
@@ -272,16 +281,31 @@ def build_sample(judge_dir: Path | None) -> list[dict]:
             }
         )
 
-    # Ablation arm. Drawn only from documents holding >= 2 pairs, so deleting one still
-    # leaves a non-empty list and the judge is not handed an obviously empty extraction.
-    eligible = [i for i, it in enumerate(items) if len(it["pairs"]) >= 2]
+    # Ablation arm: delete an entire INTERVENTION, meaning every pair that ends at it.
+    #
+    # 🔴 The first version of this deleted a single (risk, intervention) CELL and it was
+    # very nearly a no-op. The pair list is a reachability CROSS-PRODUCT -- a document with
+    # 2 risks and 6 interventions yields 12 pairs -- so removing one cell usually leaves
+    # both of its endpoints on display in other cells. Measured on the 2026-08-26 run: of
+    # 20 deletions, 8 left BOTH endpoints visible, 11 left the risk visible, and exactly 1
+    # removed an endpoint outright. Sensitivity came back 0/20, which said nothing about
+    # the judge because there was nothing there to find. Deleting an endpoint is the only
+    # deletion this list shape can actually express.
+    eligible = [
+        i for i, it in enumerate(items) if len({b for _, b in it["pairs"]}) >= 2
+    ]
     for i in rng.sample(eligible, min(N_ABLATE, len(eligible))):
         it = items[i]
-        drop = rng.randrange(len(it["pairs"]))
-        it["ablated_pair"] = it["pairs"][drop]
-        it["pairs_shown"] = it["pairs"][:drop] + it["pairs"][drop + 1 :]
+        victim = rng.choice(sorted({b for _, b in it["pairs"]}))
+        it["ablated_intervention"] = victim
+        it["pairs_shown"] = [(a, b) for a, b in it["pairs"] if b != victim]
+        it["ablated_pair"] = [
+            sorted({a for a, b in it["pairs"] if b == victim})[0],
+            victim,
+        ]
     for it in items:
         it.setdefault("ablated_pair", None)
+        it.setdefault("ablated_intervention", None)
         it.setdefault("pairs_shown", it["pairs"])
     return items
 
@@ -292,6 +316,17 @@ def render(it: dict) -> str:
         for k, (a, b) in enumerate(it["pairs_shown"])
     )
     return PROMPT.format(text=it["_text"], pairs=pairs, n_pairs=len(it["pairs_shown"]))
+
+
+def out_dir(items: list[dict]) -> Path:
+    """Ablation re-runs write to their OWN directory.
+
+    Learned 2026-08-26, immediately: an --ablation-only dry run clobbered the completed
+    run's sample.json, which is the only thing that joins its custom_ids back to documents.
+    The results were already collected so nothing was lost, but a re-collect would have been
+    impossible. Never let a repair overwrite the artifact it is repairing.
+    """
+    return RAW_ABL if all(it.get("ablated_intervention") for it in items) else RAW
 
 
 def dry_run(items: list[dict]) -> int:
@@ -342,14 +377,15 @@ def dry_run(items: list[dict]) -> int:
     print(
         "\n  wall clock: one batch, the #175 run of 210 requests returned inside an hour."
     )
-    RAW.mkdir(parents=True, exist_ok=True)
-    (RAW / "sample.json").write_text(
+    d = out_dir(items)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "sample.json").write_text(
         json.dumps(
             [{k: v for k, v in it.items() if k != "_text"} for it in items], indent=1
         ),
         encoding="utf-8",
     )
-    print(f"\n  wrote {RAW / 'sample.json'} (sample without source text)")
+    print(f"\n  wrote {d / 'sample.json'} (sample without source text)")
     return 0
 
 
@@ -369,9 +405,10 @@ def submit(items: list[dict]) -> int:
         for i, it in enumerate(items)
     ]
     batch = client.messages.batches.create(requests=reqs)
-    RAW.mkdir(parents=True, exist_ok=True)
-    (RAW / "batch_id.txt").write_text(batch.id, encoding="utf-8")
-    (RAW / "sample.json").write_text(
+    d = out_dir(items)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "batch_id.txt").write_text(batch.id, encoding="utf-8")
+    (d / "sample.json").write_text(
         json.dumps(
             [
                 {
@@ -384,7 +421,7 @@ def submit(items: list[dict]) -> int:
         ),
         encoding="utf-8",
     )
-    print(f"submitted {len(reqs)} requests, batch {batch.id}")
+    print(f"submitted {len(reqs)} requests, batch {batch.id}  ->  {d}")
     print(f"  collect with: python -u {Path(__file__).name} --collect {batch.id}")
     return 0
 
@@ -433,18 +470,21 @@ def analyse(results: list[dict], sample: list[dict]) -> dict:
                 if st == "uncaptured_material":
                     docs_with_material[c].add(cid)
 
-        if s.get("ablated_pair"):
+        want_i = s.get("ablated_intervention")
+        if want_i:
+            # What was deleted is an INTERVENTION -- every pair ending at it. Detection is
+            # therefore on the intervention alone: any risk that reached it will do, since
+            # the whole endpoint left the list. Matching on the (risk, intervention) cell
+            # instead is what made the first run's sensitivity meaningless.
             abl_total += 1
-            want_r, want_i = s["ablated_pair"]
             hit = any(
-                _same(a.get("risk"), want_r)
-                and _same(a.get("intervention"), want_i)
+                _same(a.get("intervention"), want_i)
                 and (a.get("status") or "").startswith("uncaptured")
                 for a in args
             )
             abl_detected += hit
             abl_detail.append(
-                {"custom_id": cid, "deleted": s["ablated_pair"], "detected": hit}
+                {"custom_id": cid, "deleted_intervention": want_i, "detected": hit}
             )
 
     def block(c):
@@ -521,12 +561,31 @@ def analyse(results: list[dict], sample: list[dict]) -> dict:
 def collect(batch_id: str) -> int:
     import anthropic
 
-    sample_fp = RAW / "sample.json"
-    if not sample_fp.is_file():
+    # Resolve which run this batch belongs to by matching the id recorded at submit time,
+    # rather than assuming RAW. The ablation repair writes to its own directory, and
+    # collecting it against the main run's sample would join every result to the wrong
+    # document while looking perfectly healthy.
+    d = next(
+        (
+            c
+            for c in (RAW, RAW_ABL)
+            if (c / "batch_id.txt").is_file()
+            and (c / "batch_id.txt").read_text(encoding="utf-8").strip() == batch_id
+        ),
+        None,
+    )
+    if d is None:
         die(
-            f"missing {sample_fp}; it is written by --submit and is needed to join results."
+            f"no directory records batch {batch_id}.\n"
+            f"  looked for a matching batch_id.txt in {RAW} and {RAW_ABL}.\n"
+            "  Collecting against another run's sample would silently join every result to\n"
+            "  the wrong document, so this refuses rather than guessing."
         )
+    sample_fp = d / "sample.json"
+    if not sample_fp.is_file():
+        die(f"missing {sample_fp}; written by --submit and needed to join results.")
     sample = json.loads(sample_fp.read_text(encoding="utf-8"))
+    print(f"collecting {batch_id} against {sample_fp}")
 
     client = anthropic.Anthropic(api_key=read_key())
     rows = []
@@ -544,13 +603,14 @@ def collect(batch_id: str) -> int:
                 rec["error"] = f"unparseable: {e}"
         rows.append(rec)
 
-    RAW.mkdir(parents=True, exist_ok=True)
-    with (RAW / "results.jsonl").open("w", encoding="utf-8") as fh:
+    d.mkdir(parents=True, exist_ok=True)
+    with (d / "results.jsonl").open("w", encoding="utf-8") as fh:
         for r in rows:
             fh.write(json.dumps(r) + "\n")
 
     report = analyse(rows, sample)
-    OUT.write_text(json.dumps(report, indent=1), encoding="utf-8")
+    out = OUT if d is RAW else OUT.with_name(OUT.stem + "_ablation.json")
+    out.write_text(json.dumps(report, indent=1), encoding="utf-8")
     print(f"parsed {report['n_parsed']}, errors {report['n_errors']}")
     print(
         f"  ablation sensitivity: {report['ablation_arm']['detected']}"
@@ -572,11 +632,23 @@ def main() -> int:
     g.add_argument("--dry-run", action="store_true")
     g.add_argument("--submit", action="store_true")
     g.add_argument("--collect", metavar="BATCH_ID")
+    ap.add_argument(
+        "--ablation-only",
+        action="store_true",
+        help=(
+            "submit ONLY the ablation documents. Used to repair the control after the "
+            "2026-08-26 run, whose cell-deletion ablation was a no-op; the real arm from "
+            "that run is unaffected and is not re-paid for."
+        ),
+    )
     a = ap.parse_args()
 
     if a.collect:
         return collect(a.collect)
     items = build_sample(Path(a.judge_reports) if a.judge_reports else None)
+    if a.ablation_only:
+        items = [it for it in items if it.get("ablated_intervention")]
+        print(f"ABLATION ONLY: {len(items)} documents")
     if not items:
         die("sample is empty; check --judge-reports and the packet manifest.")
     return dry_run(items) if a.dry_run else submit(items)

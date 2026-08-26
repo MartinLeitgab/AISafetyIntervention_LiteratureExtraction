@@ -47,35 +47,39 @@ def arg(status, risk="reward hacking", iv="human preference learning", steps=3):
     }
 
 
-def test_ablated_pair_is_detected_and_sets_sensitivity() -> None:
+def test_ablated_intervention_is_detected_and_sets_sensitivity() -> None:
+    """Detection keys on the deleted INTERVENTION, not on the (risk, intervention) cell.
+
+    The first version of this study deleted one cell of what is really a cross-product of
+    reachable risks by reachable interventions, so both endpoints usually stayed visible in
+    other cells and there was nothing to detect. Measured: 8 of 20 deletions left BOTH
+    endpoints on display and only 1 removed an endpoint outright. Sensitivity came back
+    0/20 and meant nothing. Keying detection on the cell is what made it meaningless, so
+    this test pins the endpoint contract.
+    """
     sample = [
         {
             "custom_id": "rec-0000",
             "cohorts": ["audited_100"],
-            "ablated_pair": [
-                "reward hacking in RL agents",
-                "learning from human preferences",
-            ],
+            "ablated_intervention": "learning from human preferences",
         },
         {
             "custom_id": "rec-0001",
             "cohorts": ["audited_100"],
-            "ablated_pair": [
-                "deceptive alignment",
-                "mechanistic interpretability audits",
-            ],
+            "ablated_intervention": "mechanistic interpretability audits",
         },
     ]
     results = [
-        # surfaces the deleted pair, worded differently -> counts as detected
+        # surfaces the deleted intervention, worded differently, under a DIFFERENT risk than
+        # any it was originally paired with -> still counts, because the endpoint is gone
         {
             "custom_id": "rec-0000",
             "verdict": {
                 "arguments": [
                     arg(
                         "uncaptured_material",
-                        "reward hacking agents",
-                        "preferences learning human",
+                        "some entirely other risk",
+                        "preferences learning from human",
                     )
                 ]
             },
@@ -91,13 +95,37 @@ def test_ablated_pair_is_detected_and_sets_sensitivity() -> None:
     assert got["headline_audited_100"]["arguments_enumerated"] == 2, got
 
 
+def test_a_carried_verdict_on_the_deleted_intervention_is_not_a_detection() -> None:
+    """The judge must FLAG it, not merely mention it. Naming the deleted intervention while
+    calling it `carried` means the judge thinks a remaining pair covers it -- which is the
+    failure mode the endpoint deletion exists to expose, not evidence against it."""
+    sample = [
+        {
+            "custom_id": "rec-0000",
+            "cohorts": ["audited_100"],
+            "ablated_intervention": "adversarial training",
+        }
+    ]
+    results = [
+        {
+            "custom_id": "rec-0000",
+            "verdict": {
+                "arguments": [arg("carried", "some risk", "adversarial training")]
+            },
+        }
+    ]
+    got = cr.analyse(results, sample)
+    assert got["ablation_arm"]["detected"] == 0, got["ablation_arm"]["detail"]
+    assert got["ablation_arm"]["sensitivity"] == 0.0
+
+
 def test_low_sensitivity_still_reports_and_the_correction_tracks_it() -> None:
     """A miss rate divided by a small sensitivity must blow UP, not quietly stay small."""
     sample = [
         {
             "custom_id": f"rec-{i:04d}",
             "cohorts": ["audited_100"],
-            "ablated_pair": ["risk %d" % i, "intervention %d" % i],
+            "ablated_intervention": "intervention %d" % i,
         }
         for i in range(10)
     ]
@@ -123,7 +151,7 @@ def test_a_document_counts_in_every_cohort_it_belongs_to() -> None:
         {
             "custom_id": "rec-0000",
             "cohorts": ["human_validation_10", "packet_30"],
-            "ablated_pair": None,
+            "ablated_intervention": None,
         }
     ]
     results = [
@@ -150,8 +178,16 @@ def test_a_document_counts_in_every_cohort_it_belongs_to() -> None:
 
 def test_unparseable_rows_are_errors_not_silent_denominator_padding() -> None:
     sample = [
-        {"custom_id": "rec-0000", "cohorts": ["audited_100"], "ablated_pair": None},
-        {"custom_id": "rec-0001", "cohorts": ["audited_100"], "ablated_pair": None},
+        {
+            "custom_id": "rec-0000",
+            "cohorts": ["audited_100"],
+            "ablated_intervention": None,
+        },
+        {
+            "custom_id": "rec-0001",
+            "cohorts": ["audited_100"],
+            "ablated_intervention": None,
+        },
     ]
     results = [
         {
