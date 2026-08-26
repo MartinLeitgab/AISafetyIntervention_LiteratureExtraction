@@ -67,14 +67,24 @@ reachable out of 86 available** (1.2% of headroom). 🔴 Headroom is the denomin
 the 100 papers are a single connected component, so quoting against the 408 reachable pairs
 reports a ceiling as a finding. The claim audit fails if anyone does.
 
-**Still owed at chain level, in priority order:**
-1. **Is a dropped path a distinct argument?** (R22/R23, both NEW and unaddressed). The
-   collapse *defines* the reporting unit and the paper says outright that the structural
-   evidence does not settle it and an annotation pass would. Cheap: sample (kept, dropped)
-   pairs, ask one judge "same argument or two". ~USD 2-3 on the same batch pattern.
-2. **Does a re-run produce the same risk-to-intervention PAIR?** Only naming (46.5%) and
-   yield (9 of 18; 15.0% against 15.0%) exist. Needs semantic matching over `multimodel_raw`.
-3. **Retrieval** (R28/S9) — chain-level by nature, still no query set or relevance labels.
+**All three chain-level studies are DONE. Closed record with every trap:
+`paper/FINDINGS_2026-08-26_chain_unit.md`.** Read that before re-deriving any of it.
+
+1. ✅ **Is a dropped path a distinct argument?** (R22/R23) — #182 / PR #185. 50.8% of 118
+   drops different, 40 of those 60 by endpoint, null arm 15/15. Report as a hierarchy:
+   **18.0%** (579 of 3,222 distinct pairs) is the headline; 33.9% and 50.8% are shares of
+   sampled drops and are NOT competing estimates.
+2. ✅ **Chain recall** — #181 / PR #184. Gate-free 69.9% carried / 10.6% material,
+   sensitivity 9/20. Gated 32.9% carried, **which is selection and not loss**: 471 of 597
+   graph-present pairs (79%) are gated out, so the document was extracted and the chain
+   scored below a gate.
+3. ⛔ **Does a re-run produce the same PAIR? DROPPED 2026-08-26**, and not for cost. The
+   reporting unit keeps 1.30 of ~6.15 candidate pairs per document, so which chain survives
+   turns on a narrow scoring margin and a re-run flipping membership is expected gate
+   behaviour — already reported as 9 of 18. The question it proxied for is answered better
+   by the recall study. Do not revive it without a new reason.
+4. ⛔ **Retrieval** (R28/S9) — still skipped, and now lower value: the substrate is known to
+   be selective by design, so a retrieval evaluation would measure that selection first.
 
 What still follows from the framing, for a session working the list:
 - Any sentence treating a chain-set descriptive as a finding about the literature must be

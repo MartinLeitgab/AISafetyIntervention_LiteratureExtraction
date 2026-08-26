@@ -319,6 +319,30 @@ field will read low by construction -- you are reading one document's argument c
 rather than auditing it exhaustively -- so it is a **floor on recall failure, never a
 rate**.
 
+## What a normal document looks like, so the volume does not alarm you
+
+Expect to find **several arguments per document that no listed pair carries**, and expect
+that most of them are `thin` rather than material. A machine run over 95 documents of this
+corpus enumerated about **6.5** risk-to-intervention arguments per document, and roughly a
+third were carried, a third thin, a third material. Finding four or five uncaptured things
+in a long paper is the normal case, not a sign the extraction failed.
+
+Two reasons it looks that way, and neither is a defect:
+
+- **Documents argue more than they conclude.** A paper's discussion section will gesture at
+  half a dozen risk-intervention links it never develops. Those are `thin` -- fewer than two
+  supporting reasoning steps -- and the materiality bar exists precisely to keep them out of
+  the number.
+- **The extraction is selective on purpose.** Over the same documents the released graph
+  supports about **6.15** risk-to-intervention pairs each while the gated reporting unit
+  keeps **1.30**. You are judging against the generous list, so that second reduction is not
+  yours to worry about -- but it is why the extraction is not trying to be exhaustive.
+
+So the question is never "is there anything else in here", because there always is. It is
+**"does the document develop a materially different argument that the list does not carry"**
+-- new endpoint, two or more supporting steps. If you find none in a document, `no` is a
+perfectly ordinary answer and you should not go hunting for one.
+
 ## The recall subset: {N_RECALL_ARM} of the {30} get one extra pass
 
 `chain_recall_missed` above is a **floor**: it records misses you happened to notice while
