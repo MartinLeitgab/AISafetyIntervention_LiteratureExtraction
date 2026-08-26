@@ -179,6 +179,26 @@ STRATA = [
 # test-retest consistency, a different and weaker instrument, and calling it agreement
 # would be the kind of relabelled measurement this project has already been caught doing.
 N_DOUBLE_CODED = 8
+
+# The recall arm, added 2026-08-26. Everything else in this packet measures PRECISION -- it
+# judges chains the extraction produced. Recall needs the opposite move: read the document
+# exhaustively, enumerate every risk-to-intervention argument it makes, and check each
+# against what the extraction holds. `chain_recall_missed` alone is only a floor, because
+# noticing a missing argument while judging a chain is not the same as looking for all of
+# them.
+#
+# Ten of the thirty, drawn with the same seed and fixed BEFORE any verdict is written, so
+# the subset cannot be chosen after seeing which documents look bad. Drawn at random rather
+# than by length: picking short documents would bias recall downward, since a short document
+# has fewer arguments to miss.
+#
+# 🔴 The resulting rate is document-level, and the document sample is size-biased by 1.19x
+# -- these documents were reached through a CHAIN-proportional sample, so a document with
+# more chains had proportionally more chances to be drawn (packet mean 1.76 chains per
+# document against 1.48 across the 2,772-chain reporting unit; median 1.0 in both). Small,
+# but it must be stated with the rate, and it cannot be corrected by the precision weights:
+# those are reason-code weights over chains and have nothing to do with recall.
+N_RECALL_ARM = 10
 DOUBLE_CODE_STRATA = {
     "model_disagreement_faithful_but_link_not_asserted",
     "model_disagreement_invented_but_link_asserted",
@@ -298,6 +318,30 @@ because a pair the extraction found and then gated out is not a recall failure. 
 field will read low by construction -- you are reading one document's argument closely
 rather than auditing it exhaustively -- so it is a **floor on recall failure, never a
 rate**.
+
+## The recall subset: {N_RECALL_ARM} of the {30} get one extra pass
+
+`chain_recall_missed` above is a **floor**: it records misses you happened to notice while
+judging a chain, which is not the same as having looked for all of them. A recall *rate*
+needs the opposite move, and {N_RECALL_ARM} of the thirty chain files ask for it explicitly.
+Which ten was fixed before any verdict existed, and drawn at random rather than by length --
+picking the short documents would bias the answer, because a short document has fewer
+arguments to miss.
+
+On those, after the verdict: re-read the document and list **every** risk-to-intervention
+argument it makes, one row each in `recall_enumeration.csv`, marking for each whether the
+pair list at the top of that chain file already carries it.
+
+**Enumerate from the document, then check the list. Never the reverse.** Reading the list
+first and asking "is this one in the document" cannot find anything missing, which is the
+only thing this pass exists to find. About 20 extra minutes each, so 3-5 hours over the ten.
+
+Two honest limits to carry into the write-up. The rate is **document-level**, so it does not
+combine with the chain-level precision weights -- those are reason-code weights and have
+nothing to say about recall. And these ten documents were reached through a chain-
+proportional sample, so they are size-biased toward chain-rich documents by **1.19x**
+(1.76 chains per document against 1.48 across the reporting unit; median 1.0 in both).
+Small, and it gets stated rather than corrected.
 
 ## Two things to resist
 
@@ -524,6 +568,13 @@ def main() -> int:
 
     rng.shuffle(picked)  # so strata are not clustered in the reading order
 
+    # Recall arm: fixed here, before any verdict exists. Drawn after the shuffle so it is
+    # independent of stratum, and recorded in the manifest so the choice is auditable.
+    recall_ids = {
+        p["row"]["custom_id"]
+        for p in rng.sample(picked, min(N_RECALL_ARM, len(picked)))
+    }
+
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "chains").mkdir(exist_ok=True)
 
@@ -565,8 +616,23 @@ def main() -> int:
             f"---\n\n## Your verdict\n\n"
             f"Fill the row for {pid} in `verdict_sheet.csv`. Read the rubric in "
             f"`README.md` first if you have not.\n\n"
-            f"Do NOT open `REVEAL_stage1_verdicts.md` until the whole sheet is filled in.\n\n"
-            f"---\n\n## Full source text\n\n```\n{text}\n```\n",
+            + (
+                f"### {pid} IS IN THE RECALL SUBSET -- one extra pass\n\n"
+                f"After the verdict, go back over the whole document and list **every** "
+                f"risk-to-intervention argument it makes, not only the one above. Add one "
+                f"row per argument to `recall_enumeration.csv`, and for each mark whether "
+                f"the pair list at the top of this file already carries it.\n\n"
+                f"Enumerate what the document argues, then check it against the list -- "
+                f'never the other way round. Reading the list first and asking "is this '
+                f'one in the document" finds nothing that is missing, which is the whole '
+                f"point of the pass.\n\n"
+                f"Ten of the thirty are in this subset, fixed before any verdict was "
+                f"written. Budget about 20 extra minutes.\n\n"
+                if r["custom_id"] in recall_ids
+                else ""
+            )
+            + "Do NOT open `REVEAL_stage1_verdicts.md` until the whole sheet is filled in.\n\n"
+            + f"---\n\n## Full source text\n\n```\n{text}\n```\n",
             encoding="utf-8",
         )
 
@@ -580,6 +646,7 @@ def main() -> int:
                 "host": host_of(r["source_url"]),
                 "nodes": r["nodes"],
                 "double_coded": r["custom_id"] in double_ids,
+                "recall_arm": r["custom_id"] in recall_ids,
             }
         )
         sheet.append(
@@ -626,6 +693,33 @@ def main() -> int:
         w.writeheader()
         w.writerows([s for s in sheet if s["packet_id"] in double_pids])
 
+    # Recall enumeration sheet: one row per argument the annotator finds, NOT one per
+    # document. Pre-seeded with eight blank rows for each of the ten so the shape is
+    # obvious; add or delete rows freely, since the number of arguments a document makes is
+    # exactly what is being measured and must not be capped by the sheet.
+    recall_pids = [m["packet_id"] for m in manifest if m["recall_arm"]]
+    recall_cols = [
+        "packet_id",
+        "argument_index",
+        "risk",
+        "intervention",
+        "carried_by_the_pair_list",
+        "evidence_quote",
+        "notes",
+    ]
+    with (OUT / "recall_enumeration.csv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=recall_cols)
+        w.writeheader()
+        for pid in recall_pids:
+            for k in range(8):
+                w.writerow(
+                    {
+                        "packet_id": pid,
+                        "argument_index": k + 1,
+                        **{c: "" for c in recall_cols[2:]},
+                    }
+                )
+
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
 
     (OUT / "REVEAL_stage1_verdicts.md").write_text(
@@ -656,6 +750,7 @@ document argues *beyond* the chain in front of you, and it is the reason to do t
 | `README.md` | this, including the rubric |
 | `chains/C01.md` ... `C30.md` | one chain plus its full source text |
 | `verdict_sheet.csv` | the sheet to fill in, one row per chain |
+| `recall_enumeration.csv` | the recall pass, for the {N_RECALL_ARM} chains whose file says so. One row per argument you find |
 | `verdict_sheet_annotator2.csv` | {N_DOUBLE_CODED} chains pre-selected for a second annotator **if one is ever found**. None is planned -- see below |
 | `manifest.json` | which packet id maps to which chain -- for the analysis afterwards, not needed while judging |
 | `REVEAL_stage1_verdicts.md` | 🔴 **do not open until the sheet is filled in** |

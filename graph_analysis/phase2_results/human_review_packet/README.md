@@ -13,6 +13,7 @@ document argues *beyond* the chain in front of you, and it is the reason to do t
 | `README.md` | this, including the rubric |
 | `chains/C01.md` ... `C30.md` | one chain plus its full source text |
 | `verdict_sheet.csv` | the sheet to fill in, one row per chain |
+| `recall_enumeration.csv` | the recall pass, for the 10 chains whose file says so. One row per argument you find |
 | `verdict_sheet_annotator2.csv` | 8 chains pre-selected for a second annotator **if one is ever found**. None is planned -- see below |
 | `manifest.json` | which packet id maps to which chain -- for the analysis afterwards, not needed while judging |
 | `REVEAL_stage1_verdicts.md` | 🔴 **do not open until the sheet is filled in** |
@@ -164,6 +165,30 @@ because a pair the extraction found and then gated out is not a recall failure. 
 field will read low by construction -- you are reading one document's argument closely
 rather than auditing it exhaustively -- so it is a **floor on recall failure, never a
 rate**.
+
+## The recall subset: {N_RECALL_ARM} of the {30} get one extra pass
+
+`chain_recall_missed` above is a **floor**: it records misses you happened to notice while
+judging a chain, which is not the same as having looked for all of them. A recall *rate*
+needs the opposite move, and {N_RECALL_ARM} of the thirty chain files ask for it explicitly.
+Which ten was fixed before any verdict existed, and drawn at random rather than by length --
+picking the short documents would bias the answer, because a short document has fewer
+arguments to miss.
+
+On those, after the verdict: re-read the document and list **every** risk-to-intervention
+argument it makes, one row each in `recall_enumeration.csv`, marking for each whether the
+pair list at the top of that chain file already carries it.
+
+**Enumerate from the document, then check the list. Never the reverse.** Reading the list
+first and asking "is this one in the document" cannot find anything missing, which is the
+only thing this pass exists to find. About 20 extra minutes each, so 3-5 hours over the ten.
+
+Two honest limits to carry into the write-up. The rate is **document-level**, so it does not
+combine with the chain-level precision weights -- those are reason-code weights and have
+nothing to say about recall. And these ten documents were reached through a chain-
+proportional sample, so they are size-biased toward chain-rich documents by **1.19x**
+(1.76 chains per document against 1.48 across the reporting unit; median 1.0 in both).
+Small, and it gets stated rather than corrected.
 
 ## Two things to resist
 

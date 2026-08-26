@@ -23,14 +23,18 @@ WHAT THIS SCRIPT WILL NOT DO, listed so a future session does not add them
   - No inter-annotator agreement. One annotator, decided 2026-08-26. Reviewer R11 stays
     open and the write-up must say so. Do not compute agreement from the annotator
     re-judging their own rows; that is test-retest, a different instrument.
-  - No corpus omission RATE, and no reconciliation of the judge's numbers. The packet does
-    now carry a chain-level recall question (`chain_recall_missed`, added 2026-08-26), and
-    it is the only chain-level recall signal this project has -- but the annotator sees one
-    chain per document rather than every chain that document produced, so it is a FLOOR on
-    recall failure and never a rate. It must not be set against the judge's 0.6% / 28.8% /
-    26.4% / 18.1% / 21.7%: those count nodes and relationships, this counts arguments, and
-    presenting them together would imply a reconciliation that does not exist (R16 stays
-    open). See experiment_review_omission_is_chain_level.py for why the units differ.
+  - No corpus omission rate for NODES, and no reconciliation of the judge's numbers. R16
+    stays open. There are now TWO recall signals here and they are not interchangeable:
+      * `chain_recall_missed`, one field per chain, recording misses the annotator happened
+        to notice while judging. A FLOOR. Never a rate.
+      * the recall arm -- 10 of the 30 documents read exhaustively, every argument
+        enumerated, `recall_enumeration.csv`. That IS a rate, over DOCUMENTS, size-biased
+        1.19x toward chain-rich documents, and it does not combine with the chain-level
+        precision weights.
+    Neither may be set against the judge's 0.6% / 28.8% / 26.4% / 18.1% / 21.7%: those count
+    nodes and relationships, these count arguments, and presenting them together implies a
+    reconciliation that does not exist. See experiment_review_omission_is_chain_level.py and
+    experiment_review_omission_chain_impact.py for why the units differ.
   - No maturity-label validation. Not asked in the rubric.
   - No confidence interval that ignores the design. Cells are 1-7 chains; the binomial
     interval on a cell of 3 is nearly the whole unit interval, and the reweighted interval
@@ -61,6 +65,7 @@ PACKET = HERE / "phase2_results" / "human_review_packet"
 SHEET = PACKET / "verdict_sheet.csv"
 SHEET2 = PACKET / "verdict_sheet_annotator2.csv"
 MANIFEST = PACKET / "manifest.json"
+RECALL = PACKET / "recall_enumeration.csv"
 PRECISION = HERE / "phase2_results" / "experiment_review_chain_precision_report.json"
 RELABEL = HERE / "phase2_results" / "confidence_relabel_raw" / "results.jsonl"
 OUT = HERE / "phase2_results" / "experiment_review_human_adjudication_report.json"
@@ -420,6 +425,69 @@ def main() -> int:
                 "reconciling them."
             ),
         }
+
+        # The recall arm. Ten documents read exhaustively: every risk-to-intervention
+        # argument enumerated from the document, then checked against what the extraction
+        # holds. Unlike chain_recall_missed above, this IS a rate -- the annotator looked
+        # for all of them rather than noticing one in passing.
+        if RECALL.is_file():
+            rrows = [
+                r
+                for r in read_sheet(RECALL)
+                if (r.get("risk") or "").strip()
+                or (r.get("intervention") or "").strip()
+            ]
+            known = {m["packet_id"] for m in manifest if m.get("recall_arm")}
+            stray = sorted({r["packet_id"] for r in rrows} - known)
+            if stray:
+                die(
+                    f"recall_enumeration.csv carries rows for {stray}, which are not in the "
+                    "recall subset. The subset is fixed at build time and recorded in "
+                    "manifest.json; enumerating extra documents after the fact turns a "
+                    "pre-registered sample into a chosen one."
+                )
+            carried = Counter(
+                (r.get("carried_by_the_pair_list") or "").strip().lower() for r in rrows
+            )
+            by_doc = defaultdict(lambda: {"total": 0, "missed": 0})
+            for r in rrows:
+                d = by_doc[r["packet_id"]]
+                d["total"] += 1
+                if (r.get("carried_by_the_pair_list") or "").strip().lower() == "no":
+                    d["missed"] += 1
+            done = [p for p in known if p in by_doc]
+            docs_with_a_miss = sum(1 for p in done if by_doc[p]["missed"])
+            n_args = sum(by_doc[p]["total"] for p in done)
+            n_missed = sum(by_doc[p]["missed"] for p in done)
+            report["chain_level_recall_rate"] = {
+                "unit": "documents, NOT chains",
+                "n_documents_in_arm": len(known),
+                "n_documents_enumerated": len(done),
+                "arguments_enumerated": n_args,
+                "arguments_not_carried_by_the_extraction": n_missed,
+                "argument_level_recall_pct": (
+                    round(100 * (n_args - n_missed) / n_args, 1) if n_args else None
+                ),
+                "documents_with_at_least_one_uncaptured_argument": docs_with_a_miss,
+                "per_document": {p: by_doc[p] for p in sorted(done)},
+                "unparsed_carried_values": {
+                    k: v for k, v in carried.items() if k not in ("yes", "no", "")
+                },
+                "SIZE_BIAS": (
+                    "These documents were reached through a CHAIN-proportional sample, so "
+                    "they are biased toward chain-rich documents by 1.19x (packet mean 1.76 "
+                    "chains per document against 1.48 across the 2,772-chain reporting "
+                    "unit; median 1.0 in both). State it with the rate. It CANNOT be "
+                    "corrected with the precision weights above: those are reason-code "
+                    "weights over chains and carry no information about recall."
+                ),
+                "DO_NOT_COMBINE": (
+                    "Never pool this with the precision estimand. Precision is a rate over "
+                    "chains, post-stratified; this is a rate over documents and arguments, "
+                    "unweighted. They answer different questions and averaging them would "
+                    "produce a number that answers neither."
+                ),
+            }
 
         conf_dist = Counter(
             (r.get("annotator_confidence") or "").strip().lower() or "blank"
