@@ -969,7 +969,25 @@ registered — only things that change the paper.
 | R20 | The repair schema had no add-edge slot — state that as the explanation rather than leaving it implicit | GC | S10 |
 | R21 | Both gates (edge confidence, intervention maturity) are unvalidated model self-assessments; sensitivity is not validation | all 6 | S4, D3 |
 | R22 | The 70% containment rule ignores edge identity, order and semantics; no annotation study shows retained paths are distinct arguments | GC GW | **NEW** |
-| R23 | Validate the gates and the collapse rule on a small hand-checked sample | GW | **NEW** |
+| R23 | Validate the gates and the collapse rule on a small hand-checked sample | GW | **NEW** — **ADDRESSED 2026-08-26**: `experiment_review_collapse_adjudication.py`, 120 displaced (kept, dropped) pairs + 15 mismatched-document nulls, batch `msgbatch_01SRNWJKUcan5ukvuQoRHiE7`, USD 3.83. Judge rather than hand, and the null arm is what makes it readable |
+
+🔴 **The register missed the sharpest methodological comment in the external round, and it
+sat unregistered for eleven days.** The rows below are from the **2026-08-17** round; the
+register was built on 2026-08-15 and only the *cut list* was re-swept afterwards, so the
+newer round's evidence comments were never entered. GPT-5.6 Sol gave the paper its lowest
+scores and attached an explicit score impact to this one: *"a corrected analysis would
+improve Quality and Clarity. Retaining the current interpretation would reinforce my
+borderline-reject assessment."* Four of its five instructions were in fact already
+satisfied; two were not, and one of those needed a study nobody had scoped.
+
+| # | Comment | Src | Status |
+|---|---|---|---|
+| R23a | "The current 0.6%, 18.1%, 28.8%, 26.4% and 21.7% quantities divide proposed missing items by the size of an existing graph, even though **the numerator and denominator are produced by different instruments**" — stop calling them omission rates unless a common universe is defined | GC GW | **PARTLY DONE 2026-08-26.** The prose caveats landed (`9583f77`, `a52e32c`); `tab:omission` still carries the word *omission* in its name and the section heading still says "Three omission measurements". Rename both, or say once in the caption what the table is a table of |
+| R23b | **"Distinguish additions per extracted item from recall"** | GC GW | **THE STUDY THAT DID NOT EXIST.** Prose now says the rates bound material and not arguments. The measurement is `experiment_review_chain_recall.py`, batch `msgbatch_01S117PieDEXocGorph6d5RB`, 127 documents, USD 3.22, with a 20-document ablation arm giving it a measured sensitivity |
+| R23c | "'The three sort by instrument rather than by unit.' **Opaque.** Explicitly define the numerator, denominator, and instrument" | GC | ✅ **DONE 2026-08-26**, manuscript `b11f7ca` |
+| R23d | Explain why the second judge run marks 95 of 97 documents for node additions | GC | ✅ already done — `sec:r-judge` names document length and the rationale-field-free rebuild, and says the comparison bounds nothing |
+| R23e | Avoid describing any quantity as an upper bound, lower bound, direction or floor without assumptions that justify it | GC GW | ✅ already done — the paper explicitly disavows a floor and a direction for the two-run comparison |
+| R23f | "The expected-list statuses sum to 776, although the paper says there are 777 rows" | GW | ✅ **reviewer error, no change.** There is a fourth status: one row the judge marked covered only in the abstract. 328 + 146 + 302 + 1 = 777, and `sec:r-judge` already names it. The audit checks the sum |
 | R24 | Report sensitivity of the substantive retrieval examples to the gates, not only aggregate counts | GW | **NEW** |
 | R25 **CLOSED** | Stage probe is circular — one call wrote both text and label; TF-IDF on the name alone reaches 69.4% | OC OW GC GW | S3 done: kappa 0.838 across providers |
 | R26 | No baseline: flat triples, abstract-only, non-reasoning model, sentence-level argument mining, retrieval over chunks | all 6 | S6 |
