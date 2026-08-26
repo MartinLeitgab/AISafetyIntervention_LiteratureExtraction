@@ -36,12 +36,18 @@ Drive archives. The PKLs are only needed to re-derive the receipts from scratch.
 | §Methods, Validation | judge audit, meta-grader table, Fleiss κ, error profile, 23/441 recovery | `experiment_judge_full_receipt.py` | `experiment_judge_full_report.json` |
 | **Whole draft** | **regression check of every number** | `experiment_paper_claim_audit.py` | `experiment_paper_claim_audit.json` |
 
+> 🔴 **This copy is stale and is kept for history.** The canonical claim-to-script-to-receipt
+> map is `REPRODUCE.md` in `../AISafetyIntervention_PaperA_shared`, which travels with the
+> manuscript. Read that one.
+
 ## The one command that checks everything
 
 ```bash
 cd graph_analysis
 python -u experiment_paper_claim_audit.py
-# -> 42/42 PASS, 0 FAIL
+# -> read what it prints; this copy quoted a stale 257/257 until 2026-08-26,
+#    when the true figure was 385/385. The canonical count lives in
+#    REPRODUCE.md in the manuscript repo, and is re-run rather than quoted.
 ```
 
 It re-derives each claim from the **raw** path files and node PKL (not from the other receipts) and
