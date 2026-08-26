@@ -37,6 +37,45 @@ genuinely cheap, and it is the right purchase only if the team later decides to 
 chain analysis from demonstration to finding. **Do not run it to pre-empt a reviewer
 objection the framing already answers.**
 
+## 🔴 UNIT DOCTRINE, set 2026-08-26. Read this before quoting any quality number.
+
+**The unit of this paper is the CHAIN.** Every quality, fidelity and stability number must
+count chains — or say plainly that it does not. A concept added mid-argument does not change
+which risk reaches which intervention, so a node count is not an omission rate for the
+artifact, and printing one invites a reviewer to price the contribution on a measurement of
+something else.
+
+Node counts are fine where the claim is about nodes: the artifact inventory (200,525 nodes,
+subtype counts, release hygiene), the stage-vocabulary evidence (98.8% probe, kappa 0.84 —
+those ARE claims about node attributes), the merge/centrality/clustering use cases (whose
+entire point is that node-level analysis distorts), and the edge-orientation finding. Leave
+them.
+
+**What was wrong and is now fixed** (manuscript `9583f77`, `a52e32c`, `bfd8789`): the
+abstract printed five omission rates and "we report them all and reconcile none"; the
+Conclusion repeated it; `sec:r-judge`'s three-measurement summary never said what the rates
+were a rate *of*; Limitations' "reads worse, not better" drew a chain verdict from node
+counts; the re-run paragraph's 46.5% read as pipeline stability when it measures name
+strings; and both loss paragraphs led with node figures (6.1%, 78.3%) ahead of the
+argument-level ones (18.0%, 28.0%).
+
+**Two receipts underwrite the doctrine.** `experiment_review_omission_is_chain_level.py`:
+the flagged omissions are NOT inert — 91.5% name a node the extraction lacks, matcher
+validated by its 95.1/43.0/8.5% resolution gradient. `experiment_review_omission_chain_
+impact.py`: granting all 270 flagged relationships makes **1 new risk-to-intervention pair
+reachable out of 86 available** (1.2% of headroom). 🔴 Headroom is the denominator — 86 of
+the 100 papers are a single connected component, so quoting against the 408 reachable pairs
+reports a ceiling as a finding. The claim audit fails if anyone does.
+
+**Still owed at chain level, in priority order:**
+1. **Is a dropped path a distinct argument?** (R22/R23, both NEW and unaddressed). The
+   collapse *defines* the reporting unit and the paper says outright that the structural
+   evidence does not settle it and an annotation pass would. Cheap: sample (kept, dropped)
+   pairs, ask one judge "same argument or two". ~USD 2-3 on the same batch pattern.
+2. **Does a re-run produce the same risk-to-intervention PAIR?** Only naming (46.5%) and
+   yield (9 of 18; 15.0% against 15.0%) exist. Needs semantic matching over `multimodel_raw`.
+3. **Retrieval** (R28/S9) — chain-level by nature, still no query set or relevance labels.
+
 What still follows from the framing, for a session working the list:
 - Any sentence treating a chain-set descriptive as a finding about the literature must be
   re-read against it. 87.4% completeness, the maturity profile and the one-in-six yield are
