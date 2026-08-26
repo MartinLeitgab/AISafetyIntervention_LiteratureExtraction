@@ -106,6 +106,21 @@ load-bearing for its claims.
 insight for the paper's findings or key messages -- "sausage-making" from the \
 analysis effort that does not belong in the final paper. Name each one and say \
 what to cut.
+
+4. Length triage against a hard page budget. The main body of this paper (title \
+through the AI-assistance statement, excluding references and appendices) runs to \
+about 15 pages. It must reach 10. Identify the material whose removal is LEAST \
+likely to change the scores you gave above, and say for each item:
+
+   - what it is, and where it sits (section, table or figure number);
+   - move to appendix, or delete outright, and why that choice;
+   - your estimate of the pages recovered;
+   - the effect on your scores: none, minor, or a named score that would drop.
+
+   Order the list by pages recovered per unit of score risk, most favourable \
+first, and state the running total so it is visible where 5 pages have been \
+reached. Then name separately the material you would refuse to move or cut, and \
+say which score depends on it.
 """
 
 PROMPT_WORKSHOP_SUFFIX = """\

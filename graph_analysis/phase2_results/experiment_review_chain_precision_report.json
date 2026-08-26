@@ -1,0 +1,79 @@
+{
+  "study": "precision of the released chain set: does a chain assert what its source does not",
+  "stage": "1 of 2 -- independent LLM judge. NOT a human anchor.",
+  "model": "claude-sonnet-4-5-20250929",
+  "transport": "Anthropic batch API",
+  "batch_id": "msgbatch_01DRm2tBz3RDHBDHCW3B4P4u",
+  "sample": {
+    "unit": "chains from the 2,772-chain reporting unit",
+    "n_real": 200,
+    "n_null_mismatched_pairs": 10,
+    "stratified_by": "URL host of the chain's risk node, proportional to the chain set",
+    "seed": 42
+  },
+  "real_arm": {
+    "n_parsed": 200,
+    "judged_fair_summary": 96,
+    "judged_fair_summary_pct": 48.0,
+    "judged_not_fair": 104,
+    "judged_not_fair_pct": 52.0,
+    "risk_framing_unsupported": 48,
+    "intervention_unsupported": 63,
+    "supported_risk_verdicts_carrying_a_quote": 125,
+    "reason_codes": {
+      "faithful": 96,
+      "intervention_not_proposed": 48,
+      "risk_framing_invented": 33,
+      "intermediate_unsupported": 15,
+      "chain_belongs_to_a_different_document": 8
+    }
+  },
+  "null_arm": {
+    "n_parsed": 10,
+    "judged_fair_summary": 0,
+    "judged_fair_summary_pct": 0.0,
+    "judged_not_fair": 10,
+    "judged_not_fair_pct": 100.0,
+    "risk_framing_unsupported": 8,
+    "intervention_unsupported": 10,
+    "supported_risk_verdicts_carrying_a_quote": 0,
+    "reason_codes": {
+      "chain_belongs_to_a_different_document": 10
+    }
+  },
+  "gate_rejected_arm": {
+    "n_parsed": 96,
+    "judged_fair_summary": 29,
+    "judged_fair_summary_pct": 30.2,
+    "judged_not_fair": 67,
+    "judged_not_fair_pct": 69.8,
+    "risk_framing_unsupported": 23,
+    "intervention_unsupported": 46,
+    "supported_risk_verdicts_carrying_a_quote": 54,
+    "reason_codes": {
+      "intervention_not_proposed": 42,
+      "faithful": 29,
+      "risk_framing_invented": 15,
+      "intermediate_unsupported": 6,
+      "chain_belongs_to_a_different_document": 4
+    }
+  },
+  "gate_discrimination": {
+    "question": "Do the two quality gates select better-grounded chains? Arm A is the reporting unit (edge confidence >= 3, endpoint maturity >= 3); arm B is chains the same enumerator emits that those gates reject. Identical prompt, model and transport; the judge sees no gate label and cannot tell the arms apart.",
+    "arm_A_not_fair_pct": 52.0,
+    "arm_B_not_fair_pct": 69.8,
+    "difference_pp": 17.8,
+    "reading": "A large positive difference is evidence the gates discriminate on grounding and is the first direct answer to reviewer R21. A difference near zero says they do not, whatever arm A's absolute rate is. The absolute rate in arm A must not be read as a spuriousness rate for the corpus: the extraction prompt licenses moderate inference where a stage is absent and caps it at edge confidence 2, so what arm A measures is whether the gates removed it."
+  },
+  "instrument_check": {
+    "question": "did the judge notice when the chain came from a different document?",
+    "null_arm_flagged_pct": 100.0,
+    "reading": "A null arm that is not flagged at a high rate invalidates the real arm. Read the real arm only if this is high."
+  },
+  "errors": 4,
+  "usage": {
+    "input_tokens": 3475745,
+    "output_tokens": 87956
+  },
+  "LIMITS": "One model's opinion, cross-provider from the extractor but sharing its priors. A judge primed by the same schema should under-detect invention, so the real arm's not-fair share is a FLOOR, not an estimate. Stage 2 (human adjudication of every flagged chain plus a random sample of the cleared ones) is what licenses any extrapolation. No number here is a human-validated rate."
+}

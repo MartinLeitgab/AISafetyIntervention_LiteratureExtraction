@@ -345,40 +345,32 @@ def main():
         loss["n_papers_with_at_least_one_lost_node"],
     )
 
-    ga = receipt("experiment_review_grader_agreement_report.json")[
-        "raw_score_agreement"
-    ]
-    check("grader ICC(2,1) pre-repair", 0.921, ga["pre_repair"]["ICC_2_1"])
-    check("grader ICC(2,1) post-repair", 0.151, ga["post_repair"]["ICC_2_1"])
-    check("grader ICC(2,k) pre-repair", 0.972, ga["pre_repair"]["ICC_2_k"])
-    check("grader ICC(2,k) post-repair", 0.348, ga["post_repair"]["ICC_2_k"])
-    check(
-        "grader Krippendorff alpha pre-repair",
-        0.917,
-        ga["pre_repair"]["krippendorff_alpha_interval"],
-    )
-    check(
-        "grader Krippendorff alpha post-repair",
-        0.043,
-        ga["post_repair"]["krippendorff_alpha_interval"],
-    )
-
-    # ---- grader session diagnostics (tab:graders caption, sec:m-repro) --------------
+    # REMOVED 2026-08-16: six checks on the grader agreement instruments (ICC(2,1),
+    # ICC(2,k), Krippendorff alpha, pre and post) and the per-grader files-seen and
+    # JSON-shape diagnostics. None of those numbers is printed in the manuscript any more
+    # -- the pre/post repair-scoring stage was compressed to a design lesson with no
+    # statistics, unanimously across six external reviews. The receipts still ship and
+    # experiment_review_grader_agreement.py still produces them; if the null-repair arm is
+    # ever run and the stage becomes a result, restore these checks with it.
+    # A check for a number the paper does not print is not a regression test.
     mg = receipt("experiment_judge_full_report.json")["item2_meta_graders"]
-    for key, n, files, shapes in [
-        ("claude-opus-4-5", 95, 101, 13),
-        ("gemini-3-pro", 13, 100, 12),
-        ("third_grader_gpt-5.1", 95, 95, 1),
+    # The third grader is keyed by whichever name the receipt on disk carries. The shipped
+    # receipt still says "third_grader_gpt-5.1"; experiment_judge_full_receipt.py now writes
+    # "third_grader_model_not_recorded", because no artifact records that grader's model and
+    # the old key was an assumption the manuscript then repeated. Regenerating the receipt
+    # needs the Drive archives, so both spellings are accepted rather than hand-editing it.
+    third_key = next(k for k in mg if k.startswith("third_grader"))
+    for key, n in [
+        ("claude-opus-4-5", 95),
+        ("gemini-3-pro", 13),
+        (third_key, 95),
     ]:
-        cd = mg[key]["coverage_diagnostics"]
-        check(f"grader {key}: paired pre/post rows", n, mg[key]["n"])
-        check(f"grader {key}: files seen", files, cd["files_seen"])
         check(
-            f"grader {key}: distinct JSON shapes",
-            shapes,
-            cd["n_distinct_json_shapes"],
-            note="the agent-session design of app:judgeprompt is why the shape drifts "
-            "within one grader's output; 1 shape -> a paired score on every file",
+            f"grader {key}: paired pre/post rows",
+            n,
+            mg[key]["n"],
+            note="printed in tab:populations-master as the 95/95/13 row; the per-grader "
+            "session diagnostics behind those denominators left the paper 2026-08-16",
         )
 
     om = receipt("experiment_review_omission_relative_report.json")
@@ -390,15 +382,603 @@ def main():
         0.6,
         j["omissions_as_pct_of_extracted_nodes"],
     )
-    check("judge implied coverage pct", 99.4, j["implied_coverage_pct"])
     check("profiled papers: extracted nodes", 751, g["extracted_nodes_total"])
     check(
         "missed concepts as pct of extracted nodes",
         28.8,
         g["omissions_as_pct_of_extracted_nodes"],
     )
-    check("grader implied coverage pct", 77.7, g["implied_coverage_pct"])
     check("missed concepts total", 216, g["omissions_total"])
+    # REMOVED 2026-08-16: the two "implied coverage" checks (99.4% and 77.7%). The phrase
+    # is gone from the paper -- reviewers read it as an accuracy claim when it is one minus
+    # an unadjudicated flag rate, and the edge measurement below made the node-only version
+    # of it misleading as a headline.
+
+    # ---- edge-level coverage (S10, issue #156) --------------------------------------
+    ec = receipt("experiment_review_edge_coverage_report.json")
+    cl = ec["coverage_list"]
+    against = ec["against_the_extraction_it_is_measured_on"]
+    check("coverage list: rows over the 100 judged papers", 777, cl["rows_total"])
+    check("coverage list: covered", 328, cl["covered"])
+    check("coverage list: partially covered", 146, cl["partially_covered"])
+    check("coverage list: missing", 302, cl["missing"])
+    check("coverage list: missing per paper", 3.02, cl["missing_mean_per_paper"])
+    check(
+        "coverage list: papers with at least one missing",
+        90,
+        cl["papers_with_at_least_one_missing"],
+    )
+    check(
+        "judged papers: structural edges in the released graph",
+        1667,
+        against["released_edges_total"],
+    )
+    check(
+        "judged papers: released edges per paper",
+        16.7,
+        against["released_edges_mean_per_paper"],
+        note="app:judge prints this beside the judge's own final_graph mean of 10.8",
+    )
+    check(
+        "missing relationships as pct of extracted edges",
+        18.1,
+        against["missing_as_pct_of_released_edges"],
+        note="the abstract's third omission rate",
+    )
+    check(
+        "same count against the judge's own edge total",
+        28.1,
+        ec["which_denominator"]["missing_as_pct_of_judge_final_graph_edges"],
+    )
+    check(
+        "judge final_graph edges per paper",
+        10.76,
+        ec["which_denominator"]["judge_final_graph_edges_mean_per_paper"],
+    )
+    check(
+        "judge repair schema has no add_edges slot",
+        False,
+        ec["no_add_edges_slot"]["has_add_edges_key"],
+        note="app:judgeprompt and sec:r-judge give this absence as the explanation for the "
+        "gap between the node-addition count and the coverage list",
+    )
+    check(
+        "structural edges crossing two source papers",
+        0,
+        ec["released_graph_structural_edges"]["n_crossing_two_source_papers"],
+        note="single-source-by-design, sec:m-structural",
+    )
+
+    # ---- what the sub-path collapse drops (issue #157) -------------------------------
+    cs = receipt("experiment_review_containment_semantics_report.json")
+    check(
+        "collapse: dropped paths that are contiguous sub-paths of their container",
+        0.0,
+        cs["order_relation"]["pct_contiguous_sub_path"],
+        note="sec:m-reporting no longer describes the step as dropping sub-paths already "
+        "counted inside a longer path; this is why",
+    )
+    check(
+        "collapse: drops differing only by chords",
+        21.7,
+        cs["edge_identity"]["pct_chords_only"],
+    )
+    check(
+        "collapse: drops touching a node the container lacks",
+        78.3,
+        cs["edge_identity"]["pct_touching_a_node_the_container_lacks"],
+    )
+    check(
+        "collapse: drops ending at an intervention the container lacks",
+        28.0,
+        cs["does_the_drop_remove_a_distinct_remedy"][
+            "pct_ending_at_an_intervention_the_container_lacks"
+        ],
+    )
+    check(
+        "collapse: distinct risk-to-intervention pairs lost",
+        579,
+        cs["does_the_drop_remove_a_distinct_remedy"][
+            "distinct_pairs_lost_to_the_collapse"
+        ],
+    )
+    check(
+        "collapse: pct of raw R-I pairs lost",
+        18.0,
+        cs["does_the_drop_remove_a_distinct_remedy"]["pct_of_raw_pairs_lost"],
+    )
+
+    # ---- what the release ships (issue #157) -----------------------------------------
+    ri = receipt("experiment_review_release_integrity_report.json")
+    defects = ri["does_the_release_ship_the_defect_classes_the_judge_found"]
+    for label, expected, key in [
+        ("orphan nodes", 0, "orphan_nodes_zero_structural_edges"),
+        ("dangling edges", 0, "dangling_edges_endpoint_not_in_node_table"),
+        ("self-loops", 0, "self_loops"),
+        ("duplicate edges", 1, "duplicate_edges_same_pair_same_relation_type"),
+        (
+            "exact-name duplicate groups",
+            448,
+            "exact_name_duplicate_groups_within_category",
+        ),
+        (
+            "exact-name duplicate nodes beyond one per group",
+            1140,
+            "exact_name_duplicate_nodes_beyond_one_per_group",
+        ),
+    ]:
+        check(f"released graph: {label}", expected, defects[key])
+    check(
+        "every gate attribute present on the released graph",
+        True,
+        ri["can_a_reuser_re_enumerate_at_any_gate"][
+            "verdict_all_gate_attributes_present"
+        ],
+        note="sec:m-repro claims a reuser can re-enumerate at any gate setting from the "
+        "dump alone, which is only true while this holds",
+    )
+    check(
+        "released nodes from a judged document",
+        1617,
+        ri["audited_vs_unaudited_content"]["nodes_from_judged_documents"],
+    )
+    check(
+        "released nodes from a judged document, pct",
+        0.81,
+        ri["audited_vs_unaudited_content"]["nodes_from_judged_documents_pct"],
+    )
+
+    # ---- second-model stage agreement (S3, issue #161) -------------------------------
+    sa = receipt("experiment_review_stage_agreement_report.json")
+    head = sa["headline"]
+    check("stage agreement: Cohen kappa", 0.838, head["cohen_kappa"])
+    check("stage agreement: raw agreement", 0.871, head["raw_agreement"])
+    check("stage agreement: chance agreement", 0.204, head["chance_agreement"])
+    check("stage agreement: disagreements", 84, head["n_disagreements"])
+    check("stage agreement: nodes scored", 653, sa["design"]["n_label_pairs_scored"])
+    check(
+        "stage agreement: kappa on chain-yielding documents",
+        0.835,
+        sa["by_stratum"]["chain_yielding"]["cohen_kappa"],
+    )
+    check(
+        "stage agreement: kappa on non-chain-yielding documents",
+        0.844,
+        sa["by_stratum"]["other"]["cohen_kappa"],
+    )
+    for stage, f1, rec in [
+        ("problem analysis", 0.955, 0.983),
+        ("theoretical insight", 0.756, 0.707),
+        ("design rationale", 0.815, 0.818),
+        ("implementation mechanism", 0.889, 0.923),
+        ("validation evidence", 0.916, 0.900),
+    ]:
+        check(f"stage agreement F1: {stage}", f1, sa["per_class"][stage]["f1"])
+        check(f"stage agreement recall: {stage}", rec, sa["per_class"][stage]["recall"])
+    adj = sa["adjacent_stage_confusions"]
+    for pair, n in [("dr_vs_im", 26), ("ti_vs_dr", 19), ("pa_vs_ti", 7)]:
+        check(f"stage agreement confusion {pair}", n, adj[pair])
+    check(
+        "stage agreement: predicted-pair share of disagreements",
+        39.3,
+        adj["pa_ti_plus_dr_im_share_of_disagreements"],
+        note="the paper reports the pre-registered prediction as half right; this is the "
+        "number that makes it half rather than wholly right",
+    )
+    check(
+        "stage agreement: unusable responses",
+        0,
+        sum(sa["unusable_responses"].values()),
+        note="653 of 653 nodes came back with a label inside the five-stage vocabulary",
+    )
+
+    # ---- schema ablation and degraded source (S6+S8, issue #165) ---------------------
+    # Read from the receipt, as the other Class A studies are: re-deriving would mean
+    # re-buying 85 o3 calls. The receipt is computed from raw responses committed beside
+    # it, so a reader can re-score without re-running the extraction.
+    ab = receipt("experiment_review_schema_ablation_report.json")["results"]
+    hl = ab["headline"]
+    pair = ab["paired_against_the_released_extraction"]
+    check(
+        "ablation: arm A chain rate, EF sample",
+        100.0,
+        hl["A_released_on_the_EF_sample"]["pct_with_chain"],
+        note="the instrument check: this scorer reproduces the released enumerator on "
+        "every document of the sample",
+    )
+    check(
+        "ablation: arm A all-five share, EF sample",
+        65.0,
+        hl["A_released_on_the_EF_sample"]["pct_chains_all_five"],
+    )
+    check(
+        "ablation: arm A chain rate, G sample",
+        100.0,
+        hl["A_released_on_the_G_sample"]["pct_with_chain"],
+    )
+    check(
+        "ablation: arm A all-five share, G sample",
+        93.3,
+        hl["A_released_on_the_G_sample"]["pct_chains_all_five"],
+    )
+    check("ablation: arm E documents returning parseable JSON", 28, hl["E"]["n"])
+    check(
+        "ablation: arm E chain yield pct of attempted",
+        36.7,
+        hl["E"]["pct_of_attempted_yielding_a_chain"],
+    )
+    check(
+        "ablation: arm E chains carrying all five stages",
+        0.0,
+        hl["E"]["pct_chains_all_five"],
+        note="the ablation headline: un-prompted, the five-stage chain does not appear",
+    )
+    check(
+        "ablation: arm E documents with a chain",
+        11,
+        pair["E"]["of_those_also_yielding_a_chain_in_this_arm"],
+    )
+    check(
+        "ablation: arm F chain yield pct",
+        30.0,
+        hl["F"]["pct_of_attempted_yielding_a_chain"],
+        note="confabulation rate from sentence-shuffled sources",
+    )
+    check("ablation: arm F all-five share", 46.3, hl["F"]["pct_chains_all_five"])
+    check(
+        "ablation: arm G chain yield pct",
+        8.0,
+        hl["G"]["pct_of_attempted_yielding_a_chain"],
+    )
+    check(
+        "ablation: arm G documents with a chain",
+        2,
+        pair["G"]["of_those_also_yielding_a_chain_in_this_arm"],
+    )
+    check(
+        "ablation: arm G declined to emit a graph",
+        6,
+        hl["G"]["no_graph_returned"]["declined_no_json_block"],
+    )
+    lm = ab["arm_E_label_mapping_summary"]
+    check("ablation: arm E distinct emergent labels", 144, sum(lm.values()))
+    check("ablation: arm E labels mapping onto no stage", 5, lm["unmappable"])
+    check(
+        "ablation: arm E labels mapping onto one of the five",
+        138,
+        sum(v for k, v in lm.items() if k not in ("unmappable", "risk")),
+        note="the split the paper reports: the vocabulary is recoverable un-prompted, the "
+        "seven-node chain is not",
+    )
+
+    # ---- comparison against an existing topical index (S12, issue #166) -------------
+    # Re-derived here from the VENDORED categories.json plus the released graph, not read
+    # back from the comparison receipt. The receipt supplies only the title-to-URL map,
+    # because their 8.6 MB input CSV is not vendored; every count below is recomputed.
+    ac = receipt("experiment_review_artifact_comparison_report.json")
+    cats = json.loads(
+        (ROOT / "phase2_results/external_artifacts/categories.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    t2u = ac["title_to_url"]
+    chains_by_url = {}
+    for r in load_paths(DEDUP, na):
+        u = next(iter(r["urls"]))
+        chains_by_url.setdefault(u, []).append(r["nodes"])
+    covered_subs, pairs_total, comembership, n_subs = 0, set(), 0, 0
+    adv = {"papers": 0, "risks": set(), "intvs": set()}
+    for subs in cats.values():
+        for sub, titles in subs.items():
+            n_subs += 1
+            matched_here = [t for t in titles if t2u.get(t)]
+            comembership += len(matched_here) * (len(matched_here) - 1) // 2
+            sub_pairs, sub_risks, sub_intvs, sub_papers = set(), set(), set(), 0
+            for t in matched_here:
+                paths = chains_by_url.get(t2u[t], [])
+                if paths:
+                    sub_papers += 1
+                for p in paths:
+                    sub_risks.add(na.get(p[0], {}).get("name"))
+                    sub_intvs.add(na.get(p[-1], {}).get("name"))
+                    sub_pairs.add(
+                        (na.get(p[0], {}).get("name"), na.get(p[-1], {}).get("name"))
+                    )
+            if sub_pairs:
+                covered_subs += 1
+                pairs_total |= sub_pairs
+            if sub == "Adversarial Machine Learning":
+                adv = {"papers": sub_papers, "risks": sub_risks, "intvs": sub_intvs}
+    check(
+        "artifact comparison: their clustered papers",
+        554,
+        len({t for s in cats.values() for ts in s.values() for t in ts}),
+    )
+    check("artifact comparison: their subcategories", 160, n_subs)
+    check(
+        "artifact comparison: their clustered papers matched to our corpus",
+        534,
+        len(t2u),
+    )
+    check(
+        "artifact comparison: matched papers yielding a chain",
+        216,
+        sum(1 for u in t2u.values() if chains_by_url.get(u)),
+    )
+    check(
+        "artifact comparison: their subcategories holding a chain-yielding paper",
+        79,
+        covered_subs,
+    )
+    check(
+        "artifact comparison: our directed pairs inside those subcategories",
+        325,
+        len(pairs_total),
+        note="79 topic labels against 325 DISTINCT directed risk-to-intervention pairs is "
+        "the resolution claim in sec:related. Summing the per-subcategory counts gives 335 "
+        "because a paper can sit in more than one subcategory; this check is what caught "
+        "that, and the receipt now reports both",
+    )
+    check(
+        "artifact comparison: chain yield on their paper list, pct",
+        40.4,
+        round(100 * sum(1 for u in t2u.values() if chains_by_url.get(u)) / len(t2u), 1),
+        note="independent check on the 40.5% arXiv yield of tab:populations, over a paper "
+        "list we did not choose",
+    )
+    check(
+        "artifact comparison: their input records",
+        7011,
+        ac["their_artifact"]["input_papers"],
+    )
+    check(
+        "artifact comparison: Adversarial ML chain-yielding papers", 17, adv["papers"]
+    )
+    check("artifact comparison: Adversarial ML distinct risks", 18, len(adv["risks"]))
+    check(
+        "artifact comparison: Adversarial ML distinct interventions",
+        23,
+        len(adv["intvs"]),
+    )
+    check(
+        "artifact comparison: their cross-document co-membership pairs",
+        2986,
+        comembership,
+        note="sec:related reports this beside our zero cross-document structural edges",
+    )
+
+    # ---- multi-model extraction consistency (S11, issue #168) ------------------------
+    # Receipt-sourced, like every Class A study. The arm-C figures are deliberately NOT
+    # checked here: that arm was still running when these numbers went into the paper.
+    mm = receipt("experiment_review_multimodel_consistency_report.json")
+    mh = mm["headline"]
+    check("multimodel: released mean nodes", 21, mh["released"]["mean_nodes"])
+    check("multimodel: released mean edges", 20.1, mh["released"]["mean_edges"])
+    check("multimodel: o3 re-run mean nodes", 21.1, mh["A_o3"]["mean_nodes"])
+    check("multimodel: o3 re-run mean edges", 21, mh["A_o3"]["mean_edges"])
+    check(
+        "multimodel: o3 re-run chain rate",
+        50.0,
+        mh["A_o3"]["pct_with_chain"],
+        note="against 100% for the shipped extraction on the same documents; the sample is "
+        "conditioned on the shipped run, so this is an upper bound on what a re-run loses",
+    )
+    check(
+        "multimodel: o3 re-run unparseable responses", 2, mh["A_o3"]["parse_failures"]
+    )
+    check("multimodel: gpt-5 mean nodes", 38.1, mh["B_gpt5"]["mean_nodes"])
+    check("multimodel: opus-5 mean nodes", 41.3, mh["C_opus5"]["mean_nodes"])
+    check("multimodel: opus-5 mean edges", 56.2, mh["C_opus5"]["mean_edges"])
+    check("multimodel: opus-5 chain rate", 82.4, mh["C_opus5"]["pct_with_chain"])
+    # What the enumerated chain count is a function of (issue #168 follow-up). A chain is
+    # a simple path THIS PROJECT walks, never something a model emits, and the count is
+    # driven by roots, terminals and degree rather than by extraction quality.
+    cd = receipt("experiment_review_chain_density_report.json")["arms"]
+    for arm, roots, mature, degree in [
+        ("A_o3", 1, 1, 1.71),
+        ("B_gpt5", 3, 3, 2.04),
+        ("C_opus5", 3, 3, 2.32),
+    ]:
+        check(
+            f"density {arm}: median risk roots", roots, cd[arm]["median"]["risk_roots"]
+        )
+        check(
+            f"density {arm}: median mature interventions",
+            mature,
+            cd[arm]["median"]["mature_interventions"],
+        )
+        check(
+            f"density {arm}: median degree on the gated subgraph",
+            degree,
+            cd[arm]["median"]["mean_degree_conf_ge3"],
+            note="below 2 the extracted graph is nearly a path; above it, simple-path "
+            "counts grow exponentially in the number of independent cycles",
+        )
+
+    for arm, med, mx in [
+        ("released", 2, 19),
+        ("B_gpt5", 6, 886),
+        ("C_opus5", 594, 57007),
+    ]:
+        check(
+            f"multimodel: median chains per document, {arm}",
+            med,
+            mh[arm]["median_chains"],
+            note="the mean is dominated by single documents; the paper quotes medians and "
+            "maxima because enumeration is super-linear in edge count",
+        )
+        check(
+            f"multimodel: max chains in one document, {arm}", mx, mh[arm]["max_chains"]
+        )
+    check("multimodel: gpt-5 mean edges", 41.3, mh["B_gpt5"]["mean_edges"])
+    check("multimodel: gpt-5 chain rate", 76.5, mh["B_gpt5"]["pct_with_chain"])
+    check("multimodel: gpt-5 unparseable responses", 3, mh["B_gpt5"]["parse_failures"])
+    pa = mm["pairwise_endpoint_agreement"]["released vs A_o3"]
+    check(
+        "multimodel: risk-name agreement at cosine 0.80",
+        46.5,
+        pa["cosine_0.8"]["pct_risks_of_A_matched_in_B"],
+    )
+    check(
+        "multimodel: risk-name agreement at cosine 0.85",
+        27.8,
+        pa["cosine_0.85"]["pct_risks_of_A_matched_in_B"],
+    )
+    check(
+        "multimodel: risk-name agreement, token-set",
+        19.0,
+        pa["jaccard_0.6"]["pct_risks_of_B_matched_in_A"],
+        note="the lexical figure the semantic one is reported against",
+    )
+    gs = mm["gate_stability_against_the_shipped_extraction"]["A_o3"]
+    check("multimodel: documents compared", 18, gs["documents_compared"])
+    check(
+        "multimodel: shipped documents with a mature intervention",
+        18,
+        gs["released_with_a_mature_intervention"],
+    )
+    check(
+        "multimodel: re-run documents with a mature intervention",
+        11,
+        gs["arm_with_a_mature_intervention"],
+        note="the maturity gate is what moves between runs; edge confidence does not",
+    )
+    check("multimodel: re-run documents with a chain", 9, gs["arm_with_a_chain"])
+
+    # ---- baselines B/C/D and the unconditioned repeat arm (S6 remainder, S7; #171) ---
+    bl = receipt("experiment_review_baselines_report.json")["results"]["headline"]
+    for arm, nodes, yield_pct in [
+        ("B_abstract", 11.4, 16.0),
+        ("C_gpt41", 16.4, 56.7),
+        ("D_triples", 24.5, 0.0),
+        ("U_unconditioned", 18.4, 15.0),
+    ]:
+        check(f"baseline {arm}: mean nodes", nodes, bl[arm]["mean_nodes"])
+        check(
+            f"baseline {arm}: chain yield pct",
+            yield_pct,
+            bl[arm]["pct_of_attempted_yielding_a_chain"],
+        )
+    check(
+        "baseline: shipped nodes on the abstract sample",
+        20.6,
+        bl["released_on_the_B_abstract_sample"]["mean_nodes"],
+    )
+    check(
+        "baseline: shipped chain yield on the unconditioned sample",
+        15.0,
+        bl["released_on_the_U_unconditioned_sample"][
+            "pct_of_attempted_yielding_a_chain"
+        ],
+        note="identical to the re-run's 15.0% on the same 20 documents, and on the same "
+        "three of them; with n=3 chain-yielding it bounds the corpus rate only",
+    )
+    for arm, risks in [("B_abstract", 18.8), ("C_gpt41", 19.5), ("D_triples", 5.2)]:
+        check(
+            f"baseline {arm}: released risks recovered pct",
+            risks,
+            bl[arm]["endpoint_recovery_pct"]["released_risks_found"],
+        )
+    check(
+        "baseline: endpoint-recovery ceiling",
+        46.5,
+        bl["D_triples"]["endpoint_recovery_pct"]["ceiling_from_issue_168"],
+        note="what an o3 re-run recovers of its own shipped output; the flat-triple arm is "
+        "read against this, never against 100%",
+    )
+    check(
+        "baseline C: all-five share",
+        40.0,
+        bl["C_gpt41"]["pct_chains_all_five"],
+    )
+    check(
+        "baseline U: all-five share",
+        88.9,
+        bl["U_unconditioned"]["pct_chains_all_five"],
+    )
+    check("baseline B: all-five share", 100.0, bl["B_abstract"]["pct_chains_all_five"])
+
+    # ---- the collapse applied to the cross-model arms (#168 follow-up) ---------------
+    # NB: not `raw`/`ded` -- those name the path_block dicts this function already holds.
+    for arm, n_raw, n_coll in [
+        ("A_o3", 0.5, 0.5),
+        ("B_gpt5", 6, 2),
+        ("C_opus5", 594, 4),
+    ]:
+        check(
+            f"density {arm}: median chains before the collapse",
+            n_raw,
+            cd[arm]["median"]["chains_undirected_raw"],
+        )
+        check(
+            f"density {arm}: median chains after the collapse",
+            n_coll,
+            cd[arm]["median"]["chains_undirected_collapsed"],
+            note="the reporting unit; raw enumeration is not what the paper counts",
+        )
+    check(
+        "density: worst document after the collapse",
+        44,
+        cd["C_opus5"]["worst_document"]["chains_undirected_collapsed"],
+        note="57,007 raw paths in one Opus graph reduce to 44 kept chains",
+    )
+    check(
+        "density: Opus median under directed traversal",
+        23,
+        cd["C_opus5"]["median"]["chains_directed_raw"],
+        note="honouring stored edge direction also tames it, but the released enumerator "
+        "is undirected, so the collapse is the reduction that applies",
+    )
+
+    # ---- second judge run on the chain-yielding population (S2, issue #172) ----------
+    s2 = receipt("experiment_review_judge_chainyielding_report.json")
+    check("S2: requests", 100, s2["n_requests"])
+    check("S2: parseable reports", 97, s2["n_parsed"])
+    check(
+        "S2: papers with an added node",
+        95,
+        s2["node_level"]["papers_with_an_added_node"],
+    )
+    check("S2: added nodes", 557, s2["node_level"]["added_nodes"])
+    check(
+        "S2: nodes in those extractions",
+        2110,
+        s2["extraction_size_over_parsed"]["nodes"],
+    )
+    check(
+        "S2: node-level omission pct",
+        26.4,
+        s2["node_level"]["pct_of_nodes"],
+        note="against 0.6% on the corpus-sampled run; confounded by document length and by "
+        "extractions rebuilt without rationale fields, and the paper says so",
+    )
+    check("S2: coverage rows", 627, s2["edge_level"]["coverage_rows"])
+    check("S2: coverage rows marked missing", 476, s2["edge_level"]["missing"])
+    check(
+        "S2: edges in those extractions",
+        2192,
+        s2["extraction_size_over_parsed"]["edges"],
+    )
+    check("S2: edge-level omission pct", 21.7, s2["edge_level"]["pct_of_edges"])
+
+    # ---- extraction-failure recovery, now printed in the body (C6) -------------------
+    rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
+        "population_A_extraction_error_candidates"
+    ]
+    check("recovery: judgeable failed extractions", 441, rec["n_judgeable_candidates"])
+    check(
+        "recovery: attempts producing a non-empty graph",
+        23,
+        rec["n_attempts_producing_nonempty_graph"],
+    )
+    check(
+        "recovery rate pct",
+        5.2,
+        rec["recovery_rate_pct"],
+        note="sec:m-recovery prints this from 2026-08-16; it used to say 'not at a useful "
+        "rate' with no number. The '~60 of ~400' in older project notes divides two "
+        "disjoint populations and is wrong",
+    )
 
     sil = receipt("experiment_review_silhouette_report.json")["headline"]
     check(
@@ -877,6 +1457,134 @@ def main():
     # read phase2_routing_assignments.jsonl, which is untracked and not re-derivable
     # by a reader at reasonable cost, so the claims they backed were withdrawn from
     # the manuscript. Reinstate only if that file ships with the release.
+
+    # ---- within-instrument coverage denominators (2026-08-17 external round) ----------
+    # Two reviewers objected that dividing flagged-missing relationships by released edges
+    # is not the rate the coverage list itself implies. The paper now prints both, so both
+    # are checked. The fourth status of the first run's list is what made 328+146+302 read
+    # as an arithmetic error against the stated 777.
+    cl2 = receipt("experiment_review_edge_coverage_report.json")["coverage_list"]
+    check(
+        "coverage list: fourth status row (covered abstractly)",
+        1,
+        cl2["unlabelled_or_other"],
+    )
+    check(
+        "coverage list: statuses sum to the row total",
+        777,
+        cl2["covered"]
+        + cl2["partially_covered"]
+        + cl2["missing"]
+        + cl2["unlabelled_or_other"],
+    )
+    check(
+        "coverage list: missing as a share of the list",
+        38.9,
+        round(100.0 * cl2["missing"] / cl2["rows_total"], 1),
+    )
+    cy = receipt("experiment_review_judge_chainyielding_report.json")
+    check(
+        "second judge run: coverage list rows", 627, cy["edge_level"]["coverage_rows"]
+    )
+    check(
+        "second judge run: missing as a share of its list",
+        75.9,
+        round(
+            100.0 * cy["edge_level"]["missing"] / cy["edge_level"]["coverage_rows"], 1
+        ),
+    )
+
+    # ---- chain order and edge orientation (2026-08-17, reviewers GC/GW) --------------
+    # The enumerator is undirected and imposes no monotonic stage order, so the reviewers
+    # asked what the released chains actually do. Every figure the manuscript prints for
+    # this is re-derived by experiment_review_chain_order_semantics.py from the released
+    # path files, the node table and the edge list.
+    co = receipt("experiment_review_chain_order_semantics_report.json")
+    ded_co, raw_co = co["deduped_2772"], co["raw_8954"]
+    so, ed = ded_co["stage_order"], ded_co["edge_direction"]
+    check(
+        "chain order: monotonic stage order, reporting unit", 84.6, so["monotonic_pct"]
+    )
+    check(
+        "chain order: strictly increasing, reporting unit",
+        72.0,
+        so["strictly_increasing_pct"],
+    )
+    check("chain order: chains with an inversion", 427, so["chains_with_an_inversion"])
+    check(
+        "chain order: chains inverting exactly once",
+        299,
+        so["inversions_per_chain_hist"]["1"],
+    )
+    inversion_pairs = dict(map(tuple, so["most_common_inversions_rank_pairs"]))
+    check(
+        "chain order: commonest inversion is va -> im, instances",
+        229,
+        inversion_pairs["5->4"],
+    )
+    check(
+        "chain order: monotonic on the raw set",
+        66.2,
+        raw_co["stage_order"]["monotonic_pct"],
+    )
+    check(
+        "edge orientation: chains with every hop stored forward",
+        80.6,
+        ed["chains_all_hops_forward_pct"],
+    )
+    check("edge orientation: hops in the reporting unit", 17829, ded_co["n_hops"])
+    check("edge orientation: hops walked backward", 800, ed["hops_backward"])
+    check("edge orientation: hops walked backward, pct", 4.5, ed["hops_backward_pct"])
+    check(
+        "edge orientation: backward hops against their type's majority",
+        799,
+        ed["hops_against_type_majority_orientation"],
+    )
+    check(
+        "edge orientation: all-forward chains on the raw set",
+        62.7,
+        raw_co["edge_direction"]["chains_all_hops_forward_pct"],
+    )
+    check(
+        "edge orientation: backward hops on the raw set, pct",
+        7.9,
+        raw_co["edge_direction"]["hops_backward_pct"],
+    )
+    check(
+        "edge orientation: no hop unresolved in either direction",
+        0,
+        ed["unresolved_hops"],
+    )
+    # The 98.9-99.7 band the manuscript quotes covers exactly the five relation types with
+    # more than 25,000 instances. Checked as a band so a future re-run cannot widen it
+    # silently to include enabled_by (90.8) or required_by (80.0).
+    orient = co["relation_type_orientation_over_the_whole_graph"]
+    big = {k: v for k, v in orient.items() if v["up"] + v["down"] > 25_000}
+    shares = sorted(v["majority_share_pct"] for v in big.values())
+    check("orientation band: number of types over 25,000 instances", 5, len(big))
+    check(
+        "orientation band: every one of them ascends the stage rank",
+        True,
+        all(v["majority"] == "up" for v in big.values()),
+    )
+    check("orientation band: low end", 98.9, shares[0])
+    check("orientation band: high end", 99.7, shares[-1])
+
+    # ---- asymmetric first-hop gate, tab:gates sensitivity row (2026-08-17) -------------
+    # Reported as a price, never as a proposal: the threshold was picked on the sample that
+    # measured it. These check the corpus-level counts the row prints, nothing about fidelity.
+    fh = receipt("experiment_review_first_hop_gate_report.json")["row"]
+    check("first-hop >= 4 row: chains", 1148, fh["chains"])
+    check("first-hop >= 4 row: papers", 853, fh["papers"])
+    check("first-hop >= 4 row: corpus yield", 7.2, fh["corpus_yield_pct"])
+    check("first-hop >= 4 row: all five stages", 90.2, fh["all_five_pct"])
+    check("first-hop >= 4 row: length 7", 63.9, fh["length_7_pct"])
+    check("first-hop >= 4 row: arXiv share", 46.5, fh["arxiv_pct"])
+    check(
+        "first-hop >= 4 row: costs 59% of the chains",
+        58.6,
+        round(100.0 * (2772 - fh["chains"]) / 2772, 1),
+    )
 
     out = {
         "audit": "paperA_draft_v2.tex quantitative claims vs raw data",
