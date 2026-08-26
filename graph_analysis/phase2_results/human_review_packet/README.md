@@ -1,8 +1,10 @@
 # Human adjudication packet -- issue #176
 
-30 chains from the released corpus. Judge each against its source. **~15-25 minutes each**,
-so budget 8-12 hours; the sheet has a `minutes_spent` column because knowing the real cost
-is worth as much as the verdicts.
+30 chains from the released corpus. Judge each against its source. **~20-30 minutes each**,
+so budget 10-15 hours; the sheet has a `minutes_spent` column because knowing the real cost
+is worth as much as the verdicts. The estimate went up from 15-25 when the recall question
+was added on 2026-08-26 -- it is the one field that needs you to think about what the
+document argues *beyond* the chain in front of you, and it is the reason to do this at all.
 
 ## What is in here
 
@@ -68,6 +70,9 @@ that is itself the answer and the field is left empty.
 | `intervention_quote` | The span in which it is proposed | verbatim, or empty |
 | `body_inference_level` | The intermediate nodes together, scored at their worst step | `0`-`3`, below |
 | `verdict` | Overall | see below |
+| `chain_recall_missed` | **Does this document argue a materially different risk-to-intervention chain that is NOT in the extraction?** See below -- this is the only recall question anyone asks in this project | `yes` / `no` / `unclear` |
+| `chain_recall_note` | If yes: name the risk and the intervention, in a few words each | free text, or empty |
+| `annotator_confidence` | How sure are you of the `verdict` on this chain? | `high` / `medium` / `low` |
 | `notes` | Anything the fields above cannot carry | free text |
 | `minutes_spent` | How long this one took | a number |
 
@@ -120,6 +125,32 @@ So the binary is asked first, on its own, before any graded field can anchor it.
 It is also the one field that is worded identically to what the machine was asked, which is
 what makes it possible to compute how often the machine was right rather than merely how often
 it was confident.
+
+## The recall question, and why it is worth the extra minutes
+
+Everything above judges a chain the extraction *produced*. That is precision. It cannot see
+what the extraction *missed*, and nothing else in this project can either -- so while the
+source is open in front of you, you are the only instrument that will ever answer it.
+
+Ask it at the chain level, never at the node level. **A concept the extraction did not name
+is not a miss.** A second pass over any document will always find more nameable concepts,
+and a denser middle does not change which risk is connected to which intervention. What
+counts as a miss is a materially different *argument*:
+
+- a **different risk** the document argues against, with its own intervention;
+- the **same risk** routed to a **different intervention**;
+- the **same intervention** offered against a **different risk**.
+
+If the document argues one of those and the extraction does not carry it, that is `yes`,
+and `chain_recall_note` gets the risk and the intervention in a few words each. If the only
+thing you can point at is a stage the chain states thinly or skips, that is `no` -- the
+inference levels above already record it. `unclear` is a real answer for a long document
+you could not search exhaustively, and it is far better than a guessed `no`.
+
+Two warnings. This field will read low by construction, because you are looking at one
+chain and its source rather than at every chain the document produced -- so it is a **floor
+on recall failure, never a rate**. And it is the one field where being unsure is common:
+use `unclear` freely.
 
 ## Two things to resist
 

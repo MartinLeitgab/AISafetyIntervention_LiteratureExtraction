@@ -23,8 +23,14 @@ WHAT THIS SCRIPT WILL NOT DO, listed so a future session does not add them
   - No inter-annotator agreement. One annotator, decided 2026-08-26. Reviewer R11 stays
     open and the write-up must say so. Do not compute agreement from the annotator
     re-judging their own rows; that is test-retest, a different instrument.
-  - No corpus omission or recall rate. This packet only shows chains that WERE emitted, so
-    it cannot see what extraction missed. The 0.6% vs 28.8% discrepancy (R16) is untouched.
+  - No corpus omission RATE, and no reconciliation of the judge's numbers. The packet does
+    now carry a chain-level recall question (`chain_recall_missed`, added 2026-08-26), and
+    it is the only chain-level recall signal this project has -- but the annotator sees one
+    chain per document rather than every chain that document produced, so it is a FLOOR on
+    recall failure and never a rate. It must not be set against the judge's 0.6% / 28.8% /
+    26.4% / 18.1% / 21.7%: those count nodes and relationships, this counts arguments, and
+    presenting them together would imply a reconciliation that does not exist (R16 stays
+    open). See experiment_review_omission_is_chain_level.py for why the units differ.
   - No maturity-label validation. Not asked in the rubric.
   - No confidence interval that ignores the design. Cells are 1-7 chains; the binomial
     interval on a cell of 3 is nearly the whole unit interval, and the reweighted interval
@@ -377,6 +383,55 @@ def main() -> int:
             "WARNING": (
                 "The 30 are a stratified, deliberately non-random sample. This block is a "
                 "sanity check on the cells, NOT a rate for anything. Never quote it."
+            ),
+        }
+
+        # Chain-level recall. Added 2026-08-26 after checking what the judge's omission
+        # figures actually count: 0.6% / 28.8% / 26.4% are NODES and 18.1% / 21.7% are
+        # RELATIONSHIPS, and the artifact's unit is neither. This field is the only
+        # chain-level recall signal the project has or can get without a second study.
+        rec = Counter(
+            (r.get("chain_recall_missed") or "").strip().lower() or "blank"
+            for r in filled
+        )
+        report["chain_level_recall"] = {
+            "question": (
+                "does the document argue a materially different risk-to-intervention "
+                "chain that the extraction does not carry"
+            ),
+            "yes": rec["yes"],
+            "no": rec["no"],
+            "unclear": rec["unclear"],
+            "not_answered": rec["blank"],
+            "named_misses": [
+                {
+                    "packet_id": r["packet_id"],
+                    "note": (r.get("chain_recall_note") or "").strip(),
+                }
+                for r in filled
+                if (r.get("chain_recall_missed") or "").strip().lower() == "yes"
+            ],
+            "IT_IS_A_FLOOR_NOT_A_RATE": (
+                "The annotator sees ONE chain per document, not every chain that document "
+                "produced, so a miss is only noticed when it is obvious from the source. "
+                "Report as a floor on chain-level recall failure. It is NOT comparable to "
+                "the judge's 0.6% / 18.1% / 26.4% / 21.7%, which count nodes and "
+                "relationships rather than arguments, and it must never be presented as "
+                "reconciling them."
+            ),
+        }
+
+        conf_dist = Counter(
+            (r.get("annotator_confidence") or "").strip().lower() or "blank"
+            for r in filled
+        )
+        report["annotator_confidence"] = {
+            **{k: conf_dist[k] for k in ("high", "medium", "low", "blank")},
+            "USE": (
+                "For a sensitivity pass, not for weighting. Recomputing the estimand over "
+                "high-confidence rows only says how much the answer rests on the calls the "
+                "annotator found hard; dropping low-confidence rows from the headline "
+                "figure would be selecting on the outcome."
             ),
         }
 
