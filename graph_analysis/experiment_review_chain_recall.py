@@ -76,6 +76,7 @@ import glob
 import json
 import pickle
 import random
+import re
 import sys
 from collections import Counter, defaultdict, deque
 from pathlib import Path
@@ -231,6 +232,104 @@ def reachable_pairs(nids, slim, adj_all):
     return sorted(set(out))
 
 
+DEDUPED = HERE / "phase1_rawpathsfiles" / "paths_hopwise_v4_edge_only_deduped.jsonl"
+RAW_GATED = HERE / "phase2_results" / "chain_recall_gated_raw"
+N_GATED = 100
+
+
+def build_sample_gated() -> list[dict]:
+    """Pair lists carrying EVERY cut, taken from the released reporting unit itself.
+
+    The gate-free run answers "did the pipeline capture this argument". This one answers
+    the question the paper's claims actually rest on: does the 2,772-chain REPORTING UNIT
+    carry it? So the pair list is read straight off
+    `paths_hopwise_v4_edge_only_deduped.jsonl`, which has every cut baked in by
+    construction -- structural edges only, edge confidence >= 3 on every hop, intervention
+    maturity >= 3, exactly one risk rooting the path, simple paths, first hop on an
+    intermediate subtype, stop at the first qualifying intervention, the four-node floor,
+    the thirty-hop ceiling, and the 70% sub-path collapse. Rebuilding those nine cuts by
+    hand would be nine chances to get one wrong; reading the shipped file is zero.
+
+    🔴 THE POPULATION HAS TO CHANGE WITH THE LIST, and this is not optional. Only 1,868 of
+    11,779 documents yield a gated chain, and just 12 of the 99 audited documents do. Run
+    this on the audited population and 87 of 99 pair lists are EMPTY, so every argument
+    reads as uncaptured and the result is trivially 100% -- a measurement of the sampling
+    frame, not of the artifact. Sampling from the chain-yielding population instead is what
+    S2 had to do for the same reason.
+
+    Host-stratified proportional to the chain set, matching how #175 drew its 200, so the
+    two are comparable and the reason-code weights remain usable.
+    """
+    if not DEDUPED.is_file():
+        die(f"missing {DEDUPED}")
+    slim = pickle.load(SLIM.open("rb"))
+    pairs: dict[str, set] = defaultdict(set)
+    for line in DEDUPED.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        p = json.loads(line)["path"]
+        u = slim.get(p[0], {}).get("url")
+        if u:
+            pairs[u].add((slim[p[0]].get("name"), slim[p[-1]].get("name")))
+    if len(pairs) != 1868:
+        die(
+            f"the deduped file yields {len(pairs)} chain-yielding documents, not the 1,868 "
+            "the paper reports. The reporting unit on disk is not the one described; fix "
+            "that before measuring anything against it."
+        )
+
+    sources = load_sources()
+    rng = random.Random(SEED)
+    hv = {
+        m["source_url"]
+        for m in json.loads(PACKET_MANIFEST.read_text(encoding="utf-8"))
+        if m.get("recall_arm")
+    }
+
+    def host(u):
+        m = re.match(r"https?://([^/]+)", u or "")
+        return (m.group(1) if m else "unknown").lower().replace("www.", "")
+
+    by_host = defaultdict(list)
+    for u in sorted(pairs):
+        if u in sources:
+            by_host[host(u)].append(u)
+    total = sum(len(v) for v in by_host.values())
+    picked = []
+    for h, us in sorted(by_host.items()):
+        k = round(N_GATED * len(us) / total)
+        rng.shuffle(us)
+        picked += us[:k]
+    picked = sorted(set(picked) | (hv & set(pairs) & set(sources)))
+
+    items = []
+    for u in picked:
+        prs = sorted(pairs[u])
+        items.append(
+            {
+                "url": u,
+                "cohorts": ["gated_reporting_unit"]
+                + (["human_validation"] if u in hv else []),
+                "pairs": prs,
+                "text_chars": len(sources[u]["text"]),
+                "_text": sources[u]["text"],
+            }
+        )
+    eligible = [
+        i for i, it in enumerate(items) if len({b for _, b in it["pairs"]}) >= 2
+    ]
+    for i in rng.sample(eligible, min(N_ABLATE, len(eligible))):
+        it = items[i]
+        victim = rng.choice(sorted({b for _, b in it["pairs"]}))
+        it["ablated_intervention"] = victim
+        it["pairs_shown"] = [(a, b) for a, b in it["pairs"] if b != victim]
+    for it in items:
+        it.setdefault("ablated_intervention", None)
+        it.setdefault("pairs_shown", it["pairs"])
+    return items
+
+
 def build_sample(judge_dir: Path | None) -> list[dict]:
     for p in (SLIM, EDGES, PACKET_MANIFEST):
         if not p.exists():
@@ -318,7 +417,13 @@ def render(it: dict) -> str:
     return PROMPT.format(text=it["_text"], pairs=pairs, n_pairs=len(it["pairs_shown"]))
 
 
-def out_dir(items: list[dict]) -> Path:
+def out_dir(items: list[dict]) -> Path:  # noqa: D401
+    if items and "gated_reporting_unit" in items[0]["cohorts"]:
+        return RAW_GATED
+    return _out_dir_ungated(items)
+
+
+def _out_dir_ungated(items: list[dict]) -> Path:
     """Ablation re-runs write to their OWN directory.
 
     Learned 2026-08-26, immediately: an --ablation-only dry run clobbered the completed
@@ -357,7 +462,7 @@ def dry_run(items: list[dict]) -> int:
     for k, v in sorted(coh.items()):
         print(f"    {k:<22}: {v}")
     print(
-        f"  ablation arm         : {sum(1 for it in items if it['ablated_pair'])} documents "
+        f"  ablation arm         : {sum(1 for it in items if it.get('ablated_intervention'))} documents "
         f"with one pair deleted from the list shown"
     )
     print(
@@ -568,7 +673,7 @@ def collect(batch_id: str) -> int:
     d = next(
         (
             c
-            for c in (RAW, RAW_ABL)
+            for c in (RAW, RAW_ABL, RAW_GATED)
             if (c / "batch_id.txt").is_file()
             and (c / "batch_id.txt").read_text(encoding="utf-8").strip() == batch_id
         ),
@@ -609,7 +714,8 @@ def collect(batch_id: str) -> int:
             fh.write(json.dumps(r) + "\n")
 
     report = analyse(rows, sample)
-    out = OUT if d is RAW else OUT.with_name(OUT.stem + "_ablation.json")
+    suffix = {RAW: "", RAW_ABL: "_ablation", RAW_GATED: "_gated"}[d]
+    out = OUT if not suffix else OUT.with_name(OUT.stem + suffix + ".json")
     out.write_text(json.dumps(report, indent=1), encoding="utf-8")
     print(f"parsed {report['n_parsed']}, errors {report['n_errors']}")
     print(
@@ -634,6 +740,7 @@ def main() -> int:
     g.add_argument("--dry-run", action="store_true")
     g.add_argument("--submit", action="store_true")
     g.add_argument("--collect", metavar="BATCH_ID")
+    ap.add_argument("--gated", action="store_true")
     ap.add_argument(
         "--ablation-only",
         action="store_true",
@@ -647,7 +754,11 @@ def main() -> int:
 
     if a.collect:
         return collect(a.collect)
-    items = build_sample(Path(a.judge_reports) if a.judge_reports else None)
+    items = (
+        build_sample_gated()
+        if a.gated
+        else build_sample(Path(a.judge_reports) if a.judge_reports else None)
+    )
     if a.ablation_only:
         items = [it for it in items if it.get("ablated_intervention")]
         print(f"ABLATION ONLY: {len(items)} documents")
