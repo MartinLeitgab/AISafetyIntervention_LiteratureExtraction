@@ -117,6 +117,16 @@ RETIRED = [
     ("4{,}462.9", "a mean dominated by one 57,007-path document"),
     ("139 of them", "138 map onto the five stages; one maps to risk"),
     ("235/235", "the claim audit has moved well past this"),
+    (
+        "direction and a floor",
+        "population, length and serialisation differ at once, so the second judge run "
+        "bounds nothing (2026-08-26)",
+    ),
+    (
+        "document-level resources cannot",
+        "a passage index can answer a mechanism question by synthesis; what it does not "
+        "do is carry the mechanism as a field (2026-08-26)",
+    ),
     ("more than five thousand", "their released clustering covers 554 papers"),
 ]
 

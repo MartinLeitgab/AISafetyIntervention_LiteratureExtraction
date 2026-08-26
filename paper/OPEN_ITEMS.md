@@ -51,8 +51,10 @@ Worked top to bottom on **2026-08-16 PM**. Each row names the issue, the PR, wha
 and where it landed in `paperA_altstyle.tex`. Rules that govern all of it: `git pull
 --ff-only` the manuscript repo **before you Read**, push the same session, keep the `.tex`
 pure ASCII, and after any manuscript edit run `asciify_tex.py` → `texlint.py` →
-`graph_analysis/experiment_paper_claim_audit.py` (**302/302** on the tip branch; if a number leaves the manuscript, delete its `check(...)` line, and if one arrives,
-add one). Every study gets a GitHub issue and a PR.
+`graph_analysis/experiment_paper_claim_audit.py` (**re-run it; do not quote a count from
+this file** -- see the verification-loop row of "Where everything lives". If a number leaves
+the manuscript, delete its `check(...)` line, and if one arrives, add one). Every study gets
+a GitHub issue and a PR.
 
 | | Item | State | Issue / PR | Landed in the manuscript |
 |---|---|---|---|---|
@@ -70,6 +72,7 @@ add one). Every study gets a GitHub issue and a PR.
 | + | What a chain count is a function of | ✅ done | #168 follow-up | `sec:limitations` |
 | + | Chain order + edge orientation: does an undirected enumerator yield a directed argument? | ✅ done | #173 / PR #174 | `sec:m-paths`, `tab:cuts` |
 | + | Third review round (3 models x 2 bars) + the cut list built from it | ✅ done | PR #174 | nine `\CUTNOTE{}` scaffold blocks; `paper/section_cut_list.md` |
+| + | The four unsupported claims the third round rejected, and the audit-count drift | ✅ done 2026-08-26 | manuscript `7d5e1d6` | `sec:r-judge` no longer reads "a direction and a floor" off a three-way-confounded comparison; the "document-level resources **cannot** serve this query" absolute is a representation claim in all three places it appears (`sec:intro`, `sec:r-retrieval`, `sec:conclusion`); the audit count is re-run, not quoted |
 
 🔴 **S2 changed a claim rather than confirming one.** Node-level omission on the
 chain-yielding population is **26.4%** against the corpus-sampled run's 0.6%, edge-level
@@ -233,8 +236,8 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
-| Open PRs from this work, stacked | #158 (edge coverage, #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair, #163) -> **#169 (schema ablation, #165) -> #167 (artifact comparison, #166) -> the #168 PR (multi-model), pending** | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main`. The three newest were merged forward on 2026-08-16 so the tip carries every check; the audit reads 285/285 there |
-| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **285/285** on the tip branch (2026-08-16, after the ablation and the artifact comparison). Counts differ per branch in the stack: 273 on `study/schema-ablation`, 269 with S12 alone. The stale 42/42 and 235/235 references are fixed |
+| Open PRs from this work, stacked | #158 (edge coverage, #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair, #163) -> **#169 (schema ablation, #165) -> #167 (artifact comparison, #166) -> the #168 PR (multi-model), pending** | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main`. The three newest were merged forward on 2026-08-16 so the tip carries every check; re-run the audit to see the count there |
+| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` (then `experiment_paper_finding_coverage.py`, which greps the rendered text for retired phrasings) | 🔴 **Re-run the audit and read what it prints; never carry its count forward by hand.** It read **385/385 PASS, 0 FAIL** on `study/confidence-relabel` on 2026-08-26, and it differs per branch in the stack. This row said 285 and the runbook said 302 while the manuscript comments said 257 and `paper/REPRODUCE.md` said 257 — four figures, one true value, and the same failure the 42/42 sweep was supposed to end. The canonical home of the number is `REPRODUCE.md` **in the manuscript repo**; it now says re-run rather than quote, and nothing else should print a count at all |
 
 ## 🔴 Locked decisions — do not revert
 
@@ -852,7 +855,7 @@ load-bearing claim":
 | ~~`app:clusters` 40-cluster name list~~ **CUT 2026-08-16** | 2/3 | done: size range plus four examples; the full list ships with the release, which also closed one `\OPEN{}` block |
 | `sec:m-recovery` + the 441-row of `tab:populations-master` | 2/3 | **partly done**: the number is printed (C6) rather than the section cut. Cutting to one clause is still available if the page budget needs it |
 | ~~Meta-grader agent-session operational detail~~ **CUT 2026-08-16** | 1/3 | done: the consequence for the denominators is kept, the JSON-shape counts are gone |
-| ~~The "218 of 218 numeric claims" audit narrative~~ **CUT 2026-08-16** | 1/3 | done: the body prints no count; the audit is at 235/235 and says so only in source comments and `REPRODUCE.md` |
+| ~~The "218 of 218 numeric claims" audit narrative~~ **CUT 2026-08-16** | 1/3 | done: the body prints no count; the audit figure survives only in source comments and `REPRODUCE.md`, and is re-run rather than quoted |
 
 **Explicitly keep**, named by every model that raised the topic: the merge/centrality
 artifact (`sec:r-hub`), `tab:gates`, `tab:populations-master`, the source-type skew table,
