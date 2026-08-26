@@ -102,7 +102,30 @@ into the paper on the strength of the receipt alone.
 | **17.8 pp** gate discrimination: 52.0% against 69.8% on gate-rejected chains | #175 / PR #177 | Same instrument. This is the half most likely to survive #176, and the half a reviewer would find most useful, but it rests on the same unadjudicated verdicts |
 | All 33 invented risk framings **cleared the confidence gate** (27 at exactly 3), and neither gate discriminates on that failure mode (16.5% against 15.6%) | #175 / PR #177 | Depends on the 52% verdicts being real. If #176 overturns them this row dissolves |
 | Blind re-labelling of 66 first hops: **the label discriminates (24.2% vs 78.8% on "does the document assert this link") but its level is unusable** — a second annotator puts 60.6% of *faithful* links below the gate too | #178 / PR #179 | One model applying a rubric to a task shape it was not written for, and the same model family as #175, so this is consistency rather than correctness. It also carries a design lesson worth more than the numbers: ask the binary question, not the five-point scale |
-| Human adjudication of 30 chains, stratified by #175's reason codes | #176 | Not started. This is the arm that would license any of the above |
+| Human adjudication of 30 chains, stratified by #175's reason codes | #176 | **Packet rebuilt and pre-registered 2026-08-26 (`7e0be0e`); annotation not started.** This is the arm that would license any of the above |
+
+🔴 **#176 is ready to annotate, and three things about it were settled 2026-08-26.**
+Commit `7e0be0e` on `study/confidence-relabel`. Start at
+`graph_analysis/phase2_results/human_review_packet/README.md`.
+- **It returns a population rate, and only because of how #175 was sampled.** #175's real
+  arm is 200 chains stratified by URL host *proportional* to the reporting unit, so its
+  reason-code shares are population estimates. The 30 human cells sit inside those codes
+  and post-stratify back up. The strata were rebuilt to make this work: `intermediate_
+  unsupported` went 0 -> 3 (it was 7.5% of the unit and blind) and the gate-rejected arm
+  1 -> 6, paid for by `risk_framing_invented_both_agree` 6 -> 3 and the known judge false
+  positives 2 -> 1. Arm-A coverage is now **100.0%**, up from 92.5%.
+- **The estimand is pre-registered.** `experiment_review_human_adjudication.py` was written
+  before annotation on purpose, because a reason-code-stratified sample supports several
+  different rates. Do not quote the pooled rate over the 30 (it runs high by construction),
+  do not renormalise the weighted shares to 1.0, and do not print a human-anchored 17.8 pp
+  — arm B carries six observations and is directional only.
+- **One annotator, so R11 stays open.** No inter-annotator figure will exist. The eight
+  double-coded rows still ship in case someone is found. Re-judging one's own rows is
+  test-retest, not agreement, and must not be reported as agreement.
+- **What #176 does NOT close**, so nothing here gets over-sold: recall and omission (R10,
+  R16 — the 0.6% vs 28.8% discrepancy is untouched, since the packet only shows chains that
+  *were* emitted), maturity labels, the 70% collapse (R22/R23), non-chain-yielding
+  documents, retrieval relevance (R28).
 
 **What IS in the paper from this line of work:** one row of `tab:gates` — the asymmetric
 first-hop $\geq 4$ cut at 1,148 chains and 7.2% yield. It is there as a **price**, with the
