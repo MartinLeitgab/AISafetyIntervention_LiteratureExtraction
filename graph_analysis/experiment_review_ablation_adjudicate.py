@@ -46,7 +46,7 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
-ABL = HERE / "phase2_results" / "chain_recall_ablation_raw"
+ABL_DEFAULT = HERE / "phase2_results" / "chain_recall_ablation_raw"
 OUT = HERE / "phase2_results" / "experiment_review_ablation_adjudicate_report.json"
 KEY_ENV = Path.home() / "0_project_work" / "ExistentialRiskBenchmark" / ".env"
 KEY_VAR = "ANTHROPIC_API_KEY"
@@ -90,7 +90,23 @@ def read_key():
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run", action="store_true", required=True)
-    ap.parse_args()
+    ap.add_argument(
+        "--dir",
+        default=str(ABL_DEFAULT),
+        help="raw directory of the ablation run to adjudicate",
+    )
+    a = ap.parse_args()
+    ABL = Path(a.dir)
+    out_path = (
+        OUT
+        if ABL == ABL_DEFAULT
+        else OUT.with_name(
+            OUT.stem
+            + "_"
+            + ABL.name.replace("chain_recall_", "").replace("_raw", "")
+            + ".json"
+        )
+    )
 
     sfp, rfp = ABL / "sample.json", ABL / "results.jsonl"
     for p in (sfp, rfp):
@@ -195,10 +211,12 @@ def main() -> int:
             "referee at all. Still not a human."
         ),
     }
-    OUT.write_text(json.dumps(report, indent=1), encoding="utf-8")
+    out_path.write_text(json.dumps(report, indent=1), encoding="utf-8")
     print(f"adjudicated {n}, detected {detected}, sensitivity {sens}")
     print(f"  judge flagged nothing at all in {no_candidates} documents")
-    print(f"\nwrote {OUT}")
+    # Print what was actually written. This said {OUT} while writing to {out_path}, which
+    # made a gated adjudication look as though it had clobbered the ungated one. It had not.
+    print(f"\nwrote {out_path}")
     return 0
 
 
