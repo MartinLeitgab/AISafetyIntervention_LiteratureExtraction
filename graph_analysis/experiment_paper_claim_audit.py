@@ -1536,6 +1536,53 @@ def main():
         9,
         oi["add_nodes_instrument"]["total_added_nodes"],
     )
+
+    # Collapse adjudication (#182). The three figures in sec:m-reporting have DIFFERENT
+    # denominators and a future edit must not blend them: 18.0% is 579 of 3,222 distinct
+    # pairs, while 50.8% and 33.9% are shares of 118 sampled drops out of 6,182.
+    ca = receipt("experiment_review_collapse_adjudication_report.json")
+    check("collapse adjudication: displaced pairs judged", 118, ca["real_arm"]["n"])
+    check(
+        "collapse adjudication: different argument",
+        60,
+        ca["real_arm"]["different_argument"],
+    )
+    check(
+        "collapse adjudication: pct different",
+        50.8,
+        ca["real_arm"]["pct_different_argument"],
+    )
+    check(
+        "collapse adjudication: null arm flagged",
+        100.0,
+        ca["null_arm"]["pct_flagged_different"],
+    )
+    check("collapse adjudication: null arm n", 15, ca["null_arm"]["n"])
+
+    # Chain recall (#181), both arms. The gated rate is deliberately NOT checked as a miss
+    # rate: 79% of what it counts is present in the released graph and gated out, so the
+    # manuscript reports it as selection. If a future edit prints 36.5% as a miss rate, or
+    # divides it by its sensitivity, these anchors are what should have caught it.
+    crf = receipt("experiment_review_chain_recall_report.json")["headline_audited_100"]
+    check(
+        "chain recall gate-free: arguments enumerated", 575, crf["arguments_enumerated"]
+    )
+    check("chain recall gate-free: carried", 402, crf["carried"])
+    check(
+        "chain recall gate-free: material miss pct", 10.6, crf["material_miss_rate_pct"]
+    )
+    aj = receipt("experiment_review_ablation_adjudicate_report.json")
+    check("chain recall: ablation sensitivity detected", 9, aj["detected"])
+    check("chain recall: ablation sensitivity n", 20, aj["n_adjudicated"])
+    crg = receipt("experiment_review_chain_recall_report_gated.json")["by_cohort"][
+        "gated_reporting_unit"
+    ]
+    check("chain recall gated: documents", 95, crg["documents"])
+    check(
+        "chain recall gated: carried share (selection, NOT a miss rate)",
+        32.9,
+        round(100.0 * crg["carried"] / crg["arguments_enumerated"], 1),
+    )
     cy = receipt("experiment_review_judge_chainyielding_report.json")
     check(
         "second judge run: coverage list rows", 627, cy["edge_level"]["coverage_rows"]
