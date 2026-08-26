@@ -621,7 +621,9 @@ def collect(batch_id: str) -> int:
         f"  corrected material miss rate: "
         f"{report['sensitivity_corrected_material_miss_rate_pct']}%"
     )
-    print(f"\nwrote {OUT}")
+    # Print the path actually written. This said {OUT} while writing to {out}, which made
+    # an ablation collect look as though it had overwritten the completed run's report.
+    print(f"\nwrote {out}")
     return 0
 
 
