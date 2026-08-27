@@ -330,12 +330,38 @@ thing you can point at is a stage the chain states thinly or skips, that is `no`
 inference levels above already record it. `unclear` is a real answer for a long document
 you could not search exhaustively, and it is far better than a guessed `no`.
 
-Two warnings. The list is built by reachability over the document's extracted graph, so it
+Three warnings. The list is built by reachability over the document's extracted graph, so it
 is **generous**: it includes pairs that the quality gates later reject, which is deliberate,
-because a pair the extraction found and then gated out is not a recall failure. And this
+because a pair the extraction found and then gated out is not a recall failure. This
 field will read low by construction -- you are reading one document's argument closely
 rather than auditing it exhaustively -- so it is a **floor on recall failure, never a
-rate**.
+rate**. 🔴 And the materiality bar of two supporting reasoning steps is **paper-shaped while
+this corpus is not**: a blog post makes an argument in a sub-sentence where a paper spends
+paragraphs, and forum sources are **58.8%** of the corpus by document count (LessWrong 23.5%,
+Alignment Forum 22.5%, EA Forum 12.8%) against arXiv's 13.8%. The bar is deliberately kept
+as-is, so expect it to read *thin* across most of the corpus and to push this arm toward zero
+misses on exactly the sources that dominate it. That is a property of the instrument, not a
+finding about the extraction, and it is the sharper reason the floor is a floor.
+
+🔴 **Sub-interventions are not misses. Rule set 2026-08-27, after the first recall pass.**
+The unit of this field is the **(risk, intervention) pair as the extraction names it**, so an
+argument that refines a listed intervention -- narrowing it, specialising it, or naming one
+way of carrying it out -- is **carried**. The first document produced two: predicting
+real-world rather than benchmark capability, and inferring capability from training-run cost.
+Both refine a listed intervention, so both are `carried_by_the_pair_list = yes` with the
+refinement described in `notes`. Enumerate them anyway -- the refinement is what a
+mechanism-level reading would want, and this sheet is the only place it is recorded.
+
+**The honest limit of that rule, and the write-up must carry it:** intervention granularity
+is the extractor's choice, not a property of the document. Had the extraction emitted
+"predict real-world capability" as its own intervention node, the identical argument would
+have counted as a distinct pair. The rule keeps the field measuring something well-defined;
+it cannot separate a real recall gap from a coarser naming decision.
+
+**`argument_inference_level` (0-3), a column added 2026-08-27**, for the reason the verdict
+sheet has such fields: a candidate you can point at in the text is a different claim about
+recall than one needing a level-2 reading. Same scale as the chain levels above. The first
+pass scored its two sub-interventions at 2 -- author intent signalled, not stated.
 
 ## What a normal document looks like, so the volume does not alarm you
 
@@ -740,11 +766,17 @@ def main() -> int:
     # obvious; add or delete rows freely, since the number of arguments a document makes is
     # exactly what is being measured and must not be capped by the sheet.
     recall_pids = [m["packet_id"] for m in manifest if m["recall_arm"]]
+    # argument_inference_level added 2026-08-27, after the first recall pass. The annotator
+    # scored each enumerated argument 0-3 in free text because the sheet had nowhere to put
+    # it, and the level turns out to matter: a candidate needing a level-2 reading is a
+    # different claim about recall than one the document states outright, and the write-up
+    # cannot separate them if the sheet does not carry it.
     recall_cols = [
         "packet_id",
         "argument_index",
         "risk",
         "intervention",
+        "argument_inference_level",
         "carried_by_the_pair_list",
         "evidence_quote",
         "notes",
