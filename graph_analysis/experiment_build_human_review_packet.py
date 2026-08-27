@@ -205,7 +205,12 @@ DOUBLE_CODE_STRATA = {
     "intervention_not_proposed",
 }
 
-RUBRIC = """\
+# f-string, and it must stay one: the two lines naming the recall subset interpolate
+# N_RECALL_ARM. It was a plain string until 2026-08-27, so the shipped README read
+# "{N_RECALL_ARM} of the {30} get one extra pass" verbatim -- the header block below is an
+# f-string and rendered correctly, which is why the bug survived a read of the output.
+# Any brace added to this string from here on must be doubled.
+RUBRIC = f"""\
 # How to judge a chain
 
 You are deciding one thing: **does this document make this argument?** You are NOT judging
@@ -343,7 +348,7 @@ So the question is never "is there anything else in here", because there always 
 -- new endpoint, two or more supporting steps. If you find none in a document, `no` is a
 perfectly ordinary answer and you should not go hunting for one.
 
-## The recall subset: {N_RECALL_ARM} of the {30} get one extra pass
+## The recall subset: {N_RECALL_ARM} of the 30 get one extra pass
 
 `chain_recall_missed` above is a **floor**: it records misses you happened to notice while
 judging a chain, which is not the same as having looked for all of them. A recall *rate*

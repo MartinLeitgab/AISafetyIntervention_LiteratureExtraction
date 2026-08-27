@@ -104,29 +104,32 @@ Union of the six "would refuse" lists, with the score each reviewer attached:
 None of these is a length item, and three of them are cheap. Ranked by what a reviewer does
 with them.
 
-1. 🔴 **Stage order is not enforced and traversal is undirected, so a "chain" may not be a
-   directed argument** (GC, GW; both make it score-moving, GC says a bad result would take it
-   to 2). Verified against `app:cuts`: monotonic stage order is not among the ten constraints,
-   and "edge direction ignored" is row 10. The asks are all Class B over the released path
-   file: the share of chains with monotonic stage order, the share whose edges are all
-   traversed with their stored orientation, and the counts under directed traversal. **Cheap,
-   and the paper cannot answer it today.**
-2. 🔴 **The omission denominators are misaligned with their instruments** (GC, GW). Within the
-   coverage list the missing share is 302/777 = 38.9%, and on the second run 476/627 = 75.9%;
-   the paper divides by released edges instead and prints 18.1% and 21.7%. The 38.9% already
-   exists in a source comment at the abstract and in `app:judge` as "42.2% of rows were
-   covered", but no body sentence carries it as a rate. Both reviewers also reject
-   `tab:omission`'s "upper bounds on omission" wording, since an unadjudicated judge can miss
-   omissions as well as invent them. **Wording plus one table column; no new inference.**
-3. 🔴 **`sec:r-judge` prints "777 rows --- 328 covered, 146 partially covered, 302 missing",
-   which sums to 776** (GW). Verified in the receipt: the 777th row is
-   `unlabelled_or_other = 1`, a "covered abstractly" status. One clause fixes it. A reviewer
-   who checks the arithmetic and finds it wrong discounts every other number.
-4. **"The stage we audit is the stage we ship" is in tension with `app:judge`** (GW), which
-   says the judge audited pre-ingestion extraction JSON whose defect classes do not reach the
-   released graph, and whose re-serialised edge count (10.8/paper) is well below the released
-   one (16.7). Both statements are in the manuscript and both are true; the framing sentence
-   needs the qualifier, or the tension reads as a contradiction.
+🔴 **Items 1-4 are DONE; verified against the manuscript 2026-08-27, and this list said they
+were open for ten days after they landed.** They are kept below with their disposition
+because the reasoning still governs the text that closed them.
+
+1. ✅ **DONE.** *Stage order is not enforced and traversal is undirected, so a "chain" may not
+   be a directed argument* (GC, GW; both score-moving, GC says a bad result would take it
+   to 2). The Class B script ran: `sec:m-paths` now reports 84.6% of the 2,772 chains
+   monotonic in stage rank (72.0% strictly), 80.6% with every hop walked in its stored
+   direction and 4.5% of 17,829 hops walked against it, with the raw-set equivalents; two
+   further rows sit in `tab:cuts`. The "cannot answer it today" that stood here is retracted.
+   Note the count wording: the enumerator applies **nine** constraints and `tab:cuts` marks
+   **ten** binding rows, because the two *absent* constraints shape the set too.
+2. ✅ **DONE.** *The omission denominators are misaligned with their instruments* (GC, GW).
+   `sec:r-judge` now gives both denominators in the body — 18.1% per released edge and 38.9%
+   of the judge's own 777-row list, and 21.7% against 75.9% on the second run — and says
+   which question each answers. `tab:omission`'s caption drops the "upper bounds" wording for
+   "neither upper nor lower bounds", on the reviewers' own argument that an unadjudicated
+   judge can miss omissions as well as invent them.
+3. ✅ **DONE — and it was a reviewer error, so the fix is a clause and not a correction.**
+   The 777th row is `unlabelled_or_other = 1`, a "covered abstractly" status; `sec:r-judge`
+   and `app:judge` now name it in place, so 328 + 146 + 302 + 1 sums correctly on the page.
+4. ✅ **DONE.** *"The stage we audit is the stage we ship" is in tension with `app:judge`*
+   (GW), which says the judge audited pre-ingestion extraction JSON whose defect classes do
+   not reach the released graph, and whose re-serialised edge count (10.8/paper) is well
+   below the released one (16.7). Both were true; the missing qualifier is now in `sec:intro`
+   and in `app:judge` — same **population**, one step upstream in **representation**.
 5. **No precision or spurious-chain rate anywhere** (OC, OW, and implied by GC/GW). The
    sharpest form: *what share of 50 randomly sampled released chains would an author call
    spurious in the Euclid sense?* OC calls this the number it would weight above every graph
@@ -143,8 +146,11 @@ with them.
    shows path enumeration exploding with mean degree. Either scope the claim or measure the
    other three stages.
 
-Items 1, 2, 3, 4 and 6 are all corrections rather than experiments. Item 1 is one Class B
-script. Item 5 is the only one needing a person.
+Items 1, 2, 3 and 4 are closed (2026-08-27). **What is left is 5, 6 and 7**: item 6 is a
+one-word abstract correction, item 7 is a title-scope decision, and item 5 is the only one
+needing a person — and it is the one the #176 packet now partly answers, since that packet's
+`verdict` field is precisely "would an author call this chain spurious", asked of 30 chains
+rather than the 50 the reviewer wanted.
 
 ## Style, restated because it is now unanimous
 

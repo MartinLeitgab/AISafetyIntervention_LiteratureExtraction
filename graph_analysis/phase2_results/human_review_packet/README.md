@@ -190,11 +190,11 @@ So the question is never "is there anything else in here", because there always 
 -- new endpoint, two or more supporting steps. If you find none in a document, `no` is a
 perfectly ordinary answer and you should not go hunting for one.
 
-## The recall subset: {N_RECALL_ARM} of the {30} get one extra pass
+## The recall subset: 10 of the 30 get one extra pass
 
 `chain_recall_missed` above is a **floor**: it records misses you happened to notice while
 judging a chain, which is not the same as having looked for all of them. A recall *rate*
-needs the opposite move, and {N_RECALL_ARM} of the thirty chain files ask for it explicitly.
+needs the opposite move, and 10 of the thirty chain files ask for it explicitly.
 Which ten was fixed before any verdict existed, and drawn at random rather than by length --
 picking the short documents would bias the answer, because a short document has fewer
 arguments to miss.

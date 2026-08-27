@@ -75,9 +75,13 @@ reports a ceiling as a finding. The claim audit fails if anyone does.
    **18.0%** (579 of 3,222 distinct pairs) is the headline; 33.9% and 50.8% are shares of
    sampled drops and are NOT competing estimates.
 2. ✅ **Chain recall** — #181 / PR #184. Gate-free 69.9% carried / 10.6% material,
-   sensitivity 9/20. Gated 32.9% carried, **which is selection and not loss**: 471 of 597
+   sensitivity 9/20. Gated **32.9% carried**, **which is selection and not loss**: 471 of 597
    graph-present pairs (79%) are gated out, so the document was extracted and the chain
-   scored below a gate.
+   scored below a gate. 🔴 **Two percentages come off the gated run's denominator of 614 and
+   they are not interchangeable**: 202/614 = **32.9% carried** (the one the manuscript
+   prints) and 224/614 = **36.5% material** (not in the manuscript at all). The memory notes
+   and the manuscript comments used them for the same sentence until 2026-08-27. Name which
+   one you mean, every time.
 3. ⛔ **Does a re-run produce the same PAIR? DROPPED 2026-08-26**, and not for cost. The
    reporting unit keeps 1.30 of ~6.15 candidate pairs per document, so which chain survives
    turns on a narrow scoring margin and a re-run flipping membership is expected gate
@@ -110,7 +114,7 @@ a GitHub issue and a PR.
 | R0 | OpenAI key on this machine | ✅ used | — | not a manuscript item |
 | R1 | Download ARD | ✅ **was never needed** | — | — |
 | R2 | S6+S8 schema ablation + degraded source | ✅ done | #165 / PR #169 | `sec:r-stages`, `sec:limitations`, `app:failure`, new `app:ablation` |
-| R3 | S11 multi-model consistency, n=20 | ✅ arms A/B done, C running | #168 / PR #170 | `sec:limitations`, rewritten around the run-to-run floor |
+| R3 | S11 multi-model consistency, n=20 | ✅ **all three arms done** (C finished on the messages API after the CLI run was abandoned; corrected 2026-08-27, this row said "C running") | #168 / PR #170 | `sec:limitations`, rewritten around the run-to-run floor; arm C's 41.3 nodes / 56.2 edges / 82.4% chain yield and its 594-chain median are in the same paragraph |
 | R3b | S12 comparison against an existing artifact | ✅ done | #166 / PR #167 | `sec:related`, first paragraph |
 | R4 | L3 contrastive corrections | ✅ done, target missed | — | throughout; manuscript `99a20ec` |
 | R5 | L10 repeated caveats, L12 verification→audit | ✅ done | — | throughout; manuscript `99a20ec` |
@@ -140,19 +144,26 @@ relevance labels) or a decision (venue, release URL, authorship, and the page cu
 
 ## 🔴 MEASURED BUT NOT IN THE MANUSCRIPT — check this list before writing any new number
 
-Everything below is committed, receipted and ticketed, and **none of it appears in
-`paperA_altstyle.tex`.** That is a live decision in each case, not an oversight, and each row
-says what would have to be true first. A future session must not quote any of these numbers
-into the paper on the strength of the receipt alone.
+Everything below is committed, receipted and ticketed, and each row says what would have to
+be true first. A future session must not quote any of these numbers into the paper on the
+strength of the receipt alone.
 
-| Finding | Where | Why it is not in the paper |
+🔴 **Corrected 2026-08-27: this table used to open "none of it appears in
+`paperA_altstyle.tex`", and that was false for two of its seven rows.** The collapse
+adjudication landed in `sec:m-reporting` and the chain recall in `sec:r-judge` on 2026-08-26,
+in the same session that wrote the row saying they had not. Both rows are marked **IN THE
+PAPER** below and stay in the table so the caveat that governs each travels with it; the
+other five are genuinely out. Check the manuscript, not this sentence, before trusting it
+again.
+
+| Finding | Where | Why it is not in the paper (or, for two rows, what governs it now that it is) |
 |---|---|---|
 | **52.0%** of 200 reporting-unit chains judged not a fair summary of an argument their source makes; **16.5%** carry a risk framing the judge could not quote | #175 / PR #177 | One model's opinion. It over-flags (8 of 200 correctly-paired chains called a different document) and should also under-detect, sharing the extractor's priors. Needs #176 |
 | **17.8 pp** gate discrimination: 52.0% against 69.8% on gate-rejected chains | #175 / PR #177 | Same instrument. This is the half most likely to survive #176, and the half a reviewer would find most useful, but it rests on the same unadjudicated verdicts |
 | All 33 invented risk framings **cleared the confidence gate** (27 at exactly 3), and neither gate discriminates on that failure mode (16.5% against 15.6%) | #175 / PR #177 | Depends on the 52% verdicts being real. If #176 overturns them this row dissolves |
 | Blind re-labelling of 66 first hops: **the label discriminates (24.2% vs 78.8% on "does the document assert this link") but its level is unusable** — a second annotator puts 60.6% of *faithful* links below the gate too | #178 / PR #179 | One model applying a rubric to a task shape it was not written for, and the same model family as #175, so this is consistency rather than correctness. It also carries a design lesson worth more than the numbers: ask the binary question, not the five-point scale |
-| **Collapse adjudication: 50.8% of drops judged a different argument; 33.9% change an ENDPOINT; null arm 15/15** | #182 / PR #185 | One model. Report as a hierarchy strictest-first — 18.0% (pair in no kept chain, already in the paper) then 33.9% (endpoints differ from the container) then 50.8% (plus same-endpoint re-routings). Do NOT headline 50.8%: a third of it is a different mechanism between the same two endpoints, which is a loss only if mechanism is the unit |
-| **Chain-level recall: 10.6% of arguments materially uncaptured, 23.6% corrected, sensitivity 0.45 [0.26, 0.66]** | #181 / PR #184 | 🔴 **Gate-FREE baseline**, so it measures whether the PIPELINE captured the argument, not whether the 2,772 reporting unit carries it. The gated version is a different and larger number and has not been run. Quote the sensitivity beside the rate or neither |
+| **Collapse adjudication: 50.8% of drops judged a different argument; 33.9% change an ENDPOINT; null arm 15/15** | #182 / PR #185 | 🔴 **IN THE PAPER** — `sec:m-reporting` carries the hierarchy and `sec:limitations` now names the 50.8% where it used to say the question was unmeasured. One model. Report as a hierarchy strictest-first — 18.0% (pair in no kept chain, already in the paper) then 33.9% (endpoints differ from the container) then 50.8% (plus same-endpoint re-routings). Do NOT headline 50.8%: a third of it is a different mechanism between the same two endpoints, which is a loss only if mechanism is the unit |
+| **Chain-level recall: 10.6% of arguments materially uncaptured, 23.6% corrected, sensitivity 0.45 [0.26, 0.66]** | #181 / PR #184 | 🔴 **IN THE PAPER** — `sec:r-judge`, "Recall, asked in the unit we report", with the 9-of-20 sensitivity beside it as required. Read it as the **gate-FREE** baseline: it measures whether the PIPELINE captured the argument, not whether the 2,772 reporting unit carries it. 🔴 The gated arm **has been run** and is in the same paragraph — the "has not been run" that stood here until 2026-08-27 was wrong on the day it was written. Quote the sensitivity beside the rate or neither |
 | Human adjudication of 30 chains, stratified by #175's reason codes | #176 | **Packet rebuilt and pre-registered 2026-08-26 (`7e0be0e`); annotation not started.** This is the arm that would license any of the above |
 
 🔴 **#176 is ready to annotate, and three things about it were settled 2026-08-26.**
@@ -311,7 +322,7 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
 | Open PRs from this work, stacked | #158 (edge coverage, #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair, #163) -> **#169 (schema ablation, #165) -> #167 (artifact comparison, #166) -> the #168 PR (multi-model), pending** | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main`. The three newest were merged forward on 2026-08-16 so the tip carries every check; re-run the audit to see the count there |
-| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` (then `experiment_paper_finding_coverage.py`, which greps the rendered text for retired phrasings) | 🔴 **Re-run the audit and read what it prints; never carry its count forward by hand.** It read **385/385 PASS, 0 FAIL** on `study/confidence-relabel` on 2026-08-26, and it differs per branch in the stack. This row said 285 and the runbook said 302 while the manuscript comments said 257 and `paper/REPRODUCE.md` said 257 — four figures, one true value, and the same failure the 42/42 sweep was supposed to end. The canonical home of the number is `REPRODUCE.md` **in the manuscript repo**; it now says re-run rather than quote, and nothing else should print a count at all |
+| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` (then `experiment_paper_finding_coverage.py`, which greps the rendered text for retired phrasings) | 🔴 **Re-run the audit and read what it prints; this row prints no count, on purpose.** It differs per branch in the stack and it moves with every study that lands. 🔴 **The 2026-08-26 fix to this row did not hold for a day**: it wrote 385/385 at 16:57, eight minutes after twelve new checks landed at 16:49, so it was stale as typed and read 408/408 by the next morning — while `paper/FINDINGS_2026-08-26_chain_unit.md`, committed in the same commit as this file, said 408. Before that the row said 285, the runbook said 302, and the manuscript comments and `paper/REPRODUCE.md` said 257. The rule that actually works is **run the script in the same turn you write the sentence, or write no number**. The canonical home is `REPRODUCE.md` **in the manuscript repo** and nothing else prints a count |
 
 ## 🔴 Locked decisions — do not revert
 
@@ -413,8 +424,12 @@ result is directly comparable to the existing run.
 **Human involvement: none.**
 
 **Unblocked 2026-08-16.** The earlier note that this was blocked on missing source text was
-wrong in one direction: `data/raw/ard_json_full/` is indeed absent from this machine, but
-ARD is a public HuggingFace dataset that downloads without credentials (runbook R1). What
+simply wrong. 🔴 **Corrected 2026-08-27, and this line contradicted runbook R1 for eleven
+days:** ARD is on this machine at `intervention_graph_creation/data/raw/ard_json_full/` (15
+`.jsonl` files, verified by listing the directory today), and it has been since 2025-08-31.
+The sentence that stood here said the directory "is indeed absent from this machine", which
+is what R1 was written to retract. It also downloads from HuggingFace without credentials
+if it is ever needed elsewhere. What
 remains true is that the judge ran as `claude-sonnet-4-5` through the Anthropic **batch**
 API, so reproducing it through the subscription CLI changes model version and transport and
 destroys the like-for-like comparison that is the study's whole point. **Run it on the batch
@@ -759,7 +774,7 @@ how badly a reviewer reacts to finding it.
 
 | # | Correction | Agreement | Verified |
 |---|---|---|---|
-| C1 | The eight rendered `\OPEN{[GAP: ...]}` blocks (enumerated below), four of which are notes addressed to co-authors ("Open for the team to decide", "Do not populate from git history alone"). Every model at both bars calls the submission unfinished on this basis alone, and two say nothing else matters until it is fixed | **3/3** | 8 blocks render |
+| C1 | The rendered `\OPEN{[GAP: ...]}` blocks (enumerated below), notes addressed to co-authors ("Open for the team to decide", "Do not populate from git history alone"). Every model at both bars calls the submission unfinished on this basis alone, and two say nothing else matters until it is fixed. 🔴 **The reviewers saw eight; `grep -c 'OPEN{\[GAP:'` returns FOUR today** — release URL, compute acknowledgment, author list, AI-drafting scope — because four closed as work landed. The enumeration below still lists all eight and marks which closed | **3/3** | 4 blocks render, re-counted 2026-08-27 |
 | C9 **DONE** | **Five stale "42/42" claim-audit references** — `REPRODUCE.md:44`, `NEXT_STEPS_REWRITE_2026-08-14.md:17` and `:369`, `NEXT_STEPS_2026-08-11.md:20` and `:173` — against the manuscript's current 218/218. `REPRODUCE.md` is the file a reviewer actually runs, so the mismatch reads as a broken audit. Not raised by any model (they never saw the repo); found in-session 2026-08-15 | in-session | 5 references confirmed |
 
 **C1 in full — the eight blocks, and who can close each:**
@@ -954,7 +969,7 @@ registered — only things that change the paper.
 
 | # | Comment | Src | Maps to |
 |---|---|---|---|
-| R1 | Eight `\OPEN{[GAP:]}` blocks render in the PDF | all 6 | C1 |
+| R1 | Eight `\OPEN{[GAP:]}` blocks render in the PDF — **four as of 2026-08-27**, the other four having closed as work landed; all four remaining are team decisions | all 6 | C1 |
 | R2 | `\author{Author List Placeholder}` renders on page 1 | GW | L1 |
 | R3 | Release URL absent — the central contribution cannot be assessed at review time | all 6 | C1, D5 |
 | R4 | Licence unnamed; ARD redistribution terms unresolved | all 6 | C1, D4 |
