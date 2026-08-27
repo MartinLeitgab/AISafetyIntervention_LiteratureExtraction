@@ -101,14 +101,28 @@ threshold. An anchored level is checkable against a rule; a five-point feel is n
 
 ## The verdict values, and the one that matters most
 
-The verdict follows the levels; where it does not, say why in `notes`.
+🔴 **ENDPOINTS GOVERN THE VERDICT** (clarified 2026-08-27, after the first chain was judged
+and hit the ambiguity). Apply these three rules in order; they no longer overlap:
 
-- **`faithful`** -- level 0 on the risk and the intervention. The document makes this argument.
-- **`inferred_but_reasonable`** -- the worst level is 1 or 2. The document does not state part
-  of the chain, but the reading is one a domain reader would accept. **The design working, not
-  a failure**, and the judgement no model can make for us.
-- **`unsupported`** -- level 3 anywhere. The extraction asserted something the document does
-  not support and could not license.
+1. **`unsupported`** -- a level 3 **anywhere**, endpoint or body. The extraction asserted
+   something the document does not support and could not license. This rule wins over the
+   other two.
+2. **`faithful`** -- no level 3 anywhere, **and** the risk and the intervention are both at
+   level 0. The document makes this argument. Body inference does **not** demote it: a chain
+   whose two endpoints are stated outright is faithful even where an intermediate node took a
+   short step, and that step is recorded in `body_inference_level` where it belongs.
+3. **`inferred_but_reasonable`** -- no level 3 anywhere, and at least one **endpoint** at
+   level 1 or 2. The document does not state part of the argument, but the reading is one a
+   domain reader would accept. **The design working, not a failure**, and the judgement no
+   model can make for us.
+
+**What changed and why.** The earlier wording defined `faithful` by the endpoints and
+`inferred_but_reasonable` by the worst level anywhere, so both fired on a chain with level-0
+endpoints and an inferred body -- which is an ordinary shape, not an edge case, so the clash
+would have recurred on most of the thirty. The fix keeps the endpoints as the verdict's
+subject because they are what a chain asserts: a risk reaching an intervention. Body
+inference is still captured, in its own field, and no verdict already written needs revising
+-- the first chain judged was decided under exactly this rule.
 
 The 2-versus-3 boundary is what the whole exercise turns on, and it is exactly what an
 automated judge cannot draw, because it requires knowing what a reader of this literature
