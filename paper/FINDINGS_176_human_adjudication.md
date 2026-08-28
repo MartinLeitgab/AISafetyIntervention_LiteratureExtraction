@@ -159,30 +159,34 @@ source contain material that would have filled it? That is answerable per chain 
 the question that separates a correct gap from a real omission. Record it in `notes` as the
 thirty are worked; do not add a field mid-run.
 
-## 🔴 The annotator found a causal relation the enumerator cannot represent
+## RETRACTED: the risk-to-risk causal reading on C01
 
-C01's extraction holds two risks -- *inadequate evaluation of advanced AI safety proposals*
-(A) and *unanticipated unsafe behaviour of trained models* (B) -- and cross-connects all six
-interventions to both, a saturated 2x6 pair list. The annotator's unprompted reading:
-**A is to some extent the cause of B.**
+**Logged 2026-08-27, retracted 2026-08-28 by the annotator, one turn later.**
 
-If that is right, the six interventions do not address B directly; they address B *through*
-A. The pair list flattens a two-step causal structure into twelve parallel one-step claims.
+The original entry: the annotator remarked in passing that risk A (*inadequate evaluation of
+advanced AI safety proposals*) is "to some extent the cause of" risk B (*unanticipated unsafe
+behaviour of trained models*), and this file elevated that to a finding -- that C01's
+saturated 2x6 pair list flattens a two-step causal structure, and that `tab:cuts` row 4
+("exactly one risk, at the root -- no risk-to-risk hop") therefore cost the document its
+argument shape.
 
-**And the pipeline could not have done otherwise.** `tab:cuts` row 4: exactly one risk, at
-the root -- "no risk-to-risk hop, and no second risk anywhere after position 0". A chain
-structurally cannot traverse A -> B, whatever the released graph holds between those two
-nodes. So this is not an extraction failure; it is a representational limit of the reporting
-unit, and it is already documented as a constraint -- just never before observed to cost
-anything. Here it costs the document's actual argument shape.
+**The annotator's revised reading, which supersedes it:** all six interventions map to both
+risks reasonably, so no hierarchy needs claiming. Safety *proposals* and trained *models* are
+not the same set of objects; the two risks stand on their own. The cross-product is
+justified, not a flattening.
 
-Worth checking directly, and cheap: does the released graph carry a `caused_by` (or similar)
-edge between C01's two risk nodes? If it does, the raw artifact has the structure and only
-the enumerated chains lose it, which is a much better story for the release than for the
-chain set -- and it is a Class B query, no LLM call.
+What survives and what does not. The enumerator constraint is real and documented -- a chain
+cannot traverse risk-to-risk, whatever the released graph holds. **C01 does not demonstrate
+that this costs anything**, and nothing else has yet. Leave the constraint where it belongs,
+in `tab:cuts`, and do not attach a cost to it without a document where the annotator holds
+that two extracted risks stand in a causal relation *on reflection*, not in passing.
 
-**Do not generalise from one chain.** Count how often a packet document's extraction holds
-more than one risk node, and how often the annotator reads a causal relation among them.
+🔴 **The lesson is about method, and it is worth more than the retracted finding.** An aside
+the annotator volunteered while answering a different question was promoted to a logged
+finding, then withdrawn on reflection one turn later. The structured fields survived the
+same reflection unchanged. **Weight volunteered asides below filled fields**, give the
+annotator a turn before logging one as a finding, and expect this to recur -- a careful
+annotator revising a first impression is the process working, not a defect in it.
 
 ## Saturated pair lists make the recall floor easier to pass
 
