@@ -203,3 +203,26 @@ read end to end. The rubric prefers `unclear` to a guessed `no` for exactly this
 the distinction matters for the write-up: a floor built from `no`s that are really `unclear`s
 would read as evidence of coverage it does not have.
 
+## 🔴 `chain_recall_missed` has a readable polarity trap
+
+The annotator who filled C03's row asked, a day later, whether `no` meant recall had
+*failed*. It means the opposite: `no` = no missed pair = no recall gap found; `yes` = a gap
+found. The field name parses both ways -- "missed? no" and "chain recall: no".
+
+That is a live risk to the study's headline, not a cosmetic one. A sign flip between the
+sheet and the analysis inverts the result, and the person most likely to flip it is whoever
+reads the CSV months later without the rubric open.
+
+Three protections, none of which touch the instrument mid-run:
+1. The analysis script asserts the polarity in its own code and prints it beside the rate --
+   e.g. `assert row["chain_recall_missed"] in {"yes","no","unclear"}` plus an explicit
+   `n_gaps_found = count(yes)`, never `count(no)`.
+2. The write-up states the direction in words ("no gap was found in N of M chains") and never
+   quotes the raw field name.
+3. Any future packet renames the field to something unambiguous -- `missed_pair_found`
+   would have avoided this entirely. Not renamed now: renaming a column mid-run is an
+   instrument change, and the C03 and C01 rows are already written under the current name.
+
+Running tally, stated in the unambiguous direction: **zero recall gaps found in two chains**
+-- C03 exhaustively (`no`), C01 opportunistically and inconclusively (`unclear`).
+
