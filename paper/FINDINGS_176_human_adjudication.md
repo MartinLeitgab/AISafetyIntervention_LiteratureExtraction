@@ -58,6 +58,31 @@ and C03 is a recall chain at the short end of the length distribution (14,627 ch
 against a 35,618 median). If that rate holds, the thirty are **20–25 hours**, not the 13–20
 the README states. Re-check after chain 5 before committing to all thirty.
 
+## 🔴 Pattern to watch: verdicts turning on the node NAME, not the argument
+
+Registered after chain 2 of 30, while it is still a pattern and not yet a claim.
+
+C01's verdict is `inferred_but_reasonable` rather than `faithful` because of **one qualifier
+in one node label**: the intervention reads "perform training story sensitivity analysis
+**pre-deployment**", and `pre-deployment` occurs zero times in an 84,526-character source.
+Every other node in the chain is the author's own wording, twice his own coinage. The
+argument the chain traces is not in dispute; a word in the name is.
+
+If this recurs, it is a finding about **node naming** rather than about extraction fidelity,
+and the paper already has the substrate to say so: `app:prompt` shows the prompt prescribes a
+name template per stage, and `sec:r-stages` reports that TF-IDF on the node name alone
+recovers the stage at 69.4% against a 20.0% chance rate. Names carry a lot in this pipeline,
+so it should not surprise anyone if they also carry the verdicts.
+
+Two things follow if it holds up. The fidelity rate would be partly a measurement of how
+much unsupported specificity the naming template invites -- a fixable prompt property, not a
+limit of the approach. And it would sharpen an already-recorded packet defect: the annotator
+sees node *names* and no edge type or description, so the name is disproportionately what
+they can judge.
+
+**Do not report this from two chains.** Count the verdicts that turn on a name qualifier
+across all thirty, and report the count, not the impression.
+
 ## Per-chain observations
 
 **C03** — `faithful`, endpoints both level 0, body 1, confidence high, 60 min.
@@ -73,3 +98,26 @@ the README states. Re-check after chain 5 before committing to all thirty.
 - Recall: three arguments enumerated, all carried. One of them — forecasting training-run
   spend — the annotator raised independently and the extraction already had as pair 1. That
   collision is the enumerate-then-check discipline working.
+
+**C01** -- `inferred_but_reasonable`, risk 0, intervention 1, body 0. Not a recall chain.
+- Source is Hubinger's training-stories post, 84,526 characters -- 2.4x C03 and well above
+  the packet's 35,618 median.
+- Nodes 1-6 are supported by the author's own wording, and two are his coinages: "mechanistic
+  training stories" and the section heading "Training story sensitivity analysis". Node 4's
+  "four" is his word. Node 5 compresses two separately named criteria (training goal
+  alignment, training goal competitiveness) into one label -- both stated, the joint phrase
+  is not.
+- The whole verdict rests on `pre-deployment` in node 7, which has **zero occurrences** in
+  the source. The annotator scored it 1, not 2: a training story is a requirements document
+  written before execution, so pre-deployment follows in a short step, and the document does
+  define "training setup" as everything before the model is deployed. See the naming pattern
+  above.
+- The intervention node fuses training-story *implementation* with *sensitivity analysis*.
+  The annotator judged the fusion fair, since a sensitivity analysis can only run on an
+  existing training story. Worth counting how often composite intervention nodes appear --
+  they interact directly with the sub-intervention rule from C03.
+- **Two design-rationale nodes, no validation-evidence node**, and the document does contain
+  VA-shaped material the extraction did not use: the author falsifying his own worked example
+  through Ilyas et al. This is the second chain in a row where the validation-evidence slot
+  behaved oddly (C03's was backward-looking at a survey's failure rather than evidence for
+  the intervention). **Watch it.**
