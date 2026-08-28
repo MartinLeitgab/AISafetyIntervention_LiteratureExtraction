@@ -323,3 +323,44 @@ extraction and less flattering to the study's own confidence:
 the level-2 count as larger than intended and the confidence distribution as lower than
 intended, in the same document.
 
+## 🔴 `no` vs `unclear` is being decided inconsistently, and the field cannot hold a confidence
+
+C01 and C02 put the annotator in the same position -- a long document not read end to end --
+and produced different answers. C01: `unclear`, on the rubric's own preference for `unclear`
+over a guessed `no`. C02: `no`, with "confidence low because I have not read the full piece"
+stated in the same breath.
+
+There is a defensible distinction. C01 attributed the absence to coverage ("I did not happen
+to see other pairs because I did not read the full post"). C02 makes an affirmative judgement
+-- this is not a safety piece, so no other primary safety risk exists -- with a coverage
+caveat attached. Those are different epistemic acts.
+
+But **the analysis will treat `no` and `unclear` very differently**, and a tally mixing them
+from near-identical states is noise dressed as signal. Two things needed before the write-up:
+the annotator either aligns the two or states the distinction explicitly, and the write-up
+reports `no` and `unclear` separately rather than folding `unclear` into either side.
+
+**Instrument gap behind it:** `annotator_confidence` scores the *verdict*, not the recall
+answer, so "no, with low confidence" cannot be written down. Both chains needed to say it and
+both had to put it in free text. A future packet wants a confidence on the recall field, or
+the recall field wants a fourth value. Not added mid-run.
+
+## Performance risks as upstream safety risks -- the annotator's scope argument
+
+C02's five extracted risks are engineering problems, not safety risks: computational
+inefficiency, RNN forgetting, limited relational reasoning, memory saturation, opaque
+decision-making. The annotator judged them probably in scope anyway, on a specific mechanism:
+**memory saturation could drop a system prompt including its safety guidance, and forgetting
+long-term dependencies could be safety-relevant for the same reason.** Performance risk as
+the upstream cause of a safety risk.
+
+This is a real argument and it is also exactly the boundary this project has already had to
+draw once -- see [[project_capability_ceiling_hcs]], where HC025-028 are held to be
+capability-ceiling rather than safety risks and reported as a separate group, while HC029 is
+safety-related. The same question, arriving from the annotation side.
+
+Worth recording per chain rather than deciding globally: when a source is not a safety
+document, does the chain's risk reach safety through a stated mechanism, an argued one, or
+only a conceivable one? C02's is conceivable -- the lecture says nothing about system prompts
+or safety guidance, and the annotator supplied that link themselves while judging.
+
