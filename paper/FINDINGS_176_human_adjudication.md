@@ -323,27 +323,30 @@ extraction and less flattering to the study's own confidence:
 the level-2 count as larger than intended and the confidence distribution as lower than
 intended, in the same document.
 
-## 🔴 `no` vs `unclear` is being decided inconsistently, and the field cannot hold a confidence
+## RESOLVED: `no` vs `unclear` turns on the risk of being wrong, not on coverage
 
-C01 and C02 put the annotator in the same position -- a long document not read end to end --
-and produced different answers. C01: `unclear`, on the rubric's own preference for `unclear`
-over a guessed `no`. C02: `no`, with "confidence low because I have not read the full piece"
-stated in the same breath.
+Flagged as an inconsistency after C02, resolved by the annotator the same day. It was never
+an inconsistency -- the two answers came from a rule that had not yet been written down.
 
-There is a defensible distinction. C01 attributed the absence to coverage ("I did not happen
-to see other pairs because I did not read the full post"). C02 makes an affirmative judgement
--- this is not a safety piece, so no other primary safety risk exists -- with a coverage
-caveat attached. Those are different epistemic acts.
+🔴 **The rule, and it governs the remaining 27: how much risk is there in being wrong?**
 
-But **the analysis will treat `no` and `unclear` very differently**, and a tally mixing them
-from near-identical states is noise dressed as signal. Two things needed before the write-up:
-the annotator either aligns the two or states the distinction explicitly, and the write-up
-reports `no` and `unclear` separately rather than folding `unclear` into either side.
+- **C02 -> `no`.** A non-safety source. There was little safety content to miss in the first
+  place, so a `no` carries little risk of being wrong even unread in full.
+- **C01 -> `unclear`.** A definitive safety piece. Smaller risks and interventions could
+  plausibly be hidden anywhere in it, so without a full read `unclear` is the honest answer.
 
-**Instrument gap behind it:** `annotator_confidence` scores the *verdict*, not the recall
-answer, so "no, with low confidence" cannot be written down. Both chains needed to say it and
-both had to put it in free text. A future packet wants a confidence on the recall field, or
-the recall field wants a fourth value. Not added mid-run.
+So the discriminator is **the source's density of things-that-could-be-missed**, not the
+annotator's coverage. Coverage is the same in both cases; the exposure is not.
+
+**No instrument change follows.** The annotator's position: the recall answer can be read
+alongside the verdict and the source type to inform the result with context before anything
+enters the paper. That is the right call at n=30 -- adding a confidence dimension to the
+recall field mid-run would change the instrument for a distinction the write-up can make from
+data already recorded.
+
+What the write-up must therefore do: report `no` and `unclear` separately, and report each
+against whether the source is a safety document. A pooled recall figure that mixes a `no`
+from a lecture on attention with a `no` from a safety paper is not measuring one thing.
 
 ## Performance risks as upstream safety risks -- the annotator's scope argument
 
