@@ -53,10 +53,23 @@ are same-endpoint re-routings called "a loss only if mechanism is the unit."
 
 ## Cost, measured
 
-The README budgets 20–30 min per chain plus ~20 for a recall chain. **C03 took 60 minutes** —
-and C03 is a recall chain at the short end of the length distribution (14,627 characters
-against a 35,618 median). If that rate holds, the thirty are **20–25 hours**, not the 13–20
-the README states. Re-check after chain 5 before committing to all thirty.
+The README budgets 20-30 min per chain plus ~20 for a recall chain, so 13-20 hours overall.
+
+| Chain | Arm | Chars | Minutes |
+|---|---|---|---|
+| C03 | verdict + recall enumeration | 14,627 | 60 |
+| C01 | verdict only | 84,526 | 30 |
+
+🔴 **Correction to what this file said after one chain.** On C03 alone the projection was
+20-25 hours, "not the 13-20 the README states". C01 lands at 30 minutes for a verdict-only
+chain six times longer, which is squarely inside the README's own per-chain estimate. The
+projection is now 20 verdict-only chains at ~30 min plus 10 recall chains at ~60 min = about
+**20 hours** -- the top of the stated range, not beyond it. Two points is still a projection,
+not a rate; re-check at chain 5.
+
+Note what the two rows do **not** show: any relationship between document length and time.
+C01 is 5.8x the characters of C03 and took half as long. The recall enumeration, not the
+reading, is what costs.
 
 ## 🔴 Pattern to watch: verdicts turning on the node NAME, not the argument
 
@@ -92,9 +105,8 @@ across all thirty, and report the count, not the impression.
 - Maturity 1 accepted because the author asserts only enthusiasm ("I'd be really excited"),
   no mandate — an instance of the maturity label tracking the source's own hedging.
 - Validation evidence is backward-looking (a survey's past failure) rather than evidence for
-  the proposed intervention's design. The annotator judged that framing accurate here, but
-  the schema's intent was the latter. **Watch whether this recurs** — if it does, it is a
-  finding about what `validation evidence` means in practice, not about this chain.
+  the proposed intervention's design. The annotator judged that framing accurate here. See
+  the reframed note below — this is not a defect signal.
 - Recall: three arguments enumerated, all carried. One of them — forecasting training-run
   spend — the annotator raised independently and the extraction already had as pair 1. That
   collision is the enumerate-then-check discipline working.
@@ -121,3 +133,28 @@ across all thirty, and report the count, not the impression.
   through Ilyas et al. This is the second chain in a row where the validation-evidence slot
   behaved oddly (C03's was backward-looking at a survey's failure rather than evidence for
   the intervention). **Watch it.**
+
+## 🔴 An absent stage node is usually the extractor being right, not missing something
+
+Scribe's earlier framing was wrong and the annotator corrected it. This file flagged
+"validation-evidence slot behaving oddly, two for two" after C03 and C01. That framing
+treated absence as a defect signal. It is not.
+
+The annotator's reading: **the schema prescribes stage slots that the source often cannot
+fill**, so an absent node is frequently correct behaviour. C01 is the clean case -- the
+document's only validation-shaped material *falsifies* its own worked example (Ilyas et al.
+on cat-detection heuristics) rather than validating the proposed intervention, so the
+extractor was right to emit no validation-evidence node.
+
+This sharpens a claim the manuscript already makes rather than contradicting it.
+`sec:r-stages` says a schema suggesting five stages will tend to produce five-stage chains,
+and ablation arm E measured it: strip the stage names from the prompt and five-stage
+completion goes from 65.0% to 0.0% on the same documents. The stage structure is
+prompt-supplied. The annotator's point is the other half of that coin -- when the source
+cannot support a stage, the honest output is a gap, and the 87.4% completion figure is
+therefore an upper bound on how often the source actually supported all five.
+
+**What to measure instead of "is a stage missing":** when a stage node is absent, does the
+source contain material that would have filled it? That is answerable per chain and it is
+the question that separates a correct gap from a real omission. Record it in `notes` as the
+thirty are worked; do not add a field mid-run.
