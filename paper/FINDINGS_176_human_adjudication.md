@@ -280,3 +280,46 @@ distribution and never as a rate. And record the rounding rule (up, conservative
 because a reader who assumes rounding-to-nearest would read the level-2 count as larger than
 the annotator intended.
 
+## 🔴 WATCH: the distribution of the safety mapping may be the study's real output
+
+Raised after C02 and agreed as a watch item. Two chains in, the pattern to test is not a
+defect count but a *distribution*.
+
+C02 maps a non-safety source -- a DeepMind lecture on attention and memory -- onto a safety
+frame, scoring the mapping at inference level 2, which the rubric explicitly licenses as "the
+design working, not a failure". `app:failure`'s Euclid chain does the same move on an
+expository mathematics article, and the paper calls that one spurious. The difference is
+real: C02's underlying concept (attention makes a network's decisions inspectable) is
+developed at length by the speaker, while Euclid's "prime scarcity" appears nowhere in its
+source. But the *move* is the same, and the instrument separates them by one step on a
+four-point scale.
+
+**If several more chains land at level 2 on this same move, the defensible output of #176 is
+the distribution of that mapping, not a count of defects.** A study that reports "0 of 30
+unsupported" while 12 of 30 sit at level 2 on a lecture-to-safety mapping has reported the
+less interesting half of what it found.
+
+Two things to record per chain from here, both cheap and neither a new field:
+1. Whether the source is a safety document at all, in `notes`. C02 is not; C01 and C03 are.
+2. Whether the level-1-or-2 inference *is* the safety mapping, as opposed to some other
+   inferential step. C01's was a timing qualifier (`pre-deployment`), not a safety mapping --
+   a different thing that happens to score the same.
+
+Without that split the write-up cannot tell a lecture-mapped-to-safety from a
+safety-paper-with-a-loose-qualifier, and they are not the same claim about the corpus.
+
+## Scale-rounding rules, applied twice each and stated once here
+
+The annotator has twice given a value the scale does not carry, in opposite directions, and
+both were resolved conservatively -- meaning toward the reading less flattering to the
+extraction and less flattering to the study's own confidence:
+
+| Field | Given | Recorded | Rule |
+|---|---|---|---|
+| inference levels | "between 1 and 2" (C03), "1.5" (C02) | **2** | round UP -- rounding toward 1 would understate how far the extraction reached |
+| `annotator_confidence` | "medium to high" (C01), "low to medium" (C02) | **medium**, **low** | round DOWN -- overstating the annotator's certainty would overstate the study's |
+
+🔴 **Both rules must appear in the write-up.** A reader assuming round-to-nearest would read
+the level-2 count as larger than intended and the confidence distribution as lower than
+intended, in the same document.
+
