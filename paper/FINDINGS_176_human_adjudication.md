@@ -158,3 +158,48 @@ therefore an upper bound on how often the source actually supported all five.
 source contain material that would have filled it? That is answerable per chain and it is
 the question that separates a correct gap from a real omission. Record it in `notes` as the
 thirty are worked; do not add a field mid-run.
+
+## 🔴 The annotator found a causal relation the enumerator cannot represent
+
+C01's extraction holds two risks -- *inadequate evaluation of advanced AI safety proposals*
+(A) and *unanticipated unsafe behaviour of trained models* (B) -- and cross-connects all six
+interventions to both, a saturated 2x6 pair list. The annotator's unprompted reading:
+**A is to some extent the cause of B.**
+
+If that is right, the six interventions do not address B directly; they address B *through*
+A. The pair list flattens a two-step causal structure into twelve parallel one-step claims.
+
+**And the pipeline could not have done otherwise.** `tab:cuts` row 4: exactly one risk, at
+the root -- "no risk-to-risk hop, and no second risk anywhere after position 0". A chain
+structurally cannot traverse A -> B, whatever the released graph holds between those two
+nodes. So this is not an extraction failure; it is a representational limit of the reporting
+unit, and it is already documented as a constraint -- just never before observed to cost
+anything. Here it costs the document's actual argument shape.
+
+Worth checking directly, and cheap: does the released graph carry a `caused_by` (or similar)
+edge between C01's two risk nodes? If it does, the raw artifact has the structure and only
+the enumerated chains lose it, which is a much better story for the release than for the
+chain set -- and it is a Class B query, no LLM call.
+
+**Do not generalise from one chain.** Count how often a packet document's extraction holds
+more than one risk node, and how often the annotator reads a causal relation among them.
+
+## Saturated pair lists make the recall floor easier to pass
+
+C03's pair list was 3 pairs over 1 risk. C01's is 12 over 2, every intervention against every
+risk. A saturated cross-product is maximally generous, so `chain_recall_missed = yes` is
+mechanically harder to reach on C01 than on C03 -- not because the document is better
+covered, but because the extraction cross-connected more densely.
+
+If this varies across the thirty, the recall floor is partly a function of extraction
+density rather than of what documents argue. Same root as the sub-intervention rule's stated
+limit: **granularity and connection density are the extractor's choices, not properties of
+the source.** Record the pair-list size per chain so the write-up can say whether the two
+correlate.
+
+**C01's own recall answer is `unclear`, not `no`** -- the annotator recognised all twelve
+pairs in the document and noticed no thirteenth, but stated plainly that the post was not
+read end to end. The rubric prefers `unclear` to a guessed `no` for exactly this case, and
+the distinction matters for the write-up: a floor built from `no`s that are really `unclear`s
+would read as evidence of coverage it does not have.
+
