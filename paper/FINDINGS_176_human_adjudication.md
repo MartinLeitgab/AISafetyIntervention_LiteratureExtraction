@@ -230,3 +230,53 @@ Three protections, none of which touch the instrument mid-run:
 Running tally, stated in the unambiguous direction: **zero recall gaps found in two chains**
 -- C03 exhaustively (`no`), C01 opportunistically and inconclusively (`unclear`).
 
+## 🔴 The low-confidence flag did not fire on the chain we call spurious
+
+Receipt: `experiment_review_failure_case_confidence.py` ->
+`..._report.json`. Class B, no LLM call. Prompted by the annotator asking, mid-C02, whether
+the Euclid chain really does carry confidence >= 3 on every link.
+
+It does, and more. Stored confidences along `app:failure`'s chain are **3, 4, 4, 4, 4, 3**.
+Four hops sit at 4, which `tab:rubric-conf` defines as **"a controlled experiment"** -- on an
+expository mathematics article about prime numbers, which contains none.
+
+The extraction prompt is explicit that this should not have happened: *"Where the source does
+not support the required flow, use moderate inference and mark it in edge confidence (1 or
+2)."* The flag exists and did not fire. That is a stronger statement than the manuscript
+currently makes -- `app:failure` says only "edge confidence >= 3", and reviewer row R34 says
+only that the gates fail to reject a clear negative.
+
+**The nuance cuts the other way and belongs in any write-up of this.** The invented hop is the
+*lowest*: risk->pa, the one asserting prime scarcity threatens cryptographic key space, sits
+at exactly 3, while the 4s are on the mathematical steps, which are genuinely rigorous. The
+extractor discriminated partially; it simply never went below the gate.
+
+**Consequence for `tab:gates`.** The asymmetric first-hop >= 4 row would have excluded this
+chain, and that is independent evidence -- `app:failure` predates the #175 sample on which
+that threshold was chosen. 🔴 **One case. It does NOT license adding a benefit side to that
+row.** The caption's warning stands, and #176 is still the arm that could license it.
+
+**Consequence for `sec:m-extraction`.** That section says the >= 3 gate "admits links the
+source evidences systematically and excludes those the model supplied." This chain's risk->pa
+link was supplied by the model and was admitted at 3. The sentence is not true of the
+artifact as stated, and this is a claim-level issue rather than a packet one -- route it to
+`OPEN_ITEMS.md`, not to this file's disposition.
+
+## 🔴 The 1/2 boundary is where the judgements actually live, and the scale has no room there
+
+Twice now the annotator has asked for a value between 1 and 2 -- C03's recall candidates
+("maybe between 1 and 2", recorded 2) and C02's safety mapping ("1.5", recorded 2). Both were
+rounded UP, which is the conservative direction: rounding toward 1 would systematically
+flatter the extraction.
+
+This is a finding about the instrument, and it is mostly a *good* one. The boundary the
+annotator strains against is 1-vs-2, and **neither the verdict nor the defect count depends
+on it** -- both land in `inferred_but_reasonable`, and the only defect class is level 3, which
+has not been close on either chain. The scale is coarse exactly where coarseness is cheap and
+sharp exactly where it matters.
+
+Two things to carry into the write-up. Report the 1/2 split as an annotator-judgement
+distribution and never as a rate. And record the rounding rule (up, conservative) explicitly,
+because a reader who assumes rounding-to-nearest would read the level-2 count as larger than
+the annotator intended.
+
