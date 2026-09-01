@@ -45,46 +45,121 @@ What still follows from the framing, for a session working the list:
 - This is also why S4 shrank to "do nothing" and S5 was dropped: a human anchor on an
   explicitly exemplary analysis is not load-bearing evidence.
 
-## 🔴 RUNBOOK — what a fresh session can execute alone
+## 🔴 RUNBOOK — check-off list
 
-Everything in this block needs no human, no API key and no team decision. Work it top to
-bottom. Each item names its inputs, its cost and the test that says it worked. Rules that
-govern all of it: `git pull --ff-only` the manuscript repo **before you Read**, push the
-same session, keep the `.tex` pure ASCII, and after any manuscript edit run
-`asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py`
-(expect **257/257**; if a number leaves the manuscript, delete its `check(...)` line, and if
-one arrives, add one). Every study gets a GitHub issue and a PR.
+Worked top to bottom on **2026-08-16 PM**. Each row names the issue, the PR, what it found
+and where it landed in `paperA_altstyle.tex`. Rules that govern all of it: `git pull
+--ff-only` the manuscript repo **before you Read**, push the same session, keep the `.tex`
+pure ASCII, and after any manuscript edit run `asciify_tex.py` → `texlint.py` →
+`graph_analysis/experiment_paper_claim_audit.py` (**302/302** on the tip branch; if a number leaves the manuscript, delete its `check(...)` line, and if one arrives,
+add one). Every study gets a GitHub issue and a PR.
+
+| | Item | State | Issue / PR | Landed in the manuscript |
+|---|---|---|---|---|
+| R0 | OpenAI key on this machine | ✅ used | — | not a manuscript item |
+| R1 | Download ARD | ✅ **was never needed** | — | — |
+| R2 | S6+S8 schema ablation + degraded source | ✅ done | #165 / PR #169 | `sec:r-stages`, `sec:limitations`, `app:failure`, new `app:ablation` |
+| R3 | S11 multi-model consistency, n=20 | ✅ arms A/B done, C running | #168 / PR #170 | `sec:limitations`, rewritten around the run-to-run floor |
+| R3b | S12 comparison against an existing artifact | ✅ done | #166 / PR #167 | `sec:related`, first paragraph |
+| R4 | L3 contrastive corrections | ✅ done, target missed | — | throughout; manuscript `99a20ec` |
+| R5 | L10 repeated caveats, L12 verification→audit | ✅ done | — | throughout; manuscript `99a20ec` |
+| R6 | Strip L14 before posting | ⏸ deliberately not now | — | source comments only |
+| R7 | Ungated chain file + CLI flags | ⛔ retired | — | — |
+| + | S6 remainder: baselines B/C/D + unconditioned repeat arm | ✅ done | #171 / PR #170 | `sec:r-stages`, `sec:limitations`, `app:ablation` |
+| + | S2: judge the chain-yielding population | ✅ done | #172 / PR #170 | `sec:r-judge`, `sec:limitations`, abstract, conclusion |
+| + | What a chain count is a function of | ✅ done | #168 follow-up | `sec:limitations` |
+
+🔴 **S2 changed a claim rather than confirming one.** Node-level omission on the
+chain-yielding population is **26.4%** against the corpus-sampled run's 0.6%, edge-level
+21.7% against 18.1%. Eight passages described that population as unaudited and have been
+reconciled (manuscript `b745108`). Two confounds ride with the population and the paper
+states both: those documents are about twice the corpus mean length, and their extractions
+were rebuilt from the released graph without the four rationale fields.
+
+🔴 **"594 chains per document" was raw enumeration, not the reporting unit.** After the 70%
+sub-path collapse the three models read 0.5, 2 and 4 chains per document and the worst
+document falls from 57,007 paths to 44. Never compare pre-collapse counts across
+extractors; the driver is mean degree crossing 2, not extraction quality.
+
+🔴 **The evidence program is complete.** What remains needs a person (S4 human anchor, S9
+relevance labels) or a decision (venue, release URL, authorship, and the page cut).
+
+🔴 **The Claude Code CLI is NOT a free execution path, and every note in this file that
+said so was wrong (corrected 2026-08-16 PM).** `claude -p` bills the interactive session's
+usage allowance, which is shared with everything else this project does and is exhaustible.
+Arm C of #168 consumed it at roughly **one percent per minute** while emitting 43k output
+tokens per document, and it had to be killed mid-run. **Use a vendor API and spend dollars**
+-- `paper/review_multi_model.py` has always done this and is the pattern to copy: three
+vendors, three SDKs, keys from `.env` files. Metered Opus 5 on the same work costs **USD
+0.70 per document**, which is cheaper than the session time it would otherwise eat. S3
+(#161/#162) also ran on the CLI and its "USD 0" is wrong in the same way; the study is done
+and does not need re-running, but do not cite it as evidence that the CLI is free.
 
 **R0. Credentials that exist on this machine.** An OpenAI key is at
 `~/0_project_work/ExistentialRiskBenchmark/.env` (`OPENAI_API_KEY`, alongside `GOOGLE_API_KEY`
 and `ANTHROPIC_API_KEY`). It is NOT in this repo and must never be copied into it — read it
-from that path at run time and keep it out of logs, receipts and commit messages. This
-changes what is possible: arm C of the merged ablation becomes a real reasoning-vs-non-
-reasoning comparison on the corpus extractor rather than a Claude-tier proxy, and S2, S7 and
-S11 become runnable as specified rather than in caveated form. Metered spend applies, so
-estimate and confirm before using it.
+from that path at run time and keep it out of logs, receipts and commit messages. Metered
+spend applies, so estimate and confirm before using it. **Spent 2026-08-16: 85 `o3` calls
+for #165 plus 40 `o3`/`gpt-5` calls for #168, against a pre-run estimate of USD 9–30.**
+`gpt-5.6-sol`, the id this file used to quote, is **not** in this account's model list;
+`gpt-5` is.
 
-**R1. Download ARD and unblock the extraction studies.** `data/raw/ard_json_full/` does not
-exist on this machine, which is what blocked S2, S6 and S8. ARD is a public HuggingFace
-dataset (`StampyAI/alignment-research-dataset`, MIT) and downloads without credentials. Do
-this first; three studies depend on it and nothing else does.
+**R1. — RESOLVED WITHOUT WORK, and the old text was wrong.** ARD has been on this machine
+since 2025-08-31 at `intervention_graph_creation/data/raw/ard_json_full/` (12 `.jsonl`,
+440 MB, one record per document with `url` and `text`). `experiment_review_extraction_cost.py`
+has been reading it all along — that is where the 100% URL match on 11,779 documents comes
+from. The claim that a missing `data/raw/ard_json_full/` blocked S2, S6 and S8 was right
+about the repo-root path and wrong about the machine. **Nothing was ever blocked on this.**
 
-**R2. S6+S8 as one experiment (see below).** The single highest-value item that needs no
-person. Budget and arms are scoped in S6/S8. Start with arms E/F/G at n=30.
+**R2. S6+S8, done — and it split the claim rather than settling it.** Issue #165, PR #169.
+85 `o3` calls, arms E/F/G, every raw response committed. Removing the five stage names from
+the prompt takes chain yield from 30 of 30 documents to 11 of 28 and the five-stage share
+from 65.0% to **zero**, so the seven-node chain is prompt-supplied. But the model invents
+the vocabulary anyway: **144 emergent labels, 138 of which map onto one of the five stages**
+under a rubric that offers "unmappable" as a real answer. Sentence-shuffled sources still
+yield a chain for **30.0%** of documents (46.3% of those carrying all five stages), which is
+the confabulation rate `app:failure` previously lacked. Reference lists alone yield 2 chains
+in 25 documents, and for 6 the model returns no graph and says so explicitly.
 
-**R3. S11, multi-model extraction consistency (see below).** Replaces the lost n=20 data and
-closes a rendered gap in Limitations either way.
+🔴 **Substrate finding from the same run, and it belongs in every future session's head: the
+released enumerator traverses edges UNDIRECTED.** `phase2_step4_F2v4_hopwise_falkordb.py`
+queries `MATCH (n)-[e:EDGE]-(m)` and fills `adj[s].add(t); adj[t].add(s)`. Three of 55
+sampled documents have a released chain that is unreachable if edge direction is honoured. A
+chain's risk-to-intervention order comes from where the traversal starts and stops, never
+from the direction of the edges it walks — which is defensible, since `caused_by` points
+from effect to cause, but was undocumented. Now in `sec:m-paths` and as a tenth row of
+`tab:cuts`.
 
-**R3b. S12, comparison against existing artifacts (see below).** Class B if the comparison
-artifact downloads. Answers "why is this needed at all" rather than "why is this design
-needed", which is the question the Introduction raises and never tests.
+**R3. S11, multi-model consistency.** Issue #168. Arms: `o3` re-run, `gpt-5`, and
+`claude-opus-5` through the Claude Code CLI on subscription auth. Arm A re-runs the corpus
+extractor on documents it already extracted, so released-vs-rerun is a repeat-extraction
+noise floor at n=20 — part of S7, free. That floor is what the #165 arm differences have to
+clear, so the two studies are written to be read together.
 
-**R7. — RETIRED 2026-08-16, do not reinstate.** It asked first for a 31,740-chain file and
-then for CLI flags on the two gate thresholds. Neither is needed. D3 dissolved (see below):
-the primary delivery is the raw graph, the gates belong to one analysis on top of it, and
-the manuscript promises no derived file it does not ship. A reuser changing thresholds edits
-two constants in `phase2_step4_F2v4_hopwise_falkordb.py`, which is ordinary for research
-code and buys the paper nothing.
+**R3b. S12, done.** Issue #166, PR #167. The AI Safety Graph publishes its input (7,011
+arXiv records from ARD, title and abstract only) and its clustering (554 papers, 160
+subcategories). 534 are in our corpus, 216 yield a chain. Across the 79 subcategories
+holding one, **79 topic labels against 325 distinct risk-to-intervention pairs**; their
+largest, *Adversarial Machine Learning*, holds 18 distinct risks and 23 distinct
+interventions under one string. The converse ships with it: their clustering asserts 2,986
+cross-document co-membership pairs and ours asserts none. Unplanned check: chain yield on
+their paper list is **40.4%** against the 40.5% the manuscript reports for arXiv documents.
+
+**R4. L3, done, and the target was missed on purpose.** 70 contrastive constructions down to
+38, not the under-15 the reviewers asked for. What went: "rather than trusting the builder
+configuration", "rather than a figure", "and not in Results", "rather than a synthesized
+answer". What stayed, in three groups — locked decisions the paper must keep visible
+(composition never a measured rate; corpus description not fidelity; a batched job and not
+an agent), distinctions with a measurement behind them (the 4-node floor is imposed not
+observed; omission rather than fabrication), and definitions that exist only as a contrast
+(confidence scores the source's evidence, not the model's certainty). Cutting further would
+delete evidence.
+
+**R5. L10 and L12, done.** L12 all-or-nothing as required: "verification" as a defined term
+is gone from all five rendered places and the paper says "audit" throughout. L10: the three
+repeated caveats now state once and cross-reference.
+
+**R6. Strip L14 immediately before any public posting, and not before.** See L14.
 
 🔴 **What "gated" means, since the wording here caused a real misreading.** It is NOT the
 raw graph, which has no gates at all and is the primary release. It is NOT unconstrained
@@ -94,27 +169,14 @@ always apply and are part of what a chain *is*. "Gated" refers only to the two m
 *quality* attributes, edge confidence and intervention maturity, at $\geq 3$ rather than
 $\geq 1$ — the two reviewers called unvalidated.
 
-**R4. Finish L3.** 44 "rather than" constructions survive outside comments plus 13 ", not X"
-and 8 "never as". Keep the ones where a plausible misreading exists *and* the paper has
-evidence about it; the reviewers set that test themselves. Target under 15. This needs a
-judgement pass, not a regex.
-
-**R5. Finish L10 and L12.** L10: three caveats (verified population is not the analysed
-population; yield is a property of the gates; completeness is what schema-filling predicts)
-each appear in six to eight places. Keep one clear statement of each plus `\cref`
-cross-references. L12: "verification stage" is a defined term used throughout — rename it to
-"audit stage" everywhere or leave it entirely, but do not do half.
-
-**R6. Strip L14 immediately before any public posting, and not before.** See L14.
-
 **What a fresh session must NOT do alone:** anything in "Decisions owed by the team", the
-six rendered `\OPEN{}` blocks, and the human studies. Those are listed further down with
+four rendered `\OPEN{}` blocks, and the human studies. Those are listed further down with
 their blockers.
 
 **Amended 2026-08-16** after an execution pass that closed S3, S10, C2-C9, every
 unanimous cut-list row and the language items: manuscript commit `337d033` in
 `AISafetyIntervention_PaperA_shared`, analysis issues #156 / #157 with PRs #158 /
-#159, and S3 as #161 / #162. Claim audit **257/257**.
+#159, and S3 as #161 / #162.
 
 🔴 **Rendered open blocks: FOUR, counted 2026-08-16 PM** (`grep -c 'OPEN{\[GAP:'` on
 `paperA_altstyle.tex`). Earlier counts of eight, nine or six are all stale, and the
@@ -148,8 +210,8 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
-| Open PRs from this work, stacked | #158 (edge coverage, issue #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair preservation, #163) | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main` |
-| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **257/257** (2026-08-16, after S3). The stale 42/42 references are fixed; C9 is closed |
+| Open PRs from this work, stacked | #158 (edge coverage, #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair, #163) -> **#169 (schema ablation, #165) -> #167 (artifact comparison, #166) -> the #168 PR (multi-model), pending** | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main`. The three newest were merged forward on 2026-08-16 so the tip carries every check; the audit reads 285/285 there |
+| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **285/285** on the tip branch (2026-08-16, after the ablation and the artifact comparison). Counts differ per branch in the stack: 273 on `study/schema-ablation`, 269 with S12 alone. The stale 42/42 and 235/235 references are fixed |
 
 ## 🔴 Locked decisions — do not revert
 
@@ -412,7 +474,7 @@ separately.**
 
 ## Tier 3 — real experiments, real budget
 
-### S6 + S8. One ablation experiment, seven arms — MERGED 2026-08-16, and the top in-session item
+### S6 + S8. One ablation experiment — ✅ **ARMS E/F/G DONE 2026-08-16 (issue #165, PR #169)**
 
 **Answers** W6/Q5 (no baseline shows any design choice is load-bearing) and the fidelity
 question Limitations names and does not answer. These were two entries; they are one
@@ -456,6 +518,16 @@ most publishable negative result available to this paper and B/C/D matter much l
 
 **Human involvement:** one judgement call on what counts as "the emergent chain maps onto
 the five stages". Write it as a rubric for a model and state the rubric in the appendix.
+
+✅ **Result, and it is not the binary either reviewer expected.** Arms E/F/G ran at n=30,
+30 and 25 on `o3`, 85 calls, USD within the 5.64-20.22 pre-run band. The **vocabulary
+survives un-prompted and the chain does not**: 144 emergent category labels, 138 mapping
+onto one of the five stages, against 0.0% of ablated chains carrying all five where the
+released extraction carries 65.0%. Shuffled sources yield a chain for 30.0% of documents,
+which is the confabulation rate the paper lacked. Reference lists alone yield 2 in 25, with
+6 explicit refusals. Arms B/C/D (abstract-only, non-reasoning model, flat triples) are
+**still unrun** and are what a "does the design earn its cost" reviewer asks for; E/F/G
+answer "is the structure real", which is the question with the fidelity claim attached.
 
 ### S6-OLD (superseded by the merged experiment above). Baselines on 200 documents
 **Answers** W6/Q5. No design choice in the paper is shown to be load-bearing: not the
@@ -502,7 +574,7 @@ the only study that would let the paper make a fidelity claim about the schema i
 rather than about the extractor's consistency. If budget appears for exactly one Tier 3
 study, this is the one with the most upside — and the most risk.
 
-### S11. Multi-model extraction consistency — NEW 2026-08-16, replaces the lost n=20 data
+### S11. Multi-model extraction consistency — ✅ **ARMS A/B DONE 2026-08-16 (issue #168, PR #170)**
 
 **Answers** the rendered gap in Limitations that currently asks a co-author to recover an
 n=20 o3 / GPT-5 / Claude-4 check run earlier in the project. That data was produced manually,
@@ -523,7 +595,25 @@ stability across models that never produced the corpus. Say which was run either
 **Either outcome closes the gap.** Numbers replace the `\OPEN{}` block; a failed run means
 deleting it and keeping the limitation as stated.
 
-### S12. Comparison against existing artifacts — NEW 2026-08-16
+✅ **Result: the counts survive a re-run and the gate does not.** `o3` re-extracting
+documents it already extracted gives 21.1 nodes and 21.0 edges against the shipped 21.0 and
+20.9, with the five stages within two points — but a chain for **9 of 18** where the shipped
+run has 18 of 18, because maturity >= 3 lands on an intervention in 11 documents rather than
+18. Edge confidence is stable. **The attribute that selects the reporting unit is the
+unstable one**, which is the sharpest form of reviewer R21 anywhere in this file.
+
+🔴 **Read it as an upper bound.** The sample is #165's chain-yielding sample, so the shipped
+side is 18 of 18 by construction and a re-run can only lose. **The next study on this list
+should be the unconditioned arm: 20 documents drawn from the corpus rather than from the
+chain-yielding subset, ~USD 2, and it turns this into a symmetric rate.**
+
+Also measured: node *identity* is unstable where counts are not — a shipped risk node has a
+counterpart in the re-run 46.5% of the time at cosine 0.80 over name embeddings, 27.8% at
+0.85, 19.0% lexically. And `gpt-5` under the identical prompt extracts 1.8x the nodes, 2x
+the edges and yields a mean of 97.8 chains per document against `o3`'s 1.4, which is what
+denser graphs do to a path enumerator.
+
+### S12. Comparison against existing artifacts — ✅ **DONE 2026-08-16 (issue #166, PR #167)**
 
 **Distinct from S6/S8, which compare us against simpler versions of ourselves.** This
 compares the released graph against artifacts that already exist over the same literature —
@@ -541,6 +631,12 @@ B if the other artifact is downloadable.
 **Why it may be worth more than S6.** It answers a reviewer's "why is this needed at all"
 rather than "why is this design needed", and it is the only item on the list that engages
 the Related Work stack the Introduction leans on.
+
+✅ **Result.** 79 of their topic labels stand against 325 distinct risk-to-intervention
+pairs in ours, 4.1 per label. Their clustering asserts 2,986 cross-document co-membership
+pairs where ours asserts none, and that half is reported in the same paragraph. Chain yield
+on their paper list, 40.4%, independently reproduces the 40.5% arXiv row of
+`tab:populations`.
 
 ### S9. Retrieval evaluation - needs human relevance labels, lowest priority
 **Answers** W7/S-W1. The retrieval use case rests on two worked queries. A 50-query set
@@ -682,6 +778,21 @@ that a reviewer agreed on has now been taken, so the remaining ~3 pages have to 
 material the reviewers wanted **kept** — which makes it an author's call, not an editorial
 one. The realistic options are the four in the ordered list below, and the first is the
 only one that yields a page on its own.
+
+🔴 **The 2026-08-16 PM pass made the gate worse, deliberately, and the number is measured.**
+Non-comment characters from `dbf88fd` to `ef5c23f`: **+3,686 characters, +60 lines**, about
++2.8%, call it three quarters of a page. What bought it: the ablation paragraph and
+`app:ablation` (#165), the Related Work measurement (#166), the undirected-traversal
+sentence and `tab:cuts` row. The language pass (L3/L10/L12) gave back roughly a fifth of
+that; the rest is new evidence.
+
+**This is the right trade and it still has to be paid for.** Every one of the four reviewer
+rounds asked for a baseline and a fidelity control, and the paper now has both. But it is
+now ~13 pages against a 10-page ceiling, so the page budget is the single largest unclosed
+item on this list and it is now an author's call. The candidates, in the order I would take
+them: the three artifact use cases to an appendix (item 1 below, ~110 lines), `sec:r-selection`
+compressed to its control paragraph, and `app:race` cut to its two-line prevalence. None of
+those touches the new evidence.
 
 Where the remaining ~3 pages would have to come from, in the order I would take them:
 

@@ -747,6 +747,220 @@ def main():
         note="sec:related reports this beside our zero cross-document structural edges",
     )
 
+    # ---- multi-model extraction consistency (S11, issue #168) ------------------------
+    # Receipt-sourced, like every Class A study. The arm-C figures are deliberately NOT
+    # checked here: that arm was still running when these numbers went into the paper.
+    mm = receipt("experiment_review_multimodel_consistency_report.json")
+    mh = mm["headline"]
+    check("multimodel: released mean nodes", 21, mh["released"]["mean_nodes"])
+    check("multimodel: released mean edges", 20.1, mh["released"]["mean_edges"])
+    check("multimodel: o3 re-run mean nodes", 21.1, mh["A_o3"]["mean_nodes"])
+    check("multimodel: o3 re-run mean edges", 21, mh["A_o3"]["mean_edges"])
+    check(
+        "multimodel: o3 re-run chain rate",
+        50.0,
+        mh["A_o3"]["pct_with_chain"],
+        note="against 100% for the shipped extraction on the same documents; the sample is "
+        "conditioned on the shipped run, so this is an upper bound on what a re-run loses",
+    )
+    check(
+        "multimodel: o3 re-run unparseable responses", 2, mh["A_o3"]["parse_failures"]
+    )
+    check("multimodel: gpt-5 mean nodes", 38.1, mh["B_gpt5"]["mean_nodes"])
+    check("multimodel: opus-5 mean nodes", 41.3, mh["C_opus5"]["mean_nodes"])
+    check("multimodel: opus-5 mean edges", 56.2, mh["C_opus5"]["mean_edges"])
+    check("multimodel: opus-5 chain rate", 82.4, mh["C_opus5"]["pct_with_chain"])
+    # What the enumerated chain count is a function of (issue #168 follow-up). A chain is
+    # a simple path THIS PROJECT walks, never something a model emits, and the count is
+    # driven by roots, terminals and degree rather than by extraction quality.
+    cd = receipt("experiment_review_chain_density_report.json")["arms"]
+    for arm, roots, mature, degree in [
+        ("A_o3", 1, 1, 1.71),
+        ("B_gpt5", 3, 3, 2.04),
+        ("C_opus5", 3, 3, 2.32),
+    ]:
+        check(
+            f"density {arm}: median risk roots", roots, cd[arm]["median"]["risk_roots"]
+        )
+        check(
+            f"density {arm}: median mature interventions",
+            mature,
+            cd[arm]["median"]["mature_interventions"],
+        )
+        check(
+            f"density {arm}: median degree on the gated subgraph",
+            degree,
+            cd[arm]["median"]["mean_degree_conf_ge3"],
+            note="below 2 the extracted graph is nearly a path; above it, simple-path "
+            "counts grow exponentially in the number of independent cycles",
+        )
+
+    for arm, med, mx in [
+        ("released", 2, 19),
+        ("B_gpt5", 6, 886),
+        ("C_opus5", 594, 57007),
+    ]:
+        check(
+            f"multimodel: median chains per document, {arm}",
+            med,
+            mh[arm]["median_chains"],
+            note="the mean is dominated by single documents; the paper quotes medians and "
+            "maxima because enumeration is super-linear in edge count",
+        )
+        check(
+            f"multimodel: max chains in one document, {arm}", mx, mh[arm]["max_chains"]
+        )
+    check("multimodel: gpt-5 mean edges", 41.3, mh["B_gpt5"]["mean_edges"])
+    check("multimodel: gpt-5 chain rate", 76.5, mh["B_gpt5"]["pct_with_chain"])
+    check("multimodel: gpt-5 unparseable responses", 3, mh["B_gpt5"]["parse_failures"])
+    pa = mm["pairwise_endpoint_agreement"]["released vs A_o3"]
+    check(
+        "multimodel: risk-name agreement at cosine 0.80",
+        46.5,
+        pa["cosine_0.8"]["pct_risks_of_A_matched_in_B"],
+    )
+    check(
+        "multimodel: risk-name agreement at cosine 0.85",
+        27.8,
+        pa["cosine_0.85"]["pct_risks_of_A_matched_in_B"],
+    )
+    check(
+        "multimodel: risk-name agreement, token-set",
+        19.0,
+        pa["jaccard_0.6"]["pct_risks_of_B_matched_in_A"],
+        note="the lexical figure the semantic one is reported against",
+    )
+    gs = mm["gate_stability_against_the_shipped_extraction"]["A_o3"]
+    check("multimodel: documents compared", 18, gs["documents_compared"])
+    check(
+        "multimodel: shipped documents with a mature intervention",
+        18,
+        gs["released_with_a_mature_intervention"],
+    )
+    check(
+        "multimodel: re-run documents with a mature intervention",
+        11,
+        gs["arm_with_a_mature_intervention"],
+        note="the maturity gate is what moves between runs; edge confidence does not",
+    )
+    check("multimodel: re-run documents with a chain", 9, gs["arm_with_a_chain"])
+
+    # ---- baselines B/C/D and the unconditioned repeat arm (S6 remainder, S7; #171) ---
+    bl = receipt("experiment_review_baselines_report.json")["results"]["headline"]
+    for arm, nodes, yield_pct in [
+        ("B_abstract", 11.4, 16.0),
+        ("C_gpt41", 16.4, 56.7),
+        ("D_triples", 24.5, 0.0),
+        ("U_unconditioned", 18.4, 15.0),
+    ]:
+        check(f"baseline {arm}: mean nodes", nodes, bl[arm]["mean_nodes"])
+        check(
+            f"baseline {arm}: chain yield pct",
+            yield_pct,
+            bl[arm]["pct_of_attempted_yielding_a_chain"],
+        )
+    check(
+        "baseline: shipped nodes on the abstract sample",
+        20.6,
+        bl["released_on_the_B_abstract_sample"]["mean_nodes"],
+    )
+    check(
+        "baseline: shipped chain yield on the unconditioned sample",
+        15.0,
+        bl["released_on_the_U_unconditioned_sample"][
+            "pct_of_attempted_yielding_a_chain"
+        ],
+        note="identical to the re-run's 15.0% on the same 20 documents, and on the same "
+        "three of them; with n=3 chain-yielding it bounds the corpus rate only",
+    )
+    for arm, risks in [("B_abstract", 18.8), ("C_gpt41", 19.5), ("D_triples", 5.2)]:
+        check(
+            f"baseline {arm}: released risks recovered pct",
+            risks,
+            bl[arm]["endpoint_recovery_pct"]["released_risks_found"],
+        )
+    check(
+        "baseline: endpoint-recovery ceiling",
+        46.5,
+        bl["D_triples"]["endpoint_recovery_pct"]["ceiling_from_issue_168"],
+        note="what an o3 re-run recovers of its own shipped output; the flat-triple arm is "
+        "read against this, never against 100%",
+    )
+    check(
+        "baseline C: all-five share",
+        40.0,
+        bl["C_gpt41"]["pct_chains_all_five"],
+    )
+    check(
+        "baseline U: all-five share",
+        88.9,
+        bl["U_unconditioned"]["pct_chains_all_five"],
+    )
+    check("baseline B: all-five share", 100.0, bl["B_abstract"]["pct_chains_all_five"])
+
+    # ---- the collapse applied to the cross-model arms (#168 follow-up) ---------------
+    # NB: not `raw`/`ded` -- those name the path_block dicts this function already holds.
+    for arm, n_raw, n_coll in [
+        ("A_o3", 0.5, 0.5),
+        ("B_gpt5", 6, 2),
+        ("C_opus5", 594, 4),
+    ]:
+        check(
+            f"density {arm}: median chains before the collapse",
+            n_raw,
+            cd[arm]["median"]["chains_undirected_raw"],
+        )
+        check(
+            f"density {arm}: median chains after the collapse",
+            n_coll,
+            cd[arm]["median"]["chains_undirected_collapsed"],
+            note="the reporting unit; raw enumeration is not what the paper counts",
+        )
+    check(
+        "density: worst document after the collapse",
+        44,
+        cd["C_opus5"]["worst_document"]["chains_undirected_collapsed"],
+        note="57,007 raw paths in one Opus graph reduce to 44 kept chains",
+    )
+    check(
+        "density: Opus median under directed traversal",
+        23,
+        cd["C_opus5"]["median"]["chains_directed_raw"],
+        note="honouring stored edge direction also tames it, but the released enumerator "
+        "is undirected, so the collapse is the reduction that applies",
+    )
+
+    # ---- second judge run on the chain-yielding population (S2, issue #172) ----------
+    s2 = receipt("experiment_review_judge_chainyielding_report.json")
+    check("S2: requests", 100, s2["n_requests"])
+    check("S2: parseable reports", 97, s2["n_parsed"])
+    check(
+        "S2: papers with an added node",
+        95,
+        s2["node_level"]["papers_with_an_added_node"],
+    )
+    check("S2: added nodes", 557, s2["node_level"]["added_nodes"])
+    check(
+        "S2: nodes in those extractions",
+        2110,
+        s2["extraction_size_over_parsed"]["nodes"],
+    )
+    check(
+        "S2: node-level omission pct",
+        26.4,
+        s2["node_level"]["pct_of_nodes"],
+        note="against 0.6% on the corpus-sampled run; confounded by document length and by "
+        "extractions rebuilt without rationale fields, and the paper says so",
+    )
+    check("S2: coverage rows", 627, s2["edge_level"]["coverage_rows"])
+    check("S2: coverage rows marked missing", 476, s2["edge_level"]["missing"])
+    check(
+        "S2: edges in those extractions",
+        2192,
+        s2["extraction_size_over_parsed"]["edges"],
+    )
+    check("S2: edge-level omission pct", 21.7, s2["edge_level"]["pct_of_edges"])
+
     # ---- extraction-failure recovery, now printed in the body (C6) -------------------
     rec = receipt("experiment_judge_full_report.json")["item3_recovery"][
         "population_A_extraction_error_candidates"
