@@ -116,10 +116,18 @@ def main():
     }
 
     edges = pickle.load(open(EDGES, "rb"))
-    # Hop-wise enumeration walks structural edges without regard to direction: 94.1% of the
-    # hops in the released path file match an edge (source -> target) and 100% match one
-    # (source, target) unordered, so pairs are keyed unordered here. Keying them directed
-    # would report every reversed hop as an edge the graph does not contain.
+    # Hop-wise enumeration walks structural edges without regard to direction: 100% of the
+    # hops in both released path files match an edge as an unordered (source, target) pair,
+    # so pairs are keyed unordered here. Keying them directed would report every reversed hop
+    # as an edge the graph does not contain.
+    # CORRECTED 2026-08-17. This comment used to say 94.1% of hops match a DIRECTED
+    # source -> target edge. That figure is not reproducible and must not be cited -- it also
+    # reached the body of GitHub issue #157. experiment_review_chain_order_semantics.py
+    # measures the quantity properly and the manuscript now quotes it at instance level:
+    # 92.1% of the raw set's 62,923 hops and 95.5% of the reporting unit's 17,829 are stored
+    # in the direction the chain walks them. The nearest figure to 94.1% is 94.6%, which is
+    # the same measure over DISTINCT hop pairs of the raw file rather than hop instances;
+    # if that is what 94.1% was, it was measuring pairs and reporting them as hops.
     subtypes_of_pair = defaultdict(set)
     for e in edges:
         if e.get("type") != "EDGE":
