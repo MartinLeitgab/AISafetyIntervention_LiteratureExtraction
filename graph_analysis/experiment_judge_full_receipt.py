@@ -688,12 +688,17 @@ def main():
     graders = {
         "claude-opus-4-5": opus,
         "gemini-3-pro": gemini,
-        "third_grader_gpt-5.1": third,
+        # The third grader's directory name carries no model, and its 195 evaluation
+        # files record file / source_type / original_url / the pre and post scores /
+        # two verdicts and nothing else. "gpt-5.1" was an assumption written into this
+        # key and then read back out of the receipt as though it were data, which is how
+        # it reached the manuscript. Do not name a model here without a file that says so.
+        "third_grader_model_not_recorded": third,
     }
     grader_diags = {
         "claude-opus-4-5": opus_diag,
         "gemini-3-pro": gemini_diag,
-        "third_grader_gpt-5.1": third_diag,
+        "third_grader_model_not_recorded": third_diag,
     }
 
     out = {
