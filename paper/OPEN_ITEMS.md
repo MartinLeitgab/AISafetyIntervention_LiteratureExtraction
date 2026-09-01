@@ -86,6 +86,27 @@ extractors; the driver is mean degree crossing 2, not extraction quality.
 🔴 **The evidence program is complete.** What remains needs a person (S4 human anchor, S9
 relevance labels) or a decision (venue, release URL, authorship, and the page cut).
 
+## 🔴 MEASURED BUT NOT IN THE MANUSCRIPT — check this list before writing any new number
+
+Everything below is committed, receipted and ticketed, and **none of it appears in
+`paperA_altstyle.tex`.** That is a live decision in each case, not an oversight, and each row
+says what would have to be true first. A future session must not quote any of these numbers
+into the paper on the strength of the receipt alone.
+
+| Finding | Where | Why it is not in the paper |
+|---|---|---|
+| **52.0%** of 200 reporting-unit chains judged not a fair summary of an argument their source makes; **16.5%** carry a risk framing the judge could not quote | #175 / PR #177 | One model's opinion. It over-flags (8 of 200 correctly-paired chains called a different document) and should also under-detect, sharing the extractor's priors. Needs #176 |
+| **17.8 pp** gate discrimination: 52.0% against 69.8% on gate-rejected chains | #175 / PR #177 | Same instrument. This is the half most likely to survive #176, and the half a reviewer would find most useful, but it rests on the same unadjudicated verdicts |
+| All 33 invented risk framings **cleared the confidence gate** (27 at exactly 3), and neither gate discriminates on that failure mode (16.5% against 15.6%) | #175 / PR #177 | Depends on the 52% verdicts being real. If #176 overturns them this row dissolves |
+| Blind re-labelling of 66 first hops: is the confidence label reproducible, or does the rubric not discriminate? | #178 | Running. Whatever it says, it is one model applying a rubric to a task shape it was not written for |
+| Human adjudication of 30 chains, stratified by #175's reason codes | #176 | Not started. This is the arm that would license any of the above |
+
+**What IS in the paper from this line of work:** one row of `tab:gates` — the asymmetric
+first-hop $\geq 4$ cut at 1,148 chains and 7.2% yield. It is there as a **price**, with the
+caption and the source comment both stating that the threshold was chosen on the sample that
+measured it and that nothing claims the surviving chains are more faithful. Do not add the
+benefit side without #176.
+
 🔴 **The Claude Code CLI is NOT a free execution path, and every note in this file that
 said so was wrong (corrected 2026-08-16 PM).** `claude -p` bills the interactive session's
 usage allowance, which is shared with everything else this project does and is exhaustible.
