@@ -37,6 +37,55 @@ genuinely cheap, and it is the right purchase only if the team later decides to 
 chain analysis from demonstration to finding. **Do not run it to pre-empt a reviewer
 objection the framing already answers.**
 
+## 🔴 UNIT DOCTRINE, set 2026-08-26. Read this before quoting any quality number.
+
+**The unit of this paper is the CHAIN.** Every quality, fidelity and stability number must
+count chains — or say plainly that it does not. A concept added mid-argument does not change
+which risk reaches which intervention, so a node count is not an omission rate for the
+artifact, and printing one invites a reviewer to price the contribution on a measurement of
+something else.
+
+Node counts are fine where the claim is about nodes: the artifact inventory (200,525 nodes,
+subtype counts, release hygiene), the stage-vocabulary evidence (98.8% probe, kappa 0.84 —
+those ARE claims about node attributes), the merge/centrality/clustering use cases (whose
+entire point is that node-level analysis distorts), and the edge-orientation finding. Leave
+them.
+
+**What was wrong and is now fixed** (manuscript `9583f77`, `a52e32c`, `bfd8789`): the
+abstract printed five omission rates and "we report them all and reconcile none"; the
+Conclusion repeated it; `sec:r-judge`'s three-measurement summary never said what the rates
+were a rate *of*; Limitations' "reads worse, not better" drew a chain verdict from node
+counts; the re-run paragraph's 46.5% read as pipeline stability when it measures name
+strings; and both loss paragraphs led with node figures (6.1%, 78.3%) ahead of the
+argument-level ones (18.0%, 28.0%).
+
+**Two receipts underwrite the doctrine.** `experiment_review_omission_is_chain_level.py`:
+the flagged omissions are NOT inert — 91.5% name a node the extraction lacks, matcher
+validated by its 95.1/43.0/8.5% resolution gradient. `experiment_review_omission_chain_
+impact.py`: granting all 270 flagged relationships makes **1 new risk-to-intervention pair
+reachable out of 86 available** (1.2% of headroom). 🔴 Headroom is the denominator — 86 of
+the 100 papers are a single connected component, so quoting against the 408 reachable pairs
+reports a ceiling as a finding. The claim audit fails if anyone does.
+
+**All three chain-level studies are DONE. Closed record with every trap:
+`paper/FINDINGS_2026-08-26_chain_unit.md`.** Read that before re-deriving any of it.
+
+1. ✅ **Is a dropped path a distinct argument?** (R22/R23) — #182 / PR #185. 50.8% of 118
+   drops different, 40 of those 60 by endpoint, null arm 15/15. Report as a hierarchy:
+   **18.0%** (579 of 3,222 distinct pairs) is the headline; 33.9% and 50.8% are shares of
+   sampled drops and are NOT competing estimates.
+2. ✅ **Chain recall** — #181 / PR #184. Gate-free 69.9% carried / 10.6% material,
+   sensitivity 9/20. Gated 32.9% carried, **which is selection and not loss**: 471 of 597
+   graph-present pairs (79%) are gated out, so the document was extracted and the chain
+   scored below a gate.
+3. ⛔ **Does a re-run produce the same PAIR? DROPPED 2026-08-26**, and not for cost. The
+   reporting unit keeps 1.30 of ~6.15 candidate pairs per document, so which chain survives
+   turns on a narrow scoring margin and a re-run flipping membership is expected gate
+   behaviour — already reported as 9 of 18. The question it proxied for is answered better
+   by the recall study. Do not revive it without a new reason.
+4. ⛔ **Retrieval** (R28/S9) — still skipped, and now lower value: the substrate is known to
+   be selective by design, so a retrieval evaluation would measure that selection first.
+
 What still follows from the framing, for a session working the list:
 - Any sentence treating a chain-set descriptive as a finding about the literature must be
   re-read against it. 87.4% completeness, the maturity profile and the one-in-six yield are
@@ -51,8 +100,10 @@ Worked top to bottom on **2026-08-16 PM**. Each row names the issue, the PR, wha
 and where it landed in `paperA_altstyle.tex`. Rules that govern all of it: `git pull
 --ff-only` the manuscript repo **before you Read**, push the same session, keep the `.tex`
 pure ASCII, and after any manuscript edit run `asciify_tex.py` → `texlint.py` →
-`graph_analysis/experiment_paper_claim_audit.py` (**302/302** on the tip branch; if a number leaves the manuscript, delete its `check(...)` line, and if one arrives,
-add one). Every study gets a GitHub issue and a PR.
+`graph_analysis/experiment_paper_claim_audit.py` (**re-run it; do not quote a count from
+this file** -- see the verification-loop row of "Where everything lives". If a number leaves
+the manuscript, delete its `check(...)` line, and if one arrives, add one). Every study gets
+a GitHub issue and a PR.
 
 | | Item | State | Issue / PR | Landed in the manuscript |
 |---|---|---|---|---|
@@ -70,6 +121,7 @@ add one). Every study gets a GitHub issue and a PR.
 | + | What a chain count is a function of | ✅ done | #168 follow-up | `sec:limitations` |
 | + | Chain order + edge orientation: does an undirected enumerator yield a directed argument? | ✅ done | #173 / PR #174 | `sec:m-paths`, `tab:cuts` |
 | + | Third review round (3 models x 2 bars) + the cut list built from it | ✅ done | PR #174 | nine `\CUTNOTE{}` scaffold blocks; `paper/section_cut_list.md` |
+| + | The four unsupported claims the third round rejected, and the audit-count drift | ✅ done 2026-08-26 | manuscript `7d5e1d6` | `sec:r-judge` no longer reads "a direction and a floor" off a three-way-confounded comparison; the "document-level resources **cannot** serve this query" absolute is a representation claim in all three places it appears (`sec:intro`, `sec:r-retrieval`, `sec:conclusion`); the audit count is re-run, not quoted |
 
 🔴 **S2 changed a claim rather than confirming one.** Node-level omission on the
 chain-yielding population is **26.4%** against the corpus-sampled run's 0.6%, edge-level
@@ -98,8 +150,33 @@ into the paper on the strength of the receipt alone.
 | **52.0%** of 200 reporting-unit chains judged not a fair summary of an argument their source makes; **16.5%** carry a risk framing the judge could not quote | #175 / PR #177 | One model's opinion. It over-flags (8 of 200 correctly-paired chains called a different document) and should also under-detect, sharing the extractor's priors. Needs #176 |
 | **17.8 pp** gate discrimination: 52.0% against 69.8% on gate-rejected chains | #175 / PR #177 | Same instrument. This is the half most likely to survive #176, and the half a reviewer would find most useful, but it rests on the same unadjudicated verdicts |
 | All 33 invented risk framings **cleared the confidence gate** (27 at exactly 3), and neither gate discriminates on that failure mode (16.5% against 15.6%) | #175 / PR #177 | Depends on the 52% verdicts being real. If #176 overturns them this row dissolves |
-| Blind re-labelling of 66 first hops: is the confidence label reproducible, or does the rubric not discriminate? | #178 | Running. Whatever it says, it is one model applying a rubric to a task shape it was not written for |
-| Human adjudication of 30 chains, stratified by #175's reason codes | #176 | Not started. This is the arm that would license any of the above |
+| Blind re-labelling of 66 first hops: **the label discriminates (24.2% vs 78.8% on "does the document assert this link") but its level is unusable** — a second annotator puts 60.6% of *faithful* links below the gate too | #178 / PR #179 | One model applying a rubric to a task shape it was not written for, and the same model family as #175, so this is consistency rather than correctness. It also carries a design lesson worth more than the numbers: ask the binary question, not the five-point scale |
+| **Collapse adjudication: 50.8% of drops judged a different argument; 33.9% change an ENDPOINT; null arm 15/15** | #182 / PR #185 | One model. Report as a hierarchy strictest-first — 18.0% (pair in no kept chain, already in the paper) then 33.9% (endpoints differ from the container) then 50.8% (plus same-endpoint re-routings). Do NOT headline 50.8%: a third of it is a different mechanism between the same two endpoints, which is a loss only if mechanism is the unit |
+| **Chain-level recall: 10.6% of arguments materially uncaptured, 23.6% corrected, sensitivity 0.45 [0.26, 0.66]** | #181 / PR #184 | 🔴 **Gate-FREE baseline**, so it measures whether the PIPELINE captured the argument, not whether the 2,772 reporting unit carries it. The gated version is a different and larger number and has not been run. Quote the sensitivity beside the rate or neither |
+| Human adjudication of 30 chains, stratified by #175's reason codes | #176 | **Packet rebuilt and pre-registered 2026-08-26 (`7e0be0e`); annotation not started.** This is the arm that would license any of the above |
+
+🔴 **#176 is ready to annotate, and three things about it were settled 2026-08-26.**
+Commit `7e0be0e` on `study/confidence-relabel`. Start at
+`graph_analysis/phase2_results/human_review_packet/README.md`.
+- **It returns a population rate, and only because of how #175 was sampled.** #175's real
+  arm is 200 chains stratified by URL host *proportional* to the reporting unit, so its
+  reason-code shares are population estimates. The 30 human cells sit inside those codes
+  and post-stratify back up. The strata were rebuilt to make this work: `intermediate_
+  unsupported` went 0 -> 3 (it was 7.5% of the unit and blind) and the gate-rejected arm
+  1 -> 6, paid for by `risk_framing_invented_both_agree` 6 -> 3 and the known judge false
+  positives 2 -> 1. Arm-A coverage is now **100.0%**, up from 92.5%.
+- **The estimand is pre-registered.** `experiment_review_human_adjudication.py` was written
+  before annotation on purpose, because a reason-code-stratified sample supports several
+  different rates. Do not quote the pooled rate over the 30 (it runs high by construction),
+  do not renormalise the weighted shares to 1.0, and do not print a human-anchored 17.8 pp
+  — arm B carries six observations and is directional only.
+- **One annotator, so R11 stays open.** No inter-annotator figure will exist. The eight
+  double-coded rows still ship in case someone is found. Re-judging one's own rows is
+  test-retest, not agreement, and must not be reported as agreement.
+- **What #176 does NOT close**, so nothing here gets over-sold: recall and omission (R10,
+  R16 — the 0.6% vs 28.8% discrepancy is untouched, since the packet only shows chains that
+  *were* emitted), maturity labels, the 70% collapse (R22/R23), non-chain-yielding
+  documents, retrieval relevance (R28).
 
 **What IS in the paper from this line of work:** one row of `tab:gates` — the asymmetric
 first-hop $\geq 4$ cut at 1,148 chains and 7.2% yield. It is there as a **price**, with the
@@ -233,8 +310,8 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
 | External three-model round | `reviews_2026-08-15/` — six `.md` + six `.meta.json` | Usage, wall-clock and stop reason per job in the meta files |
 | Re-running that round | `review_multi_model.py` (`--smoke` first) | Verified model IDs `claude-opus-5`, `gpt-5.6-sol`, `models/gemini-3.1-pro-preview` (there is no non-preview `gemini-3.1-pro`). Keys read from three different projects' `.env` files; paths are constants at the top of the script. Actual cost of the full six-job run: **$2.53**, 2.5 min wall-clock, nothing near the 64k output cap. **This repo is public**, so the two machine-specific paths are environment-supplied and fail fast if unset — export `REVIEW_PAPER_PDF` (the compiled PDF) and `REVIEW_ANTHROPIC_ENV` (the `.env` holding `ANTHROPIC_API_KEY`) before running. The OpenAI and Gemini key files are repo-relative |
-| Open PRs from this work, stacked | #158 (edge coverage, #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair, #163) -> **#169 (schema ablation, #165) -> #167 (artifact comparison, #166) -> the #168 PR (multi-model), pending** | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main`. The three newest were merged forward on 2026-08-16 so the tip carries every check; the audit reads 285/285 there |
-| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` | Expect **285/285** on the tip branch (2026-08-16, after the ablation and the artifact comparison). Counts differ per branch in the stack: 273 on `study/schema-ablation`, 269 with S12 alone. The stale 42/42 and 235/235 references are fixed |
+| Open PRs from this work, stacked | #158 (edge coverage, #156) -> #159 (substrate audits, #157) -> #160 (audit re-point) -> #162 (stage agreement, #161) -> #164 (null-repair, #163) -> **#169 (schema ablation, #165) -> #167 (artifact comparison, #166) -> the #168 PR (multi-model), pending** | Each branches off the previous, so **merging a later one merges the earlier ones**. Review in number order. All target `experiment/extraction-cost` -> `paper/receipts-clean` (#151) -> `main`. The three newest were merged forward on 2026-08-16 so the tip carries every check; re-run the audit to see the count there |
+| Verification loop after any manuscript edit | `asciify_tex.py` → `texlint.py` → `graph_analysis/experiment_paper_claim_audit.py` (then `experiment_paper_finding_coverage.py`, which greps the rendered text for retired phrasings) | 🔴 **Re-run the audit and read what it prints; never carry its count forward by hand.** It read **385/385 PASS, 0 FAIL** on `study/confidence-relabel` on 2026-08-26, and it differs per branch in the stack. This row said 285 and the runbook said 302 while the manuscript comments said 257 and `paper/REPRODUCE.md` said 257 — four figures, one true value, and the same failure the 42/42 sweep was supposed to end. The canonical home of the number is `REPRODUCE.md` **in the manuscript repo**; it now says re-run rather than quote, and nothing else should print a count at all |
 
 ## 🔴 Locked decisions — do not revert
 
@@ -852,7 +929,7 @@ load-bearing claim":
 | ~~`app:clusters` 40-cluster name list~~ **CUT 2026-08-16** | 2/3 | done: size range plus four examples; the full list ships with the release, which also closed one `\OPEN{}` block |
 | `sec:m-recovery` + the 441-row of `tab:populations-master` | 2/3 | **partly done**: the number is printed (C6) rather than the section cut. Cutting to one clause is still available if the page budget needs it |
 | ~~Meta-grader agent-session operational detail~~ **CUT 2026-08-16** | 1/3 | done: the consequence for the denominators is kept, the JSON-shape counts are gone |
-| ~~The "218 of 218 numeric claims" audit narrative~~ **CUT 2026-08-16** | 1/3 | done: the body prints no count; the audit is at 235/235 and says so only in source comments and `REPRODUCE.md` |
+| ~~The "218 of 218 numeric claims" audit narrative~~ **CUT 2026-08-16** | 1/3 | done: the body prints no count; the audit figure survives only in source comments and `REPRODUCE.md`, and is re-run rather than quoted |
 
 **Explicitly keep**, named by every model that raised the topic: the merge/centrality
 artifact (`sec:r-hub`), `tab:gates`, `tab:populations-master`, the source-type skew table,
@@ -904,7 +981,25 @@ registered — only things that change the paper.
 | R20 | The repair schema had no add-edge slot — state that as the explanation rather than leaving it implicit | GC | S10 |
 | R21 | Both gates (edge confidence, intervention maturity) are unvalidated model self-assessments; sensitivity is not validation | all 6 | S4, D3 |
 | R22 | The 70% containment rule ignores edge identity, order and semantics; no annotation study shows retained paths are distinct arguments | GC GW | **NEW** |
-| R23 | Validate the gates and the collapse rule on a small hand-checked sample | GW | **NEW** |
+| R23 | Validate the gates and the collapse rule on a small hand-checked sample | GW | **NEW** — **ADDRESSED 2026-08-26**: `experiment_review_collapse_adjudication.py`, 120 displaced (kept, dropped) pairs + 15 mismatched-document nulls, batch `msgbatch_01SRNWJKUcan5ukvuQoRHiE7`, USD 3.83. Judge rather than hand, and the null arm is what makes it readable |
+
+🔴 **The register missed the sharpest methodological comment in the external round, and it
+sat unregistered for eleven days.** The rows below are from the **2026-08-17** round; the
+register was built on 2026-08-15 and only the *cut list* was re-swept afterwards, so the
+newer round's evidence comments were never entered. GPT-5.6 Sol gave the paper its lowest
+scores and attached an explicit score impact to this one: *"a corrected analysis would
+improve Quality and Clarity. Retaining the current interpretation would reinforce my
+borderline-reject assessment."* Four of its five instructions were in fact already
+satisfied; two were not, and one of those needed a study nobody had scoped.
+
+| # | Comment | Src | Status |
+|---|---|---|---|
+| R23a | "The current 0.6%, 18.1%, 28.8%, 26.4% and 21.7% quantities divide proposed missing items by the size of an existing graph, even though **the numerator and denominator are produced by different instruments**" — stop calling them omission rates unless a common universe is defined | GC GW | **PARTLY DONE 2026-08-26.** The prose caveats landed (`9583f77`, `a52e32c`); `tab:omission` still carries the word *omission* in its name and the section heading still says "Three omission measurements". Rename both, or say once in the caption what the table is a table of |
+| R23b | **"Distinguish additions per extracted item from recall"** | GC GW | **THE STUDY THAT DID NOT EXIST.** Prose now says the rates bound material and not arguments. The measurement is `experiment_review_chain_recall.py`, batch `msgbatch_01S117PieDEXocGorph6d5RB`, 127 documents, USD 3.22, with a 20-document ablation arm giving it a measured sensitivity |
+| R23c | "'The three sort by instrument rather than by unit.' **Opaque.** Explicitly define the numerator, denominator, and instrument" | GC | ✅ **DONE 2026-08-26**, manuscript `b11f7ca` |
+| R23d | Explain why the second judge run marks 95 of 97 documents for node additions | GC | ✅ already done — `sec:r-judge` names document length and the rationale-field-free rebuild, and says the comparison bounds nothing |
+| R23e | Avoid describing any quantity as an upper bound, lower bound, direction or floor without assumptions that justify it | GC GW | ✅ already done — the paper explicitly disavows a floor and a direction for the two-run comparison |
+| R23f | "The expected-list statuses sum to 776, although the paper says there are 777 rows" | GW | ✅ **reviewer error, no change.** There is a fourth status: one row the judge marked covered only in the abstract. 328 + 146 + 302 + 1 = 777, and `sec:r-judge` already names it. The audit checks the sum |
 | R24 | Report sensitivity of the substantive retrieval examples to the gates, not only aggregate counts | GW | **NEW** |
 | R25 **CLOSED** | Stage probe is circular — one call wrote both text and label; TF-IDF on the name alone reaches 69.4% | OC OW GC GW | S3 done: kappa 0.838 across providers |
 | R26 | No baseline: flat triples, abstract-only, non-reasoning model, sentence-level argument mining, retrieval over chunks | all 6 | S6 |
