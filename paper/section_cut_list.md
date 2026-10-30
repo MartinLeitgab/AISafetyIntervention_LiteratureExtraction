@@ -104,9 +104,9 @@ Union of the six "would refuse" lists, with the score each reviewer attached:
 None of these is a length item, and three of them are cheap. Ranked by what a reviewer does
 with them.
 
-🔴 **Items 1-4 are DONE; verified against the manuscript 2026-08-27, and this list said they
-were open for ten days after they landed.** They are kept below with their disposition
-because the reasoning still governs the text that closed them.
+🔴 **Items 1-4, 6 and 7 are DONE; verified against the manuscript 2026-08-28, and this list
+said 1-4 were open for ten days and 6-7 for one day after they landed.** They are kept below
+with their disposition because the reasoning still governs the text that closed them.
 
 1. ✅ **DONE.** *Stage order is not enforced and traversal is undirected, so a "chain" may not
    be a directed argument* (GC, GW; both score-moving, GC says a bad result would take it
@@ -137,20 +137,33 @@ because the reasoning still governs the text that closed them.
    restated at n=50 and on precision rather than omission — and unlike the S4 design it does
    not need the annotator to reproduce a chain, only to judge one, which is minutes rather
    than three hours per paper. **Worth reopening the S4 decision for this one variant.**
-6. **"122.4M input tokens" is called measured and is reconstructed** (GW): logs did not
-   survive, retries and failed records are excluded, visible output is calibrated from one
-   response. The manuscript says all of this in `sec:m-repro`; the abstract does not. Retitle
-   as a reconstructed nominal estimate in the abstract.
-7. **"Scalable" in the title is established for extraction only** (GC): the judge ran at
-   sample scale, similarity construction can be quadratic, and the paper's own #168 follow-up
-   shows path enumeration exploding with mean degree. Either scope the claim or measure the
-   other three stages.
+6. ✅ **DONE 2026-08-27, verified in the manuscript 2026-08-28.** *"122.4M input tokens" is
+   called measured and is reconstructed* (GW): logs did not survive, retries and failed
+   records are excluded, visible output is calibrated from one response. The abstract now
+   reads "more than 120M input tokens" and argues in place why that is a genuine lower bound
+   — the input side is exact arithmetic over recovered artifacts, and the two exclusions both
+   push the true figure up. `sec:m-repro` keeps the exact 122.4M with the reconstruction
+   stated in full, and the claim audit still checks it against its receipt.
+7. ✅ **DONE 2026-08-27, verified in the manuscript 2026-08-28.** *"Scalable" in the title is
+   established for extraction only* (GC): the judge ran at sample scale, similarity
+   construction can be quadratic, and the paper's own #168 follow-up shows path enumeration
+   exploding with mean degree. Scoped rather than dropped — `sec:m-repro` now carries a "What
+   scales, and what does not" paragraph naming extraction and storage as the two linear
+   stages and disclaiming the other three, and the title already says "for Extracting". It
+   introduces no new number, so the audit is unaffected.
 
-Items 1, 2, 3 and 4 are closed (2026-08-27). **What is left is 5, 6 and 7**: item 6 is a
-one-word abstract correction, item 7 is a title-scope decision, and item 5 is the only one
-needing a person — and it is the one the #176 packet now partly answers, since that packet's
-`verdict` field is precisely "would an author call this chain spurious", asked of 30 chains
-rather than the 50 the reviewer wanted.
+Items 1, 2, 3, 4, 6 and 7 are closed (items 6 and 7 on 2026-08-27; this list said they were
+open for a day after they landed, the same lag that left items 1-4 stale for ten). **What is
+left is item 5 alone**, the only one needing a person — and it is the one the #176 packet
+partly answers, since that packet's `verdict` field is precisely "would an author call this
+chain spurious", asked of **20** chains rather than the 50 the reviewer wanted -- cut from 30
+on 2026-08-30 for annotator time, at no cost to population coverage. That annotation is under
+way: 3 verdicts written as of 2026-08-28, state in
+`graph_analysis/phase2_results/human_review_packet/verdict_sheet.csv`, run record
+`paper/FINDINGS_176_human_adjudication.md`. Nothing from it may be quoted yet. 🔴 Note the
+size gap is not new and the cut does not widen it in kind: this reviewer asked for 50 and the
+packet was already 30, so the answer to "why so few" is the design -- stratified with 100%
+population coverage and post-stratified back to the reporting unit -- and not the count.
 
 ## Style, restated because it is now unanimous
 

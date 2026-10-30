@@ -1428,6 +1428,38 @@ def main():
         seven["baseline_uniform_chance_accuracy"],
     )
 
+    # ---- lifecycle label leakage into intervention names (sec:r-stages) --------------
+    # Added 2026-09-01 with the sentence it guards. The control rate is checked as well as
+    # the headline: without it the 38.0% says nothing, since names mention deployment and
+    # training for ordinary reasons.
+    absorb = receipt("experiment_review_lifecycle_name_absorption_report.json")
+    check(
+        "lifecycle leakage: own label in the intervention name",
+        38.0,
+        absorb["pooled"]["own_label_in_name_pct"],
+    )
+    check(
+        "lifecycle leakage: other-label control",
+        2.5,
+        absorb["pooled"]["other_label_in_name_pct"],
+    )
+    check(
+        "lifecycle leakage: intervention nodes measured",
+        28889,
+        absorb["pooled"]["n_interventions"],
+    )
+    stage2 = absorb["packet_stage_2"]
+    check(
+        "lifecycle leakage: names traced to a searchable source",
+        7,
+        stage2["n_testable_source_at_least_10k_chars"],
+    )
+    check(
+        "lifecycle leakage: of those, marker absent from the source",
+        7,
+        stage2["n_whose_marker_is_absent_from_the_source"],
+    )
+
     # ---- race framing across centrality tiers (app:race) ----------------------------
     rr = json.loads(
         (ROOT / "phase2_results/experiment_race_top100_rederive_report.json").read_text(
