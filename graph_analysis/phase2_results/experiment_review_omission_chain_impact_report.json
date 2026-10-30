@@ -1,0 +1,33 @@
+{
+ "experiment": "chain-level impact of granting the judge every omission it flagged",
+ "question": "A chain is a connected risk-to-intervention argument. If every relationship the judge marked missing were added, how many risk-intervention pairs would become reachable that were not reachable before?",
+ "method": "Per audited paper: released subgraph, undirected, EDGE-type only. Add every `missing` coverage row as an edge, inventing a placeholder node for any endpoint the extraction lacks. Compare reachable (risk, intervention) pairs before and after. Reachability ignores the first-hop rule, the hop floor and ceiling and both gates, all of which can only remove pairs -- so new_pairs is an UPPER BOUND on new chains.",
+ "papers": 100,
+ "missing_edges_granted": 270,
+ "placeholder_nodes_invented": 307,
+ "risk_intervention_pairs": {
+  "possible": 494,
+  "before": 408,
+  "after": 409,
+  "new": 1,
+  "new_as_pct_of_before": 0.2
+ },
+ "headroom": {
+  "why": "Most audited papers extract as ONE connected component, so every risk in them already reaches every intervention and no added edge CAN create a pair. Reading new pairs against `before` would report that ceiling as a finding. Headroom is the number of pairs structurally available to gain.",
+  "pairs_unreachable_before": 86,
+  "papers_with_any_headroom": 14,
+  "saturation_pct": 82.6,
+  "new_as_pct_of_headroom": 1.2,
+  "READ_THIS_ONE": "new_as_pct_of_headroom is the honest figure. The raw share of `before` is ceiling-inflated and must not be quoted on its own."
+ },
+ "papers_with_at_least_one_new_pair": 1,
+ "papers_with_a_new_pair_pct": 1.0,
+ "papers_with_new_detail": [
+  {
+   "paper": "alignmentforum__f902c839536a971c8822284b5db37489.json",
+   "new_pairs": 1
+  }
+ ],
+ "WHAT_THIS_CANNOT_SHOW": "A missing relationship whose absent endpoint IS a risk or an intervention would add an endpoint, not just a bridge, and this test cannot see it: 98.7% of the absent names carry no category marker, so placeholders are typed `unknown` and can only bridge. Settling that needs a judge re-run with a typed add-node slot, or the human packet's chain_recall_missed field. Read this result as: the flagged omissions do not RE-WIRE the chain set among the endpoints the extraction already found.",
+ "LIMITS": "Every input row is the judge's unadjudicated opinion, granted here without checking. Node-name resolution is the fuzzy matcher validated in experiment_review_omission_is_chain_level.py (95.1/43.0/8.5% resolution on covered/partial/missing rows)."
+}

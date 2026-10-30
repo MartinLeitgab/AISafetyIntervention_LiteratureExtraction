@@ -1,0 +1,653 @@
+#!/usr/bin/env python3
+"""Analyze the #176 human adjudication packet. PRE-REGISTERED: written before annotation.
+
+This script exists BEFORE the verdict sheet is filled in, and that is the point. The packet
+chains are a reason-code-stratified sample, not a random one, so several different rates
+can be computed from the same verdicts and only one of them is the estimand. Fixing which
+one now removes the freedom to pick the flattering rate later.
+
+SCOPE CUT 2026-08-30, and it does NOT touch the estimand. The packet was built with 30
+chains; 10 were dropped for annotator time, leaving 20. Three chains were judged when that
+decision was taken and none was a defect, so no verdict motivated it. The dropped ids are
+listed in DROPPED below, their rows stay in the sheet unfilled, and the estimator, the
+weights and the strata are all unchanged -- arm-A population coverage is still 100.0%,
+because coverage depends on which strata hold a chain and not on how many sit in each.
+Priced in experiment_review_packet_resize_assessment.py. The one real cost is the ceiling
+a zero `unsupported` count can claim: 11.4% at 30, 16.1% at 20.
+
+SECOND SCOPE CUT 2026-10-29, 20 -> 10, again for annotator time and again leaving the
+estimand untouched. Six chains were judged when it was taken (C01-C06: 2 faithful, 4
+inferred_but_reasonable, 0 unsupported), so -- unlike the first cut -- it was taken after a
+run of favorable verdicts, and the write-up must say so. What guards against stopping on
+good news: the four chains kept are exactly one per arm-A stratum not yet covered, chosen
+by lowest packet id within the stratum, and those strata are the ones #175's judge flagged
+(invented risk framing, model disagreement, unsupported intermediate, known judge false
+positive), i.e. the chains most likely to produce an `unsupported`. Arm-A coverage stays
+100.0%. Costs: the zero-count ceiling goes 16.1% -> 27.8% (Wilson, n=10); every arm-A cell
+holds 1-2 chains; arm B keeps only gate_rejected_faithful (2 chains); and the recall arm
+is retired as a RATE -- C03 and C06 stay enumerated and are reported as cases.
+
+THE ESTIMAND, stated once
+    Post-stratified human chain precision on the 2,772-chain reporting unit: the share of
+    chains a domain reader judges `faithful`, `inferred_but_reasonable` or `unsupported`,
+    with each stratum's human cell reweighted by that stratum's share of the population.
+
+WHY REWEIGHTING IS LEGITIMATE HERE, and it is the whole reason a 20-chain sample can speak
+for 2,772: #175's real arm is 200 chains stratified by the URL host of the risk node,
+PROPORTIONAL to the chain set. Its reason-code shares are therefore population estimates,
+not sample quirks. The human cells sit inside those codes, so
+    rate = sum over strata of ( population share of stratum * human rate within stratum )
+is a standard post-stratified estimator. Take away the proportional stage-1 sample and
+this collapses into a rate for 20 hand-picked chains, which is worth nothing.
+
+WHAT THIS SCRIPT WILL NOT DO, listed so a future session does not add them
+  - No inter-annotator agreement. One annotator, decided 2026-08-26. Reviewer R11 stays
+    open and the write-up must say so. Do not compute agreement from the annotator
+    re-judging their own rows; that is test-retest, a different instrument.
+  - No corpus omission rate for NODES, and no reconciliation of the judge's numbers. R16
+    stays open. There are now TWO recall signals here and they are not interchangeable:
+      * `chain_recall_missed`, one field per chain, recording misses the annotator happened
+        to notice while judging. A FLOOR. Never a rate.
+      * the recall arm -- 8 of the 20 documents read exhaustively, every argument
+        enumerated, `recall_enumeration.csv`. That IS a rate, over DOCUMENTS, size-biased
+        1.19x toward chain-rich documents, and it does not combine with the chain-level
+        precision weights.
+    Neither may be set against the judge's 0.6% / 28.8% / 26.4% / 18.1% / 21.7%: those count
+    nodes and relationships, these count arguments, and presenting them together implies a
+    reconciliation that does not exist. See experiment_review_omission_is_chain_level.py and
+    experiment_review_omission_chain_impact.py for why the units differ.
+  - No maturity-label validation. Not asked in the rubric.
+  - No confidence interval that ignores the design. Cells are 1-7 chains; the binomial
+    interval on a cell of 3 is nearly the whole unit interval, and the reweighted interval
+    is reported by the same stratified formula, never by pooling the judged rows as if
+    they were a simple random sample.
+  - No human-anchored 17.8 pp. Arm B carries four observations after the cut (six before).
+    Directional only, and it was never allowed a pp figure at six either.
+
+Class B: no LLM call, no network, no API key.
+
+    cd graph_analysis
+    python -u experiment_review_human_adjudication.py            # dry run until filled in
+    python -u experiment_review_human_adjudication.py --strict    # crash on a partial sheet
+"""
+
+from __future__ import annotations
+
+import csv
+import json
+import math
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+HERE = Path(__file__).resolve().parent
+PACKET = HERE / "phase2_results" / "human_review_packet"
+SHEET = PACKET / "verdict_sheet.csv"
+SHEET2 = PACKET / "verdict_sheet_annotator2.csv"
+MANIFEST = PACKET / "manifest.json"
+RECALL = PACKET / "recall_enumeration.csv"
+PRECISION = HERE / "phase2_results" / "experiment_review_chain_precision_report.json"
+RELABEL = HERE / "phase2_results" / "confidence_relabel_raw" / "results.jsonl"
+OUT = HERE / "phase2_results" / "experiment_review_human_adjudication_report.json"
+
+VERDICTS = ("faithful", "inferred_but_reasonable", "unsupported")
+YESNO = ("yes", "no")
+LEVELS = ("0", "1", "2", "3")
+
+# Dropped 2026-08-30 when the packet was cut from 30 chains to 20 (see the module docstring).
+# Chosen by rule before any of them was read: retain every judged chain, keep at least one
+# chain in every stratum so coverage cannot fall, prefer recall-arm and double-coded chains
+# within a stratum, and take the surplus off the strata the build over-sampled relative to
+# their population weight. Their rows remain in the sheet and must stay blank.
+DROPPED_2026_08_30 = frozenset(
+    {"C08", "C10", "C11", "C14", "C17", "C19", "C21", "C22", "C25", "C26"}
+)
+# Dropped 2026-10-29, 20 -> 10 (see the module docstring). Rule: keep every judged chain,
+# then keep the lowest packet id in each arm-A stratum still uncovered (C12
+# intermediate_unsupported, C15 risk_framing_invented_both_agree, C24
+# model_disagreement_invented_but_link_asserted, C27 known_judge_false_positive); drop the
+# rest. Fixed before any of C07-C30 was read.
+DROPPED_2026_10_29 = frozenset(
+    {"C07", "C09", "C13", "C16", "C18", "C20", "C23", "C28", "C29", "C30"}
+)
+DROPPED = DROPPED_2026_08_30 | DROPPED_2026_10_29
+
+# Dropped from the RECALL arm only, 2026-09-03. C05 stays in the packet and keeps its
+# verdict; it is its exhaustive second pass that was dropped, for cost -- its source is
+# 86,655 characters, 5.9x the only document enumerated so far, and the annotator read it in
+# full only in the framing sections. An enumeration built from a partial read is not the
+# exhaustive pass the recall rate claims, so recording it would misdescribe the instrument.
+# Dropped for COST and not swapped: every recall-arm chain is already in the arm, so there is
+# nothing to swap in, and choosing a replacement by length would add a second size bias on
+# top of the arm's existing skew toward chain-rich documents.
+# C15 and C24 added 2026-10-29: with the second cut the arm could reach at most 4
+# documents, too few for a rate, so their exhaustive passes are not asked for. Their
+# verdicts and `chain_recall_missed` floors are still recorded.
+RECALL_DROPPED = frozenset({"C05", "C15", "C24"})
+
+LEVEL_FIELDS = (
+    "risk_inference_level",
+    "intervention_inference_level",
+    "body_inference_level",
+)
+
+# Which stage-1 reason code each packet stratum sits inside. Two strata split one code by
+# whether the second instrument (#179) agreed, so the split has to be named explicitly --
+# the stratum label alone does not carry it.
+STRATUM_TO_CODE = {
+    "intervention_not_proposed": ("intervention_not_proposed", None),
+    "faithful_both_agree": ("faithful", True),
+    "model_disagreement_faithful_but_link_not_asserted": ("faithful", False),
+    "risk_framing_invented_both_agree": ("risk_framing_invented", False),
+    "model_disagreement_invented_but_link_asserted": ("risk_framing_invented", True),
+    "intermediate_unsupported": ("intermediate_unsupported", None),
+    "known_judge_false_positive": ("chain_belongs_to_a_different_document", None),
+    "gate_rejected_intervention_not_proposed": ("intervention_not_proposed", None),
+    "gate_rejected_faithful": ("faithful", None),
+    "gate_rejected_invented": ("risk_framing_invented", None),
+}
+
+
+def die(msg: str) -> None:
+    raise SystemExit(
+        f"FATAL: {msg}\n\n"
+        f"  This script reads:\n"
+        f"    {SHEET}\n"
+        f"    {MANIFEST}\n"
+        f"    {PRECISION}\n"
+        f"    {RELABEL}\n"
+        f"  The packet is built by: python -u experiment_build_human_review_packet.py\n"
+        f"  This script does NOT build the packet, does NOT call an LLM, and does NOT\n"
+        f"  invent a verdict for an unfilled row."
+    )
+
+
+def load_json(p: Path) -> dict:
+    if not p.is_file():
+        die(f"missing input: {p}")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def population_weights() -> tuple[dict, dict, dict]:
+    """Population shares per reason code, for both arms, plus the #179 within-code split.
+
+    Arm A shares come from #175's 200-chain host-proportional sample of the reporting
+    unit. Arm B shares come from the 96-chain gate-rejected arm and describe that arm
+    only -- arm B is NOT part of the released reporting unit and its rate is reported
+    separately, never blended into arm A's.
+    """
+    rep = load_json(PRECISION)
+    out = {}
+    for arm_key, arm_name in (("real_arm", "A"), ("gate_rejected_arm", "B")):
+        codes = rep[arm_key]["reason_codes"]
+        n = rep[arm_key]["n_parsed"]
+        if sum(codes.values()) != n:
+            die(
+                f"{arm_key}: reason codes sum to {sum(codes.values())} but n_parsed is {n}. "
+                "The weights would be wrong; fix the stage-1 report before continuing."
+            )
+        out[arm_name] = {k: v / n for k, v in codes.items()}
+
+    # #179 re-labeled 33 invented + 33 faithful first hops and asked whether the document
+    # asserts the link. That gives the within-code agree/disagree split for exactly those
+    # two codes. No other code has a second instrument, and none is invented for them.
+    split: dict[str, dict[bool, float]] = {}
+    if RELABEL.is_file():
+        by_code: dict[str, list[bool]] = defaultdict(list)
+        for line in RELABEL.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            if "verdict" not in r:
+                continue
+            a = r["verdict"].get("is_this_link_asserted_by_the_document")
+            if a is None:
+                continue
+            by_code[r.get("group") or r.get("reason_code") or "unknown"].append(bool(a))
+        for code, vals in by_code.items():
+            if code in ("faithful", "risk_framing_invented") and vals:
+                yes = sum(vals)
+                split[code] = {True: yes / len(vals), False: 1 - yes / len(vals)}
+    return out["A"], out["B"], split
+
+
+def read_sheet(path: Path) -> list[dict]:
+    if not path.is_file():
+        die(f"missing verdict sheet: {path}")
+    with path.open(encoding="utf-8-sig", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def validate(rows: list[dict], strict: bool) -> tuple[list[dict], list[str]]:
+    """Return the filled rows and every complaint. Never repairs a row."""
+    filled, problems = [], []
+    for r in rows:
+        pid = r.get("packet_id", "?")
+        v = (r.get("verdict") or "").strip().lower()
+        if not v:
+            continue  # not yet judged; dry run reports this as progress, not as an error
+        if v not in VERDICTS:
+            problems.append(f"{pid}: verdict '{v}' is not one of {VERDICTS}")
+            continue
+        a = (r.get("risk_link_asserted") or "").strip().lower()
+        if a not in YESNO:
+            problems.append(f"{pid}: risk_link_asserted '{a}' is not yes/no")
+        lv = {}
+        for f in LEVEL_FIELDS:
+            s = (r.get(f) or "").strip()
+            if s not in LEVELS:
+                problems.append(f"{pid}: {f} '{s}' is not 0-3")
+            else:
+                lv[f] = int(s)
+
+        # The rubric says the verdict follows the levels. Where it does not, notes must
+        # explain -- so an unexplained contradiction is surfaced, never silently accepted.
+        #
+        # FIXED 2026-09-03: this encoded the SUPERSEDED rule. It required worst == 0 for
+        # `faithful`, i.e. it demoted a chain whose endpoints are both level 0 because an
+        # intermediate node took a short step. The rubric was clarified on 2026-08-27 --
+        # "ENDPOINTS GOVERN THE VERDICT ... Body inference does not demote it: a chain whose
+        # two endpoints are stated outright is faithful even where an intermediate node took
+        # a short step, and that step is recorded in body_inference_level where it belongs."
+        # The bug was masked rather than harmless: the mismatch is only reported when `notes`
+        # is empty, and every row so far carries notes, so C03 (0/0/body 1, faithful) passed
+        # silently while being flagged internally as contradicting its own levels. Apply the
+        # three rules in the rubric's own order: level 3 anywhere wins, then endpoints.
+        if len(lv) == 3:
+            worst = max(lv.values())
+            implied = (
+                "unsupported"
+                if worst == 3
+                else "faithful"
+                if lv["risk_inference_level"] == 0
+                and lv["intervention_inference_level"] == 0
+                else "inferred_but_reasonable"
+            )
+            if implied != v and not (r.get("notes") or "").strip():
+                problems.append(
+                    f"{pid}: levels imply '{implied}' but verdict is '{v}', and notes is "
+                    "empty. The rubric requires a reason when the two diverge."
+                )
+        filled.append({**r, "verdict": v, "risk_link_asserted": a, **lv})
+
+    if problems and strict:
+        die(
+            "verdict sheet has "
+            + str(len(problems))
+            + " problem(s):\n  - "
+            + "\n  - ".join(problems)
+        )
+    return filled, problems
+
+
+def wilson(k: int, n: int) -> tuple[float, float]:
+    """Wilson interval. Honest at the tiny cell sizes this study has; Wald is not."""
+    if n == 0:
+        return (0.0, 1.0)
+    z = 1.959963984540054
+    p = k / n
+    d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return (max(0.0, c - h), min(1.0, c + h))
+
+
+def post_stratify(cells: dict, weights: dict, split: dict) -> dict:
+    """Reweight per-stratum human rates to the population.
+
+    Returns the point estimate per verdict plus a stratified standard error. Strata with
+    no filled row are reported as uncovered rather than imputed -- an imputed cell would
+    make the coverage figure a lie.
+    """
+    est = {v: 0.0 for v in VERDICTS}
+    var = 0.0
+    covered_w, uncovered = 0.0, []
+    for stratum, rows in sorted(cells.items()):
+        code, asserted = STRATUM_TO_CODE[stratum]
+        w = weights.get(code, 0.0)
+        if asserted is not None:
+            w *= split.get(code, {}).get(asserted, 0.0)
+        if not rows:
+            uncovered.append({"stratum": stratum, "weight": round(w, 4)})
+            continue
+        covered_w += w
+        n = len(rows)
+        for v in VERDICTS:
+            p = sum(1 for r in rows if r["verdict"] == v) / n
+            est[v] += w * p
+            if v == "unsupported":
+                var += (w**2) * p * (1 - p) / n
+    return {
+        "weighted": {v: round(est[v], 4) for v in VERDICTS},
+        "population_coverage": round(covered_w, 4),
+        "uncovered_strata": uncovered,
+        "unsupported_se": round(math.sqrt(var), 4),
+        "NOTE": (
+            "The three weighted shares sum to population_coverage, not to 1.0, whenever a "
+            "stratum is uncovered. Renormalising them to 1.0 would silently assume the "
+            "uncovered strata behave like the covered ones. Do not renormalize; report "
+            "the coverage."
+        ),
+    }
+
+
+def main() -> int:
+    strict = "--strict" in sys.argv
+
+    manifest = load_json(MANIFEST)
+    rows = read_sheet(SHEET)
+
+    man_ids = [m["packet_id"] for m in manifest]
+    sheet_ids = [r["packet_id"] for r in rows]
+    if man_ids != sheet_ids:
+        die(
+            f"manifest and verdict sheet disagree on the packet ids.\n"
+            f"  manifest: {len(man_ids)} ids, sheet: {len(sheet_ids)} ids\n"
+            f"  This means the packet was rebuilt after the sheet was started, or the\n"
+            f"  rebuild was interrupted. Verdicts recorded against the old ids point at\n"
+            f"  different chains and CANNOT be salvaged by matching on order."
+        )
+
+    by_pid = {m["packet_id"]: m for m in manifest}
+
+    # A dropped chain carrying a verdict is un-registered data: it was excluded from the
+    # sample before it was read, so admitting it now would be selection after the fact.
+    stray = sorted(
+        r["packet_id"]
+        for r in rows
+        if r["packet_id"] in DROPPED and (r.get("verdict") or "").strip()
+    )
+    if stray:
+        die(
+            f"{stray} were dropped from the sample (2026-08-30 or 2026-10-29) but carry verdicts.\n"
+            f"  Either the drop list is wrong or a dropped chain was judged by mistake.\n"
+            f"  Do NOT resolve this by silently including them: the sample size was fixed\n"
+            f"  before they were read, and adding a chain back after seeing its verdict is\n"
+            f"  selection on the outcome. Decide deliberately and record it in\n"
+            f"  paper/FINDINGS_176_human_adjudication.md."
+        )
+
+    rows = [r for r in rows if r["packet_id"] not in DROPPED]
+    manifest = [m for m in manifest if m["packet_id"] not in DROPPED]
+    filled, problems = validate(rows, strict)
+
+    n_total, n_filled = len(rows), len(filled)
+    print(
+        f"packet: {n_total} chains in scope ({len(DROPPED)} dropped, 2026-08-30 and 2026-10-29), "
+        f"{n_filled} judged, {n_total - n_filled} outstanding"
+    )
+    for p in problems:
+        print(f"  PROBLEM  {p}")
+
+    wA, wB, split = population_weights()
+
+    cells_A: dict[str, list] = {
+        s: [] for s in STRATUM_TO_CODE if not s.startswith("gate_rejected")
+    }
+    cells_B: dict[str, list] = {
+        s: [] for s in STRATUM_TO_CODE if s.startswith("gate_rejected")
+    }
+    for r in filled:
+        m = by_pid[r["packet_id"]]
+        (cells_B if m["arm"] == "gate_rejected" else cells_A)[m["stratum_code"]].append(
+            r
+        )
+
+    report: dict = {
+        "study": "human adjudication of 10 released chains -- issue #176 (cut 30 -> 20 on 2026-08-30, 20 -> 10 on 2026-10-29)",
+        "stage": "2 of 2 -- one human annotator. The arm that licenses stage 1.",
+        "estimand": (
+            "post-stratified human chain precision on the 2,772-chain reporting unit, "
+            "weights from #175's host-proportional 200-chain sample"
+        ),
+        "annotators": 1,
+        "inter_annotator_agreement": None,
+        "progress": {"n_chains": n_total, "n_judged": n_filled},
+        "sheet_problems": problems,
+    }
+
+    if n_filled == 0:
+        report["status"] = (
+            "DRY RUN -- no verdicts yet. Weights and design are fixed below."
+        )
+        report["weights_arm_A_reporting_unit"] = {k: round(v, 4) for k, v in wA.items()}
+        report["weights_arm_B_gate_rejected"] = {k: round(v, 4) for k, v in wB.items()}
+        report["within_code_assert_split_from_179"] = {
+            k: {str(kk): round(vv, 4) for kk, vv in v.items()} for k, v in split.items()
+        }
+        report["planned_cells"] = {
+            s: {
+                "n": sum(1 for m in manifest if m["stratum_code"] == s),
+                "reason_code": STRATUM_TO_CODE[s][0],
+                "asserted_split": STRATUM_TO_CODE[s][1],
+            }
+            for s in sorted({m["stratum_code"] for m in manifest})
+        }
+        print("\nDRY RUN. Design and weights fixed; no verdicts to analyze yet.")
+        print("  arm A weights:", {k: round(v, 3) for k, v in wA.items()})
+        print(
+            "  #179 split   :",
+            {k: {str(a): round(b, 3) for a, b in v.items()} for k, v in split.items()},
+        )
+        for s, d in sorted(report["planned_cells"].items()):
+            print(f"    {d['n']:>2}  {s}")
+    else:
+        report["status"] = "PARTIAL" if n_filled < n_total else "COMPLETE"
+        report["arm_A_reporting_unit"] = post_stratify(cells_A, wA, split)
+        report["arm_B_gate_rejected"] = post_stratify(cells_B, wB, split)
+        report["arm_B_CAVEAT"] = (
+            "Two observations after the 2026-10-29 cut (four after 2026-08-30, six at build), "
+            "both in gate_rejected_faithful, so arm B is not even a direction any more; "
+            "report it as two cases. "
+            "not a confirmation of the 17.8 pp "
+            "gate discrimination #175 measured. Do not print a human-anchored pp figure."
+        )
+
+        # How often the machine was right, on the ONE field worded identically to what it
+        # was asked. This is the comparison the binary field exists for.
+        conf = Counter()
+        for r in filled:
+            m = by_pid[r["packet_id"]]
+            code = m["stratum_code"]
+            machine = STRATUM_TO_CODE[code][1]
+            if machine is None:
+                continue
+            conf[(machine, r["risk_link_asserted"] == "yes")] += 1
+        report["machine_vs_human_on_link_asserted"] = {
+            "n": sum(conf.values()),
+            "agree": conf[(True, True)] + conf[(False, False)],
+            "machine_yes_human_no": conf[(True, False)],
+            "machine_no_human_yes": conf[(False, True)],
+            "SCOPE": (
+                "Only the strata where #179 gave a machine answer to this exact question. "
+                "It is not a corpus accuracy rate for the confidence label."
+            ),
+        }
+
+        raw = Counter(r["verdict"] for r in filled)
+        k = raw["unsupported"]
+        lo, hi = wilson(k, n_filled)
+        report["unweighted_over_the_judged"] = {
+            **{v: raw[v] for v in VERDICTS},
+            "unsupported_wilson_95": [round(lo, 4), round(hi, 4)],
+            "WARNING": (
+                "These are a stratified, deliberately non-random sample. This block is a "
+                "sanity check on the cells, NOT a rate for anything. Never quote it."
+            ),
+        }
+
+        # Chain-level recall. Added 2026-08-26 after checking what the judge's omission
+        # figures actually count: 0.6% / 28.8% / 26.4% are NODES and 18.1% / 21.7% are
+        # RELATIONSHIPS, and the artifact's unit is neither. This field is the only
+        # chain-level recall signal the project has or can get without a second study.
+        rec = Counter(
+            (r.get("chain_recall_missed") or "").strip().lower() or "blank"
+            for r in filled
+        )
+        report["chain_level_recall"] = {
+            "question": (
+                "does the document argue a materially different risk-to-intervention "
+                "chain that the extraction does not carry"
+            ),
+            "yes": rec["yes"],
+            "no": rec["no"],
+            "unclear": rec["unclear"],
+            "not_answered": rec["blank"],
+            "named_misses": [
+                {
+                    "packet_id": r["packet_id"],
+                    "note": (r.get("chain_recall_note") or "").strip(),
+                }
+                for r in filled
+                if (r.get("chain_recall_missed") or "").strip().lower() == "yes"
+            ],
+            "IT_IS_A_FLOOR_NOT_A_RATE": (
+                "The annotator sees ONE chain per document, not every chain that document "
+                "produced, so a miss is only noticed when it is obvious from the source. "
+                "Report as a floor on chain-level recall failure. It is NOT comparable to "
+                "the judge's 0.6% / 18.1% / 26.4% / 21.7%, which count nodes and "
+                "relationships rather than arguments, and it must never be presented as "
+                "reconciling them."
+            ),
+        }
+
+        # The recall arm. Ten documents read exhaustively: every risk-to-intervention
+        # argument enumerated from the document, then checked against what the extraction
+        # holds. Unlike chain_recall_missed above, this IS a rate -- the annotator looked
+        # for all of them rather than noticing one in passing.
+        if RECALL.is_file():
+            rrows = [
+                r
+                for r in read_sheet(RECALL)
+                if (r.get("risk") or "").strip()
+                or (r.get("intervention") or "").strip()
+            ]
+            known = {
+                m["packet_id"]
+                for m in manifest
+                if m.get("recall_arm") and m["packet_id"] not in RECALL_DROPPED
+            }
+            stray = sorted({r["packet_id"] for r in rrows} - known)
+            if stray:
+                die(
+                    f"recall_enumeration.csv carries rows for {stray}, which are not in the "
+                    "recall subset. The subset is fixed at build time and recorded in "
+                    "manifest.json; enumerating extra documents after the fact turns a "
+                    "pre-registered sample into a chosen one."
+                )
+            carried = Counter(
+                (r.get("carried_by_the_pair_list") or "").strip().lower() for r in rrows
+            )
+            by_doc = defaultdict(lambda: {"total": 0, "missed": 0})
+            for r in rrows:
+                d = by_doc[r["packet_id"]]
+                d["total"] += 1
+                if (r.get("carried_by_the_pair_list") or "").strip().lower() == "no":
+                    d["missed"] += 1
+            done = [p for p in known if p in by_doc]
+            docs_with_a_miss = sum(1 for p in done if by_doc[p]["missed"])
+            n_args = sum(by_doc[p]["total"] for p in done)
+            n_missed = sum(by_doc[p]["missed"] for p in done)
+            report["chain_level_recall_rate"] = {
+                "unit": "documents, NOT chains",
+                "n_documents_in_arm": len(known),
+                "n_documents_enumerated": len(done),
+                "arguments_enumerated": n_args,
+                "arguments_not_carried_by_the_extraction": n_missed,
+                "argument_level_recall_pct": (
+                    round(100 * (n_args - n_missed) / n_args, 1) if n_args else None
+                ),
+                "documents_with_at_least_one_uncaptured_argument": docs_with_a_miss,
+                "per_document": {p: by_doc[p] for p in sorted(done)},
+                "unparsed_carried_values": {
+                    k: v for k, v in carried.items() if k not in ("yes", "no", "")
+                },
+                "SIZE_BIAS": (
+                    "These documents were reached through a CHAIN-proportional sample, so "
+                    "they are biased toward chain-rich documents. State it with the rate. It "
+                    "CANNOT be corrected with the precision weights above: those are "
+                    "reason-code weights over chains and carry no information about recall."
+                ),
+                "RATE_RETIRED_2026_10_29": (
+                    "After the 20 -> 10 cut the arm holds C03 and C06 only. Two documents "
+                    "are not a rate; report them as two enumerated cases and never print "
+                    "argument_level_recall_pct as a recall figure."
+                ),
+                "SIZE_BIAS_FIGURE_IS_STALE": (
+                    "The 1.19x quoted in this script's docstring (packet mean 1.76 chains "
+                    "per document against 1.48 across the reporting unit) was computed on "
+                    "the ORIGINAL 30-chain packet with a 10-document recall arm. The arm is "
+                    "now 7 documents, after the 2026-08-30 cut to 20 chains and the "
+                    "2026-09-03 removal of C05 for cost. RE-DERIVE it over the arm as it "
+                    "actually stands before quoting any bias figure beside the rate; do not "
+                    "carry 1.19x forward."
+                ),
+                "DO_NOT_COMBINE": (
+                    "Never pool this with the precision estimand. Precision is a rate over "
+                    "chains, post-stratified; this is a rate over documents and arguments, "
+                    "unweighted. They answer different questions and averaging them would "
+                    "produce a number that answers neither."
+                ),
+            }
+
+        conf_dist = Counter(
+            (r.get("annotator_confidence") or "").strip().lower() or "blank"
+            for r in filled
+        )
+        report["annotator_confidence"] = {
+            **{k: conf_dist[k] for k in ("high", "medium", "low", "blank")},
+            "USE": (
+                "For a sensitivity pass, not for weighting. Recomputing the estimand over "
+                "high-confidence rows only says how much the answer rests on the calls the "
+                "annotator found hard; dropping low-confidence rows from the headline "
+                "figure would be selecting on the outcome."
+            ),
+        }
+
+        mins = [
+            float(r["minutes_spent"])
+            for r in filled
+            if (r.get("minutes_spent") or "").strip()
+        ]
+        if mins:
+            report["cost"] = {
+                "n_timed": len(mins),
+                "total_hours": round(sum(mins) / 60, 2),
+                "median_minutes": sorted(mins)[len(mins) // 2],
+                "projected_hours_for_the_packet_in_scope": round(
+                    sum(mins) / len(mins) * n_total / 60, 2
+                ),
+            }
+
+        print(
+            f"\narm A (reporting unit), post-stratified: {report['arm_A_reporting_unit']['weighted']}"
+        )
+        print(
+            f"  population coverage: {report['arm_A_reporting_unit']['population_coverage']}"
+        )
+        if report["arm_A_reporting_unit"]["uncovered_strata"]:
+            print(f"  UNCOVERED: {report['arm_A_reporting_unit']['uncovered_strata']}")
+        n_b = sum(len(v) for v in cells_B.values())
+        print(
+            f"arm B (gate-rejected, {n_b} judged of 2 in scope): "
+            f"{report['arm_B_gate_rejected']['weighted']}  [direction only]"
+        )
+
+    report["LIMITS"] = (
+        "One annotator, so no inter-annotator agreement and reviewer R11 stays open. "
+        "Precision only: this packet shows chains that were emitted, so it says nothing "
+        "about omission and does not touch the 0.6% vs 28.8% discrepancy. Maturity labels "
+        "are not rated. The 70% containment collapse is not evaluated. Non-chain-yielding "
+        "documents are out of frame. Cells are 1-7 chains and the intervals are wide; "
+        "report them."
+    )
+
+    OUT.write_text(json.dumps(report, indent=1), encoding="utf-8")
+    print(f"\nwrote {OUT}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

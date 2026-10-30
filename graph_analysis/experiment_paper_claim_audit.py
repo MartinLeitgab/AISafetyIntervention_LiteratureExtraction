@@ -1428,6 +1428,38 @@ def main():
         seven["baseline_uniform_chance_accuracy"],
     )
 
+    # ---- lifecycle label leakage into intervention names (sec:r-stages) --------------
+    # Added 2026-09-01 with the sentence it guards. The control rate is checked as well as
+    # the headline: without it the 38.0% says nothing, since names mention deployment and
+    # training for ordinary reasons.
+    absorb = receipt("experiment_review_lifecycle_name_absorption_report.json")
+    check(
+        "lifecycle leakage: own label in the intervention name",
+        38.0,
+        absorb["pooled"]["own_label_in_name_pct"],
+    )
+    check(
+        "lifecycle leakage: other-label control",
+        2.5,
+        absorb["pooled"]["other_label_in_name_pct"],
+    )
+    check(
+        "lifecycle leakage: intervention nodes measured",
+        28889,
+        absorb["pooled"]["n_interventions"],
+    )
+    stage2 = absorb["packet_stage_2"]
+    check(
+        "lifecycle leakage: names traced to a searchable source",
+        7,
+        stage2["n_testable_source_at_least_10k_chars"],
+    )
+    check(
+        "lifecycle leakage: of those, marker absent from the source",
+        7,
+        stage2["n_whose_marker_is_absent_from_the_source"],
+    )
+
     # ---- race framing across centrality tiers (app:race) ----------------------------
     rr = json.loads(
         (ROOT / "phase2_results/experiment_race_top100_rederive_report.json").read_text(
@@ -1481,6 +1513,107 @@ def main():
         "coverage list: missing as a share of the list",
         38.9,
         round(100.0 * cl2["missing"] / cl2["rows_total"], 1),
+    )
+
+    # Chain-level impact of the flagged omissions. These arrived in the manuscript on
+    # 2026-08-26: the abstract and sec:limitations now say that granting the judge every
+    # missing relationship makes ONE further risk-to-intervention pair reachable, out of 86
+    # that were structurally available. 86 is the HEADROOM, not the pair count -- 86 of the
+    # 100 papers extract as a single connected component, so no edge could add a pair
+    # there. The last check guards exactly that confusion: if a future edit starts quoting
+    # the new pair against `before` (408) instead of against headroom, the ratio it would
+    # print is 0.2% and this file should be the thing that stops it.
+    ci = receipt("experiment_review_omission_chain_impact_report.json")
+    pairs = ci["risk_intervention_pairs"]
+    head = ci["headroom"]
+    check("chain impact: audited papers", 100, ci["papers"])
+    check(
+        "chain impact: missing relationships granted", 270, ci["missing_edges_granted"]
+    )
+    check("chain impact: pairs reachable before", 408, pairs["before"])
+    check("chain impact: new pairs after granting every omission", 1, pairs["new"])
+    check(
+        "chain impact: headroom, pairs unreachable before",
+        86,
+        head["pairs_unreachable_before"],
+    )
+    check(
+        "chain impact: papers with any headroom", 14, head["papers_with_any_headroom"]
+    )
+    check(
+        "chain impact: new pairs as a share of HEADROOM",
+        1.2,
+        head["new_as_pct_of_headroom"],
+    )
+    check(
+        "chain impact: headroom is possible minus before (the denominator is derived, not asserted)",
+        head["pairs_unreachable_before"],
+        pairs["possible"] - pairs["before"],
+    )
+
+    # The companion receipt: the flagged rows are not inert densification. Kept under audit
+    # because the manuscript comment in sec:limitations cites all four figures, and because
+    # the resolution gradient is what licenses the matcher at all -- if a future change to
+    # the matcher flattens it, these checks fail before anyone quotes the result again.
+    oi = receipt("experiment_review_omission_is_chain_level_report.json")
+    sh = oi["shares_of_usable_missing_rows"]
+    check("omission unit: inert share of missing rows", 3.7, sh["inert_pct"])
+    check(
+        "omission unit: rows naming a node the extraction lacks",
+        91.5,
+        sh["new_material_pct"],
+    )
+    check(
+        "omission unit: add_nodes proposed across 100 papers",
+        9,
+        oi["add_nodes_instrument"]["total_added_nodes"],
+    )
+
+    # Collapse adjudication (#182). The three figures in sec:m-reporting have DIFFERENT
+    # denominators and a future edit must not blend them: 18.0% is 579 of 3,222 distinct
+    # pairs, while 50.8% and 33.9% are shares of 118 sampled drops out of 6,182.
+    ca = receipt("experiment_review_collapse_adjudication_report.json")
+    check("collapse adjudication: displaced pairs judged", 118, ca["real_arm"]["n"])
+    check(
+        "collapse adjudication: different argument",
+        60,
+        ca["real_arm"]["different_argument"],
+    )
+    check(
+        "collapse adjudication: pct different",
+        50.8,
+        ca["real_arm"]["pct_different_argument"],
+    )
+    check(
+        "collapse adjudication: null arm flagged",
+        100.0,
+        ca["null_arm"]["pct_flagged_different"],
+    )
+    check("collapse adjudication: null arm n", 15, ca["null_arm"]["n"])
+
+    # Chain recall (#181), both arms. The gated rate is deliberately NOT checked as a miss
+    # rate: 79% of what it counts is present in the released graph and gated out, so the
+    # manuscript reports it as selection. If a future edit prints 36.5% as a miss rate, or
+    # divides it by its sensitivity, these anchors are what should have caught it.
+    crf = receipt("experiment_review_chain_recall_report.json")["headline_audited_100"]
+    check(
+        "chain recall gate-free: arguments enumerated", 575, crf["arguments_enumerated"]
+    )
+    check("chain recall gate-free: carried", 402, crf["carried"])
+    check(
+        "chain recall gate-free: material miss pct", 10.6, crf["material_miss_rate_pct"]
+    )
+    aj = receipt("experiment_review_ablation_adjudicate_report.json")
+    check("chain recall: ablation sensitivity detected", 9, aj["detected"])
+    check("chain recall: ablation sensitivity n", 20, aj["n_adjudicated"])
+    crg = receipt("experiment_review_chain_recall_report_gated.json")["by_cohort"][
+        "gated_reporting_unit"
+    ]
+    check("chain recall gated: documents", 95, crg["documents"])
+    check(
+        "chain recall gated: carried share (selection, NOT a miss rate)",
+        32.9,
+        round(100.0 * crg["carried"] / crg["arguments_enumerated"], 1),
     )
     cy = receipt("experiment_review_judge_chainyielding_report.json")
     check(
