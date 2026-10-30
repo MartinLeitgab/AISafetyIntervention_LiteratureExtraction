@@ -59,7 +59,9 @@ annotator knew the four came from machine-flagged strata.
 on, the scribe gives a node-by-node table of string counts in the source and a suggested
 level per node. That anchors levels more directly than a stratum name would. Each verdict's
 notes record which levels the scribe suggested and which the annotator set, so the write-up
-can say how often the two differed.
+can say how often the two differed. **Mitigation, stated by the annotator 2026-10-29:** they
+read the source and form their own judgement before opening the scribe's pre-check, so the
+pre-check is compared against a judgement already formed rather than shaping it.
 
 Implemented in `experiment_review_human_adjudication.py` as `DROPPED_2026_10_29` and an
 extended `RECALL_DROPPED`; the packet is not regenerated and the dropped rows stay blank.
