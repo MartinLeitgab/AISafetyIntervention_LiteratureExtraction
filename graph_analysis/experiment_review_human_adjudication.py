@@ -15,6 +15,18 @@ because coverage depends on which strata hold a chain and not on how many sit in
 Priced in experiment_review_packet_resize_assessment.py. The one real cost is the ceiling
 a zero `unsupported` count can claim: 11.4% at 30, 16.1% at 20.
 
+SECOND SCOPE CUT 2026-10-29, 20 -> 10, again for annotator time and again leaving the
+estimand untouched. Six chains were judged when it was taken (C01-C06: 2 faithful, 4
+inferred_but_reasonable, 0 unsupported), so -- unlike the first cut -- it was taken after a
+run of favorable verdicts, and the write-up must say so. What guards against stopping on
+good news: the four chains kept are exactly one per arm-A stratum not yet covered, chosen
+by lowest packet id within the stratum, and those strata are the ones #175's judge flagged
+(invented risk framing, model disagreement, unsupported intermediate, known judge false
+positive), i.e. the chains most likely to produce an `unsupported`. Arm-A coverage stays
+100.0%. Costs: the zero-count ceiling goes 16.1% -> 27.8% (Wilson, n=10); every arm-A cell
+holds 1-2 chains; arm B keeps only gate_rejected_faithful (2 chains); and the recall arm
+is retired as a RATE -- C03 and C06 stay enumerated and are reported as cases.
+
 THE ESTIMAND, stated once
     Post-stratified human chain precision on the 2,772-chain reporting unit: the share of
     chains a domain reader judges `faithful`, `inferred_but_reasonable` or `unsupported`,
@@ -89,9 +101,18 @@ LEVELS = ("0", "1", "2", "3")
 # chain in every stratum so coverage cannot fall, prefer recall-arm and double-coded chains
 # within a stratum, and take the surplus off the strata the build over-sampled relative to
 # their population weight. Their rows remain in the sheet and must stay blank.
-DROPPED = frozenset(
+DROPPED_2026_08_30 = frozenset(
     {"C08", "C10", "C11", "C14", "C17", "C19", "C21", "C22", "C25", "C26"}
 )
+# Dropped 2026-10-29, 20 -> 10 (see the module docstring). Rule: keep every judged chain,
+# then keep the lowest packet id in each arm-A stratum still uncovered (C12
+# intermediate_unsupported, C15 risk_framing_invented_both_agree, C24
+# model_disagreement_invented_but_link_asserted, C27 known_judge_false_positive); drop the
+# rest. Fixed before any of C07-C30 was read.
+DROPPED_2026_10_29 = frozenset(
+    {"C07", "C09", "C13", "C16", "C18", "C20", "C23", "C28", "C29", "C30"}
+)
+DROPPED = DROPPED_2026_08_30 | DROPPED_2026_10_29
 
 # Dropped from the RECALL arm only, 2026-09-03. C05 stays in the packet and keeps its
 # verdict; it is its exhaustive second pass that was dropped, for cost -- its source is
@@ -101,7 +122,10 @@ DROPPED = frozenset(
 # Dropped for COST and not swapped: every recall-arm chain is already in the arm, so there is
 # nothing to swap in, and choosing a replacement by length would add a second size bias on
 # top of the arm's existing skew toward chain-rich documents.
-RECALL_DROPPED = frozenset({"C05"})
+# C15 and C24 added 2026-10-29: with the second cut the arm could reach at most 4
+# documents, too few for a rate, so their exhaustive passes are not asked for. Their
+# verdicts and `chain_recall_missed` floors are still recorded.
+RECALL_DROPPED = frozenset({"C05", "C15", "C24"})
 
 LEVEL_FIELDS = (
     "risk_inference_level",
@@ -337,7 +361,7 @@ def main() -> int:
     )
     if stray:
         die(
-            f"{stray} were dropped from the sample on 2026-08-30 but carry verdicts.\n"
+            f"{stray} were dropped from the sample (2026-08-30 or 2026-10-29) but carry verdicts.\n"
             f"  Either the drop list is wrong or a dropped chain was judged by mistake.\n"
             f"  Do NOT resolve this by silently including them: the sample size was fixed\n"
             f"  before they were read, and adding a chain back after seeing its verdict is\n"
@@ -351,7 +375,7 @@ def main() -> int:
 
     n_total, n_filled = len(rows), len(filled)
     print(
-        f"packet: {n_total} chains in scope ({len(DROPPED)} dropped 2026-08-30), "
+        f"packet: {n_total} chains in scope ({len(DROPPED)} dropped, 2026-08-30 and 2026-10-29), "
         f"{n_filled} judged, {n_total - n_filled} outstanding"
     )
     for p in problems:
@@ -372,7 +396,7 @@ def main() -> int:
         )
 
     report: dict = {
-        "study": "human adjudication of 20 released chains -- issue #176 (cut from 30 on 2026-08-30)",
+        "study": "human adjudication of 10 released chains -- issue #176 (cut 30 -> 20 on 2026-08-30, 20 -> 10 on 2026-10-29)",
         "stage": "2 of 2 -- one human annotator. The arm that licenses stage 1.",
         "estimand": (
             "post-stratified human chain precision on the 2,772-chain reporting unit, "
@@ -414,7 +438,9 @@ def main() -> int:
         report["arm_A_reporting_unit"] = post_stratify(cells_A, wA, split)
         report["arm_B_gate_rejected"] = post_stratify(cells_B, wB, split)
         report["arm_B_CAVEAT"] = (
-            "Four observations after the 2026-08-30 cut, six before. This is a direction, "
+            "Two observations after the 2026-10-29 cut (four after 2026-08-30, six at build), "
+            "both in gate_rejected_faithful, so arm B is not even a direction any more; "
+            "report it as two cases. "
             "not a confirmation of the 17.8 pp "
             "gate discrimination #175 measured. Do not print a human-anchored pp figure."
         )
@@ -544,6 +570,11 @@ def main() -> int:
                     "CANNOT be corrected with the precision weights above: those are "
                     "reason-code weights over chains and carry no information about recall."
                 ),
+                "RATE_RETIRED_2026_10_29": (
+                    "After the 20 -> 10 cut the arm holds C03 and C06 only. Two documents "
+                    "are not a rate; report them as two enumerated cases and never print "
+                    "argument_level_recall_pct as a recall figure."
+                ),
                 "SIZE_BIAS_FIGURE_IS_STALE": (
                     "The 1.19x quoted in this script's docstring (packet mean 1.76 chains "
                     "per document against 1.48 across the reporting unit) was computed on "
@@ -585,7 +616,7 @@ def main() -> int:
                 "n_timed": len(mins),
                 "total_hours": round(sum(mins) / 60, 2),
                 "median_minutes": sorted(mins)[len(mins) // 2],
-                "projected_hours_for_the_20": round(
+                "projected_hours_for_the_packet_in_scope": round(
                     sum(mins) / len(mins) * n_total / 60, 2
                 ),
             }
@@ -600,7 +631,7 @@ def main() -> int:
             print(f"  UNCOVERED: {report['arm_A_reporting_unit']['uncovered_strata']}")
         n_b = sum(len(v) for v in cells_B.values())
         print(
-            f"arm B (gate-rejected, {n_b} judged of 4 in scope): "
+            f"arm B (gate-rejected, {n_b} judged of 2 in scope): "
             f"{report['arm_B_gate_rejected']['weighted']}  [direction only]"
         )
 

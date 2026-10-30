@@ -6,7 +6,47 @@ working, and per-chain observations worth carrying into the write-up. It is not 
 — that is `paper/OPEN_ITEMS.md` — and it is not annotator-facing, so nothing here should be
 read while judging.
 
-## 🔴 REGISTERED CHANGE 2026-08-30: the packet is cut from 30 chains to 20
+## 🔴 REGISTERED CHANGE 2026-10-29: the packet is cut again, from 20 chains to 10
+
+**Reason: annotator time; about 4 hours is what remains for the paper.** Registered before
+any of C07-C30 was read.
+
+🔴 **Disclosure the write-up must carry.** Six chains were judged when this was decided --
+C01-C06, 2 `faithful`, 4 `inferred_but_reasonable`, **0 `unsupported`**. Unlike the first
+cut, this one comes after a run of favorable verdicts, so it looks like stopping on good
+news. The guard: the four chains kept are exactly the arm-A strata #175's judge flagged
+and the human has not yet seen, which are the chains most likely to yield an
+`unsupported`. The dropped chains sit mostly in strata already covered.
+
+> **JUDGE these 4, in this order:** C12 (`intermediate_unsupported`, 7.5k chars), C15
+> (`risk_framing_invented_both_agree`, 26.7k), C24 (`model_disagreement_invented_but_link_asserted`,
+> 5.8k), C27 (`known_judge_false_positive`, 215 chars -- see the packet-defect note below).
+>
+> **DROP these 10:** C07, C09, C13, C16, C18, C20, C23, C28, C29, C30.
+
+Rule: keep every judged chain; keep the lowest packet id in each arm-A stratum still
+uncovered; drop the rest. Ids are shuffled, so lowest-id is not a choice by content.
+
+| | 20 | 10 |
+|---|---|---|
+| arm-A population coverage | 100.0% | **100.0%** |
+| arm-A chains per stratum | 1-4 | 1-2 |
+| arm B (gate-rejected) in scope | 4 | 2, both `gate_rejected_faithful` -- report as cases |
+| **ceiling if `unsupported` is zero** (Wilson 95%) | 16.1% | **27.8%** |
+| recall arm | 7 documents, a rate | **retired as a rate**: C03 and C06 reported as enumerated cases; C15 and C24 are verdict-only |
+| hours remaining (50 min/chain measured over C01-C06) | ~12-14 | **~3-4** |
+
+**What the study can still claim at 10:** a human judged a sample covering every stratum of
+the 2,772-chain reporting unit, quoting a source span for each endpoint, and found N
+`unsupported`. If N = 0, the sentence is "none of 10; 95% upper bound 27.8%". Plus the
+defect-shape findings, which do not depend on n: verdicts turning on lifecycle-label
+qualifiers in node names (measured corpus-wide), and C06's recalled-not-extracted node.
+Not available at 10: a recall rate, an arm-B direction, anything per stratum.
+
+Implemented in `experiment_review_human_adjudication.py` as `DROPPED_2026_10_29` and an
+extended `RECALL_DROPPED`; the packet is not regenerated and the dropped rows stay blank.
+
+## REGISTERED CHANGE 2026-08-30: the packet is cut from 30 chains to 20
 
 **Reason: annotator time, and nothing else.** Receipt:
 `experiment_review_packet_resize_assessment.py` ->
