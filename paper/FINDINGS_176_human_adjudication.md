@@ -43,6 +43,18 @@ defect-shape findings, which do not depend on n: verdicts turning on lifecycle-l
 qualifiers in node names (measured corpus-wide), and C06's recalled-not-extracted node.
 Not available at 10: a recall rate, an arm-B direction, anything per stratum.
 
+🔴 **BLINDING BREACH, same day, caused by the scribe.** While presenting the cut, the scribe
+told the annotator the stratum of each of C12, C15, C24 and C27 (the JUDGE list above names
+them). The README forbids this: "If you can infer a stratum you have lost the property the
+packet is built to protect." The annotator therefore knows the machine judge's suspicion for
+all four remaining chains. **It cannot be undone, and the packet is not rebuilt.** Write-up
+must say: the last four verdicts were made with the stratum known, so they are not blind to
+the stage-1 machine label. The direction of the bias is unknown (anchoring toward the
+machine, or over-correcting away from it). Report those four separately from C01-C06 in any
+breakdown. Since then the scribe has also given the annotator node-by-node pre-checks
+(string counts in the source); those report facts about the source, not a stratum, and the
+verdict notes record each level the scribe suggested.
+
 Implemented in `experiment_review_human_adjudication.py` as `DROPPED_2026_10_29` and an
 extended `RECALL_DROPPED`; the packet is not regenerated and the dropped rows stay blank.
 
