@@ -43,17 +43,23 @@ defect-shape findings, which do not depend on n: verdicts turning on lifecycle-l
 qualifiers in node names (measured corpus-wide), and C06's recalled-not-extracted node.
 Not available at 10: a recall rate, an arm-B direction, anything per stratum.
 
-🔴 **BLINDING BREACH, same day, caused by the scribe.** While presenting the cut, the scribe
-told the annotator the stratum of each of C12, C15, C24 and C27 (the JUDGE list above names
-them). The README forbids this: "If you can infer a stratum you have lost the property the
-packet is built to protect." The annotator therefore knows the machine judge's suspicion for
-all four remaining chains. **It cannot be undone, and the packet is not rebuilt.** Write-up
-must say: the last four verdicts were made with the stratum known, so they are not blind to
-the stage-1 machine label. The direction of the bias is unknown (anchoring toward the
-machine, or over-correcting away from it). Report those four separately from C01-C06 in any
-breakdown. Since then the scribe has also given the annotator node-by-node pre-checks
-(string counts in the source); those report facts about the source, not a stratum, and the
-verdict notes record each level the scribe suggested.
+🔴 **PARTIAL BLINDING BREACH, same day, caused by the scribe -- scope corrected after the
+annotator's account.** In chat the scribe said the four remaining chains were "one per
+stratum not yet covered (invented risk framing, model disagreement, unsupported intermediate
+step, known judge false positive)" and that these are "the strata the machine judge flagged".
+The per-chain mapping (C12 = ..., C15 = ...) is in the JUDGE list above, which the annotator
+does not read, and the annotator states they do not know what the labels mean or which chain
+carries which. **What leaked is a group-level prior** -- all four remaining chains come from
+machine-flagged strata -- **not a per-chain label.** The README's rule ("if you can infer a
+stratum you have lost the property") is breached only at that group level. The packet is not
+rebuilt. Write-up: report C12, C15, C24, C27 separately from C01-C06 and state that the
+annotator knew the four came from machine-flagged strata.
+
+**The larger influence on these four is the scribe's pre-checks**, not the label: from C12
+on, the scribe gives a node-by-node table of string counts in the source and a suggested
+level per node. That anchors levels more directly than a stratum name would. Each verdict's
+notes record which levels the scribe suggested and which the annotator set, so the write-up
+can say how often the two differed.
 
 Implemented in `experiment_review_human_adjudication.py` as `DROPPED_2026_10_29` and an
 extended `RECALL_DROPPED`; the packet is not regenerated and the dropped rows stay blank.
