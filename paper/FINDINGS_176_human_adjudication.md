@@ -354,6 +354,22 @@ paragraph asserts, and unlike the Euclid chain it is a case where parametric rec
 a *true* statement that the source does not support. Count how often node names resolve
 citations the document only links; that is the measurable version.
 
+**Second instance, C12 (2026-10-29), and the annotator again judged it acceptable.** The
+validation-evidence node "Anthropic constitutional AI experiments showing reduced harmful
+responses" has no support in the post: "experiment" and "reduc*" occur zero times, and
+"Anthropic" appears only inside a link URL. The annotator scored it 2, not 3: a domain reader
+who knows that published work makes this inference, and the linked work's content matches.
+**Count: 2 of 7 judged chains carry a validation node taken from a linked work, and both were
+judged correct.** For `sec:outlook` this means the grounded-not-recalled sentence needs a
+qualifier, not a retraction: on documents that only *link* their evidence, the extractor
+fills the gap from its own knowledge, accurately in both cases seen.
+
+🔴 **Rubric boundary to keep in view:** the rubric asks whether *the document* makes the
+argument, not whether the argument is true. The level-2 call rests on what a domain reader
+can infer *from the document*, and that is a legitimate reason. "Anthropic's results show
+this" makes the node true. It does not make the node inferrable from the document, so it
+must not be the reason given in the write-up.
+
 ## 🔴 An absent stage node is usually the extractor being right, not missing something
 
 Scribe's earlier framing was wrong and the annotator corrected it. This file flagged
