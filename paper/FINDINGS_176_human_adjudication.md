@@ -261,6 +261,23 @@ partly measuring a **naming convention the prompt supplies**, which is a fixable
 property rather than a limit of the approach. Two of the three judged chains have turned on
 one so far. Keep counting.
 
+## 🔴 RULE SET 2026-11-01 FOR C27, BEFORE THE LINKED ARTICLE WAS READ
+
+**Rule:** a document whose entire body is a link to another work is judged against that
+linked work, and the chain is flagged `recalled, not extracted`. The annotator's reasoning:
+given only a reference to a work the extractor likely saw in pretraining (o3's cutoff is
+about mid-2024; the article is from 2018), producing a chain the linked work supports is
+desired behavior.
+
+🔴 **Disclosure.** This rule was proposed after seeing C27's 215-character input, and under
+the strict reading every node past the risk is level 3, so the rule can only move C27's
+verdict away from `unsupported`. The scribe recommended against it twice (it is set on the
+one case it changes, in the favorable direction). It is registered **before** the Vox
+article is read, so the verdict under the rule is not yet known. **The write-up must report
+both:** C27 under the pre-registered document-as-ingested reading (`unsupported` unless the
+215 characters support more), and under this rule (whatever the article check yields). C27
+is the only link-only document in the 10, so the rule touches no other verdict.
+
 ## 🔴 PACKET DEFECT, found 2026-09-01: C27's source is 215 characters
 
 `C27.md` -- stratum `known_judge_false_positive`, still unjudged -- carries a **215-character**
