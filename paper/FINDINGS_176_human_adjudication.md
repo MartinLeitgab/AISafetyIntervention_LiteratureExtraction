@@ -278,6 +278,17 @@ both:** C27 under the pre-registered document-as-ingested reading (`unsupported`
 215 characters support more), and under this rule (whatever the article check yields). C27
 is the only link-only document in the 10, so the rule touches no other verdict.
 
+**RESULT 2026-11-01: `unsupported` under BOTH readings, so the rule changed nothing.** Against
+the 215 characters: body and intervention 3. Against the Vox article (fetched; current page
+and a 2019 archive copy agree): risk and specification-gaming problem are in it, but
+preference learning, human feedback, RLHF and fine-tuning are not, and the validation node is
+**contradicted** -- the article's one Atari mention is a specification-gaming failure
+(Montezuma's Revenge glitch), not a preference-learning success. Annotator's mechanism:
+degenerate input plus the pressure to produce a complete chain gave a plausible chain the
+source does not support. **First `unsupported` in the study.** Consequence for the stratum
+note below: on this chain the #175 judge (which said the chain belongs to a different
+document) was right, so the `known_judge_false_positive` label is wrong for C27.
+
 ## 🔴 PACKET DEFECT, found 2026-09-01: C27's source is 215 characters
 
 `C27.md` -- stratum `known_judge_false_positive`, still unjudged -- carries a **215-character**
