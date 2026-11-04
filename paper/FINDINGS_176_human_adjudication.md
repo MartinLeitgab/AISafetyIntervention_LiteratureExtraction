@@ -6,7 +6,38 @@ working, and per-chain observations worth carrying into the write-up. It is not 
 — that is `paper/OPEN_ITEMS.md` — and it is not annotator-facing, so nothing here should be
 read while judging.
 
-## 🔴 REGISTERED CHANGE 2026-10-29: the packet is cut again, from 20 chains to 10
+## 🔴 RESULT 2026-11-04: all 10 judged
+
+Receipt: `experiment_review_human_adjudication.py --strict` ->
+`phase2_results/experiment_review_human_adjudication_report.json`, status COMPLETE, zero sheet
+problems.
+
+| | value |
+|---|---|
+| verdicts (unweighted, the 10) | 2 `faithful`, 7 `inferred_but_reasonable`, **1 `unsupported` (C27)** |
+| arm A, post-stratified to the 2,772-chain unit | faithful 18.9%, inferred 77.1%, **unsupported 4.0%**, coverage 100% |
+| arm A uncertainty | **no interval**: 6 of 7 cells hold one chain, so the stratified SE is undefined (script now reports None rather than a false 0) |
+| unweighted unsupported, Wilson 95% (sanity check only, never quote) | 1/10, 1.8-40.4% |
+| machine vs human on "link asserted" (#179 strata) | n=5: 3 agree, 2 machine-no/human-yes, 0 machine-yes/human-no |
+| recall floor (`chain_recall_missed`) | 0 yes, 7 no, 3 unclear |
+| annotator confidence | 6 high, 3 medium, 1 low |
+| cost | 7.25 hours over 10 chains, median 45 min |
+
+🔴 **How to read the 4.0%.** It is exactly the population weight of one stratum -- #175's
+"chain belongs to a different document" code -- because C27 is that stratum's only chain and
+was judged `unsupported`. So the defensible sentence is about that code, not a corpus defect
+rate: *the one human-checked chain the machine judge said belonged to a different document
+was a chain extracted from a body-less, link-only post, and it was unsupported under both
+the document-as-ingested and the linked-article reading.* Every other stratum, including the
+four the machine judge flagged as invented or unsupported, came out at zero `unsupported`.
+
+**Findings that do not depend on n**, for the write-up: (1) verdicts repeatedly turn on a
+lifecycle-label qualifier in a node name (measured corpus-wide, 38.0% vs 2.5%); (2) four of
+ten chains (C06, C12, C15, C24) carry a node whose content comes from a linked work rather
+than the document, all judged reasonable; (3) C27 shows the failure the extractor produces
+on degenerate input: a complete, plausible chain from a title and a link.
+
+## REGISTERED CHANGE 2026-10-29: the packet is cut again, from 20 chains to 10
 
 **Reason: annotator time; about 4 hours is what remains for the paper.** Registered before
 any of C07-C30 was read.

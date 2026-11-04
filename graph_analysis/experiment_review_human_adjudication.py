@@ -304,6 +304,10 @@ def post_stratify(cells: dict, weights: dict, split: dict) -> dict:
     est = {v: 0.0 for v in VERDICTS}
     var = 0.0
     covered_w, uncovered = 0.0, []
+    # A cell of one chain has p = 0 or 1, so p(1-p)/n is 0 and the stratified SE collapses
+    # to 0 -- a false certainty, not a measurement. Added 2026-11-04 when the 20 -> 10 cut
+    # left most cells at n=1. Any covered cell below 2 makes the SE undefined.
+    singleton_cells = []
     for stratum, rows in sorted(cells.items()):
         code, asserted = STRATUM_TO_CODE[stratum]
         w = weights.get(code, 0.0)
@@ -314,6 +318,8 @@ def post_stratify(cells: dict, weights: dict, split: dict) -> dict:
             continue
         covered_w += w
         n = len(rows)
+        if n < 2:
+            singleton_cells.append(stratum)
         for v in VERDICTS:
             p = sum(1 for r in rows if r["verdict"] == v) / n
             est[v] += w * p
@@ -323,7 +329,13 @@ def post_stratify(cells: dict, weights: dict, split: dict) -> dict:
         "weighted": {v: round(est[v], 4) for v in VERDICTS},
         "population_coverage": round(covered_w, 4),
         "uncovered_strata": uncovered,
-        "unsupported_se": round(math.sqrt(var), 4),
+        "unsupported_se": None if singleton_cells else round(math.sqrt(var), 4),
+        "cells_with_one_chain": sorted(singleton_cells),
+        "SE_NOTE": (
+            "SE is None when any covered cell holds one chain: its within-cell variance "
+            "estimate is 0 by construction, so a stratified SE would understate the "
+            "uncertainty. Report the weighted shares with the cell sizes, not an interval."
+        ),
         "NOTE": (
             "The three weighted shares sum to population_coverage, not to 1.0, whenever a "
             "stratum is uncovered. Renormalising them to 1.0 would silently assume the "
