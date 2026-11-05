@@ -127,6 +127,22 @@ DROPPED = DROPPED_2026_08_30 | DROPPED_2026_10_29
 # verdicts and `chain_recall_missed` floors are still recorded.
 RECALL_DROPPED = frozenset({"C05", "C15", "C24"})
 
+# Two per-chain findings the manuscript reports (sec:r-human). Each id is read off the
+# annotator's own recorded levels and notes in verdict_sheet.csv; the analysis checks that
+# every listed id is judged and in scope, so a typo or a dropped chain fails loudly.
+#
+# A node whose content comes from a work the document only LINKS (title or URL), not from
+# the document's text, judged reasonable by the annotator each time:
+#   C06 node 5 'meta-analyses of deliberate practice' -- two bare 'here' links;
+#   C12 node 6 'Anthropic constitutional AI experiments' -- 'Anthropic' only in a URL;
+#   C15 node 4 'causal scrubbing' -- 'scrubbing' only in a URL;
+#   C24 node 6 'empirical demonstration of GSM signals' -- a linked USENIX paper.
+LINK_SOURCED_NODE = ("C06", "C12", "C15", "C24")
+# Chains whose ONLY non-zero endpoint level sits on a lifecycle-rubric qualifier in the
+# intervention name that the source never states: C01 'pre-deployment' (lifecycle 4),
+# C04 'RL fine-tuning' (lifecycle 3). Remove the qualifier and each verdict is `faithful`.
+LIFECYCLE_QUALIFIER_DECIDES_VERDICT = ("C01", "C04")
+
 LEVEL_FIELDS = (
     "risk_inference_level",
     "intervention_inference_level",
@@ -308,11 +324,19 @@ def post_stratify(cells: dict, weights: dict, split: dict) -> dict:
     # to 0 -- a false certainty, not a measurement. Added 2026-11-04 when the 20 -> 10 cut
     # left most cells at n=1. Any covered cell below 2 makes the SE undefined.
     singleton_cells = []
+    per_stratum = {}
     for stratum, rows in sorted(cells.items()):
         code, asserted = STRATUM_TO_CODE[stratum]
         w = weights.get(code, 0.0)
         if asserted is not None:
             w *= split.get(code, {}).get(asserted, 0.0)
+        per_stratum[stratum] = {
+            "population_weight": round(w, 4),
+            "chains": sorted(r["packet_id"] for r in rows),
+            "verdicts": {
+                v: sum(1 for r in rows if r["verdict"] == v) for v in VERDICTS
+            },
+        }
         if not rows:
             uncovered.append({"stratum": stratum, "weight": round(w, 4)})
             continue
@@ -331,6 +355,7 @@ def post_stratify(cells: dict, weights: dict, split: dict) -> dict:
         "uncovered_strata": uncovered,
         "unsupported_se": None if singleton_cells else round(math.sqrt(var), 4),
         "cells_with_one_chain": sorted(singleton_cells),
+        "per_stratum": per_stratum,
         "SE_NOTE": (
             "SE is None when any covered cell holds one chain: its within-cell variance "
             "estimate is 0 by construction, so a stratified SE would understate the "
@@ -603,6 +628,46 @@ def main() -> int:
                     "produce a number that answers neither."
                 ),
             }
+
+        judged_ids = {r["packet_id"] for r in filled}
+        for name, ids in (
+            ("LINK_SOURCED_NODE", LINK_SOURCED_NODE),
+            (
+                "LIFECYCLE_QUALIFIER_DECIDES_VERDICT",
+                LIFECYCLE_QUALIFIER_DECIDES_VERDICT,
+            ),
+        ):
+            missing = sorted(set(ids) - judged_ids)
+            if missing:
+                die(f"{name} lists {missing}, which are not judged chains in scope.")
+        by_id = {r["packet_id"]: r for r in filled}
+        for pid in LIFECYCLE_QUALIFIER_DECIDES_VERDICT:
+            r = by_id[pid]
+            if not (
+                r["verdict"] == "inferred_but_reasonable"
+                and r["risk_inference_level"] == 0
+                and r["intervention_inference_level"] >= 1
+            ):
+                die(
+                    f"{pid} is listed as decided by a lifecycle qualifier but its row is "
+                    "not risk 0 / intervention >= 1 / inferred_but_reasonable."
+                )
+        report["per_chain_findings"] = {
+            "link_sourced_node": {
+                "n": len(LINK_SOURCED_NODE),
+                "chains": list(LINK_SOURCED_NODE),
+                "verdicts": {p: by_id[p]["verdict"] for p in LINK_SOURCED_NODE},
+            },
+            "lifecycle_qualifier_decides_verdict": {
+                "n": len(LIFECYCLE_QUALIFIER_DECIDES_VERDICT),
+                "chains": list(LIFECYCLE_QUALIFIER_DECIDES_VERDICT),
+            },
+            "n_judged": n_filled,
+            "SOURCE": (
+                "Read off verdict_sheet.csv levels and notes by hand; ids and the node "
+                "each refers to are listed in the module constants."
+            ),
+        }
 
         conf_dist = Counter(
             (r.get("annotator_confidence") or "").strip().lower() or "blank"

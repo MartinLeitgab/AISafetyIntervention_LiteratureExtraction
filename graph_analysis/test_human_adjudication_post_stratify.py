@@ -16,8 +16,11 @@ import experiment_review_human_adjudication as e  # noqa: E402
 WEIGHTS = {"faithful": 0.5, "intervention_not_proposed": 0.5}
 
 
+_ids = iter(range(1, 100))
+
+
 def row(v):
-    return {"verdict": v}
+    return {"verdict": v, "packet_id": f"T{next(_ids):02d}"}
 
 
 def main():

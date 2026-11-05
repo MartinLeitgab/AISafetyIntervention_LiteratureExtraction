@@ -1460,6 +1460,129 @@ def main():
         stage2["n_whose_marker_is_absent_from_the_source"],
     )
 
+    # ---- human adjudication of 10 chains (sec:r-human, tab:human) -------------------
+    # Added 2026-11-04 with the subsection. Receipt: experiment_review_human_adjudication.py
+    # --strict, which refuses a partial sheet, so a COMPLETE status is checked first.
+    hum = receipt("experiment_review_human_adjudication_report.json")
+    check("human adjudication: sheet complete", "COMPLETE", hum["status"])
+    check("human adjudication: chains judged", 10, hum["progress"]["n_judged"])
+    check(
+        "human adjudication: packet as built",
+        30,
+        len(
+            json.loads(
+                (ROOT / "phase2_results/human_review_packet/manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        ),
+    )
+    uw = hum["unweighted_over_the_judged"]
+    check("human adjudication: faithful", 2, uw["faithful"])
+    check(
+        "human adjudication: inferred_but_reasonable", 7, uw["inferred_but_reasonable"]
+    )
+    check("human adjudication: unsupported", 1, uw["unsupported"])
+    armA = hum["arm_A_reporting_unit"]
+    check(
+        "human adjudication: weighted faithful %",
+        18.9,
+        round(100 * armA["weighted"]["faithful"], 1),
+    )
+    check(
+        "human adjudication: weighted inferred_but_reasonable %",
+        77.1,
+        round(100 * armA["weighted"]["inferred_but_reasonable"], 1),
+    )
+    check(
+        "human adjudication: weighted unsupported %",
+        4.0,
+        round(100 * armA["weighted"]["unsupported"], 1),
+    )
+    check(
+        "human adjudication: arm-A population coverage %",
+        100.0,
+        round(100 * armA["population_coverage"], 1),
+    )
+    check(
+        "human adjudication: arm-A strata covered",
+        7,
+        sum(1 for c in armA["per_stratum"].values() if c["chains"]),
+    )
+    check(
+        "human adjudication: arm-A strata holding one chain",
+        6,
+        len(armA["cells_with_one_chain"]),
+    )
+    check(
+        "human adjudication: weighted SE undefined (one-chain cells)",
+        None,
+        armA["unsupported_se"],
+    )
+    c27 = armA["per_stratum"]["known_judge_false_positive"]
+    check(
+        "human adjudication: weight of the different-document stratum %",
+        4.0,
+        round(100 * c27["population_weight"], 1),
+    )
+    check(
+        "human adjudication: the unsupported chain is the different-document stratum's",
+        ["C27"],
+        c27["chains"] if c27["verdicts"]["unsupported"] == 1 else None,
+    )
+    check(
+        "human adjudication: unsupported in the other arm-A strata",
+        0,
+        sum(
+            c["verdicts"]["unsupported"]
+            for s, c in armA["per_stratum"].items()
+            if s != "known_judge_false_positive"
+        ),
+    )
+    armB = hum["arm_B_gate_rejected"]["per_stratum"]["gate_rejected_faithful"]
+    check("human adjudication: gate-rejected chains judged", 2, len(armB["chains"]))
+    mvh = hum["machine_vs_human_on_link_asserted"]
+    check("human adjudication: link-asserted comparisons", 5, mvh["n"])
+    check("human adjudication: link-asserted agree", 3, mvh["agree"])
+    check("human adjudication: machine no, human yes", 2, mvh["machine_no_human_yes"])
+    check("human adjudication: machine yes, human no", 0, mvh["machine_yes_human_no"])
+    rec = hum["chain_level_recall"]
+    check("human adjudication: recall floor yes", 0, rec["yes"])
+    check("human adjudication: recall floor no", 7, rec["no"])
+    check("human adjudication: recall floor unclear", 3, rec["unclear"])
+    check(
+        "human adjudication: annotator confidence high",
+        6,
+        hum["annotator_confidence"]["high"],
+    )
+    check("human adjudication: annotator hours", 7.25, hum["cost"]["total_hours"])
+    z2 = 1.959963984540054**2
+    check(
+        "human adjudication: Wilson 95% upper bound for 0 of 10 (%)",
+        27.8,
+        round(100 * z2 / (hum["progress"]["n_judged"] + z2), 1),
+    )
+    pcf = hum["per_chain_findings"]
+    check(
+        "human adjudication: chains with a link-sourced node",
+        4,
+        pcf["link_sourced_node"]["n"],
+    )
+    check(
+        "human adjudication: link-sourced chains judged unsupported",
+        0,
+        sum(
+            1
+            for v in pcf["link_sourced_node"]["verdicts"].values()
+            if v == "unsupported"
+        ),
+    )
+    check(
+        "human adjudication: verdicts decided by a lifecycle qualifier",
+        2,
+        pcf["lifecycle_qualifier_decides_verdict"]["n"],
+    )
+
     # ---- race framing across centrality tiers (app:race) ----------------------------
     rr = json.loads(
         (ROOT / "phase2_results/experiment_race_top100_rederive_report.json").read_text(
