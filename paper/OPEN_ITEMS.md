@@ -325,7 +325,7 @@ extraction cost measurement (issue #152, PR #154) and the stage-separability pro
 
 | What | Where | Note |
 |---|---|---|
-| The manuscript | `../AISafetyIntervention_PaperA_shared/paperA_altstyle.tex` | **Canonical.** Overleaf syncs to the same branch, so `git pull --ff-only` **before you Read or Edit**, not just before you commit, and push the same session. The `paper/*.tex` copies in this repo are stale duplicates. Full rule in the project `CLAUDE.md` |
+| The manuscript | `../AISafetyIntervention_PaperA_shared/paperA_v4.tex` (version 4, tag `paperA-v4`, 2026-11-04; version 3 = `paperA_altstyle.tex`, frozen) | **Canonical.** Overleaf's main document must be switched to `paperA_v4.tex`. Overleaf syncs to the same branch, so `git pull --ff-only` **before you Read or Edit**, not just before you commit, and push the same session. The `paper/*.tex` copies in this repo are stale duplicates. Full rule in the project `CLAUDE.md` |
 | Compiled PDF the external round reviewed | `C:\Users\malei\Downloads\AISafetyIntervention_PaperA_shared.pdf` | 25 pp, 1.38 MB, as of 2026-08-15 |
 | Spine decisions, disposition tables, traps | `NEXT_STEPS_REWRITE_2026-08-14.md` | §1 has the locked spine (do not restore the v3 "the graph is unreliable" thesis); §7 the settled numbers; §10 the traps |
 | Internal reviews, W- and V-tags cited throughout this file | `REVIEW_neurips_scored_plus_style_shared_2026-08-14.md` (W1–W23), `REVIEW_workshop_scored_plus_style_shared_2026-08-15.md` (V1–V10, H1–H4) | What was already implemented against them: `REVIEW_RESPONSE_2026-08-14.md` |
