@@ -418,7 +418,7 @@ def main() -> int:
     ap.add_argument(
         "--smoke",
         action="store_true",
-        help="one cheap Gemini job with a small output cap, to prove the plumbing "
+        help="one job (the last reviewer in specs) with a small output cap, to prove the plumbing "
         "and measure tokens/sec before the full run",
     )
     ap.add_argument("--outdir", type=Path, default=None)
@@ -430,13 +430,15 @@ def main() -> int:
     )
     outdir.mkdir(parents=True, exist_ok=True)
 
+    # 2026-11-05 round: the two reviewers requested for manuscript version 4. Both ids
+    # verified live by a models.list call that day. Earlier rounds used claude-opus-5,
+    # gpt-5.6-sol and gemini-3.1-pro-preview.
     specs = [
-        ("anthropic", "claude-opus-5", "opus5"),
-        ("openai", "gpt-5.6-sol", "gpt56sol"),
-        ("gemini", "gemini-3.1-pro-preview", "gemini31pro"),
+        ("anthropic", "claude-opus-5-5", "opus55"),
+        ("openai", "gpt-6.1-sol", "gpt61sol"),
     ]
     if args.smoke:
-        specs = [specs[2]]
+        specs = [specs[-1]]
         modes = ["conference"]
         cap = SMOKE_OUTPUT_TOKENS
     else:
