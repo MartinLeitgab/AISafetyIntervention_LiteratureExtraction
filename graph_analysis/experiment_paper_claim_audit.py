@@ -1160,6 +1160,36 @@ def main():
     # These were quoted in Methods with no script behind them; REPRODUCE.md wrongly said
     # this file computed them. It does now. Union-find over the released checkpoints.
     edges = pickle.load(open(STEP1 / "graph_edge_data.pkl", "rb"))
+
+    # ---- node identity: per document, not merged by name (sec:m-extraction, v5 B2) ----
+    url_of = {n: a.get("url") for n, a in na.items()}
+    check(
+        "node identity: nodes with exactly one source url",
+        200525,
+        sum(1 for u in url_of.values() if isinstance(u, str) and u),
+    )
+    by_name_type = Counter((a.get("name"), a.get("type")) for a in na.values())
+    multi = {k for k, c in by_name_type.items() if c > 1}
+    urls_by_key = {}
+    for n, a in na.items():
+        k = (a.get("name"), a.get("type"))
+        if k in multi:
+            urls_by_key.setdefault(k, set()).add(url_of[n])
+    check("node identity: same-name groups", 434, len(multi))
+    check(
+        "node identity: same-name groups spanning >1 document",
+        434,
+        sum(1 for s in urls_by_key.values() if len(s) > 1),
+    )
+    struct = [e for e in edges if e["type"] == "EDGE"]
+    check("node identity: structural edges", 202149, len(struct))
+    check(
+        "node identity: structural edges joining two documents",
+        0,
+        sum(1 for e in struct if url_of.get(e["source"]) != url_of.get(e["target"])),
+    )
+    del struct, by_name_type, urls_by_key
+
     ids = list(na.keys())
     pos = {n: i for i, n in enumerate(ids)}
     parent = list(range(len(ids)))
@@ -1582,6 +1612,104 @@ def main():
         2,
         pcf["lifecycle_qualifier_decides_verdict"]["n"],
     )
+
+    # ---- v5 additions (2026-11-06, review round 2026-11-05) -------------------------
+    # tab:human: verdicts of the eight in-unit chains, read from the verdict sheet.
+    import csv as _csv
+
+    sheet = {
+        r["packet_id"]: r
+        for r in _csv.DictReader(
+            open(
+                ROOT / "phase2_results/human_review_packet/verdict_sheet.csv",
+                encoding="utf-8",
+            )
+        )
+        if r["verdict"]
+    }
+    in_unit = ["C04", "C05", "C06", "C15", "C02", "C12", "C24", "C27"]
+    v_unit = Counter(sheet[c]["verdict"] for c in in_unit)
+    check("human adjudication v5: in-unit faithful", 1, v_unit["faithful"])
+    check(
+        "human adjudication v5: in-unit inferred_but_reasonable",
+        6,
+        v_unit["inferred_but_reasonable"],
+    )
+    check("human adjudication v5: in-unit unsupported", 1, v_unit["unsupported"])
+    check(
+        "human adjudication v5: gate-rejected verdicts",
+        ["faithful", "inferred_but_reasonable"],
+        sorted(sheet[c]["verdict"] for c in ("C01", "C03")),
+    )
+    levels = {
+        c: (
+            sheet[c]["risk_inference_level"],
+            sheet[c]["body_inference_level"],
+            sheet[c]["intervention_inference_level"],
+        )
+        for c in in_unit + ["C01", "C03"]
+    }
+    check(
+        "human adjudication v5: tab:human levels (risk, worst step, intervention)",
+        {
+            "C04": ("0", "0", "1"),
+            "C05": ("0", "1", "0"),
+            "C06": ("0", "1", "2"),
+            "C15": ("1", "2", "2"),
+            "C02": ("2", "0", "2"),
+            "C12": ("0", "2", "2"),
+            "C24": ("1", "2", "2"),
+            "C27": ("2", "3", "3"),
+            "C01": ("0", "0", "1"),
+            "C03": ("0", "1", "0"),
+        },
+        levels,
+    )
+
+    # sec:r-hub / app:dedup: the risk-block merge count (B1).
+    mrg = json.loads(
+        (ROOT / "phase2_results/experiment_merge_vs_simexcl_ec_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    check("merge: risk nodes", 19096, mrg["n_risk_nodes"])
+    check("merge: risk groups", 12638, mrg["n_risk_groups"])
+    check("merge: risk nodes removed", 6458, mrg["n_risk_nodes_removed"])
+
+    # sec:r-human / abstract: degenerate-source flag (C3).
+    dg = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_degenerate_source_flag_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    check("degenerate flag: documents flagged", 501, dg["either"]["documents"])
+    check("degenerate flag: % of corpus", 4.3, dg["either"]["documents_pct_of_corpus"])
+    check("degenerate flag: chains from flagged documents", 20, dg["either"]["chains"])
+    check(
+        "degenerate flag: % of the 2,772 chains",
+        0.7,
+        round(100 * dg["either"]["chains"] / dg["chains_total"], 1),
+    )
+    check(
+        "degenerate flag: C27 body characters",
+        215,
+        dg["validation_case_C27"]["body_chars"],
+    )
+
+    # tab:coverage row 6 (C1).
+    gs = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_gated_selection_share_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    check("coverage: gated sample documents", 97, gs["documents"])
+    check("coverage: graph pairs", 597, gs["graph_pairs"])
+    check(
+        "coverage: graph pairs absent from unit",
+        471,
+        gs["graph_pairs_absent_from_unit"],
+    )
+    check("coverage: absent %", 79, round(gs["absent_pct"]))
 
     # ---- race framing across centrality tiers (app:race) ----------------------------
     rr = json.loads(
