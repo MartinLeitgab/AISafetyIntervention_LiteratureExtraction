@@ -314,6 +314,9 @@ def main():
             {
                 "conditions": results,
                 "biggest_merged_members": member_count[biggest[0]],
+                "n_risk_nodes": n_risk,
+                "n_risk_groups": n_groups,
+                "n_risk_nodes_removed": n_risk - n_groups,
                 "wall_sec": round(time.time() - t0, 1),
             },
             indent=2,

@@ -45,7 +45,9 @@ Drive archives. The PKLs are only needed to re-derive the receipts from scratch.
 ```bash
 cd graph_analysis
 python -u experiment_paper_claim_audit.py
-# -> 257/257 PASS, 0 FAIL   (2026-08-16)
+# -> read what it prints; this copy quoted a stale 257/257 until 2026-08-26,
+#    when the true figure was 385/385. The canonical count lives in
+#    REPRODUCE.md in the manuscript repo, and is re-run rather than quoted.
 ```
 
 It re-derives each claim from the **raw** path files and node PKL (not from the other receipts) and

@@ -1,0 +1,1497 @@
+{
+ "study": "chain lookup vs passage retrieval plus synthesis (review C2)",
+ "smoke": false,
+ "design": "----------------------------------------------------------------------\nQueries, n = 25. Questions are written from the SOURCE TEXT by a model that never sees the\nextraction, so they do not favor the chain lookup.\n  * 20 documents drawn at random (seed 20261106) from the 1,868 chain-yielding documents and\n    5 from the 9,911 corpus documents with no chain. The 5 show what the chain lookup cannot\n    answer because the gates removed it; they are reported separately, never pooled.\n  * One call per document (gpt-6.1-sol, reasoning effort high): write one question of the\n    form \"what has been proposed to reduce risk R, and by what mechanism?\", naming the risk in\n    the generator's own words and not naming the intervention, plus the document's answer with\n    verbatim quoted spans. The question goes to both arms; answer and spans only to the judge.\n  * A document for which the generator finds no such proposal returns NONE and is replaced by\n    the next document of the same stratum in the seeded order; skipped documents are listed.\n\nArm A, chain lookup (no LLM). Embed the question with text-embedding-3-small, the model of the\nstored node embeddings. Take the 5 risk nodes nearest by cosine among the 2,256 risk nodes\nthat root a reporting-unit chain. Among the chains rooted at them, the top chain is the one\nwhose nodes have the highest mean cosine to the question. The answer is that chain's node\nnames in logical-chain order, each with its stage label, plus its source URL.\n\nArm B, passage retrieval plus synthesis. BM25 (k1 = 1.5, b = 0.75, Lucene idf\nlog(1 + (N - df + 0.5) / (df + 0.5)), the Elasticsearch default; a sparse-matrix\nimplementation in place of rank_bm25, whose per-chunk dictionaries do not fit in memory here)\nover non-overlapping 500-word chunks of the full ARD text of all 11,779 corpus documents,\ntokens = lowercase words of 2+ characters, English stop words removed. The top 10 chunks go\nto gpt-6.1-sol (reasoning effort high) with \"answer the question from these passages only,\nciting the source URL of each claim\".\n\nJudge, blind: claude-opus-5-5, effort high. It receives the question, the reference answer and\nspans, both answers in seeded random order labeled X and Y, and the full text of every corpus\ndocument either answer cites. Per answer it scores:\n  * answers the question: the answer addresses the risk asked about and gives a proposal and\n    mechanism for it (yes / partial / no). Added to the handover's list: without it an answer\n    about a different risk can score yes on every other measure;\n  * source support: every claim supported by its cited source (yes / partial / no);\n  * mechanism completeness: risk, intermediate steps, intervention present;\n  * citation correctness: the cited document is the one that makes the argument;\n  * and which answer a researcher would rather receive, or a tie.\nA verbatim quoted span is required for every \"yes\"; the script checks each span against the\ncited text and reports how many are not found verbatim.\n\nAnalysis, fixed before the run: counts per measure and per arm, separately for the\nchain-yielding and the no-chain queries; no pooled rate across the two groups; no decimals.\nRetrieval hit: how often arm A's top chain comes from the query's own source document (the\nmatching step's accuracy), and, for symmetry, how often arm B's 10 chunks include it.\n\nKnown limits, stated in the receipt: model judge, not human relevance judgments; the judge\nshares a provider with the v5 audit judge but not with the arm-B synthesizer or the\nextractor; arm A's answer is a list of node names and arm B's is prose, so the judge can tell\nthe arms apart and blinding hides only the label.",
+ "models": {
+  "question_generation": "gpt-6.1-sol",
+  "arm_B_synthesis": "gpt-6.1-sol",
+  "judge": "claude-opus-5-5",
+  "embedding": "text-embedding-3-small"
+ },
+ "population": {
+  "n_corpus": 11779,
+  "n_chain_yielding": 1868,
+  "n_no_chain": 9911
+ },
+ "seed": 20261106,
+ "skipped_by_question_generator": {
+  "chain": [
+   {
+    "url": "http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html",
+    "reason": "The provided text describes improvements in reinforcement-learning performance, but does not propose an intervention to reduce a risk."
+   },
+   {
+    "url": "https://forum.effectivealtruism.org/posts/aBKTkqeMC4AHoinFc/owain-evans-on-llms-truthful-ai-ai-composition-and-more",
+    "reason": "The document lists discussion topics and related papers but does not describe an intervention proposed to reduce a risk or explain how it would do so."
+   }
+  ],
+  "nochain": []
+ },
+ "chain_yielding": {
+  "n": 20,
+  "arm_A": {
+   "answers_question": {
+    "partial": 9,
+    "no": 10,
+    "yes": 1
+   },
+   "source_support": {
+    "yes": 7,
+    "partial": 13
+   },
+   "citation_correctness": {
+    "yes": 9,
+    "partial": 9,
+    "no": 2
+   },
+   "mc_steps": {
+    "partial": 14,
+    "no": 5,
+    "yes": 1
+   },
+   "mc_risk": {
+    "no": 13,
+    "yes": 7
+   },
+   "mc_intervention": {
+    "yes": 16,
+    "no": 4
+   },
+   "spans_found_verbatim": "77/81"
+  },
+  "arm_B": {
+   "answers_question": {
+    "partial": 9,
+    "no": 5,
+    "yes": 6
+   },
+   "source_support": {
+    "partial": 1,
+    "no": 3,
+    "yes": 16
+   },
+   "citation_correctness": {
+    "yes": 14,
+    "no": 3,
+    "partial": 3
+   },
+   "mc_steps": {
+    "partial": 12,
+    "no": 4,
+    "yes": 4
+   },
+   "mc_risk": {
+    "yes": 11,
+    "no": 8,
+    "partial": 1
+   },
+   "mc_intervention": {
+    "yes": 17,
+    "no": 3
+   },
+   "spans_found_verbatim": "84/84"
+  },
+  "preference": {
+   "B": 16,
+   "A": 4
+  },
+  "arm_A_retrieval_hit_top_chain": 2,
+  "arm_A_source_among_candidate_chains": 5,
+  "arm_B_source_among_10_passages": 4,
+  "arm_B_cites_source": 3,
+  "arm_B_answers_citing_outside_passages": 0
+ },
+ "no_chain": {
+  "n": 5,
+  "arm_A": {
+   "answers_question": {
+    "no": 3,
+    "yes": 1,
+    "partial": 1
+   },
+   "source_support": {
+    "partial": 5
+   },
+   "citation_correctness": {
+    "partial": 3,
+    "no": 1,
+    "yes": 1
+   },
+   "mc_steps": {
+    "no": 3,
+    "partial": 2
+   },
+   "mc_risk": {
+    "no": 3,
+    "yes": 2
+   },
+   "mc_intervention": {
+    "no": 2,
+    "yes": 3
+   },
+   "spans_found_verbatim": "14/15"
+  },
+  "arm_B": {
+   "answers_question": {
+    "yes": 4,
+    "no": 1
+   },
+   "source_support": {
+    "yes": 4,
+    "no": 1
+   },
+   "citation_correctness": {
+    "yes": 4,
+    "no": 1
+   },
+   "mc_steps": {
+    "yes": 2,
+    "partial": 2,
+    "no": 1
+   },
+   "mc_risk": {
+    "yes": 4,
+    "no": 1
+   },
+   "mc_intervention": {
+    "yes": 4,
+    "no": 1
+   },
+   "spans_found_verbatim": "23/23"
+  },
+  "preference": {
+   "B": 4,
+   "A": 1
+  },
+  "arm_A_retrieval_hit_top_chain": 0,
+  "arm_A_source_among_candidate_chains": 0,
+  "arm_B_source_among_10_passages": 2,
+  "arm_B_cites_source": 2,
+  "arm_B_answers_citing_outside_passages": 0
+ },
+ "DEVIATIONS": [
+  "judge prompt asked risk/intervention presence as yes/no; one judge response used 'partial', so the parser accepts three levels for those two fields",
+  "answers_question added to the handover's measure list (see design)",
+  "BM25 as a sparse-matrix implementation with Lucene idf instead of rank_bm25 (memory)"
+ ],
+ "NOT_POOLED": "the two strata are never combined into one rate; the no-chain gap is selection by the gates",
+ "usage_tokens": {
+  "gpt-6.1-sol_in": 483328,
+  "gpt-6.1-sol_out": 43432,
+  "claude-opus-5-5_in": 1136140,
+  "claude-opus-5-5_out": 62430
+ },
+ "usd_at_list_prices": 7.19,
+ "per_query": [
+  {
+   "qid": "9bb22ea7cdff",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/2010.05769",
+   "question": "What has been proposed to reduce the risk of useful light being lost within multilayer optical devices, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/2010.05769",
+   "arm_a_hit_top": true,
+   "arm_a_hit_any_candidate": true,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2010.05769"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 7094,
+     "output_tokens": 1138
+    },
+    "arm_b": {
+     "input_tokens": 7973,
+     "output_tokens": 504
+    },
+    "judge": {
+     "input_tokens": 11941,
+     "output_tokens": 1937
+    }
+   }
+  },
+  {
+   "qid": "c4a7be6e6de7",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1909.08068",
+   "question": "What has been proposed to reduce the risk that people's inability to follow AI reasoning prevents them from accepting AI systems, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/2002.04202",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0
+   },
+   "preference": "A",
+   "usage": {
+    "qgen": {
+     "input_tokens": 5527,
+     "output_tokens": 681
+    },
+    "arm_b": {
+     "input_tokens": 7072,
+     "output_tokens": 298
+    },
+    "judge": {
+     "input_tokens": 19788,
+     "output_tokens": 1550
+    }
+   }
+  },
+  {
+   "qid": "2693bcb3eebf",
+   "stratum": "chain",
+   "source_url": "https://drive.google.com/file/d/1MTOo-ntlaB_oAcuBJtQ4c7iKt6LXDlKk/view?usp=share_link",
+   "question": "What has been proposed to reduce the risk that rivalry between countries causes AI developers to overlook the dangers of deployment, and by what mechanism?",
+   "reference_spans_found_verbatim": "3/3",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://www.youtube.com/watch?v=h0962biiZa4",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://forum.effectivealtruism.org/posts/szwZkDBtW5sECHucy/brian-tse-sino-western-cooperation-in-ai-safety"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 7732,
+     "output_tokens": 1083
+    },
+    "arm_b": {
+     "input_tokens": 8184,
+     "output_tokens": 712
+    },
+    "judge": {
+     "input_tokens": 29435,
+     "output_tokens": 2336
+    }
+   }
+  },
+  {
+   "qid": "28318b0c2847",
+   "stratum": "chain",
+   "source_url": "https://forum.effectivealtruism.org/posts/zvALRCKshYGYetsbC/reflections-on-the-pibbss-fellowship-2022",
+   "question": "What has been proposed to reduce the risk that alignment research findings remain unavailable for timely scrutiny by other researchers, and by what mechanism?",
+   "reference_spans_found_verbatim": "3/3",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://www.alignmentforum.org/posts/FoiiRDC3EhjHx7ayY/introducing-the-ai-alignment-forum-faq",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://forum.effectivealtruism.org/posts/suBJdDkEu9EaSmTxJ/implications-of-large-language-model-diffusion-for-ai",
+    "https://forum.effectivealtruism.org/posts/oB3MnFQa8LqcuEhjG/background-for-understanding-the-diffusion-of-large-language"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5
+   },
+   "B": {
+    "answers_question": "no",
+    "source_support": "yes",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "preference": "A",
+   "usage": {
+    "qgen": {
+     "input_tokens": 8733,
+     "output_tokens": 656
+    },
+    "arm_b": {
+     "input_tokens": 9807,
+     "output_tokens": 818
+    },
+    "judge": {
+     "input_tokens": 62753,
+     "output_tokens": 2383
+    }
+   }
+  },
+  {
+   "qid": "a81e93b9228a",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/2008.09043",
+   "question": "What has been proposed to reduce the risk of misleading pandemic forecasts when models are reused for populations unlike those they were trained on, and by what mechanism?",
+   "reference_spans_found_verbatim": "3/3",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://www.alignmentforum.org/posts/gYfgWSxCpFdk2cZfE/the-alignment-problem-machine-learning-and-human-values",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": true,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2008.09043",
+    "https://www.cse.ust.hk/~qyang/Docs/2009/tkde_transfer_learning.pdf"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 8,
+    "spans_found_verbatim": 8
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 3071,
+     "output_tokens": 639
+    },
+    "arm_b": {
+     "input_tokens": 7535,
+     "output_tokens": 604
+    },
+    "judge": {
+     "input_tokens": 46091,
+     "output_tokens": 3000
+    }
+   }
+  },
+  {
+   "qid": "815332860130",
+   "stratum": "chain",
+   "source_url": "https://www.deepmind.com/blog/challenges-in-detoxifying-language-models",
+   "question": "What has been proposed to reduce the risk of language models producing messages that demean or intimidate people, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://aisafety.info?state=8XBK",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": true,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://www.lesswrong.com/posts/5ZFgZbqp6Mi2xpYjK/an-explanation-for-every-token-using-an-llm-to-sample"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "no",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "preference": "A",
+   "usage": {
+    "qgen": {
+     "input_tokens": 2262,
+     "output_tokens": 938
+    },
+    "arm_b": {
+     "input_tokens": 6583,
+     "output_tokens": 805
+    },
+    "judge": {
+     "input_tokens": 14056,
+     "output_tokens": 2293
+    }
+   }
+  },
+  {
+   "qid": "e66934a3d838",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1912.01217",
+   "question": "What has been proposed to reduce the risk of a reinforcement-learning agent damaging task-irrelevant parts of its environment, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://intelligence.org/2016/06/01/new-paper-safely-interruptible-agents/",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2010.15920"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 7778,
+     "output_tokens": 1224
+    },
+    "arm_b": {
+     "input_tokens": 7511,
+     "output_tokens": 486
+    },
+    "judge": {
+     "input_tokens": 28933,
+     "output_tokens": 1702
+    }
+   }
+  },
+  {
+   "qid": "93492a17f755",
+   "stratum": "chain",
+   "source_url": "https://intelligence.org/2013/05/15/when-will-ai-be-created/",
+   "question": "What has been proposed to reduce the risk that forecasters cling to overstated claims and dismiss rival views, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://www.cold-takes.com/the-track-record-of-futurists-seems-fine/",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://intelligence.org/2013/05/01/agi-impacts-experts-and-friendly-ai-experts/",
+    "https://forum.effectivealtruism.org/posts/K2xQrrXn5ZSgtntuT/what-do-xpt-forecasts-tell-us-about-ai-risk-1",
+    "https://www.lesswrong.com/posts/cLtdcxu9E4noRSons/part-1-amplifying-generalist-research-via-forecasting-models"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 6,
+    "spans_found_verbatim": 6
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 10545,
+     "output_tokens": 807
+    },
+    "arm_b": {
+     "input_tokens": 9134,
+     "output_tokens": 1346
+    },
+    "judge": {
+     "input_tokens": 55380,
+     "output_tokens": 3088
+    }
+   }
+  },
+  {
+   "qid": "eb399b7f9b44",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1906.00336",
+   "question": "What has been proposed to reduce the risk that an agent chooses unsuitable actions because different physical environments look identical to it, and by what mechanism?",
+   "reference_spans_found_verbatim": "3/3",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://www.alignmentforum.org/posts/Ajcq9xWi2fmgn8RBJ/the-credit-assignment-problem",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "http://link.springer.com/10.1007/978-3-319-26485-1_2"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 4644,
+     "output_tokens": 1392
+    },
+    "arm_b": {
+     "input_tokens": 7431,
+     "output_tokens": 1025
+    },
+    "judge": {
+     "input_tokens": 35897,
+     "output_tokens": 1893
+    }
+   }
+  },
+  {
+   "qid": "12738f77a8e9",
+   "stratum": "chain",
+   "source_url": "https://vkrakovna.wordpress.com/2022/06/02/paradigms-of-ai-alignment-components-and-enablers/",
+   "question": "What has been proposed to reduce the risk of training an AI to favor actions that humans would reject if they understood their consequences, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://www.lesswrong.com/posts/Z9Rgek2FstkJ3L7ri/an-investigation-into-when-agents-may-be-incentivized-to",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://www.alignmentforum.org/posts/rCJQAkPTEypGjSJ8X/how-might-we-align-transformative-ai-if-it-s-developed-very",
+    "https://www.alignmentforum.org/posts/A9tJFJY7DsGTFKKkh/high-stakes-alignment-via-adversarial-training-redwood"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 6,
+    "spans_found_verbatim": 6
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 5497,
+     "output_tokens": 591
+    },
+    "arm_b": {
+     "input_tokens": 7414,
+     "output_tokens": 1295
+    },
+    "judge": {
+     "input_tokens": 63172,
+     "output_tokens": 3493
+    }
+   }
+  },
+  {
+   "qid": "3d1661dee8f7",
+   "stratum": "chain",
+   "source_url": "https://www.alignmentforum.org/posts/Ajcq9xWi2fmgn8RBJ/the-credit-assignment-problem",
+   "question": "What has been proposed to reduce the risk that an online learner cannot improve its choices because delayed payoffs obscure which actions helped, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/1806.07857",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2001.09318",
+    "http://www.jmlr.org/papers/volume16/garcia15a/garcia15a.pdf",
+    "https://www.alignmentforum.org/posts/HqLxuZ4LhaFhmAHWk/iterated-distillation-and-amplification-1"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 7,
+    "spans_found_verbatim": 7
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 6,
+    "spans_found_verbatim": 6
+   },
+   "preference": "A",
+   "usage": {
+    "qgen": {
+     "input_tokens": 7192,
+     "output_tokens": 1330
+    },
+    "arm_b": {
+     "input_tokens": 7382,
+     "output_tokens": 1142
+    },
+    "judge": {
+     "input_tokens": 193338,
+     "output_tokens": 4983
+    }
+   }
+  },
+  {
+   "qid": "5204ac33c1de",
+   "stratum": "chain",
+   "source_url": "https://www.alignmentforum.org/posts/HXxHcRCxR4oHrAsEr/an-update-on-academia-vs-industry-one-year-into-my-faculty",
+   "question": "What has been proposed to reduce the risk of being unable to distinguish genuine advances in AI safety from unproductive research, and by what mechanism?",
+   "reference_spans_found_verbatim": "3/3",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://www.alignmentforum.org/posts/SqjQFhn5KTarfW8v7/lessons-learned-from-talking-to-greater-than-100-academics",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2306.12001"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 1844,
+     "output_tokens": 894
+    },
+    "arm_b": {
+     "input_tokens": 7113,
+     "output_tokens": 350
+    },
+    "judge": {
+     "input_tokens": 65791,
+     "output_tokens": 2312
+    }
+   }
+  },
+  {
+   "qid": "8cd724f754f5",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1811.09716",
+   "question": "What has been proposed to reduce the risk of an image classifier being tricked into a wrong label by small, deliberately chosen changes to its input, and by what mechanism?",
+   "reference_spans_found_verbatim": "6/6",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/1803.06373",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": true,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2205.03824",
+    "https://arxiv.org/abs/1901.10513"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 7,
+    "spans_found_verbatim": 7
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 6,
+    "spans_found_verbatim": 6
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 9171,
+     "output_tokens": 1611
+    },
+    "arm_b": {
+     "input_tokens": 8248,
+     "output_tokens": 561
+    },
+    "judge": {
+     "input_tokens": 56829,
+     "output_tokens": 3301
+    }
+   }
+  },
+  {
+   "qid": "d02039516f5d",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/2112.03575",
+   "question": "What has been proposed to reduce the risk of robots causing accidents while learning tasks when their response to control commands has changed, and by what mechanism?",
+   "reference_spans_found_verbatim": "6/6",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "http://dl.acm.org/citation.cfm?doid=3171221.3171267",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "yes",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 5,
+    "spans_found_verbatim": 5
+   },
+   "B": {
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 17198,
+     "output_tokens": 1320
+    },
+    "arm_b": {
+     "input_tokens": 7633,
+     "output_tokens": 317
+    },
+    "judge": {
+     "input_tokens": 14851,
+     "output_tokens": 1661
+    }
+   }
+  },
+  {
+   "qid": "00fd6760dd54",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1702.03465",
+   "question": "What has been proposed to reduce the risk of people wrongly assuming that an autonomous car will repeat a familiar maneuver when traffic conditions call for a different one, and by what mechanism?",
+   "reference_spans_found_verbatim": "6/6",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "http://link.springer.com/10.1007/s10514-018-9746-1",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/1702.03465"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 5,
+    "spans_found_verbatim": 5
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 11209,
+     "output_tokens": 1982
+    },
+    "arm_b": {
+     "input_tokens": 7153,
+     "output_tokens": 303
+    },
+    "judge": {
+     "input_tokens": 52800,
+     "output_tokens": 2105
+    }
+   }
+  },
+  {
+   "qid": "1dfac1409a04",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1805.07805",
+   "question": "What has been proposed to reduce the risk of a reinforcement-learning agent becoming substantially worse after updates based on unreliable estimates from limited experience, and by what mechanism?",
+   "reference_spans_found_verbatim": "6/6",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://www.youtube.com/watch?v=eM6IBYVqXEA",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2003.06066"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 26008,
+     "output_tokens": 1432
+    },
+    "arm_b": {
+     "input_tokens": 7304,
+     "output_tokens": 374
+    },
+    "judge": {
+     "input_tokens": 39591,
+     "output_tokens": 2348
+    }
+   }
+  },
+  {
+   "qid": "bbdf837f19ad",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1805.08462",
+   "question": "What has been proposed to reduce the risk of a learned optimizer tailoring its updates to guesses about future training batches, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://www.lesswrong.com/posts/Lia5RfipxFr2chrD3/architecture-aware-optimisation-train-imagenet-and-more",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 8920,
+     "output_tokens": 994
+    },
+    "arm_b": {
+     "input_tokens": 7666,
+     "output_tokens": 142
+    },
+    "judge": {
+     "input_tokens": 2739,
+     "output_tokens": 1469
+    }
+   }
+  },
+  {
+   "qid": "e4d3c0203329",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1503.07619",
+   "question": "What has been proposed to reduce the risk that a robot treats its own assistance as evidence that it has correctly inferred the user's goal, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/1503.07619",
+   "arm_a_hit_top": true,
+   "arm_a_hit_any_candidate": true,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2006.14796"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "yes",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 10253,
+     "output_tokens": 768
+    },
+    "arm_b": {
+     "input_tokens": 7817,
+     "output_tokens": 645
+    },
+    "judge": {
+     "input_tokens": 36755,
+     "output_tokens": 2230
+    }
+   }
+  },
+  {
+   "qid": "8c38c274b203",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/1705.10528",
+   "question": "What has been proposed to reduce the risk that approximate reinforcement-learning updates let an agent exceed acceptable levels of dangerous behavior, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://intelligence.org/files/Interruptibility.pdf",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2010.15920"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 1
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 7,
+    "spans_found_verbatim": 7
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 67906,
+     "output_tokens": 1142
+    },
+    "arm_b": {
+     "input_tokens": 7348,
+     "output_tokens": 514
+    },
+    "judge": {
+     "input_tokens": 34993,
+     "output_tokens": 2858
+    }
+   }
+  },
+  {
+   "qid": "bed15289f52d",
+   "stratum": "chain",
+   "source_url": "https://cocosci.princeton.edu/papers/battledayfrom.pdf",
+   "question": "What has been proposed to reduce the risk of image classifiers giving unreliable answers on unfamiliar or maliciously altered images, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://newsletter.mlsafety.org/p/ml-safety-newsletter-6",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://www.alignmentforum.org/posts/dYHiMeSdLrrX3cy4a/embedding-safety-in-ml-development",
+    "https://www.youtube.com/watch?v=hWb09uq6Zlk",
+    "https://www.alignmentforum.org/posts/CRMhhnKs7bymY4kbb/my-thoughts-on-the-ml-safety-course",
+    "https://www.alignmentforum.org/posts/AwMb7C72etphiRvah/unsolved-ml-safety-problems",
+    "https://arxiv.org/abs/2110.07719"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 12,
+    "spans_found_verbatim": 12
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 25802,
+     "output_tokens": 1497
+    },
+    "arm_b": {
+     "input_tokens": 8260,
+     "output_tokens": 917
+    },
+    "judge": {
+     "input_tokens": 54351,
+     "output_tokens": 3192
+    }
+   }
+  },
+  {
+   "qid": "5a74ee80b1fc",
+   "stratum": "nochain",
+   "source_url": "https://arbital.com/p/modal_combat",
+   "question": "What has been proposed to reduce the risk of agents failing to cooperate merely because their source code differs in harmless ways, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://vkrakovna.wordpress.com/2019/12/20/retrospective-on-the-specification-gaming-examples-list/",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://link.springer.com/article/10.1007/s11238-018-9679-3",
+    "https://arbital.com/p/modal_combat",
+    "https://www.cambridge.org/core/product/identifier/S0022481217000421/type/journal_article"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 2392,
+     "output_tokens": 1066
+    },
+    "arm_b": {
+     "input_tokens": 6760,
+     "output_tokens": 687
+    },
+    "judge": {
+     "input_tokens": 34018,
+     "output_tokens": 2579
+    }
+   }
+  },
+  {
+   "qid": "90a688aaec7b",
+   "stratum": "nochain",
+   "source_url": "https://arxiv.org/abs/2102.10646",
+   "question": "What has been proposed to reduce the risk that one jurisdiction avoids the burdens of epidemic control while benefiting from another jurisdiction’s stricter measures, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://forum.effectivealtruism.org/posts/sH9i6PSsXZABM5RNq/introducing-the-new-riesgos-catastroficos-globales-team",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2102.10646"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 11578,
+     "output_tokens": 1453
+    },
+    "arm_b": {
+     "input_tokens": 7943,
+     "output_tokens": 448
+    },
+    "judge": {
+     "input_tokens": 24502,
+     "output_tokens": 1964
+    }
+   }
+  },
+  {
+   "qid": "f9c2c051ada4",
+   "stratum": "nochain",
+   "source_url": "https://www.alignmentforum.org/posts/2KLz6RQWkCj4Rozrk/is-my-result-wrong-maths-vs-intuition-vs-evolution-in",
+   "question": "What has been proposed to reduce the risk of AI systems making unreliable judgments in unfamiliar situations or for different people, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/2209.13578",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://www.alignmentforum.org/posts/fzFyCJ6gB9kBL9RqW/axrp-episode-8-assistance-games-with-dylan-hadfield-menell",
+    "https://arxiv.org/abs/2206.05862",
+    "https://arxiv.org/abs/2110.07574"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 8,
+    "spans_found_verbatim": 8
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 8196,
+     "output_tokens": 1115
+    },
+    "arm_b": {
+     "input_tokens": 8598,
+     "output_tokens": 761
+    },
+    "judge": {
+     "input_tokens": 115613,
+     "output_tokens": 3275
+    }
+   }
+  },
+  {
+   "qid": "66e1a3e04bb9",
+   "stratum": "nochain",
+   "source_url": "https://www.lesswrong.com/posts/pEbHHHR3aPLumaKJK/recursively-self-improving-human-intelligence",
+   "question": "What has been proposed to reduce the risk of abandoning efforts to improve one's abilities, and by what mechanism?",
+   "reference_spans_found_verbatim": "3/3",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://www.lesswrong.com/posts/qPKbLpSRRw89zdkJn/fading-novelty",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0
+   },
+   "preference": "A",
+   "usage": {
+    "qgen": {
+     "input_tokens": 483,
+     "output_tokens": 726
+    },
+    "arm_b": {
+     "input_tokens": 7226,
+     "output_tokens": 210
+    },
+    "judge": {
+     "input_tokens": 4710,
+     "output_tokens": 1673
+    }
+   }
+  },
+  {
+   "qid": "c2e61c58ba5f",
+   "stratum": "nochain",
+   "source_url": "https://www.lesswrong.com/posts/nALdMXkxkLzysKtzC/linkpost-scott-alexander-reacts-to-openai-s-latest-post",
+   "question": "What has been proposed to reduce the risk that increasingly powerful AI outpaces people's ability to adjust and researchers' ability to understand it, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://forum.effectivealtruism.org/posts/3gmkrj3khJHndYGNe/estimating-the-current-and-future-number-of-ai-safety",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": false,
+   "arm_b_cites_source": false,
+   "arm_b_cited_urls": [
+    "https://www.lesswrong.com/posts/bkpZHXMJx3dG5waA7/ways-to-buy-time",
+    "https://www.alignmentforum.org/posts/fRSj2W4Fjje8rQWm9/thoughts-on-sharing-information-about-language-model"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 7,
+    "spans_found_verbatim": 7
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 2314,
+     "output_tokens": 743
+    },
+    "arm_b": {
+     "input_tokens": 7483,
+     "output_tokens": 679
+    },
+    "judge": {
+     "input_tokens": 37813,
+     "output_tokens": 2805
+    }
+   }
+  }
+ ],
+ "wall_clock_s": 8.1
+}

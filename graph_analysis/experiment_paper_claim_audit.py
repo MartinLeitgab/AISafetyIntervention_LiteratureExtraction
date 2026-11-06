@@ -1160,6 +1160,36 @@ def main():
     # These were quoted in Methods with no script behind them; REPRODUCE.md wrongly said
     # this file computed them. It does now. Union-find over the released checkpoints.
     edges = pickle.load(open(STEP1 / "graph_edge_data.pkl", "rb"))
+
+    # ---- node identity: per document, not merged by name (sec:m-extraction, v5 B2) ----
+    url_of = {n: a.get("url") for n, a in na.items()}
+    check(
+        "node identity: nodes with exactly one source url",
+        200525,
+        sum(1 for u in url_of.values() if isinstance(u, str) and u),
+    )
+    by_name_type = Counter((a.get("name"), a.get("type")) for a in na.values())
+    multi = {k for k, c in by_name_type.items() if c > 1}
+    urls_by_key = {}
+    for n, a in na.items():
+        k = (a.get("name"), a.get("type"))
+        if k in multi:
+            urls_by_key.setdefault(k, set()).add(url_of[n])
+    check("node identity: same-name groups", 434, len(multi))
+    check(
+        "node identity: same-name groups spanning >1 document",
+        434,
+        sum(1 for s in urls_by_key.values() if len(s) > 1),
+    )
+    struct = [e for e in edges if e["type"] == "EDGE"]
+    check("node identity: structural edges", 202149, len(struct))
+    check(
+        "node identity: structural edges joining two documents",
+        0,
+        sum(1 for e in struct if url_of.get(e["source"]) != url_of.get(e["target"])),
+    )
+    del struct, by_name_type, urls_by_key
+
     ids = list(na.keys())
     pos = {n: i for i, n in enumerate(ids)}
     parent = list(range(len(ids)))
@@ -1428,6 +1458,323 @@ def main():
         seven["baseline_uniform_chance_accuracy"],
     )
 
+    # ---- lifecycle label leakage into intervention names (sec:r-stages) --------------
+    # Added 2026-09-01 with the sentence it guards. The control rate is checked as well as
+    # the headline: without it the 38.0% says nothing, since names mention deployment and
+    # training for ordinary reasons.
+    absorb = receipt("experiment_review_lifecycle_name_absorption_report.json")
+    check(
+        "lifecycle leakage: own label in the intervention name",
+        38.0,
+        absorb["pooled"]["own_label_in_name_pct"],
+    )
+    check(
+        "lifecycle leakage: other-label control",
+        2.5,
+        absorb["pooled"]["other_label_in_name_pct"],
+    )
+    check(
+        "lifecycle leakage: intervention nodes measured",
+        28889,
+        absorb["pooled"]["n_interventions"],
+    )
+    stage2 = absorb["packet_stage_2"]
+    check(
+        "lifecycle leakage: names traced to a searchable source",
+        7,
+        stage2["n_testable_source_at_least_10k_chars"],
+    )
+    check(
+        "lifecycle leakage: of those, marker absent from the source",
+        7,
+        stage2["n_whose_marker_is_absent_from_the_source"],
+    )
+
+    # ---- human adjudication of 10 chains (sec:r-human, tab:human) -------------------
+    # Added 2026-11-04 with the subsection. Receipt: experiment_review_human_adjudication.py
+    # --strict, which refuses a partial sheet, so a COMPLETE status is checked first.
+    hum = receipt("experiment_review_human_adjudication_report.json")
+    check("human adjudication: sheet complete", "COMPLETE", hum["status"])
+    check("human adjudication: chains judged", 10, hum["progress"]["n_judged"])
+    check(
+        "human adjudication: packet as built",
+        30,
+        len(
+            json.loads(
+                (ROOT / "phase2_results/human_review_packet/manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        ),
+    )
+    uw = hum["unweighted_over_the_judged"]
+    check("human adjudication: faithful", 2, uw["faithful"])
+    check(
+        "human adjudication: inferred_but_reasonable", 7, uw["inferred_but_reasonable"]
+    )
+    check("human adjudication: unsupported", 1, uw["unsupported"])
+    armA = hum["arm_A_reporting_unit"]
+    check(
+        "human adjudication: weighted faithful %",
+        18.9,
+        round(100 * armA["weighted"]["faithful"], 1),
+    )
+    check(
+        "human adjudication: weighted inferred_but_reasonable %",
+        77.1,
+        round(100 * armA["weighted"]["inferred_but_reasonable"], 1),
+    )
+    check(
+        "human adjudication: weighted unsupported %",
+        4.0,
+        round(100 * armA["weighted"]["unsupported"], 1),
+    )
+    check(
+        "human adjudication: arm-A population coverage %",
+        100.0,
+        round(100 * armA["population_coverage"], 1),
+    )
+    check(
+        "human adjudication: arm-A strata covered",
+        7,
+        sum(1 for c in armA["per_stratum"].values() if c["chains"]),
+    )
+    check(
+        "human adjudication: arm-A strata holding one chain",
+        6,
+        len(armA["cells_with_one_chain"]),
+    )
+    check(
+        "human adjudication: weighted SE undefined (one-chain cells)",
+        None,
+        armA["unsupported_se"],
+    )
+    c27 = armA["per_stratum"]["known_judge_false_positive"]
+    check(
+        "human adjudication: weight of the different-document stratum %",
+        4.0,
+        round(100 * c27["population_weight"], 1),
+    )
+    check(
+        "human adjudication: the unsupported chain is the different-document stratum's",
+        ["C27"],
+        c27["chains"] if c27["verdicts"]["unsupported"] == 1 else None,
+    )
+    check(
+        "human adjudication: unsupported in the other arm-A strata",
+        0,
+        sum(
+            c["verdicts"]["unsupported"]
+            for s, c in armA["per_stratum"].items()
+            if s != "known_judge_false_positive"
+        ),
+    )
+    armB = hum["arm_B_gate_rejected"]["per_stratum"]["gate_rejected_faithful"]
+    check("human adjudication: gate-rejected chains judged", 2, len(armB["chains"]))
+    mvh = hum["machine_vs_human_on_link_asserted"]
+    check("human adjudication: link-asserted comparisons", 5, mvh["n"])
+    check("human adjudication: link-asserted agree", 3, mvh["agree"])
+    check("human adjudication: machine no, human yes", 2, mvh["machine_no_human_yes"])
+    check("human adjudication: machine yes, human no", 0, mvh["machine_yes_human_no"])
+    rec = hum["chain_level_recall"]
+    check("human adjudication: recall floor yes", 0, rec["yes"])
+    check("human adjudication: recall floor no", 7, rec["no"])
+    check("human adjudication: recall floor unclear", 3, rec["unclear"])
+    check(
+        "human adjudication: annotator confidence high",
+        6,
+        hum["annotator_confidence"]["high"],
+    )
+    check("human adjudication: annotator hours", 7.25, hum["cost"]["total_hours"])
+    z2 = 1.959963984540054**2
+    check(
+        "human adjudication: Wilson 95% upper bound for 0 of 10 (%)",
+        27.8,
+        round(100 * z2 / (hum["progress"]["n_judged"] + z2), 1),
+    )
+    pcf = hum["per_chain_findings"]
+    check(
+        "human adjudication: chains with a link-sourced node",
+        4,
+        pcf["link_sourced_node"]["n"],
+    )
+    check(
+        "human adjudication: link-sourced chains judged unsupported",
+        0,
+        sum(
+            1
+            for v in pcf["link_sourced_node"]["verdicts"].values()
+            if v == "unsupported"
+        ),
+    )
+    check(
+        "human adjudication: verdicts decided by a lifecycle qualifier",
+        2,
+        pcf["lifecycle_qualifier_decides_verdict"]["n"],
+    )
+
+    # ---- v5 additions (2026-11-06, review round 2026-11-05) -------------------------
+    # tab:human: verdicts of the eight in-unit chains, read from the verdict sheet.
+    import csv as _csv
+
+    sheet = {
+        r["packet_id"]: r
+        for r in _csv.DictReader(
+            open(
+                ROOT / "phase2_results/human_review_packet/verdict_sheet.csv",
+                encoding="utf-8",
+            )
+        )
+        if r["verdict"]
+    }
+    in_unit = ["C04", "C05", "C06", "C15", "C02", "C12", "C24", "C27"]
+    v_unit = Counter(sheet[c]["verdict"] for c in in_unit)
+    check("human adjudication v5: in-unit faithful", 1, v_unit["faithful"])
+    check(
+        "human adjudication v5: in-unit inferred_but_reasonable",
+        6,
+        v_unit["inferred_but_reasonable"],
+    )
+    check("human adjudication v5: in-unit unsupported", 1, v_unit["unsupported"])
+    check(
+        "human adjudication v5: gate-rejected verdicts",
+        ["faithful", "inferred_but_reasonable"],
+        sorted(sheet[c]["verdict"] for c in ("C01", "C03")),
+    )
+    levels = {
+        c: (
+            sheet[c]["risk_inference_level"],
+            sheet[c]["body_inference_level"],
+            sheet[c]["intervention_inference_level"],
+        )
+        for c in in_unit + ["C01", "C03"]
+    }
+    check(
+        "human adjudication v5: tab:human levels (risk, worst step, intervention)",
+        {
+            "C04": ("0", "0", "1"),
+            "C05": ("0", "1", "0"),
+            "C06": ("0", "1", "2"),
+            "C15": ("1", "2", "2"),
+            "C02": ("2", "0", "2"),
+            "C12": ("0", "2", "2"),
+            "C24": ("1", "2", "2"),
+            "C27": ("2", "3", "3"),
+            "C01": ("0", "0", "1"),
+            "C03": ("0", "1", "0"),
+        },
+        levels,
+    )
+
+    # sec:r-hub / app:dedup: the risk-block merge count (B1).
+    mrg = json.loads(
+        (ROOT / "phase2_results/experiment_merge_vs_simexcl_ec_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    check("merge: risk nodes", 19096, mrg["n_risk_nodes"])
+    check("merge: risk groups", 12638, mrg["n_risk_groups"])
+    check("merge: risk nodes removed", 6458, mrg["n_risk_nodes_removed"])
+
+    # sec:r-human / abstract: degenerate-source flag (C3).
+    dg = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_degenerate_source_flag_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    check("degenerate flag: documents flagged", 501, dg["either"]["documents"])
+    check("degenerate flag: % of corpus", 4.3, dg["either"]["documents_pct_of_corpus"])
+    check("degenerate flag: chains from flagged documents", 20, dg["either"]["chains"])
+    check(
+        "degenerate flag: % of the 2,772 chains",
+        0.7,
+        round(100 * dg["either"]["chains"] / dg["chains_total"], 1),
+    )
+    check(
+        "degenerate flag: C27 body characters",
+        215,
+        dg["validation_case_C27"]["body_chars"],
+    )
+
+    # sec:r-retrieval / abstract / limitations: chain lookup vs passage synthesis (C2).
+    rc = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_retrieval_comparison_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    cy, nc = rc["chain_yielding"], rc["no_chain"]
+    check("retrieval: chain-yielding questions", 20, cy["n"])
+    check("retrieval: no-chain questions", 5, nc["n"])
+    check("retrieval: corpus documents indexed", 11779, rc["population"]["n_corpus"])
+    check(
+        "retrieval: synthesis preferred (chain-yielding)",
+        16,
+        cy["preference"].get("B", 0),
+    )
+    check(
+        "retrieval: chain answers question yes",
+        1,
+        cy["arm_A"]["answers_question"].get("yes", 0),
+    )
+    check(
+        "retrieval: chain answers question partly",
+        9,
+        cy["arm_A"]["answers_question"].get("partial", 0),
+    )
+    check(
+        "retrieval: synthesis answers question yes",
+        6,
+        cy["arm_B"]["answers_question"].get("yes", 0),
+    )
+    check(
+        "retrieval: synthesis answers question partly",
+        9,
+        cy["arm_B"]["answers_question"].get("partial", 0),
+    )
+    check(
+        "retrieval: synthesis fully supported",
+        16,
+        cy["arm_B"]["source_support"].get("yes", 0),
+    )
+    check(
+        "retrieval: chain fully supported",
+        7,
+        cy["arm_A"]["source_support"].get("yes", 0),
+    )
+    check(
+        "retrieval: top chain from own source", 2, cy["arm_A_retrieval_hit_top_chain"]
+    )
+    check(
+        "retrieval: own source among candidates",
+        5,
+        cy["arm_A_source_among_candidate_chains"],
+    )
+    hits = [
+        q for q in rc["per_query"] if q["stratum"] == "chain" and q["arm_a_hit_top"]
+    ]
+    check(
+        "retrieval: hits where synthesis still preferred",
+        2,
+        sum(q["preference"] == "B" for q in hits),
+    )
+    check("retrieval: synthesis preferred (no-chain)", 4, nc["preference"].get("B", 0))
+    check("retrieval: judge model", "claude-opus-5-5", rc["models"]["judge"])
+
+    # tab:coverage row 6 (C1).
+    gs = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_gated_selection_share_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    check("coverage: gated sample documents", 97, gs["documents"])
+    check("coverage: graph pairs", 597, gs["graph_pairs"])
+    check(
+        "coverage: graph pairs absent from unit",
+        471,
+        gs["graph_pairs_absent_from_unit"],
+    )
+    check("coverage: absent %", 79, round(gs["absent_pct"]))
+
     # ---- race framing across centrality tiers (app:race) ----------------------------
     rr = json.loads(
         (ROOT / "phase2_results/experiment_race_top100_rederive_report.json").read_text(
@@ -1481,6 +1828,107 @@ def main():
         "coverage list: missing as a share of the list",
         38.9,
         round(100.0 * cl2["missing"] / cl2["rows_total"], 1),
+    )
+
+    # Chain-level impact of the flagged omissions. These arrived in the manuscript on
+    # 2026-08-26: the abstract and sec:limitations now say that granting the judge every
+    # missing relationship makes ONE further risk-to-intervention pair reachable, out of 86
+    # that were structurally available. 86 is the HEADROOM, not the pair count -- 86 of the
+    # 100 papers extract as a single connected component, so no edge could add a pair
+    # there. The last check guards exactly that confusion: if a future edit starts quoting
+    # the new pair against `before` (408) instead of against headroom, the ratio it would
+    # print is 0.2% and this file should be the thing that stops it.
+    ci = receipt("experiment_review_omission_chain_impact_report.json")
+    pairs = ci["risk_intervention_pairs"]
+    head = ci["headroom"]
+    check("chain impact: audited papers", 100, ci["papers"])
+    check(
+        "chain impact: missing relationships granted", 270, ci["missing_edges_granted"]
+    )
+    check("chain impact: pairs reachable before", 408, pairs["before"])
+    check("chain impact: new pairs after granting every omission", 1, pairs["new"])
+    check(
+        "chain impact: headroom, pairs unreachable before",
+        86,
+        head["pairs_unreachable_before"],
+    )
+    check(
+        "chain impact: papers with any headroom", 14, head["papers_with_any_headroom"]
+    )
+    check(
+        "chain impact: new pairs as a share of HEADROOM",
+        1.2,
+        head["new_as_pct_of_headroom"],
+    )
+    check(
+        "chain impact: headroom is possible minus before (the denominator is derived, not asserted)",
+        head["pairs_unreachable_before"],
+        pairs["possible"] - pairs["before"],
+    )
+
+    # The companion receipt: the flagged rows are not inert densification. Kept under audit
+    # because the manuscript comment in sec:limitations cites all four figures, and because
+    # the resolution gradient is what licenses the matcher at all -- if a future change to
+    # the matcher flattens it, these checks fail before anyone quotes the result again.
+    oi = receipt("experiment_review_omission_is_chain_level_report.json")
+    sh = oi["shares_of_usable_missing_rows"]
+    check("omission unit: inert share of missing rows", 3.7, sh["inert_pct"])
+    check(
+        "omission unit: rows naming a node the extraction lacks",
+        91.5,
+        sh["new_material_pct"],
+    )
+    check(
+        "omission unit: add_nodes proposed across 100 papers",
+        9,
+        oi["add_nodes_instrument"]["total_added_nodes"],
+    )
+
+    # Collapse adjudication (#182). The three figures in sec:m-reporting have DIFFERENT
+    # denominators and a future edit must not blend them: 18.0% is 579 of 3,222 distinct
+    # pairs, while 50.8% and 33.9% are shares of 118 sampled drops out of 6,182.
+    ca = receipt("experiment_review_collapse_adjudication_report.json")
+    check("collapse adjudication: displaced pairs judged", 118, ca["real_arm"]["n"])
+    check(
+        "collapse adjudication: different argument",
+        60,
+        ca["real_arm"]["different_argument"],
+    )
+    check(
+        "collapse adjudication: pct different",
+        50.8,
+        ca["real_arm"]["pct_different_argument"],
+    )
+    check(
+        "collapse adjudication: null arm flagged",
+        100.0,
+        ca["null_arm"]["pct_flagged_different"],
+    )
+    check("collapse adjudication: null arm n", 15, ca["null_arm"]["n"])
+
+    # Chain recall (#181), both arms. The gated rate is deliberately NOT checked as a miss
+    # rate: 79% of what it counts is present in the released graph and gated out, so the
+    # manuscript reports it as selection. If a future edit prints 36.5% as a miss rate, or
+    # divides it by its sensitivity, these anchors are what should have caught it.
+    crf = receipt("experiment_review_chain_recall_report.json")["headline_audited_100"]
+    check(
+        "chain recall gate-free: arguments enumerated", 575, crf["arguments_enumerated"]
+    )
+    check("chain recall gate-free: carried", 402, crf["carried"])
+    check(
+        "chain recall gate-free: material miss pct", 10.6, crf["material_miss_rate_pct"]
+    )
+    aj = receipt("experiment_review_ablation_adjudicate_report.json")
+    check("chain recall: ablation sensitivity detected", 9, aj["detected"])
+    check("chain recall: ablation sensitivity n", 20, aj["n_adjudicated"])
+    crg = receipt("experiment_review_chain_recall_report_gated.json")["by_cohort"][
+        "gated_reporting_unit"
+    ]
+    check("chain recall gated: documents", 95, crg["documents"])
+    check(
+        "chain recall gated: carried share (selection, NOT a miss rate)",
+        32.9,
+        round(100.0 * crg["carried"] / crg["arguments_enumerated"], 1),
     )
     cy = receipt("experiment_review_judge_chainyielding_report.json")
     check(

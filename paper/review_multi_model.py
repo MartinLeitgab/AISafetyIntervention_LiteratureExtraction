@@ -68,7 +68,12 @@ KEY_FILES = {
         Path(os.environ[_ANTHROPIC_ENV]) if os.environ.get(_ANTHROPIC_ENV) else None,
         "ANTHROPIC_API_KEY",
     ),
-    "openai": (HERE.parent / "graph_analysis" / ".env", "openai_api_key"),
+    # REVIEW_OPENAI_KEY_VAR names the variable to read when graph_analysis/.env holds
+    # more than one OpenAI key (e.g. newopenai_api_key); unset means openai_api_key.
+    "openai": (
+        HERE.parent / "graph_analysis" / ".env",
+        os.environ.get("REVIEW_OPENAI_KEY_VAR") or "openai_api_key",
+    ),
     "gemini": (HERE.parent.parent / ".env", "gemini_api_key"),
 }
 
@@ -107,20 +112,21 @@ insight for the paper's findings or key messages -- "sausage-making" from the \
 analysis effort that does not belong in the final paper. Name each one and say \
 what to cut.
 
-4. Length triage against a hard page budget. The main body of this paper (title \
-through the AI-assistance statement, excluding references and appendices) runs to \
-about 15 pages. It must reach 10. Identify the material whose removal is LEAST \
-likely to change the scores you gave above, and say for each item:
+4. Use of the page budget. The main body of this paper (title through the \
+AI-assistance statement, excluding references and appendices) runs to about 8 \
+pages against a hard limit of 10. Say how the body's space should be allocated to \
+raise your scores:
 
-   - what it is, and where it sits (section, table or figure number);
-   - move to appendix, or delete outright, and why that choice;
-   - your estimate of the pages recovered;
-   - the effect on your scores: none, minor, or a named score that would drop.
+   - body material to move to an appendix or delete, because it costs reader \
+attention without supporting a main claim;
+   - appendix material to promote into the body, because a main claim needs it \
+in front of the reader;
+   - for each item: what it is and where it sits (section, table or figure \
+number), the action and why, your page estimate, and the score it would raise, \
+lower, or leave unchanged.
 
-   Order the list by pages recovered per unit of score risk, most favourable \
-first, and state the running total so it is visible where 5 pages have been \
-reached. Then name separately the material you would refuse to move or cut, and \
-say which score depends on it.
+   Then name separately the material you would refuse to move or cut, and say \
+which score depends on it.
 """
 
 PROMPT_WORKSHOP_SUFFIX = """\
@@ -264,12 +270,13 @@ def run_anthropic(job: Job, pdf: bytes, guidance: str, sink: Sink) -> dict:
     import anthropic
 
     client = anthropic.Anthropic(api_key=read_key("anthropic"))
-    # Thinking and effort are deliberately omitted: on claude-opus-5 thinking is
-    # on (adaptive) by default and effort defaults to high, so omitting them is
-    # equivalent to setting them and avoids SDK-version typing gaps.
+    # Thinking is omitted: it is always on (adaptive) on claude-opus-5-5. Effort is
+    # set explicitly because claude-opus-5-5 defaults to medium, one level below the
+    # high that claude-opus-5 ran at in earlier rounds; extra_body avoids SDK typing gaps.
     with client.messages.stream(
         model=job.model,
         max_tokens=job.max_tokens,
+        extra_body={"output_config": {"effort": "high"}},
         system=SYSTEM_PROMPT,
         messages=[
             {
@@ -418,10 +425,16 @@ def main() -> int:
     ap.add_argument(
         "--smoke",
         action="store_true",
-        help="one cheap Gemini job with a small output cap, to prove the plumbing "
+        help="one job (the last reviewer in specs) with a small output cap, to prove the plumbing "
         "and measure tokens/sec before the full run",
     )
     ap.add_argument("--outdir", type=Path, default=None)
+    ap.add_argument(
+        "--only",
+        nargs="+",
+        default=None,
+        help="run only these reviewers, by short name (e.g. opus55); for when one provider is down",
+    )
     args = ap.parse_args()
 
     pdf, guidance = load_inputs()
@@ -430,13 +443,23 @@ def main() -> int:
     )
     outdir.mkdir(parents=True, exist_ok=True)
 
+    # Flag 4 of the prompt changed 2026-11-05 between the opus55 and gpt61sol jobs of the
+    # v4 round: it had said the body runs to 15 pages, while v4's body is about 8. Flag 4
+    # is not scored, so the scores stay comparable.
+    # 2026-11-05 round: the two reviewers requested for manuscript version 4. Both ids
+    # verified live by a models.list call that day. Earlier rounds used claude-opus-5,
+    # gpt-5.6-sol and gemini-3.1-pro-preview.
     specs = [
-        ("anthropic", "claude-opus-5", "opus5"),
-        ("openai", "gpt-5.6-sol", "gpt56sol"),
-        ("gemini", "gemini-3.1-pro-preview", "gemini31pro"),
+        ("anthropic", "claude-opus-5-5", "opus55"),
+        ("openai", "gpt-6.1-sol", "gpt61sol"),
     ]
+    if args.only:
+        unknown = set(args.only) - {short for _, _, short in specs}
+        if unknown:
+            raise SystemExit(f"--only: unknown reviewer(s) {sorted(unknown)}")
+        specs = [s for s in specs if s[2] in args.only]
     if args.smoke:
-        specs = [specs[2]]
+        specs = [specs[-1]]
         modes = ["conference"]
         cap = SMOKE_OUTPUT_TOKENS
     else:
