@@ -1,0 +1,244 @@
+{
+ "study": "chain lookup vs passage retrieval plus synthesis (review C2)",
+ "smoke": true,
+ "design": "----------------------------------------------------------------------\nQueries, n = 25. Questions are written from the SOURCE TEXT by a model that never sees the\nextraction, so they do not favor the chain lookup.\n  * 20 documents drawn at random (seed 20261106) from the 1,868 chain-yielding documents and\n    5 from the 9,911 corpus documents with no chain. The 5 show what the chain lookup cannot\n    answer because the gates removed it; they are reported separately, never pooled.\n  * One call per document (gpt-6.1-sol, reasoning effort high): write one question of the\n    form \"what has been proposed to reduce risk R, and by what mechanism?\", naming the risk in\n    the generator's own words and not naming the intervention, plus the document's answer with\n    verbatim quoted spans. The question goes to both arms; answer and spans only to the judge.\n  * A document for which the generator finds no such proposal returns NONE and is replaced by\n    the next document of the same stratum in the seeded order; skipped documents are listed.\n\nArm A, chain lookup (no LLM). Embed the question with text-embedding-3-small, the model of the\nstored node embeddings. Take the 5 risk nodes nearest by cosine among the 2,256 risk nodes\nthat root a reporting-unit chain. Among the chains rooted at them, the top chain is the one\nwhose nodes have the highest mean cosine to the question. The answer is that chain's node\nnames in logical-chain order, each with its stage label, plus its source URL.\n\nArm B, passage retrieval plus synthesis. BM25 (k1 = 1.5, b = 0.75, Lucene idf\nlog(1 + (N - df + 0.5) / (df + 0.5)), the Elasticsearch default; a sparse-matrix\nimplementation in place of rank_bm25, whose per-chunk dictionaries do not fit in memory here)\nover non-overlapping 500-word chunks of the full ARD text of all 11,779 corpus documents,\ntokens = lowercase words of 2+ characters, English stop words removed. The top 10 chunks go\nto gpt-6.1-sol (reasoning effort high) with \"answer the question from these passages only,\nciting the source URL of each claim\".\n\nJudge, blind: claude-opus-5-5, effort high. It receives the question, the reference answer and\nspans, both answers in seeded random order labeled X and Y, and the full text of every corpus\ndocument either answer cites. Per answer it scores:\n  * answers the question: the answer addresses the risk asked about and gives a proposal and\n    mechanism for it (yes / partial / no). Added to the handover's list: without it an answer\n    about a different risk can score yes on every other measure;\n  * source support: every claim supported by its cited source (yes / partial / no);\n  * mechanism completeness: risk, intermediate steps, intervention present;\n  * citation correctness: the cited document is the one that makes the argument;\n  * and which answer a researcher would rather receive, or a tie.\nA verbatim quoted span is required for every \"yes\"; the script checks each span against the\ncited text and reports how many are not found verbatim.\n\nAnalysis, fixed before the run: counts per measure and per arm, separately for the\nchain-yielding and the no-chain queries; no pooled rate across the two groups; no decimals.\nRetrieval hit: how often arm A's top chain comes from the query's own source document (the\nmatching step's accuracy), and, for symmetry, how often arm B's 10 chunks include it.\n\nKnown limits, stated in the receipt: model judge, not human relevance judgments; the judge\nshares a provider with the v5 audit judge but not with the arm-B synthesizer or the\nextractor; arm A's answer is a list of node names and arm B's is prose, so the judge can tell\nthe arms apart and blinding hides only the label.",
+ "models": {
+  "question_generation": "gpt-6.1-sol",
+  "arm_B_synthesis": "gpt-6.1-sol",
+  "judge": "claude-opus-5-5",
+  "embedding": "text-embedding-3-small"
+ },
+ "population": {
+  "n_corpus": 11779,
+  "n_chain_yielding": 1868,
+  "n_no_chain": 9911
+ },
+ "seed": 20261106,
+ "skipped_by_question_generator": {
+  "chain": [],
+  "nochain": []
+ },
+ "chain_yielding": {
+  "n": 1,
+  "arm_A": {
+   "answers_question": {
+    "partial": 1
+   },
+   "source_support": {
+    "yes": 1
+   },
+   "citation_correctness": {
+    "yes": 1
+   },
+   "mc_steps": {
+    "partial": 1
+   },
+   "mc_risk": {
+    "no": 1
+   },
+   "mc_intervention": {
+    "yes": 1
+   },
+   "spans_found_verbatim": "4/4"
+  },
+  "arm_B": {
+   "answers_question": {
+    "partial": 1
+   },
+   "source_support": {
+    "partial": 1
+   },
+   "citation_correctness": {
+    "yes": 1
+   },
+   "mc_steps": {
+    "partial": 1
+   },
+   "mc_risk": {
+    "yes": 1
+   },
+   "mc_intervention": {
+    "yes": 1
+   },
+   "spans_found_verbatim": "2/2"
+  },
+  "preference": {
+   "B": 1
+  },
+  "arm_A_retrieval_hit_top_chain": 1,
+  "arm_A_source_among_candidate_chains": 1,
+  "arm_B_source_among_10_passages": 1,
+  "arm_B_cites_source": 1,
+  "arm_B_answers_citing_outside_passages": 0
+ },
+ "no_chain": {
+  "n": 1,
+  "arm_A": {
+   "answers_question": {
+    "no": 1
+   },
+   "source_support": {
+    "partial": 1
+   },
+   "citation_correctness": {
+    "partial": 1
+   },
+   "mc_steps": {
+    "no": 1
+   },
+   "mc_risk": {
+    "no": 1
+   },
+   "mc_intervention": {
+    "no": 1
+   },
+   "spans_found_verbatim": "3/3"
+  },
+  "arm_B": {
+   "answers_question": {
+    "yes": 1
+   },
+   "source_support": {
+    "yes": 1
+   },
+   "citation_correctness": {
+    "yes": 1
+   },
+   "mc_steps": {
+    "yes": 1
+   },
+   "mc_risk": {
+    "yes": 1
+   },
+   "mc_intervention": {
+    "yes": 1
+   },
+   "spans_found_verbatim": "5/5"
+  },
+  "preference": {
+   "B": 1
+  },
+  "arm_A_retrieval_hit_top_chain": 0,
+  "arm_A_source_among_candidate_chains": 0,
+  "arm_B_source_among_10_passages": 1,
+  "arm_B_cites_source": 1,
+  "arm_B_answers_citing_outside_passages": 0
+ },
+ "NOT_POOLED": "the two strata are never combined into one rate; the no-chain gap is selection by the gates",
+ "usage_tokens": {
+  "gpt-6.1-sol_in": 24219,
+  "gpt-6.1-sol_out": 3395,
+  "claude-opus-5-5_in": 45959,
+  "claude-opus-5-5_out": 4516
+ },
+ "usd_at_list_prices": 0.36,
+ "per_query": [
+  {
+   "qid": "9bb22ea7cdff",
+   "stratum": "chain",
+   "source_url": "https://arxiv.org/abs/2010.05769",
+   "question": "What has been proposed to reduce the risk of useful light being lost within multilayer optical devices, and by what mechanism?",
+   "reference_spans_found_verbatim": "4/4",
+   "arm_a_label": "Y",
+   "arm_a_top_chain_url": "https://arxiv.org/abs/2010.05769",
+   "arm_a_hit_top": true,
+   "arm_a_hit_any_candidate": true,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://arxiv.org/abs/2010.05769"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4
+   },
+   "B": {
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 7094,
+     "output_tokens": 1138
+    },
+    "arm_b": {
+     "input_tokens": 7973,
+     "output_tokens": 504
+    },
+    "judge": {
+     "input_tokens": 11941,
+     "output_tokens": 1937
+    }
+   }
+  },
+  {
+   "qid": "5a74ee80b1fc",
+   "stratum": "nochain",
+   "source_url": "https://arbital.com/p/modal_combat",
+   "question": "What has been proposed to reduce the risk of agents failing to cooperate merely because their source code differs in harmless ways, and by what mechanism?",
+   "reference_spans_found_verbatim": "5/5",
+   "arm_a_label": "X",
+   "arm_a_top_chain_url": "https://vkrakovna.wordpress.com/2019/12/20/retrospective-on-the-specification-gaming-examples-list/",
+   "arm_a_hit_top": false,
+   "arm_a_hit_any_candidate": false,
+   "arm_b_hit_passages": true,
+   "arm_b_cites_source": true,
+   "arm_b_cited_urls": [
+    "https://link.springer.com/article/10.1007/s11238-018-9679-3",
+    "https://arbital.com/p/modal_combat",
+    "https://www.cambridge.org/core/product/identifier/S0022481217000421/type/journal_article"
+   ],
+   "arm_b_cites_outside_passages": [],
+   "A": {
+    "answers_question": "no",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 3,
+    "spans_found_verbatim": 3
+   },
+   "B": {
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5
+   },
+   "preference": "B",
+   "usage": {
+    "qgen": {
+     "input_tokens": 2392,
+     "output_tokens": 1066
+    },
+    "arm_b": {
+     "input_tokens": 6760,
+     "output_tokens": 687
+    },
+    "judge": {
+     "input_tokens": 34018,
+     "output_tokens": 2579
+    }
+   }
+  }
+ ],
+ "wall_clock_s": 76.8
+}

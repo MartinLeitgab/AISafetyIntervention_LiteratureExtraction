@@ -1696,6 +1696,70 @@ def main():
         dg["validation_case_C27"]["body_chars"],
     )
 
+    # sec:r-retrieval / abstract / limitations: chain lookup vs passage synthesis (C2).
+    rc = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_retrieval_comparison_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    cy, nc = rc["chain_yielding"], rc["no_chain"]
+    check("retrieval: chain-yielding questions", 20, cy["n"])
+    check("retrieval: no-chain questions", 5, nc["n"])
+    check("retrieval: corpus documents indexed", 11779, rc["population"]["n_corpus"])
+    check(
+        "retrieval: synthesis preferred (chain-yielding)",
+        16,
+        cy["preference"].get("B", 0),
+    )
+    check(
+        "retrieval: chain answers question yes",
+        1,
+        cy["arm_A"]["answers_question"].get("yes", 0),
+    )
+    check(
+        "retrieval: chain answers question partly",
+        9,
+        cy["arm_A"]["answers_question"].get("partial", 0),
+    )
+    check(
+        "retrieval: synthesis answers question yes",
+        6,
+        cy["arm_B"]["answers_question"].get("yes", 0),
+    )
+    check(
+        "retrieval: synthesis answers question partly",
+        9,
+        cy["arm_B"]["answers_question"].get("partial", 0),
+    )
+    check(
+        "retrieval: synthesis fully supported",
+        16,
+        cy["arm_B"]["source_support"].get("yes", 0),
+    )
+    check(
+        "retrieval: chain fully supported",
+        7,
+        cy["arm_A"]["source_support"].get("yes", 0),
+    )
+    check(
+        "retrieval: top chain from own source", 2, cy["arm_A_retrieval_hit_top_chain"]
+    )
+    check(
+        "retrieval: own source among candidates",
+        5,
+        cy["arm_A_source_among_candidate_chains"],
+    )
+    hits = [
+        q for q in rc["per_query"] if q["stratum"] == "chain" and q["arm_a_hit_top"]
+    ]
+    check(
+        "retrieval: hits where synthesis still preferred",
+        2,
+        sum(q["preference"] == "B" for q in hits),
+    )
+    check("retrieval: synthesis preferred (no-chain)", 4, nc["preference"].get("B", 0))
+    check("retrieval: judge model", "claude-opus-5-5", rc["models"]["judge"])
+
     # tab:coverage row 6 (C1).
     gs = json.loads(
         (
