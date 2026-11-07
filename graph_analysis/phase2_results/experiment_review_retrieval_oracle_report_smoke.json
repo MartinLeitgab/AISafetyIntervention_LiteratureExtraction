@@ -1,0 +1,307 @@
+{
+ "study": "four-arm retrieval follow-up (review C2, v5.1 review round)",
+ "smoke": true,
+ "design": "----------------------------------------------------------------------\nQuestions: the 20 chain-yielding questions of experiment_review_retrieval_comparison.py,\nreused unchanged (question, reference answer, spans). The 5 no-chain questions are not\nre-run: no ORACLE arm exists for them.\n\nWriter for all four arms: gemini-3.1-pro-preview, one call per arm per question, through the\nGemini batch API. Every prompt says to answer from the given evidence only and to cite the\nsource URL of each claim.\n  * MATCHED: candidates are the chains rooted at the 20 risk nodes nearest the question by\n    cosine (text-embedding-3-small, the cached question vector), among the 2,256 risk nodes\n    that root a reporting-unit chain. The writer picks one chain, or none, and answers from it.\n  * ORACLE: candidates are all reporting-unit chains whose source is the question's own\n    document; same prompt as MATCHED.\n  * PASSAGE: the ten BM25 passages of the first run, unchanged.\n  * CHAIN+PASSAGE: the MATCHED candidates plus the ten passages; the writer answers from both.\nA chain is shown as its node names and node descriptions in logical-chain order, each with\nits stage label, plus its source URL: what the released graph stores for that chain.\n\nJudge: claude-opus-5-5, effort high, through the Message Batches API, one call per question.\nIt receives the question, the reference answer and spans, the four answers in seeded random\norder labeled W, X, Y, Z, and the full text of every corpus document any answer cites. Per\nanswer: material equivalence to the reference (same risk, same intervention, same mechanism,\nignoring wording, length, format and fluency; yes / partial / no); answers the question;\nsource support with a verbatim span per supported claim; citation correctness; mechanism\ncompleteness (risk, intermediate steps, intervention). Then a ranking of the four, ties\nallowed, by which answer a researcher would rather receive.\n\nAnalysis, fixed before the run: counts per measure per arm over the 20; pairwise\nwin / tie / loss from the ranking for ORACLE vs PASSAGE, MATCHED vs PASSAGE, CHAIN+PASSAGE\nvs PASSAGE and MATCHED vs ORACLE; how often MATCHED's chosen chain comes from the source\ndocument and how often its candidates include one. No pooled score, no decimals.\n\nLimits: n = 20; model judge; the judge shares a provider with the v5 audit judge; the\nreference answer and the questions come from gpt-6.1-sol, a provider used by no arm.",
+ "models": {
+  "writer_all_arms": "gemini-3.1-pro-preview",
+  "judge": "claude-opus-5-5",
+  "questions_and_reference": "gpt-6.1-sol"
+ },
+ "n_questions": 1,
+ "by_arm": {
+  "matched": {
+   "material_equivalence": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "answers_question": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "source_support": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "citation_correctness": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "mc_risk": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "mc_steps": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "mc_intervention": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "spans_found_verbatim": "5/5",
+   "chose_no_chain": 0
+  },
+  "oracle": {
+   "material_equivalence": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "answers_question": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "source_support": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "citation_correctness": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "mc_risk": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "mc_steps": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "mc_intervention": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "spans_found_verbatim": "4/4",
+   "chose_no_chain": 0
+  },
+  "passage": {
+   "material_equivalence": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "answers_question": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "source_support": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "citation_correctness": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "mc_risk": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "mc_steps": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "mc_intervention": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "spans_found_verbatim": "0/0",
+   "chose_no_chain": null
+  },
+  "chain_passage": {
+   "material_equivalence": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "answers_question": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "source_support": {
+    "yes": 0,
+    "partial": 1,
+    "no": 0
+   },
+   "citation_correctness": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "mc_risk": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "mc_steps": {
+    "yes": 0,
+    "partial": 0,
+    "no": 1
+   },
+   "mc_intervention": {
+    "yes": 1,
+    "partial": 0,
+    "no": 0
+   },
+   "spans_found_verbatim": "3/3",
+   "chose_no_chain": 0
+  }
+ },
+ "pairwise_from_ranking": {
+  "oracle_vs_passage": {
+   "win": 1
+  },
+  "matched_vs_passage": {
+   "win": 1
+  },
+  "chain_passage_vs_passage": {
+   "win": 1
+  },
+  "matched_vs_oracle": {
+   "loss": 1
+  }
+ },
+ "matched_chain_from_source": 1,
+ "matched_candidates_include_source": 1,
+ "usage_tokens": {
+  "writer_in": 37173,
+  "writer_out": 7834,
+  "judge_in": 12388,
+  "judge_out": 3222
+ },
+ "usd_at_batch_rates": 0.14,
+ "per_query": [
+  {
+   "qid": "9bb22ea7cdff",
+   "source_url": "https://arxiv.org/abs/2010.05769",
+   "question": "What has been proposed to reduce the risk of useful light being lost within multilayer optical devices, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "X",
+    "passage": "Z",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5,
+    "chain_id": 940,
+    "cited_urls": [
+     "https://arxiv.org/abs/2010.05769"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": 940,
+    "cited_urls": [
+     "https://arxiv.org/abs/2010.05769"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 940,
+    "cited_urls": [
+     "https://arxiv.org/abs/2010.05769"
+    ]
+   },
+   "matched_chain_from_source": true,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "X",
+     "Y"
+    ],
+    [
+     "W"
+    ],
+    [
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9977,
+      "output_tokens": 2910
+     },
+     "oracle": {
+      "input_tokens": 814,
+      "output_tokens": 1367
+     },
+     "passage": {
+      "input_tokens": 8246,
+      "output_tokens": 1160
+     },
+     "chain_passage": {
+      "input_tokens": 18136,
+      "output_tokens": 2397
+     }
+    },
+    "judge": {
+     "input_tokens": 12388,
+     "output_tokens": 3222
+    }
+   }
+  }
+ ]
+}

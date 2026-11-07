@@ -1696,69 +1696,75 @@ def main():
         dg["validation_case_C27"]["body_chars"],
     )
 
-    # sec:r-retrieval / abstract / limitations: chain lookup vs passage synthesis (C2).
+    # sec:r-retrieval / abstract / contributions / conclusion / outlook / limitations (C2).
+    # First run: embedding-only lookup vs gpt-6.1-sol passage synthesis.
     rc = json.loads(
         (
             ROOT / "phase2_results/experiment_review_retrieval_comparison_report.json"
         ).read_text(encoding="utf-8")
     )
-    cy, nc = rc["chain_yielding"], rc["no_chain"]
-    check("retrieval: chain-yielding questions", 20, cy["n"])
-    check("retrieval: no-chain questions", 5, nc["n"])
-    check("retrieval: corpus documents indexed", 11779, rc["population"]["n_corpus"])
+    cy = rc["chain_yielding"]
+    check("retrieval run 1: chain-yielding questions", 20, cy["n"])
     check(
-        "retrieval: synthesis preferred (chain-yielding)",
-        16,
-        cy["preference"].get("B", 0),
+        "retrieval run 1: corpus documents indexed", 11779, rc["population"]["n_corpus"]
     )
     check(
-        "retrieval: chain answers question yes",
-        1,
-        cy["arm_A"]["answers_question"].get("yes", 0),
-    )
-    check(
-        "retrieval: chain answers question partly",
-        9,
-        cy["arm_A"]["answers_question"].get("partial", 0),
-    )
-    check(
-        "retrieval: synthesis answers question yes",
-        6,
-        cy["arm_B"]["answers_question"].get("yes", 0),
-    )
-    check(
-        "retrieval: synthesis answers question partly",
-        9,
-        cy["arm_B"]["answers_question"].get("partial", 0),
-    )
-    check(
-        "retrieval: synthesis fully supported",
-        16,
-        cy["arm_B"]["source_support"].get("yes", 0),
-    )
-    check(
-        "retrieval: chain fully supported",
-        7,
-        cy["arm_A"]["source_support"].get("yes", 0),
-    )
-    check(
-        "retrieval: top chain from own source", 2, cy["arm_A_retrieval_hit_top_chain"]
-    )
-    check(
-        "retrieval: own source among candidates",
-        5,
-        cy["arm_A_source_among_candidate_chains"],
-    )
-    hits = [
-        q for q in rc["per_query"] if q["stratum"] == "chain" and q["arm_a_hit_top"]
-    ]
-    check(
-        "retrieval: hits where synthesis still preferred",
+        "retrieval run 1: embedding lookup hit own source",
         2,
-        sum(q["preference"] == "B" for q in hits),
+        cy["arm_A_retrieval_hit_top_chain"],
     )
-    check("retrieval: synthesis preferred (no-chain)", 4, nc["preference"].get("B", 0))
-    check("retrieval: judge model", "claude-opus-5-5", rc["models"]["judge"])
+    check(
+        "retrieval run 1: gpt-6.1-sol passage answers addressing the question at least partly",
+        15,
+        cy["arm_B"]["answers_question"].get("yes", 0)
+        + cy["arm_B"]["answers_question"].get("partial", 0),
+    )
+    # Second run: four arms written by gemini-3.1-pro-preview (v5.1 review round).
+    ro = json.loads(
+        (
+            ROOT / "phase2_results/experiment_review_retrieval_oracle_report.json"
+        ).read_text(encoding="utf-8")
+    )
+    check("retrieval run 2: questions", 20, ro["n_questions"])
+    eq = {a: ro["by_arm"][a]["material_equivalence"] for a in ro["by_arm"]}
+    for arm, (y, p) in {
+        "oracle": (5, 5),
+        "matched": (1, 10),
+        "passage": (0, 5),
+        "chain_passage": (2, 9),
+    }.items():
+        check(f"retrieval run 2: {arm} equivalent", y, eq[arm]["yes"])
+        check(f"retrieval run 2: {arm} partly equivalent", p, eq[arm]["partial"])
+    check(
+        "retrieval run 2: oracle found no answering chain",
+        10,
+        ro["by_arm"]["oracle"]["chose_no_chain"],
+    )
+    check(
+        "retrieval run 2: matched chose source document",
+        3,
+        ro["matched_chain_from_source"],
+    )
+    check(
+        "retrieval run 2: matched candidates include source",
+        10,
+        ro["matched_candidates_include_source"],
+    )
+    n_decl = 0
+    for q in ro["per_query"]:
+        txt = json.loads(
+            (
+                ROOT / f"phase2_results/retrieval_oracle_raw/{q['qid']}/passage.json"
+            ).read_text(encoding="utf-8")
+        )["text"]
+        n_decl += "do not answer" in txt[:200]
+    check("retrieval run 2: passage writer says the passages do not answer", 14, n_decl)
+    check(
+        "retrieval run 2: writer",
+        "gemini-3.1-pro-preview",
+        ro["models"]["writer_all_arms"],
+    )
+    check("retrieval run 2: judge", "claude-opus-5-5", ro["models"]["judge"])
 
     # tab:coverage row 6 (C1).
     gs = json.loads(

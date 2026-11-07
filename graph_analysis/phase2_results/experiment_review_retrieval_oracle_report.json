@@ -1,0 +1,2507 @@
+{
+ "study": "four-arm retrieval follow-up (review C2, v5.1 review round)",
+ "smoke": false,
+ "design": "----------------------------------------------------------------------\nQuestions: the 20 chain-yielding questions of experiment_review_retrieval_comparison.py,\nreused unchanged (question, reference answer, spans). The 5 no-chain questions are not\nre-run: no ORACLE arm exists for them.\n\nWriter for all four arms: gemini-3.1-pro-preview, one call per arm per question, through the\nGemini batch API. Every prompt says to answer from the given evidence only and to cite the\nsource URL of each claim.\n  * MATCHED: candidates are the chains rooted at the 20 risk nodes nearest the question by\n    cosine (text-embedding-3-small, the cached question vector), among the 2,256 risk nodes\n    that root a reporting-unit chain. The writer picks one chain, or none, and answers from it.\n  * ORACLE: candidates are all reporting-unit chains whose source is the question's own\n    document; same prompt as MATCHED.\n  * PASSAGE: the ten BM25 passages of the first run, unchanged.\n  * CHAIN+PASSAGE: the MATCHED candidates plus the ten passages; the writer answers from both.\nA chain is shown as its node names and node descriptions in logical-chain order, each with\nits stage label, plus its source URL: what the released graph stores for that chain.\n\nJudge: claude-opus-5-5, effort high, through the Message Batches API, one call per question.\nIt receives the question, the reference answer and spans, the four answers in seeded random\norder labeled W, X, Y, Z, and the full text of every corpus document any answer cites. Per\nanswer: material equivalence to the reference (same risk, same intervention, same mechanism,\nignoring wording, length, format and fluency; yes / partial / no); answers the question;\nsource support with a verbatim span per supported claim; citation correctness; mechanism\ncompleteness (risk, intermediate steps, intervention). Then a ranking of the four, ties\nallowed, by which answer a researcher would rather receive.\n\nAnalysis, fixed before the run: counts per measure per arm over the 20; pairwise\nwin / tie / loss from the ranking for ORACLE vs PASSAGE, MATCHED vs PASSAGE, CHAIN+PASSAGE\nvs PASSAGE and MATCHED vs ORACLE; how often MATCHED's chosen chain comes from the source\ndocument and how often its candidates include one. No pooled score, no decimals.\n\nLimits: n = 20; model judge; the judge shares a provider with the v5 audit judge; the\nreference answer and the questions come from gpt-6.1-sol, a provider used by no arm.",
+ "models": {
+  "writer_all_arms": "gemini-3.1-pro-preview",
+  "judge": "claude-opus-5-5",
+  "questions_and_reference": "gpt-6.1-sol"
+ },
+ "n_questions": 20,
+ "by_arm": {
+  "matched": {
+   "material_equivalence": {
+    "yes": 1,
+    "partial": 10,
+    "no": 9
+   },
+   "answers_question": {
+    "yes": 9,
+    "partial": 4,
+    "no": 7
+   },
+   "source_support": {
+    "yes": 1,
+    "partial": 12,
+    "no": 7
+   },
+   "citation_correctness": {
+    "yes": 9,
+    "partial": 4,
+    "no": 7
+   },
+   "mc_risk": {
+    "yes": 10,
+    "partial": 3,
+    "no": 7
+   },
+   "mc_steps": {
+    "yes": 4,
+    "partial": 8,
+    "no": 8
+   },
+   "mc_intervention": {
+    "yes": 10,
+    "partial": 3,
+    "no": 7
+   },
+   "spans_found_verbatim": "47/53",
+   "chose_no_chain": 7,
+   "declined_to_answer": 3
+  },
+  "oracle": {
+   "material_equivalence": {
+    "yes": 5,
+    "partial": 5,
+    "no": 10
+   },
+   "answers_question": {
+    "yes": 7,
+    "partial": 3,
+    "no": 10
+   },
+   "source_support": {
+    "yes": 2,
+    "partial": 8,
+    "no": 10
+   },
+   "citation_correctness": {
+    "yes": 8,
+    "partial": 2,
+    "no": 10
+   },
+   "mc_risk": {
+    "yes": 8,
+    "partial": 2,
+    "no": 10
+   },
+   "mc_steps": {
+    "yes": 4,
+    "partial": 5,
+    "no": 11
+   },
+   "mc_intervention": {
+    "yes": 8,
+    "partial": 2,
+    "no": 10
+   },
+   "spans_found_verbatim": "38/46",
+   "chose_no_chain": 10,
+   "declined_to_answer": 1
+  },
+  "passage": {
+   "material_equivalence": {
+    "yes": 0,
+    "partial": 5,
+    "no": 15
+   },
+   "answers_question": {
+    "yes": 4,
+    "partial": 2,
+    "no": 14
+   },
+   "source_support": {
+    "yes": 5,
+    "partial": 1,
+    "no": 14
+   },
+   "citation_correctness": {
+    "yes": 5,
+    "partial": 1,
+    "no": 14
+   },
+   "mc_risk": {
+    "yes": 5,
+    "partial": 1,
+    "no": 14
+   },
+   "mc_steps": {
+    "yes": 0,
+    "partial": 6,
+    "no": 14
+   },
+   "mc_intervention": {
+    "yes": 4,
+    "partial": 2,
+    "no": 14
+   },
+   "spans_found_verbatim": "24/24",
+   "chose_no_chain": null,
+   "declined_to_answer": 0
+  },
+  "chain_passage": {
+   "material_equivalence": {
+    "yes": 2,
+    "partial": 9,
+    "no": 9
+   },
+   "answers_question": {
+    "yes": 8,
+    "partial": 6,
+    "no": 6
+   },
+   "source_support": {
+    "yes": 4,
+    "partial": 10,
+    "no": 6
+   },
+   "citation_correctness": {
+    "yes": 11,
+    "partial": 2,
+    "no": 7
+   },
+   "mc_risk": {
+    "yes": 11,
+    "partial": 2,
+    "no": 7
+   },
+   "mc_steps": {
+    "yes": 3,
+    "partial": 8,
+    "no": 9
+   },
+   "mc_intervention": {
+    "yes": 13,
+    "partial": 1,
+    "no": 6
+   },
+   "spans_found_verbatim": "40/42",
+   "chose_no_chain": 10,
+   "declined_to_answer": 0
+  }
+ },
+ "pairwise_from_ranking": {
+  "oracle_vs_passage": {
+   "win": 10,
+   "tie": 8,
+   "loss": 2
+  },
+  "matched_vs_passage": {
+   "win": 11,
+   "tie": 5,
+   "loss": 4
+  },
+  "chain_passage_vs_passage": {
+   "win": 10,
+   "tie": 7,
+   "loss": 3
+  },
+  "matched_vs_oracle": {
+   "loss": 7,
+   "win": 8,
+   "tie": 5
+  }
+ },
+ "matched_chain_from_source": 3,
+ "matched_candidates_include_source": 10,
+ "usage_tokens": {
+  "writer_in": 703843,
+  "writer_out": 246614,
+  "judge_in": 757370,
+  "judge_out": 51370
+ },
+ "usd_at_batch_rates": 4.21,
+ "per_query": [
+  {
+   "qid": "9bb22ea7cdff",
+   "source_url": "https://arxiv.org/abs/2010.05769",
+   "question": "What has been proposed to reduce the risk of useful light being lost within multilayer optical devices, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "X",
+    "passage": "Z",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5,
+    "chain_id": 940,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2010.05769"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": 940,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2010.05769"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 940,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2010.05769"
+    ]
+   },
+   "matched_chain_from_source": true,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "X",
+     "Y"
+    ],
+    [
+     "W"
+    ],
+    [
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9977,
+      "output_tokens": 2910
+     },
+     "oracle": {
+      "input_tokens": 814,
+      "output_tokens": 1367
+     },
+     "passage": {
+      "input_tokens": 8246,
+      "output_tokens": 1160
+     },
+     "chain_passage": {
+      "input_tokens": 18136,
+      "output_tokens": 2397
+     }
+    },
+    "judge": {
+     "input_tokens": 12388,
+     "output_tokens": 3222
+    }
+   }
+  },
+  {
+   "qid": "c4a7be6e6de7",
+   "source_url": "https://arxiv.org/abs/1909.08068",
+   "question": "What has been proposed to reduce the risk that people's inability to follow AI reasoning prevents them from accepting AI systems, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "X",
+    "passage": "Z",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": 1315,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2001.07417"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": 1315,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2001.07417"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Y",
+     "W"
+    ],
+    [
+     "X",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 8374,
+      "output_tokens": 1967
+     },
+     "oracle": {
+      "input_tokens": 469,
+      "output_tokens": 463
+     },
+     "passage": {
+      "input_tokens": 7402,
+      "output_tokens": 1244
+     },
+     "chain_passage": {
+      "input_tokens": 15683,
+      "output_tokens": 2211
+     }
+    },
+    "judge": {
+     "input_tokens": 36065,
+     "output_tokens": 2231
+    }
+   }
+  },
+  {
+   "qid": "2693bcb3eebf",
+   "source_url": "https://drive.google.com/file/d/1MTOo-ntlaB_oAcuBJtQ4c7iKt6LXDlKk/view?usp=share_link",
+   "question": "What has been proposed to reduce the risk that rivalry between countries causes AI developers to overlook the dangers of deployment, and by what mechanism?",
+   "labels": {
+    "matched": "Z",
+    "oracle": "X",
+    "passage": "W",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "partial",
+    "spans_total": 3,
+    "spans_found_verbatim": 2,
+    "chain_id": 2273,
+    "declined": false,
+    "cited_urls": [
+     "https://longtermrisk.org/international-cooperation-vs-ai-arms-race/"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "no",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 2681,
+    "declined": false,
+    "cited_urls": [
+     "https://www.youtube.com/watch?v=h0962biiZa4"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Z"
+    ],
+    [
+     "Y"
+    ],
+    [
+     "W",
+     "X"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 7943,
+      "output_tokens": 5430
+     },
+     "oracle": {
+      "input_tokens": 446,
+      "output_tokens": 683
+     },
+     "passage": {
+      "input_tokens": 8631,
+      "output_tokens": 3036
+     },
+     "chain_passage": {
+      "input_tokens": 16483,
+      "output_tokens": 24378
+     }
+    },
+    "judge": {
+     "input_tokens": 25708,
+     "output_tokens": 1908
+    }
+   }
+  },
+  {
+   "qid": "28318b0c2847",
+   "source_url": "https://forum.effectivealtruism.org/posts/zvALRCKshYGYetsbC/reflections-on-the-pibbss-fellowship-2022",
+   "question": "What has been proposed to reduce the risk that alignment research findings remain unavailable for timely scrutiny by other researchers, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "Y",
+    "passage": "Z",
+    "chain_passage": "X"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 65,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/FoiiRDC3EhjHx7ayY/introducing-the-ai-alignment-forum-faq"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "W"
+    ],
+    [
+     "X",
+     "Y",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 6508,
+      "output_tokens": 1493
+     },
+     "oracle": {
+      "input_tokens": 476,
+      "output_tokens": 566
+     },
+     "passage": {
+      "input_tokens": 10425,
+      "output_tokens": 1401
+     },
+     "chain_passage": {
+      "input_tokens": 16843,
+      "output_tokens": 4117
+     }
+    },
+    "judge": {
+     "input_tokens": 5505,
+     "output_tokens": 1912
+    }
+   }
+  },
+  {
+   "qid": "a81e93b9228a",
+   "source_url": "https://arxiv.org/abs/2008.09043",
+   "question": "What has been proposed to reduce the risk of misleading pandemic forecasts when models are reused for populations unlike those they were trained on, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "X",
+    "passage": "Z",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2008.09043"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "Y"
+    ],
+    [
+     "W",
+     "X",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "tie",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "tie"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 7351,
+      "output_tokens": 1410
+     },
+     "oracle": {
+      "input_tokens": 436,
+      "output_tokens": 786
+     },
+     "passage": {
+      "input_tokens": 7766,
+      "output_tokens": 2968
+     },
+     "chain_passage": {
+      "input_tokens": 15023,
+      "output_tokens": 4778
+     }
+    },
+    "judge": {
+     "input_tokens": 6000,
+     "output_tokens": 1228
+    }
+   }
+  },
+  {
+   "qid": "815332860130",
+   "source_url": "https://www.deepmind.com/blog/challenges-in-detoxifying-language-models",
+   "question": "What has been proposed to reduce the risk of language models producing messages that demean or intimidate people, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "Z",
+    "passage": "Y",
+    "chain_passage": "W"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 1,
+    "chain_id": 2171,
+    "declined": false,
+    "cited_urls": [
+     "https://www.lesswrong.com/posts/e2XAqFyEBWxzGXeHy/ai-safety-newsletter-6-examples-of-ai-safety-progress-yoshua"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 1,
+    "chain_id": 1477,
+    "declined": false,
+    "cited_urls": [
+     "https://www.deepmind.com/blog/challenges-in-detoxifying-language-models"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 0,
+    "chain_id": 1477,
+    "declined": false,
+    "cited_urls": [
+     "https://www.deepmind.com/blog/challenges-in-detoxifying-language-models"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "W",
+     "Z"
+    ],
+    [
+     "X"
+    ],
+    [
+     "Y"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 8549,
+      "output_tokens": 3043
+     },
+     "oracle": {
+      "input_tokens": 888,
+      "output_tokens": 2472
+     },
+     "passage": {
+      "input_tokens": 6771,
+      "output_tokens": 1718
+     },
+     "chain_passage": {
+      "input_tokens": 15232,
+      "output_tokens": 3682
+     }
+    },
+    "judge": {
+     "input_tokens": 11330,
+     "output_tokens": 2635
+    }
+   }
+  },
+  {
+   "qid": "e66934a3d838",
+   "source_url": "https://arxiv.org/abs/1912.01217",
+   "question": "What has been proposed to reduce the risk of a reinforcement-learning agent damaging task-irrelevant parts of its environment, and by what mechanism?",
+   "labels": {
+    "matched": "Z",
+    "oracle": "X",
+    "passage": "W",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": 62,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/5kurn5W62C5CpSWq6/avoiding-side-effects-in-complex-environments"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 5,
+    "spans_found_verbatim": 5,
+    "chain_id": 771,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1912.01217"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5,
+    "chain_id": 62,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/5kurn5W62C5CpSWq6/avoiding-side-effects-in-complex-environments"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Y"
+    ],
+    [
+     "Z"
+    ],
+    [
+     "X"
+    ],
+    [
+     "W"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9281,
+      "output_tokens": 1913
+     },
+     "oracle": {
+      "input_tokens": 474,
+      "output_tokens": 1564
+     },
+     "passage": {
+      "input_tokens": 7636,
+      "output_tokens": 1129
+     },
+     "chain_passage": {
+      "input_tokens": 16824,
+      "output_tokens": 3887
+     }
+    },
+    "judge": {
+     "input_tokens": 17115,
+     "output_tokens": 3639
+    }
+   }
+  },
+  {
+   "qid": "93492a17f755",
+   "source_url": "https://intelligence.org/2013/05/15/when-will-ai-be-created/",
+   "question": "What has been proposed to reduce the risk that forecasters cling to overstated claims and dismiss rival views, and by what mechanism?",
+   "labels": {
+    "matched": "Y",
+    "oracle": "W",
+    "passage": "Z",
+    "chain_passage": "X"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "W",
+     "X",
+     "Y",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "tie",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "tie"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10186,
+      "output_tokens": 2854
+     },
+     "oracle": {
+      "input_tokens": 857,
+      "output_tokens": 936
+     },
+     "passage": {
+      "input_tokens": 9749,
+      "output_tokens": 1590
+     },
+     "chain_passage": {
+      "input_tokens": 19846,
+      "output_tokens": 4128
+     }
+    },
+    "judge": {
+     "input_tokens": 1430,
+     "output_tokens": 713
+    }
+   }
+  },
+  {
+   "qid": "eb399b7f9b44",
+   "source_url": "https://arxiv.org/abs/1906.00336",
+   "question": "What has been proposed to reduce the risk that an agent chooses unsuitable actions because different physical environments look identical to it, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "Z",
+    "passage": "X",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": true,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 2,
+    "chain_id": 1400,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1906.00336"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Z"
+    ],
+    [
+     "W",
+     "X",
+     "Y"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "tie",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10537,
+      "output_tokens": 4419
+     },
+     "oracle": {
+      "input_tokens": 494,
+      "output_tokens": 867
+     },
+     "passage": {
+      "input_tokens": 7473,
+      "output_tokens": 946
+     },
+     "chain_passage": {
+      "input_tokens": 17918,
+      "output_tokens": 3073
+     }
+    },
+    "judge": {
+     "input_tokens": 8413,
+     "output_tokens": 1523
+    }
+   }
+  },
+  {
+   "qid": "12738f77a8e9",
+   "source_url": "https://vkrakovna.wordpress.com/2022/06/02/paradigms-of-ai-alignment-components-and-enablers/",
+   "question": "What has been proposed to reduce the risk of training an AI to favor actions that humans would reject if they understood their consequences, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "Z",
+    "passage": "W",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 2175,
+    "declined": false,
+    "cited_urls": [
+     "https://www.lesswrong.com/posts/FFz6H35Gy6BArHxkc/task-decomposition-for-scalable-oversight-agisf-distillation"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 2175,
+    "declined": false,
+    "cited_urls": [
+     "https://www.lesswrong.com/posts/FFz6H35Gy6BArHxkc/task-decomposition-for-scalable-oversight-agisf-distillation"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Y",
+     "X"
+    ],
+    [
+     "W",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 8437,
+      "output_tokens": 4613
+     },
+     "oracle": {
+      "input_tokens": 432,
+      "output_tokens": 757
+     },
+     "passage": {
+      "input_tokens": 7638,
+      "output_tokens": 3662
+     },
+     "chain_passage": {
+      "input_tokens": 15981,
+      "output_tokens": 14661
+     }
+    },
+    "judge": {
+     "input_tokens": 17464,
+     "output_tokens": 2579
+    }
+   }
+  },
+  {
+   "qid": "3d1661dee8f7",
+   "source_url": "https://www.alignmentforum.org/posts/Ajcq9xWi2fmgn8RBJ/the-credit-assignment-problem",
+   "question": "What has been proposed to reduce the risk that an online learner cannot improve its choices because delayed payoffs obscure which actions helped, and by what mechanism?",
+   "labels": {
+    "matched": "W",
+    "oracle": "X",
+    "passage": "Z",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": 1240,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1806.07857"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": true,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2001.09318"
+    ]
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 1240,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1806.07857"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Y"
+    ],
+    [
+     "W"
+    ],
+    [
+     "Z"
+    ],
+    [
+     "X"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "loss",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10579,
+      "output_tokens": 1184
+     },
+     "oracle": {
+      "input_tokens": 954,
+      "output_tokens": 1053
+     },
+     "passage": {
+      "input_tokens": 7543,
+      "output_tokens": 1955
+     },
+     "chain_passage": {
+      "input_tokens": 18029,
+      "output_tokens": 1912
+     }
+    },
+    "judge": {
+     "input_tokens": 140130,
+     "output_tokens": 3509
+    }
+   }
+  },
+  {
+   "qid": "5204ac33c1de",
+   "source_url": "https://www.alignmentforum.org/posts/HXxHcRCxR4oHrAsEr/an-update-on-academia-vs-industry-one-year-into-my-faculty",
+   "question": "What has been proposed to reduce the risk of being unable to distinguish genuine advances in AI safety from unproductive research, and by what mechanism?",
+   "labels": {
+    "matched": "Y",
+    "oracle": "W",
+    "passage": "X",
+    "chain_passage": "Z"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2306.12001",
+     "https://www.alignmentforum.org/posts/wpsGprQCRffRKG92v/catastrophic-risks-from-ai-4-organizational-risks"
+    ]
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2306.12001",
+     "https://www.alignmentforum.org/posts/wpsGprQCRffRKG92v/catastrophic-risks-from-ai-4-organizational-risks"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "Z"
+    ],
+    [
+     "X"
+    ],
+    [
+     "W",
+     "Y"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "loss",
+    "matched_vs_passage": "loss",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "tie"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 8967,
+      "output_tokens": 3764
+     },
+     "oracle": {
+      "input_tokens": 440,
+      "output_tokens": 681
+     },
+     "passage": {
+      "input_tokens": 7385,
+      "output_tokens": 2162
+     },
+     "chain_passage": {
+      "input_tokens": 16261,
+      "output_tokens": 2787
+     }
+    },
+    "judge": {
+     "input_tokens": 73054,
+     "output_tokens": 2179
+    }
+   }
+  },
+  {
+   "qid": "8cd724f754f5",
+   "source_url": "https://arxiv.org/abs/1811.09716",
+   "question": "What has been proposed to reduce the risk of an image classifier being tricked into a wrong label by small, deliberately chosen changes to its input, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "W",
+    "passage": "Y",
+    "chain_passage": "Z"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 155,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/NTwA3J99RPkgmp6jh/an-62-are-adversarial-examples-caused-by-real-but"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 6,
+    "spans_found_verbatim": 6,
+    "chain_id": 995,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1811.09716"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2205.03824"
+    ]
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 2,
+    "spans_found_verbatim": 2,
+    "chain_id": 155,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/NTwA3J99RPkgmp6jh/an-62-are-adversarial-examples-caused-by-real-but"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "W"
+    ],
+    [
+     "Y"
+    ],
+    [
+     "Z"
+    ],
+    [
+     "X"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "loss",
+    "chain_passage_vs_passage": "loss",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10351,
+      "output_tokens": 2924
+     },
+     "oracle": {
+      "input_tokens": 653,
+      "output_tokens": 1607
+     },
+     "passage": {
+      "input_tokens": 8252,
+      "output_tokens": 1388
+     },
+     "chain_passage": {
+      "input_tokens": 18506,
+      "output_tokens": 3026
+     }
+    },
+    "judge": {
+     "input_tokens": 46567,
+     "output_tokens": 3917
+    }
+   }
+  },
+  {
+   "qid": "d02039516f5d",
+   "source_url": "https://arxiv.org/abs/2112.03575",
+   "question": "What has been proposed to reduce the risk of robots causing accidents while learning tasks when their response to control commands has changed, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "Y",
+    "passage": "Z",
+    "chain_passage": "W"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "partial",
+    "mc_risk": "partial",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 6,
+    "spans_found_verbatim": 6,
+    "chain_id": 1104,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1602.04450"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5,
+    "chain_id": 1204,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2112.03575"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Y"
+    ],
+    [
+     "X"
+    ],
+    [
+     "W",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10320,
+      "output_tokens": 19416
+     },
+     "oracle": {
+      "input_tokens": 1141,
+      "output_tokens": 2055
+     },
+     "passage": {
+      "input_tokens": 7884,
+      "output_tokens": 3324
+     },
+     "chain_passage": {
+      "input_tokens": 18111,
+      "output_tokens": 7274
+     }
+    },
+    "judge": {
+     "input_tokens": 53627,
+     "output_tokens": 3116
+    }
+   }
+  },
+  {
+   "qid": "00fd6760dd54",
+   "source_url": "https://arxiv.org/abs/1702.03465",
+   "question": "What has been proposed to reduce the risk of people wrongly assuming that an autonomous car will repeat a familiar maneuver when traffic conditions call for a different one, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "W",
+    "passage": "Y",
+    "chain_passage": "Z"
+   },
+   "matched": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 4,
+    "chain_id": 1092,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1702.03465"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 5,
+    "chain_id": 1092,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1702.03465"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1702.03465"
+    ]
+   },
+   "chain_passage": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": 1092,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1702.03465"
+    ]
+   },
+   "matched_chain_from_source": true,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "X"
+    ],
+    [
+     "W",
+     "Z"
+    ],
+    [
+     "Y"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "win",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9484,
+      "output_tokens": 3137
+     },
+     "oracle": {
+      "input_tokens": 915,
+      "output_tokens": 1476
+     },
+     "passage": {
+      "input_tokens": 7387,
+      "output_tokens": 1500
+     },
+     "chain_passage": {
+      "input_tokens": 16772,
+      "output_tokens": 2792
+     }
+    },
+    "judge": {
+     "input_tokens": 19481,
+     "output_tokens": 3624
+    }
+   }
+  },
+  {
+   "qid": "1dfac1409a04",
+   "source_url": "https://arxiv.org/abs/1805.07805",
+   "question": "What has been proposed to reduce the risk of a reinforcement-learning agent becoming substantially worse after updates based on unreliable estimates from limited experience, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "Y",
+    "passage": "W",
+    "chain_passage": "Z"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": true,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 5,
+    "spans_found_verbatim": 3,
+    "chain_id": 1063,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1805.07805"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2003.06066"
+    ]
+   },
+   "chain_passage": {
+    "material_equivalence": "partial",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 3,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/2003.06066"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "Y"
+    ],
+    [
+     "W",
+     "Z"
+    ],
+    [
+     "X"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "loss",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9968,
+      "output_tokens": 8406
+     },
+     "oracle": {
+      "input_tokens": 1198,
+      "output_tokens": 1725
+     },
+     "passage": {
+      "input_tokens": 7479,
+      "output_tokens": 3163
+     },
+     "chain_passage": {
+      "input_tokens": 17351,
+      "output_tokens": 4951
+     }
+    },
+    "judge": {
+     "input_tokens": 52394,
+     "output_tokens": 3090
+    }
+   }
+  },
+  {
+   "qid": "bbdf837f19ad",
+   "source_url": "https://arxiv.org/abs/1805.08462",
+   "question": "What has been proposed to reduce the risk of a learned optimizer tailoring its updates to guesses about future training batches, and by what mechanism?",
+   "labels": {
+    "matched": "X",
+    "oracle": "Z",
+    "passage": "W",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": true,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "W",
+     "X",
+     "Y",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "tie",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "tie"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9578,
+      "output_tokens": 2418
+     },
+     "oracle": {
+      "input_tokens": 1244,
+      "output_tokens": 676
+     },
+     "passage": {
+      "input_tokens": 7688,
+      "output_tokens": 1041
+     },
+     "chain_passage": {
+      "input_tokens": 17175,
+      "output_tokens": 2529
+     }
+    },
+    "judge": {
+     "input_tokens": 1239,
+     "output_tokens": 633
+    }
+   }
+  },
+  {
+   "qid": "e4d3c0203329",
+   "source_url": "https://arxiv.org/abs/1503.07619",
+   "question": "What has been proposed to reduce the risk that a robot treats its own assistance as evidence that it has correctly inferred the user's goal, and by what mechanism?",
+   "labels": {
+    "matched": "Y",
+    "oracle": "X",
+    "passage": "W",
+    "chain_passage": "Z"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "oracle": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "W",
+     "X",
+     "Y",
+     "Z"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "tie",
+    "matched_vs_passage": "tie",
+    "chain_passage_vs_passage": "tie",
+    "matched_vs_oracle": "tie"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 9674,
+      "output_tokens": 2866
+     },
+     "oracle": {
+      "input_tokens": 863,
+      "output_tokens": 630
+     },
+     "passage": {
+      "input_tokens": 7857,
+      "output_tokens": 1911
+     },
+     "chain_passage": {
+      "input_tokens": 17434,
+      "output_tokens": 2725
+     }
+    },
+    "judge": {
+     "input_tokens": 1367,
+     "output_tokens": 670
+    }
+   }
+  },
+  {
+   "qid": "8c38c274b203",
+   "source_url": "https://arxiv.org/abs/1705.10528",
+   "question": "What has been proposed to reduce the risk that approximate reinforcement-learning updates let an agent exceed acceptable levels of dangerous behavior, and by what mechanism?",
+   "labels": {
+    "matched": "Z",
+    "oracle": "W",
+    "passage": "Y",
+    "chain_passage": "X"
+   },
+   "matched": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 7,
+    "spans_found_verbatim": 7,
+    "chain_id": 433,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1705.10528"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "partial",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "partial",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 7,
+    "spans_found_verbatim": 7,
+    "chain_id": 433,
+    "declined": false,
+    "cited_urls": [
+     "https://arxiv.org/abs/1705.10528"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "no",
+    "source_support": "no",
+    "citation_correctness": "no",
+    "mc_risk": "no",
+    "mc_steps": "no",
+    "mc_intervention": "no",
+    "spans_total": 0,
+    "spans_found_verbatim": 0,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": []
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "partial",
+    "source_support": "partial",
+    "citation_correctness": "no",
+    "mc_risk": "partial",
+    "mc_steps": "partial",
+    "mc_intervention": "partial",
+    "spans_total": 1,
+    "spans_found_verbatim": 1,
+    "chain_id": 362,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/kj37Hzb2MsALwLqWt/alignment-research-exercises"
+    ]
+   },
+   "matched_chain_from_source": true,
+   "matched_candidates_include_source": true,
+   "ranking": [
+    [
+     "Z"
+    ],
+    [
+     "W"
+    ],
+    [
+     "Y"
+    ],
+    [
+     "X"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "win",
+    "chain_passage_vs_passage": "loss",
+    "matched_vs_oracle": "win"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10362,
+      "output_tokens": 4574
+     },
+     "oracle": {
+      "input_tokens": 503,
+      "output_tokens": 1188
+     },
+     "passage": {
+      "input_tokens": 7474,
+      "output_tokens": 2048
+     },
+     "chain_passage": {
+      "input_tokens": 17743,
+      "output_tokens": 1532
+     }
+    },
+    "judge": {
+     "input_tokens": 120227,
+     "output_tokens": 4172
+    }
+   }
+  },
+  {
+   "qid": "bed15289f52d",
+   "source_url": "https://cocosci.princeton.edu/papers/battledayfrom.pdf",
+   "question": "What has been proposed to reduce the risk of image classifiers giving unreliable answers on unfamiliar or maliciously altered images, and by what mechanism?",
+   "labels": {
+    "matched": "Z",
+    "oracle": "X",
+    "passage": "W",
+    "chain_passage": "Y"
+   },
+   "matched": {
+    "material_equivalence": "no",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 1,
+    "chain_id": 2359,
+    "declined": false,
+    "cited_urls": [
+     "http://proceedings.mlr.press/v97/hendrycks19a/hendrycks19a.pdf"
+    ]
+   },
+   "oracle": {
+    "material_equivalence": "yes",
+    "answers_question": "yes",
+    "source_support": "partial",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "yes",
+    "mc_intervention": "yes",
+    "spans_total": 3,
+    "spans_found_verbatim": 0,
+    "chain_id": 2519,
+    "declined": false,
+    "cited_urls": [
+     "https://cocosci.princeton.edu/papers/battledayfrom.pdf"
+    ]
+   },
+   "passage": {
+    "material_equivalence": "no",
+    "answers_question": "yes",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "partial",
+    "mc_intervention": "yes",
+    "spans_total": 8,
+    "spans_found_verbatim": 8,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://www.alignmentforum.org/posts/dYHiMeSdLrrX3cy4a/embedding-safety-in-ml-development",
+     "https://www.youtube.com/watch?v=hWb09uq6Zlk",
+     "https://www.alignmentforum.org/posts/AwMb7C72etphiRvah/unsolved-ml-safety-problems",
+     "https://www.alignmentforum.org/posts/CRMhhnKs7bymY4kbb/my-thoughts-on-the-ml-safety-course",
+     "https://arxiv.org/abs/2110.07719"
+    ]
+   },
+   "chain_passage": {
+    "material_equivalence": "no",
+    "answers_question": "partial",
+    "source_support": "yes",
+    "citation_correctness": "yes",
+    "mc_risk": "yes",
+    "mc_steps": "no",
+    "mc_intervention": "yes",
+    "spans_total": 4,
+    "spans_found_verbatim": 4,
+    "chain_id": null,
+    "declined": false,
+    "cited_urls": [
+     "https://www.youtube.com/watch?v=hWb09uq6Zlk",
+     "https://www.alignmentforum.org/posts/dYHiMeSdLrrX3cy4a/embedding-safety-in-ml-development"
+    ]
+   },
+   "matched_chain_from_source": false,
+   "matched_candidates_include_source": false,
+   "ranking": [
+    [
+     "X"
+    ],
+    [
+     "W"
+    ],
+    [
+     "Z"
+    ],
+    [
+     "Y"
+    ]
+   ],
+   "pairwise": {
+    "oracle_vs_passage": "win",
+    "matched_vs_passage": "loss",
+    "chain_passage_vs_passage": "loss",
+    "matched_vs_oracle": "loss"
+   },
+   "usage": {
+    "writer": {
+     "matched": {
+      "input_tokens": 10180,
+      "output_tokens": 4490
+     },
+     "oracle": {
+      "input_tokens": 499,
+      "output_tokens": 675
+     },
+     "passage": {
+      "input_tokens": 8457,
+      "output_tokens": 2962
+     },
+     "chain_passage": {
+      "input_tokens": 18547,
+      "output_tokens": 4008
+     }
+    },
+    "judge": {
+     "input_tokens": 107866,
+     "output_tokens": 4870
+    }
+   }
+  }
+ ]
+}
